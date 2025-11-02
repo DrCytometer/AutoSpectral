@@ -14,6 +14,7 @@
 #' @importFrom future plan multisession
 #' @importFrom future.apply future_lapply
 #' @importFrom dplyr filter
+#' @importFrom flowCore read.FCS
 #'
 #' @param control.dir File path to the single-stained control FCS files.
 #' @param control.def.file CSV file defining the single-color control file names,
@@ -80,15 +81,23 @@ define.flow.control <- function( control.dir, control.def.file, asp,
   # read channels from controls
   if ( verbose ) message( "\033[34m Reading control information \033[0m" )
 
-  flow.set.channel.table <- read.channel( control.dir, control.def.file, asp )
+  control.table <- read.csv( control.def.file, na.strings = "",
+                             stringsAsFactors = FALSE )
+  control.table <- dplyr::filter( control.table, filename != "" )
+  check.critical( anyDuplicated( control.table$filename ) == 0,
+                  "duplicated filenames in fcs data" )
 
-  flow.set.channel <- flow.set.channel.table[[ 1 ]]
-  flow.set.channel.corrected <- flow.set.channel.table[[ 2 ]]
+  flow.set.channel <- colnames(
+    suppressWarnings(
+      flowCore::read.FCS( file.path( control.dir, control.table$filename[ 1 ] ),
+                          truncate_max_range = FALSE,
+                          emptyValue = FALSE )
+    )
+  )
 
-  # read definition of controls
+  # remove unnecessary channels
   non.spectral.channel <- asp$non.spectral.channel
   non.spectral.channel <- paste0( non.spectral.channel, collapse = "|" )
-
   flow.spectral.channel <- flow.set.channel[ !grepl( non.spectral.channel,
                                                      flow.set.channel ) ]
 
@@ -96,16 +105,12 @@ define.flow.control <- function( control.dir, control.def.file, asp,
     flow.spectral.channel <- flow.spectral.channel[ grep( asp$spectral.channel,
                                                           flow.spectral.channel ) ]
 
+  # reorganize channels if necessary
+  flow.spectral.channel <- check.channels( flow.spectral.channel, asp$cytometer )
+
   flow.spectral.channel.n <- length( flow.spectral.channel )
 
-  control.table <- read.csv( control.def.file, na.strings = "",
-                             stringsAsFactors = FALSE )
-
-  control.table <- dplyr::filter( control.table, filename != "" )
-
-  check.critical( anyDuplicated( control.table$filename ) == 0,
-                  "duplicated filenames in fcs data" )
-
+  # get fluorophores and markers
   control.table$sample <- control.table$fluorophore
 
   control.table$universal.negative[ is.na( control.table$universal.negative )] <- FALSE

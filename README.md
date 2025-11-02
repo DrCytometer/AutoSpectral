@@ -39,9 +39,12 @@ At the moment, the following cytometers are supported:
 - Agilent NovoCyte Opteon (“opteon”)
 
 There will likely be some unresolved issues with plotting data from
-certain configurations of the ID7000 and Aurora. Please note that FCS
-3.2 files from the S8 and A8 cytometers are not fully supported in
-flowCore. You may receive warnings, but things should still work.
+certain configurations of the ID7000 and Aurora. Edit: this should now
+be fixed.
+
+Please note that FCS 3.2 files from the S8 and A8 cytometers are not
+fully supported in flowCore. You may receive warnings, but things should
+still work.
 
 If you want to use data from another cytometer and are wiling to provide
 files for establishing the workflow, contact the author/maintainer.
@@ -73,7 +76,10 @@ devtools::install_github("DrCytometer/AutoSpectral")
 
 ## Example
 
-This is a basic example of the workflow, using samples from the ID7000:
+This is a basic example of the workflow, using samples from the ID7000.
+This only illustrates weighted least squares unmixing. For per-cell
+autofluorescence extraction or per-cell fluorophore optimization, see
+the articles on those topics.
 
 ``` r
 library( AutoSpectral )

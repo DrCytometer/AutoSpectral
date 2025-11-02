@@ -43,8 +43,8 @@ channel means (Poisson variance). Only used if \code{weighted}.}
 accuracy and include it as an output. Default is \code{FALSE}.}
 
 \item{use.dist0}{Logical, controls whether the selection of the optimal AF
-signature for each cell is determined by which unmixing brings the cell
-closest to 0 (\code{use.dist0} = \code{TRUE}) or by which unmixing minimizes the
+signature for each cell is determined by which unmixing brings the fluorophore
+signals closest to 0 (\code{use.dist0} = \code{TRUE}) or by which unmixing minimizes the
 per-cell residual (\code{use.dist0} = \code{FALSE}). Default is \code{TRUE}.}
 
 \item{verbose}{Logical, whether to send messages to the console.

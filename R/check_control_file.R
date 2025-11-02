@@ -86,7 +86,6 @@ check.control.file <- function( control.dir, control.def.file, asp,
       return( errors )
   }
 
-
   if ( nrow( control.table ) < 3 ) {
     message( "\033[32mControl table only has two rows. Please check that it is complete.\033[0m" )
     warning.list$low.sample.number <- paste( "Only", nrow( control.table ), "samples provided" )
@@ -139,6 +138,23 @@ check.control.file <- function( control.dir, control.def.file, asp,
     message( "\033[31mTo run multiple controls per fluorophore, name them uniquely, e.g.,
              FITC_1, FITC_2, etc.\033[0m" )
     errors$duplicated.fluorophore <- dup.fluor
+  }
+
+  # check that an unstained cell sample has been provided and is named "AF"
+  if ( ! any( control.table$fluorophore == "AF" ) ) {
+    message( "\033[32mNo Autofluorescence `AF` control sample has been provided.\033[0m" )
+    errors$missing.af <- "No `AF` sample listed"
+  } else {
+    # check that the sample has been marked as `cells`
+    af.control <- control.table$filename[ control.table$fluorophore == "AF" ]
+    if ( length( af.control ) > 1 ) {
+      message( "\033[32mDuplicate `AF` control samples have been provided. Provide unique names.\033[0m" )
+      errors$duplicate.af <- af.control
+    }
+    if ( ! control.table$control.type[ control.table$fluorophore == "AF" ] == "cells" ) {
+      message( "\033[32mThe `AF` control must be `cells` in the `control.type` column.\033[0m" )
+      errors$wrong.af.type <- af.control
+    }
   }
 
   # check that marker has been filled in
@@ -453,9 +469,14 @@ check.control.file <- function( control.dir, control.def.file, asp,
     } else {
       warning( "Critical errors found in control file" )
     }
+
+    if ( length( warning.list ) == 0 )
+      warning.list <- "See Errors"
   } else {
     message( "\033[34m No critical errors found in control file.\033[0m" )
     errors <- "No Errors Found"
+    if ( length( warning.list ) == 0 )
+      warning.list <- "No Issues Detected"
   }
 
   error.checks <- list( Errors = errors, Warnings = warning.list )

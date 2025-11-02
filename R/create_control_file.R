@@ -45,7 +45,7 @@ create.control.file <- function( control.dir, asp ){
   control.colnames <- c( "filename", "fluorophore", "marker", "channel",
                          "control.type", "universal.negative", "large.gate" )
 
-  control.def.file <- df <- data.frame( matrix( ncol = length( control.colnames ),
+  control.def.file <- data.frame( matrix( ncol = length( control.colnames ),
                                                 nrow = length( control.files ) ) )
 
   colnames( control.def.file ) <- control.colnames
@@ -59,21 +59,18 @@ create.control.file <- function( control.dir, asp ){
   control.def.file$fluorophore <- fluorophore.matches[ control.def.file$filename ]
 
   # set corresponding peak detectors based on cytometer
-  if ( asp$cytometer == "Aurora" ){
+  if ( asp$cytometer == "Aurora" ) {
     detectors <- setNames( fluorophore.database$channel.Aurora, fluorophore.database$fluorophore )
-
-  } else if ( asp$cytometer == "ID7000" ){
+  } else if ( asp$cytometer == "ID7000" ) {
     detectors <- setNames( fluorophore.database$channel.ID7000, fluorophore.database$fluorophore )
-
-  } else if ( asp$cytometer == "FACSDiscover A8" ){
+  } else if ( asp$cytometer == "FACSDiscover A8" ) {
     detectors <- setNames( fluorophore.database$channel.s8, fluorophore.database$fluorophore )
-
-  } else if ( asp$cytometer == "FACSDiscover S8" ){
+  } else if ( asp$cytometer == "FACSDiscover S8" ) {
     detectors <- setNames( fluorophore.database$channel.s8, fluorophore.database$fluorophore )
-
-  } else if ( asp$cytometer == "Opteon" ){
+  } else if ( asp$cytometer == "Opteon" ) {
     detectors <- setNames( fluorophore.database$channel.opteon, fluorophore.database$fluorophore )
-
+  } else {
+    stop( "Unsupported cytometer" )
   }
 
   detector.idx <- match( control.def.file$fluorophore, names( detectors ) )

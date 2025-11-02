@@ -25,8 +25,8 @@
 #' @param calculate.error Logical, whether to calculate the RMSE unmixing model
 #' accuracy and include it as an output. Default is `FALSE`.
 #' @param use.dist0 Logical, controls whether the selection of the optimal AF
-#' signature for each cell is determined by which unmixing brings the cell
-#' closest to 0 (`use.dist0` = `TRUE`) or by which unmixing minimizes the
+#' signature for each cell is determined by which unmixing brings the fluorophore
+#' signals closest to 0 (`use.dist0` = `TRUE`) or by which unmixing minimizes the
 #' per-cell residual (`use.dist0` = `FALSE`). Default is `TRUE`.
 #' @param verbose Logical, whether to send messages to the console.
 #' Default is `TRUE`.

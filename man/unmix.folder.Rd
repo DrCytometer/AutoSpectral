@@ -80,9 +80,10 @@ the written FCS file: relevant for S8 and A8. Default is \code{FALSE}}
 accuracy and include it as a keyword in the FCS file.}
 
 \item{use.dist0}{Logical, controls whether the selection of the optimal AF
-signature for each cell is determined by which unmixing brings the cell
-closest to 0 (\code{use.dist0} = \code{TRUE}) or by which unmixing minimizes the
-per-cell residual (\code{use.dist0} = \code{FALSE}). Default is \code{TRUE}.}
+signature for each cell is determined by which unmixing brings the fluorophore
+signals closest to 0 (\code{use.dist0} = \code{TRUE}) or by which unmixing minimizes the
+per-cell residual (\code{use.dist0} = \code{FALSE}). Default is \code{TRUE}. Used for
+AutoSpectral unmixing.}
 
 \item{divergence.threshold}{Numeric. Used for \code{FastPoisson} only. Threshold
 to trigger reversion towards WLS unmixing when Poisson result diverges.

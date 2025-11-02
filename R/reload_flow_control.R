@@ -8,6 +8,7 @@
 #'
 #' @importFrom utils read.csv
 #' @importFrom dplyr filter
+#' @importFrom flowCore read.FCS
 #'
 #' @param control.dir file path to the single stained control fcs files
 #' @param control.def.file csv file defining the single color control file
@@ -23,29 +24,36 @@
 reload.flow.control <- function( control.dir, control.def.file, asp ) {
 
   # read channels from controls
-  flow.set.channel.table <- read.channel( control.dir, control.def.file, asp )
+  control.table <- read.csv( control.def.file, na.strings = "",
+                             stringsAsFactors = FALSE )
+  control.table <- dplyr::filter( control.table, filename != "" )
+  check.critical( anyDuplicated( control.table$filename ) == 0,
+                  "duplicated filenames in fcs data" )
 
-  flow.set.channel <- flow.set.channel.table[[ 1 ]]
-  flow.set.channel.corrected <- flow.set.channel.table[[ 2 ]]
+  flow.set.channel <- colnames(
+    suppressWarnings(
+      flowCore::read.FCS( file.path( control.dir, control.table$filename[ 1 ] ),
+                          truncate_max_range = FALSE,
+                          emptyValue = FALSE )
+    )
+  )
 
-  # read definition of controls
+  # remove unnecessary channels
   non.spectral.channel <- asp$non.spectral.channel
   non.spectral.channel <- paste0( non.spectral.channel, collapse = "|" )
-
   flow.spectral.channel <- flow.set.channel[ !grepl( non.spectral.channel,
-                                                     flow.set.channel ) ]
+                                                 flow.set.channel ) ]
 
   if ( grepl( "Discover", asp$cytometer ) )
     flow.spectral.channel <- flow.spectral.channel[ grep( asp$spectral.channel,
                                                           flow.spectral.channel ) ]
 
+  # reorganize channels if necessary
+  flow.spectral.channel <- check.channels( flow.spectral.channel, asp$cytometer )
+
   flow.spectral.channel.n <- length( flow.spectral.channel )
 
-  control.table <- read.csv( control.def.file, na.strings = "",
-                             stringsAsFactors = FALSE )
-
-  control.table <- dplyr::filter( control.table, filename != "" )
-
+  # get fluorophores and markers
   flow.fluorophore <- control.table$fluorophore
   flow.fluorophore[ is.na( flow.fluorophore ) ] <- "Negative"
 
@@ -54,9 +62,6 @@ reload.flow.control <- function( control.dir, control.def.file, asp ) {
 
   flow.antigen <- control.table$marker
   flow.channel <- control.table$channel
-
-  check.critical( anyDuplicated( control.table$filename ) == 0,
-                  "duplicated filenames in fcs data" )
 
   # read scatter parameters
   flow.scatter.parameter <- read.scatter.parameter( asp )
