@@ -14,57 +14,51 @@
 #'
 #' @export
 
-match.fluorophores <- function( control.filenames, fluorophore.database ){
+match.fluorophores <- function( control.filenames, fluorophore.database ) {
 
-  delim.start <- "(?:^|[[:space:]_\\.])"
-  delim.end <- "(?=$|[[:space:]_\\.])"
+  delim.start <- "(?<![A-Za-z0-9])"
+  delim.end   <- "(?![A-Za-z0-9])"
 
   fluorophore.matches <- list()
 
-  for( filename in control.filenames ) {
+  for ( filename in control.filenames ) {
+    fluorophore <- character( 0 )
 
-    fluorophore <- fluorophore.database$fluorophore[ sapply( fluorophore.database$fluorophore, function( fluor ) {
-      mod.fluor <- gsub( " ", "\\\\s*", fluor )
-      pattern <- paste0( delim.start, mod.fluor, delim.end )
-      grepl( pattern, filename, perl = TRUE )
-    }) ]
+    # Columns to check in order of priority
+    fluor.cols <- c( "fluorophore", "synonym1", "synonym2", "synonym3" )
 
-    if ( length( fluorophore ) == 0 ){
-      fluorophore <- fluorophore.database$fluorophore[ sapply( fluorophore.database$synonym1, function( fluor ) {
-        mod.fluor <- gsub( " ", "\\\\s*", fluor )
-        pattern <- paste0( delim.start, mod.fluor, delim.end )
-        grepl( pattern, filename, perl = TRUE )
-      }) ]
+    for ( col in fluor.cols ) {
+      vals <- fluorophore.database[[ col ]]
 
-      if ( length( fluorophore ) == 0 ){
-        fluorophore <- fluorophore.database$fluorophore[ sapply( fluorophore.database$synonym2, function( fluor ) {
-          mod.fluor <- gsub( " ", "\\\\s*", fluor )
-          pattern <- paste0( delim.start, mod.fluor, delim.end )
-          grepl( pattern, filename, perl = TRUE )
-        }) ]
+      for ( i in seq_along( vals ) ) {
+        fluor <- vals[ i ]
+        if ( is.na( fluor ) || fluor == "" ) next
 
-        if ( length( fluorophore ) == 0 ){
-          fluorophore <- fluorophore.database$fluorophore[ sapply( fluorophore.database$synonym3, function( fluor ) {
-            mod.fluor <- gsub( " ", "\\\\s*", fluor )
-            pattern <- paste0( delim.start, mod.fluor, delim.end )
-            grepl( pattern, filename, perl = TRUE )
-          }) ]
+        # Escape regex metacharacters
+        fluor.escaped <- gsub( "([][{}()^$.|*+?\\\\])", "\\\\\\1", fluor )
+        fluor.escaped <- gsub( " ", "\\\\s*", fluor.escaped)
 
+        pattern <- paste0( delim.start, fluor.escaped, delim.end )
+
+        if ( grepl( pattern, filename, perl = TRUE ) ) {
+          fluorophore <- fluorophore.database$fluorophore[ i ]
+          message( paste( "\033[32mMatch:", fluor, "to", fluorophore, "in", filename, "\033[0m" ) )
+          break
         }
       }
+
+      if ( length( fluorophore ) > 0 ) break
     }
 
-    if ( length( fluorophore ) == 0 ){
-
+    if ( length( fluorophore ) == 0) {
       fluorophore <- "No match"
-
+      message( paste( "\033[31mNo Match for:", filename, "\033[0m" ) )
     }
 
     fluorophore.matches[ filename ] <- fluorophore
-
   }
 
-  fluorophore.matches <- unlist(fluorophore.matches)
+  fluorophore.matches <- unlist( fluorophore.matches )
 
-  return( unlist( fluorophore.matches ) )
+  return( fluorophore.matches )
 }

@@ -69,6 +69,10 @@ create.control.file <- function( control.dir, asp ){
     detectors <- setNames( fluorophore.database$channel.s8, fluorophore.database$fluorophore )
   } else if ( asp$cytometer == "Opteon" ) {
     detectors <- setNames( fluorophore.database$channel.opteon, fluorophore.database$fluorophore )
+  } else if ( asp$cytometer == "Mosaic" ) {
+    detectors <- setNames( fluorophore.database$channel.mosaic, fluorophore.database$fluorophore )
+  } else if ( asp$cytometer == "Xenith" ) {
+    detectors <- setNames( fluorophore.database$channel.xenith, fluorophore.database$fluorophore )
   } else {
     stop( "Unsupported cytometer" )
   }
@@ -93,7 +97,6 @@ create.control.file <- function( control.dir, asp ){
   control.def.file.merged <- merge( control.def.file, fluorophore.database,
                                     by = "fluorophore", all.x = TRUE )
 
-
   laser.order <- c( "UV", "Violet", "Blue", "YellowGreen", "Red" )
 
   control.def.file.merged$excitation.laser <- factor( control.def.file.merged$excitation.laser,
@@ -106,8 +109,11 @@ create.control.file <- function( control.dir, asp ){
 
   control.def.file <- control.def.file.merged[, desired.col ]
 
-  # fill AF for unstained
-  control.def.file$fluorophore[ grepl( "Unstained", control.def.file$filename ) ] <- "AF"
+  # fill AF for unstained cells, Negative for unstained beads
+  control.def.file$fluorophore[ grepl( "Unstained", control.def.file$filename ) ] <-
+    ifelse( control.def.file$control.type[ grepl( "Unstained", control.def.file$filename ) ] == "cells",
+           "AF",
+           "Negative" )
 
   # fill Negative for Negative
   control.def.file$fluorophore[ grepl( "Negative", control.def.file$filename ) ] <- "Negative"

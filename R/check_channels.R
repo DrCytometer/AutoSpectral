@@ -38,6 +38,10 @@ check.channels <- function( spectral.channels, cytometer ) {
     detectors <- cytometers$Discover
   } else if ( cytometer == "Opteon" ) {
     detectors <- cytometers$Opteon
+  } else if ( cytometer == "Mosaic" ) {
+    detectors <- cytometers$Mosaic
+  } else if ( cytometer == "Xenith" ) {
+    detectors <- cytometers$Xenith
   } else {
     stop( "Unsupported cytometer" )
   }

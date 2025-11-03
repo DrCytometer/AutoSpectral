@@ -431,7 +431,7 @@ check.control.file <- function( control.dir, control.def.file, asp,
     cytometer.match <- unique( cytometer.list ) == asp$cytometer
 
     if ( !cytometer.match ) {
-      cytometer.match <- grepl( asp$cytometer, unique( cytometer.list ) )
+      cytometer.match <- grepl( asp$cytometer, unique( cytometer.list ), ignore.case = TRUE )
       if ( !cytometer.match ) {
         warning( paste( "The name of the cytomter in your FCS files does not match the",
                         "name in the `asp` parameter list. Please ensure you have selected",

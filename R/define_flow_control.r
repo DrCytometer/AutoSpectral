@@ -213,8 +213,13 @@ define.flow.control <- function( control.dir, control.def.file, asp,
 
   flow.antigen[ flow.fluorophore == "AF" ] <- "AF"
   flow.antigen[ is.na( flow.antigen ) ] <- "other"
-  if ( length( flow.channel[ flow.fluorophore == "AF" ] ) == 0 )
-    flow.channel[ flow.fluorophore == "AF" ] <- asp$af.channel
+  # set default AF channel if none has been provided
+  if ( any( flow.fluorophore == "AF" ) ) {
+    idx <- which( flow.fluorophore == "AF" )
+    if ( length( flow.channel[ idx ] ) == 0 || all( is.na( flow.channel[ idx ] ) ) ) {
+      flow.channel[ idx ] <- asp$af.channel
+    }
+  }
 
   flow.channel[ is.na( flow.channel ) ] <- "other"
 

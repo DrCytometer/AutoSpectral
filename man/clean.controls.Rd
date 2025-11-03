@@ -10,7 +10,7 @@ clean.controls(
   time.clean = FALSE,
   trim = FALSE,
   trim.factor = NULL,
-  af.remove = FALSE,
+  af.remove = TRUE,
   universal.negative = TRUE,
   downsample = TRUE,
   negative.n = asp$negative.n,
@@ -39,7 +39,7 @@ remove time-based inconsistencies in the controls.}
 \item{trim.factor}{Numeric. Default is \code{asp$rlm.trim.factor}. Required if
 \code{trim = TRUE}.}
 
-\item{af.remove}{Logical, default is \code{FALSE}. Whether to remove intrusive
+\item{af.remove}{Logical, default is \code{TRUE}. Whether to remove intrusive
 autofluorescence contamination from cell controls using PCA-based
 identification and gating. Requires universal negatives to be defined in the
 control file and in \code{flow.control}.}

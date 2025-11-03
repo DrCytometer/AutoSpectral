@@ -10,3 +10,6 @@
 #' - `ID7000`: Sony ID7000 channels (6-laser is used as archetype)
 #' - `Discover`: BD FACSDiscover (A8 and S8) channels
 #' - `Opteon`: Agilent Novocyte Opteon channels
+#' - `Mosaic`: Beckman Coulter CytoFLEX Mosaic channels
+#' - `Xenith`: ThermoFisher Attune Xenith channels
+#' - `Xenith_description`: Filters for the Xenith

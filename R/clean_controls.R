@@ -24,7 +24,7 @@
 #' (positive and negative) from controls.
 #' @param trim.factor Numeric. Default is `asp$rlm.trim.factor`. Required if
 #' `trim = TRUE`.
-#' @param af.remove Logical, default is `FALSE`. Whether to remove intrusive
+#' @param af.remove Logical, default is `TRUE`. Whether to remove intrusive
 #' autofluorescence contamination from cell controls using PCA-based
 #' identification and gating. Requires universal negatives to be defined in the
 #' control file and in `flow.control`.
@@ -64,7 +64,7 @@
 clean.controls <- function( flow.control, asp,
                             time.clean = FALSE,
                             trim = FALSE, trim.factor = NULL,
-                            af.remove = FALSE,
+                            af.remove = TRUE,
                             universal.negative = TRUE, downsample = TRUE,
                             negative.n = asp$negative.n, positive.n = asp$positive.n,
                             scatter.match = TRUE, scrub = FALSE,
@@ -183,7 +183,8 @@ clean.controls <- function( flow.control, asp,
 
     check.critical( length( univ.neg ) > 0,
                     "No cell-based universal negative samples could be identified.
-                    To perform autofluorescence removal, you must specify a universal negative in the fcs_control_file." )
+                    To perform autofluorescence removal, you must have single-stained cells,
+                    and specify a universal negative in the fcs_control_file." )
 
     univ.neg.sample <- flow.control$sample[ flow.control.type == "cells" &
                                               flow.sample %in% univ.neg ]
@@ -201,7 +202,8 @@ clean.controls <- function( flow.control, asp,
                     "No cell-based universal negative samples could be identified.
                     To perform autofluorescence removal, you must specify a
                     universal negative in the fcs_control_file,
-                    and you must have single-stained cell controls." )
+                    and you must have single-stained cell controls. If you only
+                    have bead-based controls, set `af.remove` to FALSE and try again." )
 
     af.remove.peak.channels <- flow.control$channel[ flow.control$fluorophore
                                                      %in% af.removal.sample ]

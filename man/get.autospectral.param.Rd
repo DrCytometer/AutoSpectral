@@ -7,7 +7,8 @@
 get.autospectral.param(cytometer = "aurora", figures = TRUE)
 }
 \arguments{
-\item{cytometer}{The type of cytometer, default is \code{aurora}.}
+\item{cytometer}{The type of cytometer, default is \code{aurora}. Supported options
+include \code{aurora}, \code{id7000}, \code{a8}, \code{s8}, \code{opteon}, \code{mosaic} and \code{xenith}.}
 
 \item{figures}{Logical indicating whether to set up directory parameters for
 figures and tables, default is \code{TRUE}}

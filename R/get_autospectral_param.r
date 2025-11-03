@@ -4,7 +4,8 @@
 #'
 #' @description Retrieves autospectral parameters for a specified cytometer.
 #'
-#' @param cytometer The type of cytometer, default is `aurora`.
+#' @param cytometer The type of cytometer, default is `aurora`. Supported options
+#' include `aurora`, `id7000`, `a8`, `s8`, `opteon`, `mosaic` and `xenith`.
 #' @param figures Logical indicating whether to set up directory parameters for
 #' figures and tables, default is `TRUE`
 #'
@@ -16,7 +17,7 @@ get.autospectral.param <- function( cytometer = "aurora", figures = TRUE )
 {
   autosp.param <- get.autospectral.param.minimal()
 
-  if ( figures ){
+  if ( figures ) {
 
     autosp.param$figures <- TRUE
 
@@ -46,7 +47,7 @@ get.autospectral.param <- function( cytometer = "aurora", figures = TRUE )
 
   autosp.param <- get.param.function( autosp.param )
 
-  autosp.param
+  return( autosp.param )
 
 }
 

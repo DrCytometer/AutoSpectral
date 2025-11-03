@@ -37,6 +37,10 @@ At the moment, the following cytometers are supported:
 - BD FACSDiscoverS8 (“s8”)
 - BD FACSDiscoverA8 (“a8”)
 - Agilent NovoCyte Opteon (“opteon”)
+- Beckman Coulter CytoFLEX mosaic (“mosaic”)
+- ThermoFisher Attune Xenith (“xenith”)
+
+Support for the Mosaic and Xenith is new in version 0.8.2.
 
 There will likely be some unresolved issues with plotting data from
 certain configurations of the ID7000 and Aurora. Edit: this should now
@@ -145,16 +149,23 @@ fairly easy.
 
 First, upgrade the BLAS and LAPACK libraries used by R. These provide
 algorithms for linear algebra, which is the heart of spectral unmixing.
-Simply swapping out your .dll files as in this tutorial can give speed
-ups of 5x. [Install
+
+On Windows, simply swapping out your .dll files as in this tutorial can
+give speed ups of 5x. [Install
 OpenBLAS](https://github.com/david-cortes/R-openblas-in-windows) All
 this involves is downloading the files from the internet, placing them
 in the right folder and doing a quick restart.
 
+On Mac, you likely want to use the vecLib library BLAS that ships with
+Mac OS. The following articles may be helpful in setting this as the
+default BLAS for use in R: [BLAS for Mac in
+R](https://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html#Which-BLAS-is-used-and-how-can-it-be-changed_003f)
+[Performance BLAS](https://csantill.github.io/RPerformanceWBLAS/)
+Feedback from users on Mac who successfully upgrade their BLAS would be
+appreciated.
+
 Do not set multiple threads for the BLAS as this will conflict with
 higher level parallelization, either in AutoSpectral or other packages.
-
-[More on fast BLAS](https://csantill.github.io/RPerformanceWBLAS/)
 
 Second, install AutoSpectralRcpp. This is fully accessible from R and
 integrates with AutoSpectral. But, when it gets to the slow bits in the
@@ -169,16 +180,20 @@ You can install the development version of AutoSpectralRcpp like so:
 devtools::install_github("DrCytometer/AutoSpectralRcpp")
 ```
 
-Third, turn on parallel processing in AutoSpectral and AutoSpectralRcpp.
-At the moment, this is not fully optimized in AutoSpectral. The parallel
-processing in AutoSpectralRcpp operates via OpenMP and works well.
+Third, turn on parallel processing in AutoSpectral. At the moment, this
+is not fully optimized in AutoSpectral. The parallel processing in
+AutoSpectralRcpp operates via OpenMP and works well. It is always
+activated, but the number of threads can be configured.
 
 To activate parallel processing, either set the `parallel` flag to
 `TRUE` in `asp` or check the function arguments for a `parallel` option.
-Sorry, this will be cleaned up soon.
+Additionally, there is control over the number of threads used, either
+directly in the function call or via `asp$max.worker.process.n`. Sorry,
+this will be cleaned up soon.
 
 ``` r
 asp$parallel <- TRUE
+asp$max.worker.process.n
 ```
 
 For unmixing larger data sets, you will do well to use a machine with
