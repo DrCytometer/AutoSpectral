@@ -24,19 +24,23 @@
 #' channel labels.
 #' @param asp The AutoSpectral parameter list.
 #' Prepare using `get.autospectral.param`
+#' @param color.palette Optional character string defining the viridis color
+#' palette to be used for the fluorophore traces. Default is `rainbow`, which will
+#' be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+#' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
+#' and `turbo`.
 #'
 #' @return Saves the plot as a JPEG file in the specified directory.
 
 gate.define.plot <- function( samp, gate.data, gate.marker, gate.bound,
-                              gate.region, gate.population, scatter.and.channel.label, asp )
+                              gate.region, gate.population,
+                              scatter.and.channel.label, asp,
+                              color.palette = "rainbow" )
 {
 
   gate.data.ggp <- data.frame(
     x = gate.data[ , 1 ],
-    y = gate.data[ , 2 ],
-    z = interp.surface( gate.bound$density, gate.data ) )
-
-  gate.data.ggp$z[ is.na( gate.data.ggp$z ) ] <- min( gate.bound$density$z )
+    y = gate.data[ , 2 ] )
 
   gate.bound.ggp <- data.frame(
     x = c(
@@ -83,15 +87,20 @@ gate.define.plot <- function( samp, gate.data, gate.marker, gate.bound,
            gate.population$boundary$y[ 1 ] )
   )
 
-  density.palette <- get.density.palette( gate.data.ggp$z, asp )
-
   x.lab.idx <- which( scatter.and.channel.label == gate.marker[ 1 ] )
   x.lab <- names( scatter.and.channel.label[ x.lab.idx ] )
   y.lab.idx <- which( scatter.and.channel.label == gate.marker[ 2 ] )
   y.lab <- names( scatter.and.channel.label[ y.lab.idx ] )
 
-  gate.plot <- ggplot( gate.data.ggp, aes( .data$x, .data$y,
-                                           color = .data$z ) ) +
+  gate.plot <- ggplot( gate.data.ggp, aes( .data$x, .data$y ) ) +
+    geom_scattermore(
+      pointsize = asp$figure.gate.point.size,
+      alpha = 1, na.rm = TRUE ) +
+    stat_density_2d(
+      aes( fill = after_stat( level ) ),
+      geom = "polygon",
+      contour = TRUE,
+      na.rm = TRUE ) +
     scale_x_continuous(
       name = x.lab,
       breaks = seq( asp$scatter.data.min.x,
@@ -110,11 +119,6 @@ gate.define.plot <- function( samp, gate.data, gate.marker, gate.bound,
       limits = c( asp$scatter.data.min.y,
                   asp$scatter.data.max.y ),
       expand = expansion( asp$figure.gate.scale.expand ) ) +
-    geom_scattermore( pointsize = asp$figure.gate.point.size,
-                      stroke = 0.1 * asp$figure.gate.point.size, alpha = 1, na.rm = TRUE ) +
-    scale_color_gradientn( "", labels = NULL, colors = density.palette,
-                           guide = guide_colorbar( barwidth = asp$figure.gate.bar.width,
-                                                   barheight = asp$figure.gate.bar.height ) ) +
     geom_path( aes( .data$x, .data$y, color = NULL ),
                data = gate.bound.ggp, linewidth = asp$figure.gate.line.size,
                linetype = "dashed" ) +
@@ -133,9 +137,7 @@ gate.define.plot <- function( samp, gate.data, gate.marker, gate.bound,
     theme_bw() +
     theme( plot.margin = margin( asp$figure.margin, asp$figure.margin,
                                  asp$figure.margin, asp$figure.margin ),
-           legend.margin = margin( asp$figure.gate.bar.margin,
-                                   asp$figure.gate.bar.margin, asp$figure.gate.bar.margin,
-                                   asp$figure.gate.bar.margin ),
+           legend.position = "none",
            axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
            axis.text = element_text( size = asp$figure.axis.text.size ),
            axis.text.x = element_text( angle = 45, hjust = 1 ),
@@ -144,8 +146,21 @@ gate.define.plot <- function( samp, gate.data, gate.marker, gate.bound,
            panel.grid.major = element_blank(),
            panel.grid.minor = element_blank() )
 
+  # color options
+  virids.colors <- c( "magma", "inferno", "plasma", "viridis", "cividis",
+                      "rocket", "mako", "turbo" )
+  if ( color.palette %in% virids.colors ) {
+    gate.plot <- gate.plot +
+      scale_fill_viridis_c( option = color.palette )
+  } else {
+    gate.plot <- gate.plot +
+      scale_fill_gradientn( colours = asp$density.palette.base.color,
+                            values = asp$ribbon.scale.values )
+  }
+
   ggsave( file.path( asp$figure.gate.dir, sprintf( "%s.jpg", samp ) ),
-          plot = gate.plot, width = asp$figure.width,
+          plot = gate.plot,
+          width = asp$figure.width,
           height = asp$figure.height )
 
 }

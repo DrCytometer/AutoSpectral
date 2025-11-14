@@ -5,45 +5,71 @@
 \title{Spectral Ribbon Plot}
 \usage{
 spectral.ribbon.plot(
-  pos.expr.data,
-  neg.expr.data,
+  pos.expr.data = NULL,
+  neg.expr.data = NULL,
+  removed.data = NULL,
   spectral.channel,
   asp,
-  fluor.name,
+  fluor.name = NULL,
   title = NULL,
-  af = FALSE,
-  removed.data = NULL,
   figure.dir = NULL,
-  factor.names = NULL
+  factor.names = NULL,
+  save = TRUE,
+  color.palette = "rainbow",
+  data.list = NULL,
+  af = FALSE,
+  plot.width = 15,
+  plot.height = 10
 )
 }
 \arguments{
-\item{pos.expr.data}{A matrix containing the positive expression data.}
+\item{pos.expr.data}{Internal argument for \code{clean.controls}. A matrix
+containing the positive expression data. Default is \code{NULL}.}
 
-\item{neg.expr.data}{A matrix containing the negative expression data.}
+\item{neg.expr.data}{Internal argument for \code{clean.controls}. A matrix
+containing the negative expression data. Default is \code{NULL}.}
 
-\item{spectral.channel}{A character vector specifying the spectral channels.}
+\item{removed.data}{Internal argument for \code{clean.controls}. A matrix
+containing the removed data, if applicable. Default is \code{NULL}. If omitted,
+only two groups (facets) are plotted.}
+
+\item{spectral.channel}{A character vector specifying the spectral channels.
+Recommended: use \code{colnames(spectra)} or \code{flow.control$spectral.channel}.}
 
 \item{asp}{The AutoSpectral parameter list. Prepare using get.autospectral.param.}
 
-\item{fluor.name}{A character string specifying the fluorophore name.}
+\item{fluor.name}{An optional character string specifying the fluorophore
+name for plot titles and filename. Default is \code{NULL}.}
 
-\item{title}{A character string to prefix the plot file name.
-Default is \code{NULL}}
-
-\item{af}{A logical value indicating whether autofluorescence removal is
-being performed. Default is \code{FALSE}}
-
-\item{removed.data}{A matrix containing the removed data, if applicable.
-Default is \code{NULL}. If omitted, only two groups (facets) are plotted.}
+\item{title}{An optional character string to prefix the plot file name.
+Default is \code{NULL}.}
 
 \item{figure.dir}{Output folder where the figures will be created. Default is
-\code{NULL}, enabling automatic selection inside AutoSpectral.}
+\code{NULL}, enabling automatic selection inside AutoSpectral. For user-supplied
+data, \code{asp$figure.spectral.ribbon.dir} will be used if \code{NULL}.}
 
 \item{factor.names}{Optional titles for the facets on the plot. Default is
-\code{NULL}, enabling automatic selection inside AutoSpectral. A character vector
-containing three elements should be provided unless \code{af} is set to \code{TRUE} and
-\code{removed.data} is \code{NULL}, in which case two labels must be provided.}
+\code{NULL}, enabling automatic selection inside AutoSpectral. If \code{data.list} is
+named, \code{factor.names} will be pulled from that.}
+
+\item{save}{Logical, default is \code{TRUE}. If \code{TRUE}, the plot is saved to
+\code{figure.dir}. Otherwise, it is returned to the viewer only.}
+
+\item{color.palette}{Optional character string defining the color palette to
+be used. Default is \code{rainbow}, mimicking a FlowJo scheme. Other choices
+are the viridis color options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis},
+\code{cividis}, \code{rocket}, \code{mako} and \code{turbo}.}
+
+\item{data.list}{Provide data here. A (named) list of matrices or dataframes
+for plotting. These should probably be flow expression data. Data provided
+will be subsetted to the columns in \code{spectral.channel}.}
+
+\item{af}{Internal argument for \code{clean.controls}. A logical value indicating
+whether autofluorescence removal is being performed. Default is \code{FALSE}.}
+
+\item{plot.width}{Width of the saved plot. Default is \code{15}.}
+
+\item{plot.height}{Height of the saved plot. Default is \code{10}.}
 }
 \value{
 None. The function saves the generated spectral ribbon plot to
@@ -51,5 +77,7 @@ a file.
 }
 \description{
 This function generates spectral ribbon plots for positive and negative
-expression data.
+expression data. The function gets called internally in \code{clean.controls}. To
+use the function directly, pass data to \code{data.list} in the form of a named
+list of matrices or data.frames.
 }

@@ -18,7 +18,7 @@ color palette, and saves it as a JPEG file."><!-- mathjax --><script src="https:
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">AutoSpectral</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.5</span>
       </span>
     </div>
 
@@ -40,6 +40,9 @@ color palette, and saves it as a JPEG file."><!-- mathjax --><script src="https:
     </li>
     <li>
       <a href="../articles/Control_File_example.html">Control_File_example</a>
+    </li>
+    <li>
+      <a href="../articles/Development.html">Development</a>
     </li>
     <li>
       <a href="../articles/Gating.html">Gating</a>
@@ -90,7 +93,9 @@ color palette, and saves it as a JPEG file.</p>
 <span>  legend.label <span class="op">=</span> <span class="st">"Intensity"</span>,</span>
 <span>  color.palette <span class="op">=</span> <span class="st">"viridis"</span>,</span>
 <span>  save <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  show.legend <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  show.legend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  plot.width <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  plot.height <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -130,6 +135,18 @@ Otherwise, the plot will simply be created in the Viewer.</p></dd>
 
 <dt id="arg-show-legend">show.legend<a class="anchor" aria-label="anchor" href="#arg-show-legend"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, figure legend will be included.</p></dd>
+
+
+<dt id="arg-plot-width">plot.width<a class="anchor" aria-label="anchor" href="#arg-plot-width"></a></dt>
+<dd><p>Width for the output plot. Default is <code>NULL</code>, in which case
+the width will be scaled automatically based on the number of detectors in
+<code>spectra</code>.</p></dd>
+
+
+<dt id="arg-plot-height">plot.height<a class="anchor" aria-label="anchor" href="#arg-plot-height"></a></dt>
+<dd><p>Height for the output plot. Default is <code>NULL</code>, in which
+case the height will be scaled automatically based on the number of rows in
+<code>spectra</code> plus a safety margin.</p></dd>
 
 </dl></div>
     <div id="value">

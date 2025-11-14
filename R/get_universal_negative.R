@@ -7,7 +7,6 @@
 #' control for a given sample, including scatter matching and plotting.
 #'
 #' @importFrom stats quantile median mad
-#' @importFrom MASS kde2d bandwidth.nrd
 #' @importFrom sp point.in.polygon Polygon Polygons SpatialPolygons
 #' @importFrom grDevices contourLines
 #'
@@ -142,17 +141,27 @@ get.universal.negative <- function( clean.expr.data, samp,
     neg.scatter.matched <- neg.control.expr[ neg.population.idx, ]
 
   } else {
-    neg.population.idx <- sample( 1:nrow( neg.control.expr ), negative.n )
-    neg.scatter.matched <- neg.control.expr[ neg.population.idx, ]
+    if ( nrow( neg.control.expr ) > negative.n ) {
+      neg.population.idx <- sample( 1:nrow( neg.control.expr ), negative.n )
+      neg.scatter.matched <- neg.control.expr[ neg.population.idx, ]
+    } else {
+      neg.scatter.matched <- neg.control.expr
+    }
   }
 
 
   if ( main.figures ) {
-    scatter.match.plot( pos.selected.expr, neg.scatter.matched, samp,
-                        scatter.param, asp )
+    scatter.match.plot( pos.expr.data = pos.selected.expr,
+                        neg.expr.data = neg.scatter.matched,
+                        fluor.name = samp,
+                        scatter.param = scatter.param,
+                        asp = asp )
+
     if ( intermediate.figures )
-      spectral.ribbon.plot( pos.selected.expr, neg.scatter.matched,
-                            spectral.channel, asp, samp )
+      spectral.ribbon.plot( pos.expr.data = pos.selected.expr,
+                            neg.expr.data = neg.scatter.matched,
+                            spectral.channel = spectral.channel,
+                            asp = asp, fluor.name = samp )
   }
 
   return( rbind( pos.selected.expr, neg.scatter.matched ) )

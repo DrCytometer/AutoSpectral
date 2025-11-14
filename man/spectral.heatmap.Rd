@@ -11,7 +11,9 @@ spectral.heatmap(
   legend.label = "Intensity",
   color.palette = "viridis",
   save = TRUE,
-  show.legend = TRUE
+  show.legend = TRUE,
+  plot.width = NULL,
+  plot.height = NULL
 )
 }
 \arguments{
@@ -34,6 +36,14 @@ are the viridis color options: \code{magma}, \code{inferno}, \code{plasma}, \cod
 Otherwise, the plot will simply be created in the Viewer.}
 
 \item{show.legend}{Logical. If \code{TRUE}, figure legend will be included.}
+
+\item{plot.width}{Width for the output plot. Default is \code{NULL}, in which case
+the width will be scaled automatically based on the number of detectors in
+\code{spectra}.}
+
+\item{plot.height}{Height for the output plot. Default is \code{NULL}, in which
+case the height will be scaled automatically based on the number of rows in
+\code{spectra} plus a safety margin.}
 }
 \value{
 Saves the heatmap plot as a JPEG file in the specified directory.

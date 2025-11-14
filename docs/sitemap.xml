@@ -3,6 +3,7 @@
 <url><loc>/articles/Aurora_example.html</loc></url>
 <url><loc>/articles/Cleaning.html</loc></url>
 <url><loc>/articles/Control_File_example.html</loc></url>
+<url><loc>/articles/Development.html</loc></url>
 <url><loc>/articles/Gating.html</loc></url>
 <url><loc>/articles/index.html</loc></url>
 <url><loc>/articles/Per_Cell_Optimization.html</loc></url>
@@ -14,6 +15,7 @@
 <url><loc>/LICENSE-text.html</loc></url>
 <url><loc>/LICENSE.html</loc></url>
 <url><loc>/reference/calculate.condition.number.html</loc></url>
+<url><loc>/reference/check.channels.html</loc></url>
 <url><loc>/reference/check.control.file.html</loc></url>
 <url><loc>/reference/check.critical.html</loc></url>
 <url><loc>/reference/clean.controls.html</loc></url>
@@ -43,8 +45,10 @@
 <url><loc>/reference/get.autospectral.param.html</loc></url>
 <url><loc>/reference/get.autospectral.param.id7000.html</loc></url>
 <url><loc>/reference/get.autospectral.param.minimal.html</loc></url>
+<url><loc>/reference/get.autospectral.param.mosaic.html</loc></url>
 <url><loc>/reference/get.autospectral.param.opteon.html</loc></url>
 <url><loc>/reference/get.autospectral.param.s8.html</loc></url>
+<url><loc>/reference/get.autospectral.param.xenith.html</loc></url>
 <url><loc>/reference/get.density.palette.html</loc></url>
 <url><loc>/reference/get.fluor.variants.html</loc></url>
 <url><loc>/reference/get.fluorophore.spectra.html</loc></url>

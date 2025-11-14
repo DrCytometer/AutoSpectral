@@ -7,6 +7,7 @@
 #' expression data, selected based on scatter parameters gates.
 #'
 #' @importFrom MASS kde2d bandwidth.nrd
+#' @importFrom fields interp.surface
 #' @importFrom ggplot2 ggplot aes scale_color_gradientn facet_wrap
 #' @importFrom ggplot2 xlab ylab scale_x_continuous scale_y_continuous theme_bw
 #' @importFrom ggplot2 theme element_rect element_text margin ggsave guide_colorbar
@@ -19,17 +20,22 @@
 #' @param scatter.param A character vector specifying the scatter parameters.
 #' @param asp The AutoSpectral parameter list.
 #' Prepare using `get.autospectral.param`
+#' @param color.palette Optional character string defining the viridis color
+#' palette to be used for the fluorophore traces. Default is `rainbow`, which will
+#' be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+#' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
+#' and `turbo`.
 #'
 #' @return None. The function saves the generated scatter plot to a file.
 #'
 #' @export
 
 scatter.match.plot <- function( pos.expr.data, neg.expr.data, fluor.name,
-                                scatter.param, asp ){
+                                scatter.param, asp,
+                                color.palette = "rainbow" ) {
 
   pos.scatter.plot <- data.frame( pos.expr.data[ , scatter.param ],
                                   check.names = FALSE )
-
   neg.scatter.plot  <- data.frame( neg.expr.data[ , scatter.param ],
                                    check.names = FALSE )
 
@@ -37,29 +43,24 @@ scatter.match.plot <- function( pos.expr.data, neg.expr.data, fluor.name,
   neg.scatter.plot$group <- "Negative"
 
   scatter.plot.data <- rbind( pos.scatter.plot, neg.scatter.plot )
-  scatter.plot.data$group <- factor( scatter.plot.data$group, levels = c( "Negative", fluor.name ) )
-
-  scatter.density <- MASS::kde2d(
-    scatter.plot.data[ , 1 ],
-    scatter.plot.data[ , 2 ],
-    asp$gate.bound.density.bw.factor.cells * apply( scatter.plot.data[ , 1:2 ], 2, bandwidth.nrd ),
-    n = asp$plot.gate.factor * asp$gate.bound.density.grid.n.cells )
+  scatter.plot.data$group <- factor( scatter.plot.data$group,
+                                     levels = c( "Negative", fluor.name ) )
 
   data.ggp <- data.frame(
     x = scatter.plot.data[ , 1 ],
     y = scatter.plot.data[ , 2 ],
-    z = interp.surface( scatter.density, scatter.plot.data ),
     group = scatter.plot.data$group )
 
-  density.palette <- get.density.palette( data.ggp$z, asp )
-
-  ggplot( data.ggp, aes( .data$x, .data$y, color = .data$z, group ) ) +
-    geom_scattermore( pointsize = asp$figure.gate.point.size * 3,
-                      stroke = asp$figure.gate.point.size, alpha = 1, na.rm = TRUE ) +
-
-    scale_color_gradientn( "", labels = NULL, colors = density.palette,
-                           guide = guide_colorbar( barwidth = asp$figure.gate.bar.width,
-                                                   barheight = asp$figure.gate.bar.height ) ) +
+  scatter.plot <- ggplot( data.ggp, aes( .data$x, .data$y, .data$group ) ) +
+    geom_scattermore(
+      pointsize = asp$figure.gate.point.size * 3,
+      alpha = 1, na.rm = TRUE
+      ) +
+    stat_density_2d(
+      aes( fill = after_stat( level ) ),
+      geom = "polygon",
+      contour = TRUE,
+      na.rm = TRUE ) +
     facet_wrap( ~ group, ncol = 2 ) +
     xlab( scatter.param[ 1 ] ) +
     ylab( scatter.param[ 2 ] ) +
@@ -93,9 +94,25 @@ scatter.match.plot <- function( pos.expr.data, neg.expr.data, fluor.name,
            panel.grid.major = element_blank(),
            panel.grid.minor = element_blank() )
 
-  scatter.plot.filename <- paste( fluor.name, asp$scatter.match.plot.filename )
+  # color options
+  virids.colors <- c( "magma", "inferno", "plasma", "viridis", "cividis",
+                      "rocket", "mako", "turbo" )
+  if ( color.palette %in% virids.colors ) {
+    scatter.plot <- scatter.plot +
+      scale_fill_viridis_c( option = color.palette )
+  } else {
+    scatter.plot <- scatter.plot +
+      scale_fill_gradientn( colours = asp$density.palette.base.color,
+                            values = asp$ribbon.scale.values )
+  }
 
-  ggsave( scatter.plot.filename, path = asp$figure.scatter.dir.base,
-          width = asp$scatter.match.plot.width, height = asp$scatter.match.plot.height )
+  scatter.plot.filename <- paste( fluor.name, asp$scatter.match.plot.filename,
+                                  sep = "_" )
+
+  ggsave( scatter.plot.filename,
+          path = asp$figure.scatter.dir.base,
+          plot = scatter.plot,
+          width = asp$scatter.match.plot.width,
+          height = asp$scatter.match.plot.height )
 
 }

@@ -19,7 +19,7 @@ directory of the user's choice."><!-- mathjax --><script src="https://cdnjs.clou
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">AutoSpectral</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.5</span>
       </span>
     </div>
 
@@ -41,6 +41,9 @@ directory of the user's choice."><!-- mathjax --><script src="https://cdnjs.clou
     </li>
     <li>
       <a href="../articles/Control_File_example.html">Control_File_example</a>
+    </li>
+    <li>
+      <a href="../articles/Development.html">Development</a>
     </li>
     <li>
       <a href="../articles/Gating.html">Gating</a>
@@ -104,7 +107,9 @@ directory of the user's choice.</p>
 <span>  divergence.threshold <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  divergence.handling <span class="op">=</span> <span class="st">"Balance"</span>,</span>
 <span>  balance.weight <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  speed <span class="op">=</span> <span class="st">"fast"</span></span>
+<span>  speed <span class="op">=</span> <span class="st">"fast"</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  threads <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -194,9 +199,10 @@ accuracy and include it as a keyword in the FCS file.</p></dd>
 
 <dt id="arg-use-dist-">use.dist0<a class="anchor" aria-label="anchor" href="#arg-use-dist-"></a></dt>
 <dd><p>Logical, controls whether the selection of the optimal AF
-signature for each cell is determined by which unmixing brings the cell
-closest to 0 (<code>use.dist0</code> = <code>TRUE</code>) or by which unmixing minimizes the
-per-cell residual (<code>use.dist0</code> = <code>FALSE</code>). Default is <code>TRUE</code>.</p></dd>
+signature for each cell is determined by which unmixing brings the fluorophore
+signals closest to 0 (<code>use.dist0</code> = <code>TRUE</code>) or by which unmixing minimizes the
+per-cell residual (<code>use.dist0</code> = <code>FALSE</code>). Default is <code>TRUE</code>. Used for
+AutoSpectral unmixing.</p></dd>
 
 
 <dt id="arg-divergence-threshold">divergence.threshold<a class="anchor" aria-label="anchor" href="#arg-divergence-threshold"></a></dt>
@@ -228,6 +234,18 @@ recomputes the unmixing matrix for each variant for maximum precision. The
 <code>fast</code> method is only one available in the <code>AutoSpectral</code> package and will be
 slow in the pure R implementation. Installation of <code>AutoSpectralRcpp</code> is
 strongly encouraged.</p></dd>
+
+
+<dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
+<dd><p>Logical, default is <code>FALSE</code>. Set to <code>TRUE</code> to activate parallel
+processing using futures for multiple FCS files.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>Numeric, default is <code>NULL</code>, in which case <code>asp$worker.process.n</code>
+will be used. <code>asp$worker.process.n</code> is set by default to be one less than the
+available cores on the machine. Multi-threading is only used if <code>parallel</code> is
+<code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div id="value">

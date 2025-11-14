@@ -34,9 +34,10 @@
 #' @param max.points Number of points to plot (speeds up plotting). Default is
 #' `1e5`.
 #' @param color.palette Optional character string defining the viridis color
-#' palette to be used for the fluorophore traces. Default is `viridis`. Options
-#' are the viridis color options: `magma`, `inferno`, `plasma`, `viridis`,
-#' `cividis`, `rocket`, `mako` and `turbo`.
+#' palette to be used for the fluorophore traces. Default is `rainbow`, which will
+#' be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+#' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
+#' and `turbo`.
 #' @param save Logical, if `TRUE`, saves a JPEG file to the `output.dir`.
 #' Otherwise, the plot will simply be created in the Viewer.
 #' @param title Optional title for the plot filename. If `NULL`, defaults to
@@ -57,7 +58,7 @@ create.biplot <- function( plot.data, x.dim, y.dim, asp,
                            x.width.basis = -1000,
                            y.width.basis = -1000,
                            max.points = 1e5,
-                           color.palette = "turbo",
+                           color.palette = "rainbow",
                            save = TRUE,
                            title = NULL, output.dir = NULL,
                            width = 5, height = 5 ) {
@@ -185,7 +186,6 @@ create.biplot <- function( plot.data, x.dim, y.dim, asp,
       geom = "polygon",
       contour = TRUE,
       na.rm = TRUE ) +
-    scale_fill_viridis_c( option = color.palette ) +
     scale_x_continuous(
       name = x.lab,
       breaks = plot.biexp.transform.x$transform( x.breaks ),
@@ -210,6 +210,18 @@ create.biplot <- function( plot.data, x.dim, y.dim, asp,
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()
     )
+
+  # color options
+  virids.colors <- c( "magma", "inferno", "plasma", "viridis", "cividis",
+                      "rocket", "mako", "turbo" )
+  if ( color.palette %in% virids.colors ) {
+    biplot <- biplot +
+      scale_fill_viridis_c( option = color.palette )
+  } else {
+    biplot <- biplot +
+      scale_fill_gradientn( colours = asp$density.palette.base.color,
+                            values = asp$ribbon.scale.values )
+  }
 
   if ( save )
     ggsave( file.path( output.dir, sprintf( "%s.jpg", title ) ),

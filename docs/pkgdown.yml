@@ -5,9 +5,10 @@ articles:
   articles/Aurora_example: Aurora_example.html
   articles/Cleaning: Cleaning.html
   articles/Control_File_example: Control_File_example.html
+  articles/Development: Development.html
   articles/Gating: Gating.html
   articles/Per_Cell_Optimization: Per_Cell_Optimization.html
   articles/Plotting: Plotting.html
   articles/Reload_AutoSpectral: Reload_AutoSpectral.html
   articles/Single_Cell_AutoFluorescence: Single_Cell_AutoFluorescence.html
-last_built: 2025-10-27T15:36Z
+last_built: 2025-11-14T07:32Z

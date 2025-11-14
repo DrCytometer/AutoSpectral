@@ -51,8 +51,6 @@ get.autospectral.param.xenith <- function( autosp.param )
   autosp.param$large.gate.scaling.x <- 1.5
   autosp.param$large.gate.scaling.y <- 4.5
 
-  autosp.param$plot.gate.factor <- 1
-
   autosp.param$ribbon.breaks <- c( -1e3, 0, 1e3, 3e3, 1e4, 3e4 )
 
   autosp.param

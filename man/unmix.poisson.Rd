@@ -4,7 +4,14 @@
 \alias{unmix.poisson}
 \title{Unmix Using Poisson Regression}
 \usage{
-unmix.poisson(raw.data, spectra, asp, initial.weights = NULL)
+unmix.poisson(
+  raw.data,
+  spectra,
+  asp,
+  initial.weights = NULL,
+  parallel = TRUE,
+  threads = 1
+)
 }
 \arguments{
 \item{raw.data}{Matrix containing raw data to be unmixed.}
@@ -17,6 +24,12 @@ Prepare using \code{get.autospectral.param}}
 \item{initial.weights}{Optional numeric vector of weights, one per fluorescent
 detector. Default is \code{NULL}, in which case weighting will be done by
 channel means.}
+
+\item{parallel}{Logical, default is \code{TRUE}, which enables parallel processing
+for per-cell unmixing.}
+
+\item{threads}{Numeric, default is \code{1}. Multi-threading is only used if
+\code{parallel} is \code{TRUE} and \code{threads} is greater than 1.}
 }
 \value{
 A matrix containing the unmixed data.

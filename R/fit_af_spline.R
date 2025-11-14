@@ -10,7 +10,7 @@
 #'
 #' @importFrom MASS rlm
 #' @importFrom tripack tri.mesh convex.hull
-#' @importFrom stats predict
+#' @importFrom stats predict sd
 #' @importFrom sp point.in.polygon
 #'
 #' @param af.cells A matrix containing the autofluorescence data.

@@ -80,7 +80,7 @@ gate.af.sample.plot <- function( plot.data, samp, af.boundary.upper, asp,
 
   gate.plot <- ggplot( plot.data, aes( x = x.trans, y = y.trans ) ) +
     geom_scattermore(
-      aes( x = x.trans, y = y.trans ),
+      # aes( x = x.trans, y = y.trans ),
       pointsize = asp$figure.gate.point.size,
       alpha = 1,
       na.rm = TRUE
@@ -90,7 +90,6 @@ gate.af.sample.plot <- function( plot.data, samp, af.boundary.upper, asp,
       geom = "polygon",
       contour = TRUE,
       na.rm = TRUE ) +
-    scale_fill_viridis_c( option = color.palette ) +
     scale_x_continuous(
       name = x.lab,
       breaks = plot.biexp.transform$transform( breaks ),
@@ -133,8 +132,20 @@ gate.af.sample.plot <- function( plot.data, samp, af.boundary.upper, asp,
                data = af.boundary.upper.ggp, linewidth = asp$figure.gate.line.size )
   }
 
+  # color options
+  virids.colors <- c( "magma", "inferno", "plasma", "viridis", "cividis",
+                      "rocket", "mako", "turbo" )
+  if ( color.palette %in% virids.colors ) {
+    gate.plot <- gate.plot +
+      scale_fill_viridis_c( option = color.palette )
+  } else {
+    gate.plot <- gate.plot +
+      scale_fill_gradientn( colours = asp$density.palette.base.color,
+                            values = asp$ribbon.scale.values )
+  }
+
   ggsave( file.path( asp$figure.clean.control.dir,
-                     paste( asp$af.plot.filename, samp, ".jpg" ) ),
+                     paste( asp$af.plot.filename, samp, ".jpg", sep = "_" ) ),
           plot = gate.plot, width = asp$figure.width,
           height = asp$figure.height )
 

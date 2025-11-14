@@ -23,7 +23,9 @@ unmix.folder(
   divergence.threshold = 10000,
   divergence.handling = "Balance",
   balance.weight = 0.5,
-  speed = "fast"
+  speed = "fast",
+  parallel = FALSE,
+  threads = NULL
 )
 }
 \arguments{
@@ -107,6 +109,14 @@ recomputes the unmixing matrix for each variant for maximum precision. The
 \code{fast} method is only one available in the \code{AutoSpectral} package and will be
 slow in the pure R implementation. Installation of \code{AutoSpectralRcpp} is
 strongly encouraged.}
+
+\item{parallel}{Logical, default is \code{FALSE}. Set to \code{TRUE} to activate parallel
+processing using futures for multiple FCS files.}
+
+\item{threads}{Numeric, default is \code{NULL}, in which case \code{asp$worker.process.n}
+will be used. \code{asp$worker.process.n} is set by default to be one less than the
+available cores on the machine. Multi-threading is only used if \code{parallel} is
+\code{TRUE}.}
 }
 \value{
 None. Saves the unmixed FCS files to the specified output directory.

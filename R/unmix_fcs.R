@@ -71,6 +71,12 @@
 #' `fast` method is only one available in the `AutoSpectral` package and will be
 #' slow in the pure R implementation. Installation of `AutoSpectralRcpp` is
 #' strongly encouraged.
+#' @param parallel Logical, default is `TRUE`, which enables parallel processing
+#' for per-cell unmixing methods.
+#' @param threads Numeric, default is `NULL`, in which case `asp$worker.process.n`
+#' will be used. `asp$worker.process.n` is set by default to be one less than the
+#' available cores on the machine. Multi-threading is only used if `parallel` is
+#' `TRUE`.
 #'
 #' @return None. The function writes the unmixed FCS data to a file.
 #'
@@ -91,10 +97,15 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
                        divergence.threshold = 1e4,
                        divergence.handling = "Balance",
                        balance.weight = 0.5,
-                       speed = "fast" ) {
+                       speed = "fast",
+                       parallel = TRUE,
+                       threads = NULL ) {
 
   if ( is.null( output.dir ) )
     output.dir <- asp$unmixed.fcs.dir
+
+  if ( is.null( threads ) )
+    threads <- asp$worker.process.n
 
   # logic for default unmixing with cytometer-based selection
   if ( method == "Automatic" ) {
@@ -205,8 +216,8 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
                                                                           calculate.error = calculate.error,
                                                                           use.dist0 = use.dist0,
                                                                           verbose = asp$verbose,
-                                                                          parallel = TRUE,
-                                                                          threads = asp$worker.process.n,
+                                                                          parallel = parallel,
+                                                                          threads = threads,
                                                                           speed = speed ),
                                error = function( e ) {
                                  warning( "AutoSpectralRcpp unmixing failed, falling back to standard AutoSpectral: ", e$message )
@@ -244,18 +255,20 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
                                                                      weights = weights,
                                                                      maxit = asp$rlm.iter.max,
                                                                      tol = 1e-6,
-                                                                     n_threads = asp$worker.process.n,
+                                                                     n_threads = threads,
                                                                      divergence.threshold = divergence.threshold,
                                                                      divergence.handling = divergence.handling,
                                                                      balance.weight = balance.weight ),
                                error = function( e ) {
                                  warning( "FastPoisson failed, falling back to standard Poisson: ", e$message )
-                                 unmix.poisson( spectral.exprs, spectra, asp )
+                                 unmix.poisson( spectral.exprs, spectra, asp, weights,
+                                                parallel, threads )
                                }
                              )
                            } else {
                              warning( "AutoSpectralRcpp not available, falling back to standard Poisson." )
-                             unmix.poisson( spectral.exprs, spectra, asp, weights )
+                             unmix.poisson( spectral.exprs, spectra, asp, weights,
+                                            parallel, threads )
                            }
                          },
                          stop( "Unknown method" )

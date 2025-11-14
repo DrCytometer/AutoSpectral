@@ -19,6 +19,7 @@
 #' @importFrom deldir deldir tile.list which.tile
 #' @importFrom sp point.in.polygon
 #' @importFrom tripack tri.mesh convex.hull
+#' @importFrom fields interp.surface
 #'
 #' @param gate.data A data frame containing the gate data.
 #' @param viability.gate A logical vector indicating the viability gate.
@@ -127,11 +128,11 @@ do.gate <- function( gate.data, viability.gate, large.gate,
       gate.data[ , 2 ] > gate.bound.y.low &
       gate.data[ , 2 ] < gate.bound.y.high )
 
+  bw <- apply( gate.data[ gate.bound.data.idx, ], 2, bandwidth.nrd )
   gate.bound.density <- MASS::kde2d(
     gate.data[ gate.bound.data.idx, 1 ],
     gate.data[ gate.bound.data.idx, 2 ],
-    gate.bound.density.bw.factor *
-      apply( gate.data[ gate.bound.data.idx, ], 2, bandwidth.nrd ),
+    h = gate.bound.density.bw.factor * bw,
     n = gate.bound.density.grid.n )
 
   # get density maxima in bound
@@ -342,14 +343,12 @@ do.gate <- function( gate.data, viability.gate, large.gate,
   } else {
 
     # get density maxima in region
+    bw <- apply( gate.data[ gate.region.data.idx, ], 2, bandwidth.nrd )
     gate.region.density <- MASS::kde2d(
       gate.data[ gate.region.data.idx, 1 ],
       gate.data[ gate.region.data.idx, 2 ],
-      gate.region.density.bw.factor *
-        apply( gate.data[ gate.region.data.idx, ], 2, bandwidth.nrd ),
+      h = gate.region.density.bw.factor * bw,
       n = gate.region.density.grid.n )
-
-    # names( gate.region.density ) <- c( "x", "y", "z" )
 
     gate.region.neighbor.idx <- list(
       x = - gate.region.density.neigh.size :
@@ -427,14 +426,14 @@ do.gate <- function( gate.data, viability.gate, large.gate,
     )
 
     # threshold data in region around target maximum
+    bw <- apply( gate.data[ gate.region.density.max.data.idx, ], 2, bandwidth.nrd )
     gate.region.max.density <- MASS::kde2d(
       gate.data[ gate.region.density.max.data.idx, 1 ],
       gate.data[ gate.region.density.max.data.idx, 2 ],
-      gate.region.max.density.bw.factor *
-        apply( gate.data[ gate.region.density.max.data.idx, ], 2, bandwidth.nrd ),
+      h = gate.region.max.density.bw.factor * bw,
       n = gate.region.max.density.grid.n )
 
-    gate.region.max.density.interp <- interp.surface( gate.region.max.density,
+    gate.region.max.density.interp <- fields::interp.surface( gate.region.max.density,
                                                       gate.data[ gate.region.density.max.data.idx, ] )
 
     gate.region.max.density.threshold <-
@@ -448,7 +447,7 @@ do.gate <- function( gate.data, viability.gate, large.gate,
     gate.population.strict.idx <- gate.population.strict.idx[
       ! duplicated( data.frame( gate.data[ gate.population.strict.idx, ] ) ) ]
 
-    if ( large.gate ){
+    if ( large.gate ) {
 
       original.hull <- convex.hull( tri.mesh(
         gate.data[ gate.population.strict.idx, 1 ],

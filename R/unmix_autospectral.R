@@ -192,18 +192,19 @@ unmix.autospectral <- function( raw.data, spectra, af.spectra,
 
     # identify which fluorophores are present on this cell
     pos.fluors <- setNames(
-      as.vector(cell.unmixed >= pos.thresholds[fluorophores]),
+      as.vector( cell.unmixed >= pos.thresholds[ fluorophores ] ),
       fluorophores
     )
-    pos.fluor.names <- names(pos.fluors)[pos.fluors]
+    pos.fluor.names <- names( pos.fluors )[ pos.fluors ]
 
     if ( !any( pos.fluors ) )
       return( cell.unmixed )
+
     # set baseline spectra (optimized single spectrum)
     cell.spectra.final <- spectra
     # use only fluorophores present for this cell to aid residual-based selection
     cell.spectra.curr <- cell.spectra.final[ pos.fluors, , drop = FALSE ]
-    cell.unmixed <- unmix( cell.raw, cell.spectra.curr )
+    cell.unmixed <- unmix( cell.raw, cell.spectra.curr, weights )
 
     ## calculate initial residual error based only on fluorophores present in the cell
     fitted <- cell.unmixed %*% cell.spectra.curr

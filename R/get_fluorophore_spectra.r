@@ -29,11 +29,11 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
   names( spectra.zero ) <- flow.control$spectral.channel
 
   if ( !is.null( title ) )
-    title <- paste( title, asp$spectra.file.name )
+    title <- paste( title, asp$spectra.file.name, sep = "_" )
   else if ( use.clean.expr )
-    title <- paste( "Clean", asp$spectra.file.name )
+    title <- paste( "Clean", asp$spectra.file.name, sep = "_" )
   else
-    title <- paste( "Initial", asp$spectra.file.name )
+    title <- paste( "Initial", asp$spectra.file.name, sep = "_" )
 
   # iterate only over non-negative samples
   fluorophore.samples <- flow.control$fluorophore[ ! grepl( "negative",
