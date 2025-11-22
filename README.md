@@ -41,9 +41,9 @@ At the moment, the following cytometers are supported:
 [![Stable](https://img.shields.io/badge/stable-master-blue)](https://github.com/DrCytometer/AutoSpectral)
 [![Dev](https://img.shields.io/badge/dev-branch-orange)](https://github.com/DrCytometer/AutoSpectral/tree/dev)
 
-### Stable Release
+### Latest Release
 
-**Version 0.8.5**
+**Version 0.8.6**
 
 Install using `devtools` or `remotes`. You will need to install the
 Bioconductor packages separately, I believe.
@@ -83,12 +83,15 @@ Please check the [help pages and
 articles](https://drcytometer.github.io/AutoSpectral/) before submitting
 bug reports. There’s a lot of info there.
 
+In particular, see the [Full
+Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_Workflow.html).
+
 - Gating. The automated gating is not great. See the [help
   page](https://drcytometer.github.io/AutoSpectral/articles/Gating.html)
   for tips. I’m looking into an alternative.
 - Keywords. My attempt to preserve the original keywords from the FCS
   files has resulted in misalignment of some of the parameters. Edit:
-  This should be fixed in version 0.8.5.
+  This should be fixed in version 0.8.5 onwards.
 - Lack of a minimal example with full workflow. I’m putting something
   together.
 - There will likely be some unresolved issues with plotting data from
@@ -99,25 +102,23 @@ bug reports. There’s a lot of info there.
 - Please note that FCS 3.2 files from the S8 and A8 cytometers are not
   fully supported in flowCore. You may receive warnings, but things
   should still work.
+- More stuff in progress will appear in the [Development
+  article](https://drcytometer.github.io/AutoSpectral/articles/Development.html)
 
 If you want to use data from another cytometer and are wiling to provide
 files for establishing the workflow, contact the author/maintainer.
 
-\<\<\<\<\<\<\< HEAD This work has received funding from the KU Leuven C1
-program, the European Union’s Horizon 2020 research and innovation
-programme under grant agreement No 874707 (EXIMIOUS), Wellcome
-Investigator Award, 222442/A/21/Z and UKRI Proactive Vaccinology Award,
-MR/Y004450/1 (IMMPROVE). ======= This work has received funding from the
-KU Leuven C1 program, the European Union’s Horizon 2020 research and
-innovation programme under grant agreement No 874707 (EXIMIOUS),
-Wellcome Investigator Award 222442/A/21/Z, and UKRI Proactive
-Vaccinology Award MR/Y004450/1 (IMMPROVE). \>\>\>\>\>\>\> dev
+This work has received funding from the KU Leuven C1 program, the
+European Union’s Horizon 2020 research and innovation programme under
+grant agreement No 874707 (EXIMIOUS), Wellcome Investigator Award
+222442/A/21/Z, and UKRI Proactive Vaccinology Award MR/Y004450/1
+(IMMPROVE).
 
 AutoSpectral is provided under an AGPL3 licence.
 
 ## Example
 
-This is a basic example of the workflow, using samples from the ID7000.
+Below is a basic example of the workflow, using samples from the ID7000.
 This only illustrates weighted least squares unmixing. For per-cell
 autofluorescence extraction or per-cell fluorophore optimization, see
 the articles on those topics.
@@ -214,6 +215,9 @@ faster.
 
 [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp)
 
+You will need [Rtools](https://cran.r-project.org/bin/windows/Rtools/)
+to compile this.
+
 You can install AutoSpectralRcpp like so:
 
 ``` r
@@ -227,8 +231,10 @@ activated, but the number of threads can be configured.
 
 To activate parallel processing, check the function arguments for a
 `parallel` option and set it to `TRUE`. Additionally, there is control
-over the number of threads used, either directly in the function call or
-via `asp$max.worker.process.n`.
+over the number of threads used, which should be directly in the
+function call via a `threads` argument. If you don’t know how many
+threads to use, check the recommendation for your machine after running
+`get.autospectral.param()`:
 
 ``` r
 asp$max.worker.process.n
@@ -244,4 +250,5 @@ improvements are in the works.
 - Version 0.8.2: Support for Mosaic and Xenith cytometers
 - Version 0.8.3: Patch for error introduced in 0.8.2
 - Version 0.8.4: Changes to error messaging in check.control.file
-- version 0.8.5: Improvements to keyword handling in writing FCS files
+- Version 0.8.5: Improvements to keyword handling in writing FCS files
+- Version 0.8.6: Improvements to plotting, fluorophore matching

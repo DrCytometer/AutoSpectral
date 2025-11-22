@@ -50,9 +50,9 @@ At the moment, the following cytometers are supported:
 [![Dev](https://img.shields.io/badge/dev-branch-orange)](https://github.com/DrCytometer/AutoSpectral/tree/dev)
 
 
-### Stable Release
+### Latest Release
 
-**Version 0.8.5**
+**Version 0.8.6**
 
 Install using `devtools` or `remotes`. You will need to install the Bioconductor
 packages separately, I believe.
@@ -85,31 +85,27 @@ Since one of my recent updates broke things, I'll be moving to using tagged rele
 
 Please check the [help pages and articles](https://drcytometer.github.io/AutoSpectral/) before submitting bug reports. There's a lot of info there.
 
+In particular, see the [Full Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_Workflow.html).
+
 * Gating. The automated gating is not great. See the [help page](https://drcytometer.github.io/AutoSpectral/articles/Gating.html) for tips. I'm looking into an alternative.
-* Keywords. My attempt to preserve the original keywords from the FCS files has resulted in misalignment of some of the parameters. Edit: This should be fixed in version 0.8.5.
+* Keywords. My attempt to preserve the original keywords from the FCS files has resulted in misalignment of some of the parameters. Edit: This should be fixed in version 0.8.5 onwards.
 * Lack of a minimal example with full workflow. I'm putting something together.
 * There will likely be some unresolved issues with plotting data from certain configurations of the ID7000 and Aurora. For example, Northern Lights spectral trace plots may show lasers that are not present on that configuration. This should be merely aesthetic.
 * Support for the Mosaic and Xenith is new in version 0.8.2.
 * Please note that FCS 3.2 files from the S8 and A8 cytometers are not fully 
 supported in flowCore. You may receive warnings, but things should still work.
+* More stuff in progress will appear in the [Development article](https://drcytometer.github.io/AutoSpectral/articles/Development.html)
 
 If you want to use data from another cytometer and are wiling to provide files 
 for establishing the workflow, contact the author/maintainer.
 
-<<<<<<< HEAD
-This work has received funding from the KU Leuven C1 program, the European Union’s Horizon 2020 research and innovation programme under grant agreement No 874707 (EXIMIOUS), Wellcome Investigator Award, 222442/A/21/Z and UKRI Proactive 
-Vaccinology Award, MR/Y004450/1 (IMMPROVE).
-=======
 This work has received funding from the KU Leuven C1 program, the European Union’s Horizon 2020 research and innovation programme under grant agreement No 874707 (EXIMIOUS), Wellcome Investigator Award 222442/A/21/Z, and UKRI Proactive Vaccinology Award MR/Y004450/1 (IMMPROVE).
->>>>>>> dev
 
 AutoSpectral is provided under an AGPL3 licence.
 
 ## Example
 
-This is a basic example of the workflow, using samples from the ID7000. This only
-illustrates weighted least squares unmixing. For per-cell autofluorescence 
-extraction or per-cell fluorophore optimization, see the articles on those topics.
+Below is a basic example of the workflow, using samples from the ID7000. This only illustrates weighted least squares unmixing. For per-cell autofluorescence extraction or per-cell fluorophore optimization, see the articles on those topics.
 
 Please see the [Full Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_Workflow.html)
 
@@ -175,8 +171,7 @@ unmix.folder( sample.dir, no.af.spectra, asp, flow.control, method = "WLS" )
 
 R is not known for its speed.
 
-For faster processing there are three things you can do, hopefully all fairly
-easy. 
+For faster processing there are three things you can do, hopefully all fairly easy. 
 
 First, upgrade the BLAS and LAPACK libraries used by R. These provide algorithms for linear algebra, which is the heart of spectral unmixing.
 
@@ -199,13 +194,15 @@ switches over to calculating in C++, so it can be 10-100x faster.
 
 [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp)
 
+You will need [Rtools](https://cran.r-project.org/bin/windows/Rtools/) to compile this.
+
 You can install AutoSpectralRcpp like so:
 ``` r
 devtools::install_github("DrCytometer/AutoSpectralRcpp")
 ```
 Third, turn on parallel processing in AutoSpectral. At the moment, this is not fully optimized in AutoSpectral. The parallel processing in AutoSpectralRcpp operates via OpenMP and works well. It is always activated, but the number of threads can be configured.
 
-To activate parallel processing, check the function arguments for a `parallel` option and set it to `TRUE`. Additionally, there is control over the number of threads used, either directly in the function call or via `asp$max.worker.process.n`.
+To activate parallel processing, check the function arguments for a `parallel` option and set it to `TRUE`. Additionally, there is control over the number of threads used, which should be directly in the function call via a `threads` argument. If you don't know how many threads to use, check the recommendation for your machine after running `get.autospectral.param()`:
 
 ``` {r, eval = FALSE }
 asp$max.worker.process.n
@@ -222,7 +219,8 @@ the works.
 * Version 0.8.2: Support for Mosaic and Xenith cytometers
 * Version 0.8.3: Patch for error introduced in 0.8.2
 * Version 0.8.4: Changes to error messaging in check.control.file
-* version 0.8.5: Improvements to keyword handling in writing FCS files
+* Version 0.8.5: Improvements to keyword handling in writing FCS files
+* Version 0.8.6: Improvements to plotting, fluorophore matching
 
 
 
