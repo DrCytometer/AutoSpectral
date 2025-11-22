@@ -16,8 +16,8 @@
 
 match.fluorophores <- function( control.filenames, fluorophore.database ) {
 
-  delim.start <- "(?<![A-Za-z0-9])"
-  delim.end   <- "(?![A-Za-z0-9])"
+  delim.start <- "(?<![A-Za-z0-9-])"
+  delim.end   <- "(?![A-Za-z0-9-])"
 
   fluorophore.matches <- list()
 

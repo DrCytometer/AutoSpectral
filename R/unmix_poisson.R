@@ -18,12 +18,17 @@
 #' @param initial.weights Optional numeric vector of weights, one per fluorescent
 #' detector. Default is `NULL`, in which case weighting will be done by
 #' channel means.
+#' @param parallel Logical, default is `TRUE`, which enables parallel processing
+#' for per-cell unmixing.
+#' @param threads Numeric, default is `1`. Multi-threading is only used if
+#' `parallel` is `TRUE` and `threads` is greater than 1.
 #'
 #' @return A matrix containing the unmixed data.
 #'
 #' @export
 
-unmix.poisson <- function( raw.data, spectra, asp, initial.weights = NULL ) {
+unmix.poisson <- function( raw.data, spectra, asp, initial.weights = NULL,
+                           parallel = TRUE, threads = 1 ) {
 
   # initialize with WLS unmixing (approximates Poisson weighting)
   unmixed.data <- unmix.wls( raw.data, spectra, initial.weights )
@@ -35,8 +40,8 @@ unmix.poisson <- function( raw.data, spectra, asp, initial.weights = NULL ) {
   unmixed.data[ unmixed.data <= 0 ] <- 1e-6
 
   # set up parallel processing
-  if ( asp$parallel ){
-    future::plan( future::multisession, workers = asp$worker.process.n )
+  if ( parallel ){
+    future::plan( future::multisession, workers = threads )
     options( future.globals.maxSize = asp$max.memory.n )
     lapply.function <- future.apply::future_lapply
   } else {

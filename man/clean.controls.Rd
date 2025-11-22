@@ -88,12 +88,12 @@ data and corresponding factors are stored in new slots.
 A four-part function to clean single-color controls in order to extract
 fluorophore signatures. Any part can be run independently:
 \itemize{
-\item \strong{Stage 1}: PeacoQC to eliminate flow artefacts.
-\item \strong{Stage 2}: Trimming to eliminate extreme events.
+\item \strong{Stage 1}: PeacoQC to eliminate flow artefacts. Not required in most cases.
+\item \strong{Stage 2}: Trimming to eliminate extreme events. Not recommended for most
+use cases.
 \item \strong{Stage 3}: Autofluorescence noise removal using PCA unmixing on matching
 unstained (cells only).
 \item \strong{Stage 4}: Brightest event selection from positive, universal negative
-from matching negative, and downsampling to speed up RLM spectra
-optimization.
+from matching negative, and downsampling to speed up RLM spectra optimization.
 }
 }

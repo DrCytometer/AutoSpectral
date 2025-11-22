@@ -6,13 +6,13 @@
 #' A four-part function to clean single-color controls in order to extract
 #' fluorophore signatures. Any part can be run independently:
 #'
-#' - **Stage 1**: PeacoQC to eliminate flow artefacts.
-#' - **Stage 2**: Trimming to eliminate extreme events.
+#' - **Stage 1**: PeacoQC to eliminate flow artefacts. Not required in most cases.
+#' - **Stage 2**: Trimming to eliminate extreme events. Not recommended for most
+#' use cases.
 #' - **Stage 3**: Autofluorescence noise removal using PCA unmixing on matching
-#'   unstained (cells only).
+#' unstained (cells only).
 #' - **Stage 4**: Brightest event selection from positive, universal negative
-#'   from matching negative, and downsampling to speed up RLM spectra
-#'   optimization.
+#' from matching negative, and downsampling to speed up RLM spectra optimization.
 #'
 #' @param flow.control A list prepared using `define.flow.control`, containing
 #' the data and essential information about the cytometer and data structure.
@@ -63,11 +63,15 @@
 
 clean.controls <- function( flow.control, asp,
                             time.clean = FALSE,
-                            trim = FALSE, trim.factor = NULL,
+                            trim = FALSE,
+                            trim.factor = NULL,
                             af.remove = TRUE,
-                            universal.negative = TRUE, downsample = TRUE,
-                            negative.n = asp$negative.n, positive.n = asp$positive.n,
-                            scatter.match = TRUE, scrub = FALSE,
+                            universal.negative = TRUE,
+                            downsample = TRUE,
+                            negative.n = asp$negative.n,
+                            positive.n = asp$positive.n,
+                            scatter.match = TRUE,
+                            scrub = FALSE,
                             intermediate.figures = FALSE,
                             main.figures = TRUE,
                             parallel = FALSE,
@@ -169,8 +173,6 @@ clean.controls <- function( flow.control, asp,
         dir.create( asp$figure.clean.control.dir )
       if ( !dir.exists( asp$figure.spectral.ribbon.dir ) )
         dir.create( asp$figure.spectral.ribbon.dir )
-      if ( !dir.exists( asp$figure.af.dir ) )
-        dir.create( asp$figure.af.dir )
       if ( !dir.exists( asp$figure.scatter.dir.base ) )
         dir.create( asp$figure.scatter.dir.base )
     }
@@ -180,51 +182,62 @@ clean.controls <- function( flow.control, asp,
     univ.neg <- univ.neg[ !is.null( univ.neg ) ]
     univ.neg <- univ.neg[ !is.na( univ.neg ) ]
     univ.neg <- univ.neg[ univ.neg != FALSE ]
-
-    check.critical( length( univ.neg ) > 0,
-                    "No cell-based universal negative samples could be identified.
-                    To perform autofluorescence removal, you must have single-stained cells,
-                    and specify a universal negative in the fcs_control_file." )
-
     univ.neg.sample <- flow.control$sample[ flow.control.type == "cells" &
                                               flow.sample %in% univ.neg ]
-
-    # select cell-based single-stained samples to be used
-    # must be cells and must have a corresponding universal negative
-    af.removal.sample <- flow.sample[ flow.control.type == "cells" &
-                                        flow.negative %in% univ.neg ]
-
-    # don't remove AF from negatives (to allow scatter matching)
-    af.removal.sample <- af.removal.sample[ !( af.removal.sample  %in% univ.neg.sample ) ]
-
-    # check that we have samples to work with
-    check.critical( length( af.removal.sample ) > 0,
-                    "No cell-based universal negative samples could be identified.
-                    To perform autofluorescence removal, you must specify a
-                    universal negative in the fcs_control_file,
-                    and you must have single-stained cell controls. If you only
-                    have bead-based controls, set `af.remove` to FALSE and try again." )
-
-    af.remove.peak.channels <- flow.control$channel[ flow.control$fluorophore
-                                                     %in% af.removal.sample ]
-
-    # remove identified AF from single-color controls
-    af.removed.expr <- run.af.removal( clean.expr, af.removal.sample,
-                                       spectral.channel, af.remove.peak.channels,
-                                       flow.negative, asp,
-                                       flow.control$scatter.parameter,
-                                       negative.n, positive.n, scatter.match,
-                                       intermediate.figures, main.figures,
-                                       parallel = parallel, verbose = verbose )
-
     # create new negative slot
     clean.universal.negative <- flow.negative
     flow.control$clean.universal.negative <- clean.universal.negative
 
-    # store cleaned data
-    cleaned.samples <- names( af.removed.expr )
-    clean.expr[ cleaned.samples ] <- af.removed.expr[ cleaned.samples ]
+    if ( ( length( univ.neg ) > 0 ) ) {
 
+      # select cell-based single-stained samples to be used
+      # must be cells and must have a corresponding universal negative
+      af.removal.sample <- flow.sample[ flow.control.type == "cells" &
+                                          flow.negative %in% univ.neg ]
+
+      # don't remove AF from negatives (to allow scatter matching)
+      af.removal.sample <- af.removal.sample[ !( af.removal.sample  %in% univ.neg.sample ) ]
+
+      # check that we have samples to work with
+      if ( length( af.removal.sample ) > 0 ) {
+        af.remove.peak.channels <- flow.control$channel[ flow.control$fluorophore
+                                                         %in% af.removal.sample ]
+
+        # remove identified AF from single-color controls
+        af.removed.expr <- run.af.removal( clean.expr, af.removal.sample,
+                                           spectral.channel, af.remove.peak.channels,
+                                           flow.negative, asp,
+                                           flow.control$scatter.parameter,
+                                           negative.n, positive.n, scatter.match,
+                                           intermediate.figures, main.figures,
+                                           parallel = parallel, verbose = verbose )
+
+        # store cleaned data
+        cleaned.samples <- names( af.removed.expr )
+        clean.expr[ cleaned.samples ] <- af.removed.expr[ cleaned.samples ]
+
+      } else {
+        warning( "No cell-based universal negative samples could be identified for `af.remove`." )
+        message(
+          "\033[31m",
+          paste(
+            "No cell-based universal negative samples could be identified.",
+            "To perform autofluorescence removal, you must specify a universal negative in the fcs_control_file,",
+            "and you must have single-stained cell controls.",
+            "If you only have bead-based controls, set `af.remove` to FALSE and try again.",
+            "Skipping autofluorescence removal.",
+            sep = "\n"
+          ),
+          "\033[0m"
+        )
+      }
+    } else {
+      warning( "No cell-based universal negative samples could be identified.
+      To perform autofluorescence removal, you must have single-stained cells,
+      and specify a universal negative in the fcs_control_file." )
+      message( "\033[31mNo cell-based universal negative samples could be identified.
+      Skipping autofluorescence removal.\033[0m" )
+    }
   }
 
   ### Stage 4: Universal Negatives and Downsampling -----------------

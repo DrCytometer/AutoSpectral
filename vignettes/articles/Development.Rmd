@@ -1,0 +1,44 @@
+---
+title: "Development"
+output: html_document
+date: "2025-11-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Here's some stuff that's in progress. These changes will show up first in the development `dev` branch, which you are welcome to install and test.
+
+I don't have a particular timeframe or priority list for any of this, so ping me if any of this is important to you.
+
+* Parallelization improvements. 
+  + The parallelization of functions like `define.flow.control` can be problematic on Windows due to memory usage with `futures` and the tendency of Windows to usurp threads that R was using.
+* More control over plotting, more color options. 
+  + This should be rolled out in the current `dev` branch.
+* A full workflow example with one of the datasets on Mendeley.
+* A guide for the unmixing.
+* More flexibility in negative/unstained samples.
+* Allow multiple controls per fluorophore.
+* An alternative to the automated gating.
+* Better handling of file from the Northern Lights (3-laser Aurora).
+* Better mapping of fluorophores to lasers in `spectral.trace`
+* Some improvements/corrections to the weighting for WLS unmixing.
+* Speed up per-cell fluorophore optimization.
+
+
+To install the `dev` branch:
+
+```{r dev branch, eval=FALSE}
+devtools::install_github("DrCytometer/AutoSpectral@dev")
+```
+
+To replace this with the (hopefully) stable version, run this:
+
+```{r master branch, eval=FALSE}
+remove.packages("AutoSpectral")
+devtools::install_github("DrCytometer/AutoSpectral")
+```
+
+
+

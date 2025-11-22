@@ -47,8 +47,6 @@ get.autospectral.param.opteon <- function( autosp.param )
 
   # spectral parameters
 
-  autosp.param$plot.gate.factor <- 0.5
-
   autosp.param$ribbon.breaks <- c( -1e3, 0, 1e3, 1e4, 1e5, 1e6, 1e7 )
 
   autosp.param

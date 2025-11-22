@@ -24,6 +24,12 @@
 #' @param save Logical, if `TRUE`, saves a JPEG file to the `plot.dir`.
 #' Otherwise, the plot will simply be created in the Viewer.
 #' @param show.legend Logical. If `TRUE`, figure legend will be included.
+#' @param plot.width Width for the output plot. Default is `NULL`, in which case
+#' the width will be scaled automatically based on the number of detectors in
+#' `spectra`.
+#' @param plot.height Height for the output plot. Default is `NULL`, in which
+#' case the height will be scaled automatically based on the number of rows in
+#' `spectra` plus a safety margin.
 #'
 #' @return Saves the heatmap plot as a JPEG file in the specified directory.
 #'
@@ -32,7 +38,8 @@
 spectral.heatmap <- function( spectra, title = NULL, plot.dir = NULL,
                               legend.label = "Intensity",
                               color.palette = "viridis",
-                              save = TRUE, show.legend = TRUE ) {
+                              save = TRUE, show.legend = TRUE,
+                              plot.width = NULL, plot.height = NULL ) {
 
   if ( !is.null( title ) )
     heatmap.filename <- paste( title, "spectral_heatmap.jpg" )
@@ -44,8 +51,10 @@ spectral.heatmap <- function( spectra, title = NULL, plot.dir = NULL,
 
   heatmap.df <- data.frame( spectra, check.names = FALSE )
 
-  plot.width <- max( ( ( ncol( heatmap.df ) - 1 ) / 64 * 12 ), 3 )
-  plot.height <- 5 + round( nrow( heatmap.df ) / 8, 0 )
+  if ( is.null( plot.width ) )
+    plot.width <- max( ( ( ncol( heatmap.df ) - 1 ) / 64 * 12 ), 3 )
+  if ( is.null( plot.height ) )
+    plot.height <- 5 + round( nrow( heatmap.df ) / 8, 0 )
 
   row.levels <- rownames( heatmap.df )
   col.levels <- colnames( heatmap.df )

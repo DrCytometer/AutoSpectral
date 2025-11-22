@@ -72,6 +72,12 @@
 #' `fast` method is only one available in the `AutoSpectral` package and will be
 #' slow in the pure R implementation. Installation of `AutoSpectralRcpp` is
 #' strongly encouraged.
+#' @param parallel Logical, default is `FALSE`. Set to `TRUE` to activate parallel
+#' processing using futures for multiple FCS files.
+#' @param threads Numeric, default is `NULL`, in which case `asp$worker.process.n`
+#' will be used. `asp$worker.process.n` is set by default to be one less than the
+#' available cores on the machine. Multi-threading is only used if `parallel` is
+#' `TRUE`.
 #'
 #' @return None. Saves the unmixed FCS files to the specified output directory.
 #'
@@ -92,7 +98,9 @@ unmix.folder <- function( fcs.dir, spectra, asp, flow.control,
                           divergence.threshold = 1e4,
                           divergence.handling = "Balance",
                           balance.weight = 0.5,
-                          speed = "fast" ){
+                          speed = "fast",
+                          parallel = FALSE,
+                          threads = NULL ) {
 
   if ( is.null( output.dir ) )
     output.dir <- asp$unmixed.fcs.dir
@@ -100,8 +108,8 @@ unmix.folder <- function( fcs.dir, spectra, asp, flow.control,
   files.to.unmix <- list.files( fcs.dir, pattern = ".fcs", full.names = TRUE )
 
   # set up parallel processing
-  if ( asp$parallel && ( method == "OLS" || method == "WLS" ) ) {
-    plan( multisession, workers = asp$worker.process.n )
+  if ( parallel && ( method == "OLS" || method == "WLS" ) ) {
+    plan( multisession, workers = ifelse( is.null( threads ), asp$worker.process.n, threads ) )
     options( future.globals.maxSize = asp$max.memory.n )
     lapply.function <- future_lapply
   } else {
@@ -113,5 +121,5 @@ unmix.folder <- function( fcs.dir, spectra, asp, flow.control,
                    output.dir, file.suffix, include.raw,include.imaging,
                    calculate.error, use.dist0,
                    divergence.threshold, divergence.handling, balance.weight,
-                   speed )
+                   speed, parallel, threads )
 }

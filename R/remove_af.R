@@ -8,7 +8,7 @@
 #'
 #' @importFrom sp point.in.polygon
 #' @importFrom flowWorkspace flowjo_biexp
-#' @importFrom stats prcomp
+#' @importFrom stats prcomp sd
 #'
 #' @param clean.expr List containing cleaned expression data.
 #' @param samp Sample identifier.
@@ -190,13 +190,24 @@ remove.af <- function( clean.expr, samp, spectral.channel, peak.channel,
     af.boundary.ggp[ af.boundary.ggp < asp$expr.data.min ] <- asp$expr.data.min
 
     # plot stained control clean-up
-    spectral.ribbon.plot( expr.data.pos,
-                          expr.data.pos[ gate.population.idx, , drop = FALSE ],
-                          spectral.channel, asp, samp,
+    # handle cases of no removal
+    if ( length( gate.population.idx ) == nrow( expr.data.pos ) ) {
+      removed.data <- matrix( 0,
+                             nrow = nrow( expr.data.pos ),
+                             ncol = ncol( expr.data.pos ),
+                             dimnames = dimnames( expr.data.pos ) )
+    } else {
+      removed.data <- expr.data.pos[ -gate.population.idx,
+                                     , drop = FALSE ]
+    }
+
+    spectral.ribbon.plot( pos.expr.data = expr.data.pos,
+                          neg.expr.data = expr.data.pos[ gate.population.idx, , drop = FALSE ],
+                          spectral.channel = spectral.channel,
+                          asp = asp, fluor.name = samp,
                           title = asp$af.plot.filename,
                           af = TRUE,
-                          removed.data = expr.data.pos[ -gate.population.idx,
-                                                        , drop = FALSE ] )
+                          removed.data = removed.data )
 
     # plot AF removal gating on stained control
     gate.af.sample.plot( gate.data.pos, samp, af.boundary.ggp, asp )
@@ -206,13 +217,24 @@ remove.af <- function( clean.expr, samp, spectral.channel, peak.channel,
       negative.label <- paste( samp, "negative", matching.negative )
 
       # plot negative clean-up
-      spectral.ribbon.plot( expr.data.neg,
-                            expr.data.neg[ gate.neg.idx, , drop = FALSE ],
-                            spectral.channel, asp, negative.label,
+      if ( length( gate.neg.idx ) == nrow( expr.data.neg ) ) {
+        removed.data <- matrix( 0,
+                                nrow = nrow( expr.data.neg ),
+                                ncol = ncol( expr.data.neg ),
+                                dimnames = dimnames( expr.data.neg ) )
+      } else {
+        removed.data <- expr.data.neg[ -gate.neg.idx,
+                                       , drop = FALSE ]
+      }
+
+      spectral.ribbon.plot( pos.expr.data = expr.data.neg,
+                            neg.expr.data = expr.data.neg[ gate.neg.idx, , drop = FALSE ],
+                            spectral.channel = spectral.channel,
+                            asp = asp,
+                            fluor.name = negative.label,
                             title = asp$af.plot.filename,
                             af = TRUE,
-                            removed.data = expr.data.neg[ -gate.neg.idx,
-                                                          , drop = FALSE ] )
+                            removed.data = removed.data )
 
       # plot AF removal gating on negative control
       gate.af.sample.plot( gate.data.neg, negative.label, af.boundary.ggp, asp )
@@ -294,12 +316,18 @@ remove.af <- function( clean.expr, samp, spectral.channel, peak.channel,
     neg.scatter.matched <- expr.data.neg[ neg.population.idx, ]
 
     if ( main.figures ) {
-      scatter.match.plot( pos.selected.expr, neg.scatter.matched, samp,
-                          scatter.param, asp )
+      scatter.match.plot( pos.expr.data = pos.selected.expr,
+                          neg.expr.data = neg.scatter.matched,
+                          fluor.name = samp,
+                          scatter.param = scatter.param,
+                          asp = asp )
 
       if ( intermediate.figures )
-        spectral.ribbon.plot( pos.selected.expr, neg.scatter.matched,
-                            spectral.channel, asp, samp )
+        spectral.ribbon.plot( pos.expr.data = pos.selected.expr,
+                              neg.expr.data = neg.scatter.matched,
+                              spectral.channel = spectral.channel,
+                              asp = asp,
+                              fluor.name = samp )
 
     }
     return( rbind( pos.selected.expr, neg.scatter.matched ) )

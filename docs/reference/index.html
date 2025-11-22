@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">AutoSpectral</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.5.9000</span>
       </span>
     </div>
 
@@ -39,6 +39,12 @@
     </li>
     <li>
       <a href="../articles/Control_File_example.html">Control_File_example</a>
+    </li>
+    <li>
+      <a href="../articles/Development.html">Development</a>
+    </li>
+    <li>
+      <a href="../articles/Full_AutoSpectral_Workflow.html">Full Workflow Example</a>
     </li>
     <li>
       <a href="../articles/Gating.html">Gating</a>
@@ -83,21 +89,21 @@
         </td>
         <td><p>Calculate Condition Number</p></td>
       </tr><tr><td>
+          <p><code><a href="check.channels.html">check.channels()</a></code> </p>
+        </td>
+        <td><p>Check Channels</p></td>
+      </tr><tr><td>
           <p><code><a href="check.control.file.html">check.control.file()</a></code> </p>
         </td>
         <td><p>Check Control File</p></td>
       </tr><tr><td>
           <p><code><a href="check.critical.html">check.critical()</a></code> </p>
         </td>
-        <td><p>check.critical</p></td>
+        <td><p>Perform Critical Check</p></td>
       </tr><tr><td>
           <p><code><a href="clean.controls.html">clean.controls()</a></code> </p>
         </td>
         <td><p>Clean Controls</p></td>
-      </tr><tr><td>
-          <p><code><a href="convergence.plot.html">convergence.plot()</a></code> </p>
-        </td>
-        <td><p>Convergence Plot</p></td>
       </tr><tr><td>
           <p><code><a href="cosine.similarity.plot.html">cosine.similarity.plot()</a></code> </p>
         </td>
@@ -105,7 +111,7 @@
       </tr><tr><td>
           <p><code><a href="cosine.similarity.html">cosine.similarity()</a></code> </p>
         </td>
-        <td><p>Calculate cosine similarity</p></td>
+        <td><p>Calculate Cosine Similarity</p></td>
       </tr><tr><td>
           <p><code><a href="create.biplot.html">create.biplot()</a></code> </p>
         </td>
@@ -143,10 +149,6 @@
         </td>
         <td><p>Downsample Control Data</p></td>
       </tr><tr><td>
-          <p><code><a href="estimate.spread.html">estimate.spread()</a></code> </p>
-        </td>
-        <td><p>Estimate Spread</p></td>
-      </tr><tr><td>
           <p><code><a href="fit.af.spline.html">fit.af.spline()</a></code> </p>
         </td>
         <td><p>Fit Spline to Autofluorescence Data</p></td>
@@ -158,10 +160,6 @@
           <p><code><a href="gate.af.identify.plot.html">gate.af.identify.plot()</a></code> </p>
         </td>
         <td><p>Plot Autofluorescence Identification Gate</p></td>
-      </tr><tr><td>
-          <p><code><a href="gate.af.plot.html">gate.af.plot()</a></code> </p>
-        </td>
-        <td><p>Plot Autofluorescence Gate</p></td>
       </tr><tr><td>
           <p><code><a href="gate.af.sample.plot.html">gate.af.sample.plot()</a></code> </p>
         </td>
@@ -195,6 +193,10 @@
         </td>
         <td><p>Get Minimal Autospectral Parameters</p></td>
       </tr><tr><td>
+          <p><code><a href="get.autospectral.param.mosaic.html">get.autospectral.param.mosaic()</a></code> </p>
+        </td>
+        <td><p>Get Autospectral Parameters for Mosaic Cytometer</p></td>
+      </tr><tr><td>
           <p><code><a href="get.autospectral.param.opteon.html">get.autospectral.param.opteon()</a></code> </p>
         </td>
         <td><p>Get Autospectral Parameters for Opteon Cytometer</p></td>
@@ -206,6 +208,10 @@
           <p><code><a href="get.autospectral.param.s8.html">get.autospectral.param.s8()</a></code> </p>
         </td>
         <td><p>Get Autospectral Parameters for DiscoverS8 Cytometer</p></td>
+      </tr><tr><td>
+          <p><code><a href="get.autospectral.param.xenith.html">get.autospectral.param.xenith()</a></code> </p>
+        </td>
+        <td><p>Get Autospectral Parameters for Xenith Cytometer</p></td>
       </tr><tr><td>
           <p><code><a href="get.density.palette.html">get.density.palette()</a></code> </p>
         </td>
@@ -235,10 +241,6 @@
         </td>
         <td><p>Get Universal Negative Control</p></td>
       </tr><tr><td>
-          <p><code><a href="get.unmixing.error.html">get.unmixing.error()</a></code> </p>
-        </td>
-        <td><p>Calculate Unmixing Error</p></td>
-      </tr><tr><td>
           <p><code><a href="lapply.sequential.html">lapply.sequential()</a></code> </p>
         </td>
         <td><p>Sequential lapply</p></td>
@@ -249,7 +251,7 @@
       </tr><tr><td>
           <p><code><a href="read.bd.spectra.html">read.bd.spectra()</a></code> </p>
         </td>
-        <td><p>Read BD FCS Spectra</p></td>
+        <td><p>Extract Spectra From BD FCS File</p></td>
       </tr><tr><td>
           <p><code><a href="read.channel.html">read.channel()</a></code> </p>
         </td>
@@ -261,23 +263,11 @@
       </tr><tr><td>
           <p><code><a href="read.spectra.html">read.spectra()</a></code> </p>
         </td>
-        <td><p>Read Spectra</p></td>
+        <td><p>Read In Saved Spectra</p></td>
       </tr><tr><td>
           <p><code><a href="read.spectroflo.expt.html">read.spectroflo.expt()</a></code> </p>
         </td>
-        <td><p>read.spectroflo.expt</p></td>
-      </tr><tr><td>
-          <p><code><a href="refine.unmixing.log.plot.html">refine.unmixing.log.plot()</a></code> </p>
-        </td>
-        <td><p>Plot Density of Log Values</p></td>
-      </tr><tr><td>
-          <p><code><a href="refine.unmixing.log.plot.together.html">refine.unmixing.log.plot.together()</a></code> </p>
-        </td>
-        <td><p>Plot Density of Log Values Together</p></td>
-      </tr><tr><td>
-          <p><code><a href="refine.unmixing.html">refine.unmixing()</a></code> </p>
-        </td>
-        <td><p>Refine Unmixing</p></td>
+        <td><p>Extract Spectra From SpectroFlo Expt File</p></td>
       </tr><tr><td>
           <p><code><a href="reload.flow.control.html">reload.flow.control()</a></code> </p>
         </td>

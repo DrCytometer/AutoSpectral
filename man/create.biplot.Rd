@@ -18,7 +18,7 @@ create.biplot(
   x.width.basis = -1000,
   y.width.basis = -1000,
   max.points = 1e+05,
-  color.palette = "turbo",
+  color.palette = "rainbow",
   save = TRUE,
   title = NULL,
   output.dir = NULL,
@@ -65,9 +65,10 @@ x-axis. Default is \code{-1000}.}
 \code{1e5}.}
 
 \item{color.palette}{Optional character string defining the viridis color
-palette to be used for the fluorophore traces. Default is \code{viridis}. Options
-are the viridis color options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis},
-\code{cividis}, \code{rocket}, \code{mako} and \code{turbo}.}
+palette to be used for the fluorophore traces. Default is \code{rainbow}, which will
+be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
+and \code{turbo}.}
 
 \item{save}{Logical, if \code{TRUE}, saves a JPEG file to the \code{output.dir}.
 Otherwise, the plot will simply be created in the Viewer.}

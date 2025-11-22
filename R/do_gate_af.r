@@ -50,10 +50,10 @@ do.gate.af <- function( gate.data, samp, asp, intermediate.figures = FALSE ) {
     gate.data.trim.factor.y.max * gate.data.y.max
 
   grid.n <- asp$af.gate.bound.density.grid.n
-
+  bw <- apply( gate.data, 2, bandwidth.nrd )
   gate.bound.density <- MASS::kde2d(
     gate.data[ , 1 ], gate.data[ , 2 ],
-    asp$af.gate.density.bw.factor * apply( gate.data, 2, bandwidth.nrd ),
+    h = asp$af.gate.density.bw.factor * bw,
     n = grid.n )
 
   # Identify density maxima

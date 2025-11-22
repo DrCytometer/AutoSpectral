@@ -22,19 +22,22 @@
 #' @param gate.bound.density Density (e.g., from MASS:kde2d) information
 #' @param asp The AutoSpectral parameter list.
 #' Prepare using `get.autospectral.param`
+#' @param color.palette Optional character string defining the viridis color
+#' palette to be used for the fluorophore traces. Default is `rainbow`, which will
+#' be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+#' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
+#' and `turbo`.
 #'
 #' @return Saves the plot as a JPEG file in the specified directory.
 
 gate.af.identify.plot <- function( gate.data, samp, gate.region,
-                                   gate.bound.density, asp ) {
+                                   gate.bound.density, asp,
+                                   color.palette = "rainbow" ) {
 
   gate.data.ggp <- data.frame(
     x = gate.data[ , 1 ],
-    y = gate.data[ , 2 ],
-    z = interp.surface( gate.bound.density, gate.data )
+    y = gate.data[ , 2 ]
     )
-
-  density.palette <- get.density.palette( gate.data.ggp$z, asp )
 
   # get axis labels
   axes.labels <- colnames( gate.data )
@@ -49,8 +52,15 @@ gate.af.identify.plot <- function( gate.data, samp, gate.region,
   x.breaks <- round( seq( x.min, x.max, length.out = 10 ) )
   y.breaks <- round( seq( y.min, y.max, length.out = 10 ) )
 
-  gate.plot <- ggplot( gate.data.ggp, aes( .data$x, .data$y,
-                                         color = .data$z ) ) +
+  gate.plot <- ggplot( gate.data.ggp, aes( .data$x, .data$y ) ) +
+    geom_scattermore(
+      pointsize = 1.2 * asp$figure.gate.point.size,
+      alpha = 1, na.rm = TRUE ) +
+    stat_density_2d(
+      aes( fill = after_stat( level ) ),
+      geom = "polygon",
+      contour = TRUE,
+      na.rm = TRUE ) +
     scale_x_continuous(
       name = axes.labels[ 1 ],
       breaks = x.breaks,
@@ -63,17 +73,11 @@ gate.af.identify.plot <- function( gate.data, samp, gate.region,
       labels = y.breaks,
       limits = c( y.min, y.max ),
       expand = expansion( asp$af.figure.gate.scale.expand ) ) +
-    geom_scattermore( pointsize = 1.2 * asp$figure.gate.point.size,
-                      alpha = 1, na.rm = TRUE ) +
-    scale_color_gradientn( "", labels = NULL, colors = density.palette,
-                           guide = guide_colorbar( barwidth = asp$figure.gate.bar.width,
-                                                   barheight = asp$figure.gate.bar.height ) ) +
+    geom_path( aes( .data$x, .data$y, color = NULL ),
+               data = gate.region, linewidth = asp$figure.gate.line.size ) +
     theme_bw() +
     theme( plot.margin = margin( asp$figure.margin, asp$figure.margin,
                                  asp$figure.margin, asp$figure.margin ),
-           legend.margin = margin( asp$figure.gate.bar.margin,
-                                   asp$figure.gate.bar.margin, asp$figure.gate.bar.margin,
-                                   asp$figure.gate.bar.margin ),
            legend.position = "none",
            axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
            axis.text = element_text( size = asp$figure.axis.text.size ),
@@ -83,12 +87,20 @@ gate.af.identify.plot <- function( gate.data, samp, gate.region,
            panel.grid.major = element_blank(),
            panel.grid.minor = element_blank() )
 
-  gate.plot <- gate.plot +
-    geom_path( aes( .data$x, .data$y, color = NULL ),
-               data = gate.region, linewidth = asp$figure.gate.line.size )
+  # color options
+  virids.colors <- c( "magma", "inferno", "plasma", "viridis", "cividis",
+                      "rocket", "mako", "turbo" )
+  if ( color.palette %in% virids.colors ) {
+    gate.plot <- gate.plot +
+      scale_fill_viridis_c( option = color.palette )
+  } else {
+    gate.plot <- gate.plot +
+      scale_fill_gradientn( colours = asp$density.palette.base.color,
+                            values = asp$ribbon.scale.values )
+  }
 
   ggsave( file.path( asp$figure.clean.control.dir,
-                     paste( asp$af.plot.define.filename, samp, ".jpg" ) ),
+                     paste( asp$af.plot.define.filename, samp, ".jpg", sep = "_" ) ),
           plot = gate.plot, width = asp$figure.width,
           height = asp$figure.height )
 

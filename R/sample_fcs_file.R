@@ -32,7 +32,7 @@ sample.fcs.file <- function( file.name, control.dir, downsample.n, asp ) {
   check.critical( event.n > asp$min.cell.warning.n,
                   paste( "Fewer than", asp$min.cell.warning.n, "events in", file.name ) )
 
-  ifelse( event.n < downsample.n, downsample.n <- event.n, downsample.n )
+  downsample.n <- if ( event.n < downsample.n ) event.n else downsample.n
 
   fcs.idx <- sample( 1:event.n, downsample.n )
 

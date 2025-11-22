@@ -128,10 +128,11 @@ create.control.file <- function( control.dir, asp ){
   duplicate.fluorophores <- anyDuplicated( control.def.file$fluorophore )
 
   if ( duplicate.fluorophores != 0 ){
-    warning( paste( "\033[31m",
-    "Duplicated fluorophore names appear in the control file.
-           Inspect and remove any extra single color control files or edit the control file to be accurate.
-           Only one control may be used per fluorophore.", "\033[0m", "\n" ) )
+    warning(
+      paste( "\033[31m", "Duplicated fluorophore names appear in the control file.", "\n",
+             "Inspect and remove any extra single color control files or edit the control file to be accurate.",
+             "\n", "Only one control may be used per fluorophore.", "\033[0m" )
+      )
   }
 
 }

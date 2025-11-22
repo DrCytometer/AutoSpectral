@@ -52,21 +52,22 @@ spectral.variant.plot <- function( spectra.variants, median.spectrum,
   detector.names <- colnames( spectra.variants )
 
   variant.data <- data.frame(
-    x = seq_len( ncol( spectra.variants ) ),
+    detector.n = seq_len( ncol( spectra.variants ) ),
     detector = factor( detector.names, levels = detector.names ),
     median = median.spectrum,
     min = apply( spectra.variants, 2, min, na.rm = TRUE ),
     max = apply( spectra.variants, 2, max, na.rm = TRUE )
   )
 
-  ggplot( variant.data, aes( x = x ) ) +
+  ggplot( variant.data, aes( x = detector.n ) ) +
     geom_ribbon( aes( ymin = min, ymax = max ),
                  fill = variant.fill.color,
                  alpha = variant.fill.alpha ) +
     geom_line( aes( y = median, group = 1 ),
                linewidth = median.linewidth,
                color = median.line.color ) +
-    scale_x_continuous( breaks = variant.data$x, labels = variant.data$detector ) +
+    scale_x_continuous( breaks = variant.data$detector.n,
+                        labels = variant.data$detector ) +
     labs( x = "Detector", y = "Intensity",
          title = title ) +
     theme_minimal() +

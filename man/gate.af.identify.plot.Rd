@@ -4,7 +4,14 @@
 \alias{gate.af.identify.plot}
 \title{Plot Autofluorescence Identification Gate}
 \usage{
-gate.af.identify.plot(gate.data, samp, gate.region, gate.bound.density, asp)
+gate.af.identify.plot(
+  gate.data,
+  samp,
+  gate.region,
+  gate.bound.density,
+  asp,
+  color.palette = "rainbow"
+)
 }
 \arguments{
 \item{gate.data}{Matrix containing autofluorescence data points.}
@@ -17,6 +24,12 @@ gate.af.identify.plot(gate.data, samp, gate.region, gate.bound.density, asp)
 
 \item{asp}{The AutoSpectral parameter list.
 Prepare using \code{get.autospectral.param}}
+
+\item{color.palette}{Optional character string defining the viridis color
+palette to be used for the fluorophore traces. Default is \code{rainbow}, which will
+be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
+and \code{turbo}.}
 }
 \value{
 Saves the plot as a JPEG file in the specified directory.

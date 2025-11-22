@@ -99,8 +99,8 @@ get.autospectral.param.minimal <- function()
 
       af.plot.bw.factor = 1,
       af.plot.density.grid.n = 100,
-      af.plot.define.filename = "AF identification",
-      af.plot.filename = "AF removal",
+      af.plot.define.filename = "AF_identification",
+      af.plot.filename = "AF_removal",
 
       # universal negative selection parameters
       positivity.threshold = 0.99,
@@ -110,7 +110,7 @@ get.autospectral.param.minimal <- function()
       positive.n = 500,
       scatter.match.plot.width = 12,
       scatter.match.plot.height = 6,
-      scatter.match.plot.filename = "universal negative scatter plot.jpg",
+      scatter.match.plot.filename = "universal_negative_scatter_plot.jpg",
       scatter.match.plot.text.size = 15,
       scatter.match.plot.text.face = "bold",
 
@@ -124,10 +124,10 @@ get.autospectral.param.minimal <- function()
       ribbon.scale.colors = c( NA, "#440154FF", "#238A8DFF", "#55C667FF",
                                "#B8DE29FF", "#FDE725FF" ),
       ribbon.scale.values = c( 0, 0.1, 0.2, 0.3, 0.4, 1 ),
-      ribbon.bins = 200,
+      ribbon.bins = 300,
       ribbon.plot.width = 15,
       ribbon.plot.height = 10,
-      ribbon.plot.filename = "spectral ribbon plot.jpg",
+      ribbon.plot.filename = "spectral_ribbon_plot.jpg",
       ribbon.plot.axis.text.angle = 45,
       ribbon.plot.strip.text.size = 15,
       ribbon.plot.strip.text.face = "bold",
@@ -262,8 +262,8 @@ get.autospectral.param.minimal <- function()
 
       # how the output files will be called
       convergence.file.name = "autospectral_convergence",
-      af.file.name = "autospectral autofluorescence",
-      spectra.file.name = "autospectral spectra",
+      af.file.name = "autospectral_autofluorescence",
+      spectra.file.name = "autospectral_spectra",
       slope.error.file.name = "autospectral_slope_error",
       similarity.heatmap.file.name = "autospectral_similarity_matrix",
       ssm.heatmap.file.name = "autospectral_spread_matrix",

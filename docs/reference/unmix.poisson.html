@@ -19,7 +19,7 @@ that fail to converge."><!-- mathjax --><script src="https://cdnjs.cloudflare.co
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">AutoSpectral</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.5.9000</span>
       </span>
     </div>
 
@@ -41,6 +41,12 @@ that fail to converge."><!-- mathjax --><script src="https://cdnjs.cloudflare.co
     </li>
     <li>
       <a href="../articles/Control_File_example.html">Control_File_example</a>
+    </li>
+    <li>
+      <a href="../articles/Development.html">Development</a>
+    </li>
+    <li>
+      <a href="../articles/Full_AutoSpectral_Workflow.html">Full Workflow Example</a>
     </li>
     <li>
       <a href="../articles/Gating.html">Gating</a>
@@ -85,7 +91,14 @@ that fail to converge.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">unmix.poisson</span><span class="op">(</span><span class="va">raw.data</span>, <span class="va">spectra</span>, <span class="va">asp</span>, initial.weights <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">unmix.poisson</span><span class="op">(</span></span>
+<span>  <span class="va">raw.data</span>,</span>
+<span>  <span class="va">spectra</span>,</span>
+<span>  <span class="va">asp</span>,</span>
+<span>  initial.weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  threads <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -109,6 +122,16 @@ Prepare using <code>get.autospectral.param</code></p></dd>
 <dd><p>Optional numeric vector of weights, one per fluorescent
 detector. Default is <code>NULL</code>, in which case weighting will be done by
 channel means.</p></dd>
+
+
+<dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
+<dd><p>Logical, default is <code>TRUE</code>, which enables parallel processing
+for per-cell unmixing.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>Numeric, default is <code>1</code>. Multi-threading is only used if
+<code>parallel</code> is <code>TRUE</code> and <code>threads</code> is greater than 1.</p></dd>
 
 </dl></div>
     <div id="value">

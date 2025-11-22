@@ -15,7 +15,7 @@
 #' @param spectral.matrix Matrix or dataframe containing spectral data. This
 #' should be in format fluorophores x detectors. Row names will be used as the
 #' fluorophore names. Column names will be used as the detectors (channels).
-#' @param title Title for the plot. Default is `Fluorophore Spectra`
+#' @param title Title for the plot. Default is `Fluorophore_Spectra`
 #' @param plot.dir Directory to save the plot files. Default is `NULL`, in
 #' which case the current working directory will be used.
 #' @param split.lasers Logical indicating whether to create a second plot split
@@ -41,7 +41,7 @@
 #' @export
 
 spectral.trace <- function( spectral.matrix,
-                            title = "Fluorophore Spectra",
+                            title = "Fluorophore_Spectra",
                             plot.dir = NULL, split.lasers = TRUE,
                             figure.spectra.line.size = 1,
                             figure.spectra.point.size = 1,
@@ -58,6 +58,9 @@ spectral.trace <- function( spectral.matrix,
     plot.dir <- getwd()
 
   # get excitation laser
+  # change this to reflect empirical peak detector
+  # change to get mapping to new database
+  # change to proceed with only non-split if no database found
   laser.order <- c( "UV", "Violet","Blue", "YellowGreen", "Red" )
 
   data.path <- system.file( "extdata", "fluorophore_database.csv",
@@ -82,7 +85,7 @@ spectral.trace <- function( spectral.matrix,
     plot.width <- max( ( ( ncol( fluor.spectra.plotting ) - 1 ) / 64 * 12 ), 3 )
 
   if ( is.null( plot.height ) )
-       plot.height <- 5 + round( nrow( fluor.spectra.plotting ) / 8, 0 )
+    plot.height <- 5 + round( nrow( fluor.spectra.plotting ) / 8, 0 )
 
   fluor.spectra.long <- tidyr::pivot_longer( fluor.spectra.plotting,
                                              -c( Fluorophore, Laser ),
