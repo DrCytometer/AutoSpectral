@@ -47,8 +47,9 @@ At the moment, the following cytometers are supported:
 
 **Version 0.8.7**
 
-Install using `devtools` or `remotes`. You will need to install the
-Bioconductor packages separately, I believe.
+To install the latest, hopefully stable version, install using
+`devtools` or `remotes`. You will need to install the Bioconductor
+packages separately, I believe.
 
 ``` r
 # Install Bioconductor packages
@@ -63,7 +64,8 @@ devtools::install_github("DrCytometer/AutoSpectral")
 
 ### Dev branch
 
-You can install the development version of AutoSpectral from
+If you’re feeling adventurous or simply want early access to the latest
+features, you can install the development version of AutoSpectral from
 [GitHub](https://github.com/) with:
 
 ``` r
@@ -90,7 +92,7 @@ Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_
 
 - Gating. The automated gating is not great. See the [help
   page](https://drcytometer.github.io/AutoSpectral/articles/Gating.html)
-  for tips. I’m looking into an alternative.
+  for tips. I’m working on an alternative.
 - Please note that FCS 3.2 files from the S8 and A8 cytometers are not
   fully supported in flowCore. You may receive warnings, but things
   should still work.
@@ -245,4 +247,7 @@ improvements are in the works.
 - Version 0.8.5: Improvements to keyword handling in writing FCS files
 - Version 0.8.6: Improvements to plotting, fluorophore matching
 - Version 0.8.7: Support for Symphony A5 SE. More improvements to
-  plotting.
+  plotting. Marker names will now be added to the control file based on
+  matches in the FCS file names, where possible. The Hotspot(TM) matrix
+  will be calculated and plotted as per the preprint by Peter Mage et
+  al.
