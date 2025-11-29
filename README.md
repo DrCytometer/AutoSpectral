@@ -258,5 +258,6 @@ improvements are in the works.
 - Version 0.8.7: Support for Symphony A5 SE. More improvements to
   plotting. Marker names will now be added to the control file based on
   matches in the FCS file names, where possible. The Hotspot(TM) matrix
-  will be calculated and plotted as per the preprint by Peter Mage et
-  al.
+  will be calculated and plotted as per the
+  [preprint](https://www.biorxiv.org/content/10.1101/2025.04.17.649396v2.full.pdf)
+  by Peter Mage et al.
