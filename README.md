@@ -29,11 +29,11 @@ errors.
 At the moment, the following cytometers are supported:
 
 - Cytek Aurora (“aurora”)
-- Cytek Northern Lights (“auroraNL”)
+- *New! Cytek Northern Lights (“auroraNL”)*
 - Sony ID7000 (“id7000”)
 - BD FACSDiscoverS8 (“s8”)
 - BD FACSDiscoverA8 (“a8”)
-- BD FACSymphony A5 SE (“a5se”)
+- *New! BD FACSymphony A5 SE (“a5se”)*
 - Agilent NovoCyte Opteon (“opteon”)
 - Beckman Coulter CytoFLEX mosaic (“mosaic”)
 - ThermoFisher Attune Xenith (“xenith”)
@@ -77,6 +77,14 @@ devtools::install_github("DrCytometer/AutoSpectral@dev")
 AutoSpectral is pretty complex and newly released, so there will be
 bugs. Sorry. Thanks to all of you providing feedback.
 
+To submit a bug report, go to
+[Issues](https://github.com/DrCytometer/AutoSpectral/issues).
+
+For more general problems, like not being clear on how to do things,
+something doesn’t work well, or maybe you have an idea for something new
+or better, visit the [Discussions
+page](https://github.com/DrCytometer/AutoSpectral/discussions).
+
 Since one of my recent updates broke things, I’ll be moving to using
 tagged releases that should be easier to install if the latest version
 has flaws. I’ve also set up a separate development branch, which will
@@ -84,8 +92,9 @@ get the updates first. Things probably should have been that way from
 the start, but this is all new to me.
 
 Please check the [help pages and
-articles](https://drcytometer.github.io/AutoSpectral/) before submitting
-bug reports. There’s a lot of info there.
+articles](https://drcytometer.github.io/AutoSpectral/) if you’re
+struggling to understand how to do something. There’s a lot of info
+there.
 
 In particular, see the [Full
 Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_Workflow.html).

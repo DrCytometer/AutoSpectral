@@ -29,11 +29,11 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
   names( spectra.zero ) <- flow.control$spectral.channel
 
   if ( !is.null( title ) )
-    title <- paste( title, asp$spectra.file.name, sep = "_" )
+    plot.title <- paste( title, asp$spectra.file.name, sep = "_" )
   else if ( use.clean.expr )
-    title <- paste( "Clean", asp$spectra.file.name, sep = "_" )
+    plot.title <- paste( "Clean", asp$spectra.file.name, sep = "_" )
   else
-    title <- paste( "Initial", asp$spectra.file.name, sep = "_" )
+    plot.title <- paste( "Initial", asp$spectra.file.name, sep = "_" )
 
   # iterate only over non-negative samples
   fluorophore.samples <- flow.control$fluorophore[ ! grepl( "negative",
@@ -162,18 +162,18 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
 
     spectral.trace( spectral.matrix = fluorophore.spectra.plot,
                     asp = asp,
-                    title = title,
+                    title = plot.title,
                     plot.dir = asp$figure.spectra.dir,
                     split.lasers = TRUE,
                     figure.spectra.line.size = asp$figure.spectra.line.size,
                     figure.spectra.point.size = asp$figure.spectra.point.size )
 
-    spectral.heatmap( fluorophore.spectra.plot, title,
+    spectral.heatmap( fluorophore.spectra.plot, plot.title,
                       plot.dir = asp$figure.spectra.dir )
 
     cosine.similarity.plot( fluorophore.spectra.plot,
                             filename = asp$similarity.heatmap.file.name,
-                            title,
+                            plot.title,
                             output.dir = asp$figure.similarity.heatmap.dir,
                             figure.width = asp$figure.similarity.width,
                             figure.height = asp$figure.similarity.height )
@@ -188,11 +188,16 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
                     color.palette = "inferno",
                     figure.width = asp$figure.similarity.width,
                     figure.height = asp$figure.similarity.height )
+
+    unmixing.matrix <- solve( crossprod( t( marker.spectra ) ) ) %*% marker.spectra
+    spectral.heatmap( unmixing.matrix, paste( title, "unmixing_matrix", sep = "_" ),
+                      plot.dir = asp$figure.spectra.dir,
+                      legend.label = "Coefficients", color.palette = "mako" )
   }
 
   if ( !is.null( asp$table.spectra.dir ) )
     write.csv( fluorophore.spectra.plot,
-               file = file.path( asp$table.spectra.dir, sprintf( "%s.csv", title ) ) )
+               file = file.path( asp$table.spectra.dir, sprintf( "%s.csv", plot.title ) ) )
 
   # cosine similarity QC for controls
   similarity.matrix <- cosine.similarity( fluorophore.spectra.plot )
