@@ -17,15 +17,9 @@ I don't have a particular timeframe or priority list for any of this, so ping me
 * More flexibility in negative/unstained samples.
 * Allow multiple controls per fluorophore.
 * An alternative to the automated gating.
-* Better handling of files from the Northern Lights (3-laser Aurora).
-  --this is now in `dev` branch for testing
-* Support for the A5 SE
-  --this is now in `dev` branch for testing
-* Better mapping of fluorophores to lasers in `spectral.trace`
-  --this is now in `dev` branch for testing
-* Some improvements/corrections to the weighting for WLS unmixing.
+* Cell-specific weighting for per-cell unmixing.
 * Speed up per-cell fluorophore optimization.
-* Fix the issue causing discontinuities
+* Fix the issue causing discontinuities.
 
 
 To install the `dev` branch:

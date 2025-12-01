@@ -55,7 +55,7 @@ match.markers <- function( control.filenames, marker.database ) {
     # decide best match
     if ( length( all.matches ) == 0 ) {
       marker.matches[[filename]] <- ""
-      message( sprintf( "\033[31mNo Match for: %s\033[0m", filename ) )
+      message( sprintf( "\033[31mNo matching marker for: %s\033[0m", filename ) )
 
     } else {
       # choose longest antigen match
@@ -63,7 +63,7 @@ match.markers <- function( control.filenames, marker.database ) {
 
       marker.matches[[ filename ]] <- best$marker
       message( sprintf(
-        "\033[32mMatch: %s -> %s in %s\033[0m",
+        "\033[32mMarker match: %s -> %s in %s\033[0m",
         best$antigen, best$marker, filename
       ) )
     }

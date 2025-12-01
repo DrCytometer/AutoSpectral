@@ -1,0 +1,9 @@
+template:
+  bootstrap: 5
+
+url: https://drcytometer.github.io/AutoSpectral/
+
+navbar:
+  structure:
+    left: [reference, articles]
+    right: [github]

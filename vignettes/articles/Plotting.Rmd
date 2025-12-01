@@ -9,6 +9,8 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Plotting with AutoSpectral
+
 In this article, let's look at a couple of the functions that AutoSpectral offers for plotting your spectra and data. AutoSpectral isn't intended to replace flow analysis software like FlowJo or FCS Express, but it's essential to have some options for visualizing the outputs.
 
 ```{r setup}
@@ -54,7 +56,7 @@ It's also better to split it up by laser when there are many fluorophores:
 spectral.trace( chorus.spectra, title = "OMIP102", split.lasers = TRUE )
 ```
 ![Spectral Trace](figures/OMIP102_by_laser.jpg)
-In this case, the laser data are out of order because OMIP-102 was produced on an early version of the BD FACSDiscoverS8. I'll fix this eventually, but it hasn't been an issue on any other data I've tried unless the files have been exported by FlowJo first.
+*Edit: this is now fixed*: In this case, the laser data are out of order because OMIP-102 was produced on an early version of the BD FACSDiscoverS8. I'll fix this eventually, but it hasn't been an issue on any other data I've tried unless the files have been exported by FlowJo first.
 
 We can create a cosine similarity matrix plot in one of two ways.
 

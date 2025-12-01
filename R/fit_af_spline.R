@@ -11,7 +11,6 @@
 #' @importFrom MASS rlm
 #' @importFrom tripack tri.mesh convex.hull
 #' @importFrom stats predict sd
-#' @importFrom sp point.in.polygon
 #'
 #' @param af.cells A matrix containing the autofluorescence data.
 #' @param non.af.cells A matrix containing the low autofluorescence data.
@@ -89,7 +88,8 @@ fit.af.spline <- function( af.cells, non.af.cells, asp ) {
   expanded.points <- unique( expanded.points )
 
   # get the boundary of those events
-  af.remove.boundary <- convex.hull( tri.mesh( expanded.points$x, expanded.points$y ) )
+  af.remove.boundary <- tripack::convex.hull( tripack::tri.mesh(
+    expanded.points$x, expanded.points$y ) )
 
   if ( length( af.remove.boundary ) == 1 )
     stop( "Failed to identify autofluorescence" )

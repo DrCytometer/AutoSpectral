@@ -57,7 +57,7 @@ get.gated.flow.expression.data <- function( samp, file.name, control.dir,
 
   gate.data <- expr.data[ , scatter.param ]
 
-  gate.population.pip <- point.in.polygon(
+  gate.population.pip <- sp::point.in.polygon(
     gate.data[ , 1 ], gate.data[ , 2 ],
     gate.population.boundary$x, gate.population.boundary$y )
 

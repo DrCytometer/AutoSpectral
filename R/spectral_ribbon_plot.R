@@ -171,7 +171,7 @@ spectral.ribbon.plot <- function(
   } )
   ribbon.limits <- c( asp$ribbon.plot.min, asp$expr.data.max )
 
-  biexp.transform <- flowjo_biexp(
+  biexp.transform <- flowWorkspace::flowjo_biexp(
     channelRange = asp$default.transformation.param$length,
     maxValue     = asp$default.transformation.param$max.range,
     pos          = asp$default.transformation.param$pos,
@@ -179,7 +179,7 @@ spectral.ribbon.plot <- function(
     widthBasis   = asp$default.transformation.param$width,
     inverse      = FALSE
   )
-  biexp.inverse <- flowjo_biexp(
+  biexp.inverse <- flowWorkspace::flowjo_biexp(
     channelRange = asp$default.transformation.param$length,
     maxValue     = asp$default.transformation.param$max.range,
     pos          = asp$default.transformation.param$pos,

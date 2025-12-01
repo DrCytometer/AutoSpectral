@@ -43,7 +43,7 @@ cosine.similarity.plot <- function( spectra,
                                     save = TRUE ) {
 
   if ( !is.null( title ) )
-    similarity.heatmap.filename <- paste0( title, " ", filename, ".jpg" )
+    similarity.heatmap.filename <- paste0( title, "_", filename, ".jpg" )
   else
     similarity.heatmap.filename <- paste0( filename, ".jpg" )
 

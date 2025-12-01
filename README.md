@@ -62,6 +62,12 @@ BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC"))
 devtools::install_github("DrCytometer/AutoSpectral")
 ```
 
+As of version 0.8.7, there is a Shiny helper tool to assist you in
+setting up your AutoSpectral control files. This is an interactive html
+app that opens in RStudio. Hopefully this makes things easier. It is
+new, so again, probably not perfect. To try it, visit
+[AutoSpectralHelper](https://github.com/DrCytometer/AutoSpectralHelper).
+
 ### Dev branch
 
 If you’re feeling adventurous or simply want early access to the latest
@@ -75,7 +81,9 @@ devtools::install_github("DrCytometer/AutoSpectral@dev")
 ## Bug fixes and known issues
 
 AutoSpectral is pretty complex and newly released, so there will be
-bugs. Sorry. Thanks to all of you providing feedback.
+bugs. Sorry. Thanks to all of you providing feedback. Please submit any
+and all issues either using the Issues page or via email at
+colibri-cytometry at gmail.
 
 To submit a bug report, go to
 [Issues](https://github.com/DrCytometer/AutoSpectral/issues).
@@ -98,6 +106,8 @@ there.
 
 In particular, see the [Full
 Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_Workflow.html).
+
+### Known shortcomings
 
 - Gating. The automated gating is not great. See the [help
   page](https://drcytometer.github.io/AutoSpectral/articles/Gating.html)
@@ -255,9 +265,9 @@ improvements are in the works.
 - Version 0.8.4: Changes to error messaging in check.control.file
 - Version 0.8.5: Improvements to keyword handling in writing FCS files
 - Version 0.8.6: Improvements to plotting, fluorophore matching
-- Version 0.8.7: Support for Symphony A5 SE. More improvements to
-  plotting. Marker names will now be added to the control file based on
-  matches in the FCS file names, where possible. The Hotspot(TM) matrix
-  will be calculated and plotted as per the
+- Version 0.8.7: Support for Symphony A5 SE and Cytek Northern Lights.
+  More improvements to plotting. Marker names will now be added to the
+  control file based on matches in the FCS file names, where possible.
+  The Hotspot(TM) matrix will be calculated and plotted as per the
   [preprint](https://www.biorxiv.org/content/10.1101/2025.04.17.649396v2.full.pdf)
   by Peter Mage et al.

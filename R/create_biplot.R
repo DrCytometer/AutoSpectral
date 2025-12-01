@@ -132,31 +132,35 @@ create.biplot <- function( plot.data, x.dim, y.dim, asp,
   y.limits <- c( y.min, y.max )
 
   # set transforms (one for x, one for y)
-  biexp.transform.x <- flowjo_biexp( channelRange = asp$default.transformation.param$length,
-                                     maxValue = x.max,
-                                     pos = x.pos.log,
-                                     neg = asp$default.transformation.param$neg,
-                                     widthBasis = x.width.basis,
-                                     inverse = FALSE )
-  biexp.inverse.x <- flowjo_biexp( channelRange = asp$default.transformation.param$length,
-                                   maxValue = x.max,
-                                   pos = x.pos.log,
-                                   neg = asp$default.transformation.param$neg,
-                                   widthBasis = x.width.basis,
-                                   inverse = TRUE )
+  biexp.transform.x <- flowWorkspace::flowjo_biexp(
+    channelRange = asp$default.transformation.param$length,
+    maxValue = x.max,
+    pos = x.pos.log,
+    neg = asp$default.transformation.param$neg,
+    widthBasis = x.width.basis,
+    inverse = FALSE )
+  biexp.inverse.x <- flowWorkspace::flowjo_biexp(
+    channelRange = asp$default.transformation.param$length,
+    maxValue = x.max,
+    pos = x.pos.log,
+    neg = asp$default.transformation.param$neg,
+    widthBasis = x.width.basis,
+    inverse = TRUE )
 
-  biexp.transform.y <- flowjo_biexp( channelRange = asp$default.transformation.param$length,
-                                     maxValue = y.max,
-                                     pos = y.pos.log,
-                                     neg = asp$default.transformation.param$neg,
-                                     widthBasis = y.width.basis,
-                                     inverse = FALSE )
-  biexp.inverse.y <- flowjo_biexp( channelRange = asp$default.transformation.param$length,
-                                   maxValue = y.max,
-                                   pos = y.pos.log,
-                                   neg = asp$default.transformation.param$neg,
-                                   widthBasis = y.width.basis,
-                                   inverse = TRUE )
+  biexp.transform.y <- flowWorkspace::flowjo_biexp(
+    channelRange = asp$default.transformation.param$length,
+    maxValue = y.max,
+    pos = y.pos.log,
+    neg = asp$default.transformation.param$neg,
+    widthBasis = y.width.basis,
+    inverse = FALSE )
+  biexp.inverse.y <- flowWorkspace::flowjo_biexp(
+    channelRange = asp$default.transformation.param$length,
+    maxValue = y.max,
+    pos = y.pos.log,
+    neg = asp$default.transformation.param$neg,
+    widthBasis = y.width.basis,
+    inverse = TRUE )
 
   plot.biexp.transform.x <- scales::trans_new(
     name = "biexp",

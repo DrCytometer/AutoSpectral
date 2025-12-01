@@ -9,18 +9,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-In this article, we'll try to cover some of the features and tuning for the 
-automated gating in AutoSpectral. This was developed by Carlos Roca in AutoSpill,
-and has been lightly modified for use in AutoSpectral. To be fair, this is one
-of the weaker points, largely because of the immense variability in sample types
-that people may have and the even bigger variability in opinions on how to set
-up the appearance of your scatter plots. So, a one-size-fits-all approach is 
-never going to work.
+In this article, we'll try to cover some of the features and tuning for the automated gating in AutoSpectral. This was developed by Carlos Roca in AutoSpill, and has been lightly modified for use in AutoSpectral. To be fair, this is one of the weaker points, largely because of the immense variability in sample types that people may have and the even bigger variability in opinions on how to set up the appearance of your scatter plots. So, a one-size-fits-all approach is never going to work. I'm working on an alternative, but this will require quite a bit of testing before it can implemented.
 
-Gating to identify the correct cells for the single-stained controls is really
-important, though. We'll look at common failure points, how to get the gates
-to look the way you want and also cover how to skip the gating entirely. For the
-latter, you can just import pre-gated files exported from your favorite FCS analysis program.
+Gating to identify the correct cells for the single-stained controls is really important, though. We'll look at common failure points, how to get the gates to look the way you want and also cover how to skip the gating entirely. For the latter, you can just import pre-gated files exported from your favorite FCS analysis program.
 
 ```{r setup}
 library(AutoSpectral)

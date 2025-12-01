@@ -78,12 +78,13 @@ remove.af <- function( clean.expr, samp, spectral.channel, peak.channel,
   # unmix using first two components plus crude fluorophore spectrum
   unmixed.neg <- unmix.ols( expr.data.neg[ , spectral.channel ], af.components )
 
-  biexp.transform <- flowjo_biexp( channelRange = asp$default.transformation.param$length,
-                                   maxValue = asp$default.transformation.param$max.range,
-                                   pos = asp$default.transformation.param$pos,
-                                   neg = asp$default.transformation.param$neg,
-                                   widthBasis = asp$default.transformation.param$width,
-                                   inverse = FALSE )
+  biexp.transform <- flowWorkspace::flowjo_biexp(
+    channelRange = asp$default.transformation.param$length,
+    maxValue = asp$default.transformation.param$max.range,
+    pos = asp$default.transformation.param$pos,
+    neg = asp$default.transformation.param$neg,
+    widthBasis = asp$default.transformation.param$width,
+    inverse = FALSE )
   zero.point <- biexp.transform( 0 )
 
   # transform for easier visualization and faster gating
@@ -158,7 +159,7 @@ remove.af <- function( clean.expr, samp, spectral.channel, peak.channel,
   # find events in this bound in the stained sample
   gate.data.pos <- expr.data.pos[ , c( names( af.peak ), fluor.peak ) ]
 
-  gate.population.pip <- point.in.polygon(
+  gate.population.pip <- sp::point.in.polygon(
     gate.data.pos[ , 1 ], gate.data.pos[ , 2 ],
     af.boundaries$upper$x, af.boundaries$upper$y )
 
@@ -167,7 +168,7 @@ remove.af <- function( clean.expr, samp, spectral.channel, peak.channel,
   # define negative clean-up for plotting and threshold
   gate.data.neg <- expr.data.neg[ , c( names( af.peak ), fluor.peak ) ]
 
-  gate.population.pip <- point.in.polygon(
+  gate.population.pip <- sp::point.in.polygon(
     gate.data.neg[ , 1 ], gate.data.neg[ , 2 ],
     af.boundaries$upper$x, af.boundaries$upper$y )
 
@@ -284,12 +285,12 @@ remove.af <- function( clean.expr, samp, spectral.channel, peak.channel,
     pos.scatter.coord <- unique( pos.selected.expr[ , scatter.param ] )
 
     pos.scatter.gate <- suppressWarnings(
-      convex.hull( tri.mesh(
+      tripack::convex.hull( tripack::tri.mesh(
         pos.scatter.coord[ , 1 ],
         pos.scatter.coord[ , 2 ]
       ) ) )
 
-    neg.scatter.matched.pip <- point.in.polygon(
+    neg.scatter.matched.pip <- sp::point.in.polygon(
       expr.data.neg[ , scatter.param[ 1 ] ],
       expr.data.neg[ , scatter.param[ 2 ] ],
       pos.scatter.gate$x, pos.scatter.gate$y )

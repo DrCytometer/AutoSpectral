@@ -328,11 +328,11 @@ do.gate <- function( gate.data, viability.gate, large.gate,
       y.high = gate.region.y.high
     )
 
-    gate.population.boundary <- convex.hull( tri.mesh(
+    gate.population.boundary <- tripack::convex.hull( tripack::tri.mesh(
       gate.data[ gate.region.data.idx, 1 ],
       gate.data[ gate.region.data.idx, 2 ] ) )
 
-    gate.population.pip <- point.in.polygon(
+    gate.population.pip <- sp::point.in.polygon(
       gate.data[ , 1 ], gate.data[ , 2 ],
       gate.population.boundary$x, gate.population.boundary$y )
 
@@ -449,7 +449,7 @@ do.gate <- function( gate.data, viability.gate, large.gate,
 
     if ( large.gate ) {
 
-      original.hull <- convex.hull( tri.mesh(
+      original.hull <- tripack::convex.hull( tripack::tri.mesh(
         gate.data[ gate.population.strict.idx, 1 ],
         gate.data[ gate.population.strict.idx, 2 ]
       ) )
@@ -480,13 +480,13 @@ do.gate <- function( gate.data, viability.gate, large.gate,
 
     } else {
 
-      gate.population.boundary <- convex.hull( tri.mesh(
+      gate.population.boundary <- tripack::convex.hull( tripack::tri.mesh(
         gate.data[ gate.population.strict.idx, 1 ],
         gate.data[ gate.population.strict.idx, 2 ] ) )
 
     }
 
-    gate.population.pip <- point.in.polygon(
+    gate.population.pip <- sp::point.in.polygon(
       gate.data[ , 1 ], gate.data[ , 2 ],
       gate.population.boundary$x, gate.population.boundary$y )
 

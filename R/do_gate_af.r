@@ -97,7 +97,7 @@ do.gate.af <- function( gate.data, samp, asp, intermediate.figures = FALSE ) {
   target.max.idx <- asp$af.gate.target.max
   target.max <- gate.bound.density.max[ target.max.idx, ]
 
-  gate.bound.voronoi <- deldir( gate.bound.density.max,
+  gate.bound.voronoi <- deldir::deldir( gate.bound.density.max,
                                 rw = c( gate.data.x.min, gate.data.x.max,
                                         gate.data.y.min, gate.data.y.max ),
                                 suppressMsge = TRUE )
@@ -108,7 +108,7 @@ do.gate.af <- function( gate.data, samp, asp, intermediate.figures = FALSE ) {
   target.tile <- tiles[[ target.max.idx ]]
   tile.polygon <- cbind( target.tile$x, target.tile$y )
 
-  gate.region.data.idx <- which( point.in.polygon(
+  gate.region.data.idx <- which( sp::point.in.polygon(
     gate.data[, 1], gate.data[, 2],
     tile.polygon[ , 1 ], tile.polygon[ , 2 ] ) > 0 )
 

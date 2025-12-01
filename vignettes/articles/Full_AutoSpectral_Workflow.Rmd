@@ -25,11 +25,13 @@ devtools::install_github("DrCytometer/AutoSpectral")
 ```
 
 # Get the data
+
 Download the data for today's example from [Mendeley Data](https://data.mendeley.com/datasets/ch5dnspd79/1).
 
 These data are a 9-colour panel run on a 5-laser Cytek Aurora. The samples are from spleen, lung and liver. This is a pretty simple experiment, which is nice since it will run quickly. The different tissues allow us to look at how to handle diverse autofluorescence profiles. I'll point out that this panel has been deliberately designed to accommodate autofluorescence peaks, so we can expect autofluorescence removal to work pretty well with any method. In my testing, you can use multiple autofluorescences and get good results; you can also use deconvolution of the autofluorescence using principal components. Both produce good results with a highly over-determined data set like this. We'll look at the per-cell autofluorescence extraction with these data, which has the advantage of also working on large panels.
 
 # Start-up
+
 Now we can load AutoSpectral.
 ```{r setup, eval=FALSE}
 library(AutoSpectral)

@@ -39,7 +39,7 @@ run.peacoQC <- function( expr.data, spectral.channel, all.channels, asp,
   }
 
   # define parameters for peacoQC
-  biexp.transform <- flowjo_biexp(
+  biexp.transform <- flowWorkspace::flowjo_biexp(
     channelRange = asp$default.transformation.param$length,
     maxValue = asp$default.transformation.param$max.range,
     pos = asp$default.transformation.param$pos,
@@ -48,7 +48,7 @@ run.peacoQC <- function( expr.data, spectral.channel, all.channels, asp,
     inverse = FALSE
   )
 
-  transform.inv <- flowjo_biexp(
+  transform.inv <- flowWorkspace::flowjo_biexp(
     channelRange = asp$default.transformation.param$length,
     maxValue = asp$default.transformation.param$max.range,
     pos = asp$default.transformation.param$pos,

@@ -36,7 +36,7 @@ get.autospectral.param.a5se <- function( autosp.param )
   autosp.param$default.transformation.param <- list(
           length = 256,
           max.range = 262144,
-          pos = 442,
+          pos = 4.42,
           neg = 0,
           width = -100
         )

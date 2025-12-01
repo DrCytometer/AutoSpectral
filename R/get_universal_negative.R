@@ -107,7 +107,7 @@ get.universal.negative <- function( clean.expr.data, samp,
       pos.scatter.coord[ , 2 ]
     ) ) )
 
-    neg.scatter.matched.pip <- point.in.polygon(
+    neg.scatter.matched.pip <- sp::point.in.polygon(
       neg.control.expr[ , scatter.param[ 1 ] ],
       neg.control.expr[ , scatter.param[ 2 ] ],
       pos.scatter.gate$x, pos.scatter.gate$y )
@@ -115,7 +115,7 @@ get.universal.negative <- function( clean.expr.data, samp,
     neg.population.idx <- which( neg.scatter.matched.pip != 0 )
 
     # warn if few events in negative
-    if ( length( neg.population.idx ) < asp$min.cell.warning.n ){
+    if ( length( neg.population.idx ) < asp$min.cell.warning.n ) {
       warning( paste( "\033[31m", "Warning! Fewer than",  asp$min.cell.warning.n,
                       "scatter-matched negative events for", samp,  "\033[0m", "\n" )  )
     }

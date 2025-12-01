@@ -46,18 +46,20 @@ gate.af.sample.plot <- function( plot.data, samp, af.boundary.upper, asp,
   y.lab <- colnames( plot.data )[ 2 ]
 
   # set transform
-  biexp.transform <- flowjo_biexp( channelRange = asp$default.transformation.param$length,
-                                     maxValue = asp$default.transformation.param$max.range,
-                                     pos = asp$default.transformation.param$pos,
-                                     neg = asp$default.transformation.param$neg,
-                                     widthBasis = asp$default.transformation.param$width,
-                                     inverse = FALSE )
-  biexp.inverse <- flowjo_biexp( channelRange = asp$default.transformation.param$length,
-                                   maxValue = asp$default.transformation.param$max.range,
-                                   pos = asp$default.transformation.param$pos,
-                                   neg = asp$default.transformation.param$neg,
-                                   widthBasis = asp$default.transformation.param$width,
-                                   inverse = TRUE )
+  biexp.transform <- flowWorkspace::flowjo_biexp(
+    channelRange = asp$default.transformation.param$length,
+    maxValue = asp$default.transformation.param$max.range,
+    pos = asp$default.transformation.param$pos,
+    neg = asp$default.transformation.param$neg,
+    widthBasis = asp$default.transformation.param$width,
+    inverse = FALSE )
+  biexp.inverse <- flowWorkspace::flowjo_biexp(
+    channelRange = asp$default.transformation.param$length,
+    maxValue = asp$default.transformation.param$max.range,
+    pos = asp$default.transformation.param$pos,
+    neg = asp$default.transformation.param$neg,
+    widthBasis = asp$default.transformation.param$width,
+    inverse = TRUE )
 
   plot.biexp.transform <- scales::trans_new(
     name = "biexp",
