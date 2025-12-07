@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,14 +83,36 @@ so ping me if any of this is important to you.</p>
 <code>define.flow.control</code> can be problematic on Windows due to
 memory usage with <code>futures</code> and the tendency of Windows to
 usurp threads that R was using.</li>
+<li>A new parallel backend using <code>parLapply</code> on Windows or
+<code>mclapply</code> on Mac/Linux is being implemented in
+<code>dev</code> branch. This should gracefully fall back to sequential
+<code>lapply</code> processing if it runs into any problems.</li>
 </ul>
 </li>
 <li>More flexibility in negative/unstained samples.</li>
 <li>Allow multiple controls per fluorophore.</li>
-<li>An alternative to the automated gating.</li>
-<li>Cell-specific weighting for per-cell unmixing.</li>
-<li>Speed up per-cell fluorophore optimization.</li>
-<li>Fix the issue causing discontinuities.</li>
+<li>An alternative to the automated gating.
+<ul>
+<li>This is now in progress.</li>
+</ul>
+</li>
+<li>Cell-specific weighting for per-cell unmixing.
+<ul>
+<li>This is problematic for the ID7000, probably due to the PMT
+noise.</li>
+</ul>
+</li>
+<li>Speed up per-cell fluorophore optimization.
+<ul>
+<li>Some progress on this has been implemented in <code>dev</code>
+branch. Should be ~4x faster now.</li>
+</ul>
+</li>
+<li>Fix the issue causing discontinuities.
+<ul>
+<li>Some progress on this in <code>dev</code> branch.</li>
+</ul>
+</li>
 </ul>
 <p>To install the <code>dev</code> branch:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">

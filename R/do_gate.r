@@ -39,7 +39,7 @@ do.gate <- function( gate.data, viability.gate, large.gate,
                      samp, scatter.and.channel.label, control.type, asp )
 {
   # set parameters for beads or cells
-  if ( control.type == "beads" ){
+  if ( control.type == "beads" ) {
     default.gate.param <- asp$default.gate.param.beads
     gate.data.trim.factor.x.min <- asp$gate.data.trim.factor.x.min.beads
     gate.data.trim.factor.x.max <- asp$gate.data.trim.factor.x.max.beads

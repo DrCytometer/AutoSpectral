@@ -76,11 +76,11 @@ in the peak channel, and cluster those to get variants.
 ``` r
 variants <- get.spectral.variants( control.dir, control.file, asp, 
                                    spectra, af.spectra,
-                                   parallel = FALSE, verbose = TRUE )
+                                   parallel = TRUE, verbose = TRUE )
 ```
 
-Set `parallel` to `TRUE` for faster processing with `futures` if you
-have enough memory available. This should take a couple of minutes.
+Set `parallel` to `TRUE` for faster processing. This should take a
+couple of minutes.
 
 This outputs a list containing: 1) The thresholds for positivity in each
 unmixed channel, as determined by the 99.5th percentile on the `AF`

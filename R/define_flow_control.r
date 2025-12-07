@@ -9,10 +9,10 @@
 #' the gates needed based on variables such as beads or cells, `large.gate`, and
 #' `viability.gate`, and then creates gates for each combination. It imports
 #' and gates the data in the FCS files and assigns various factors to track
-#' the data.
+#' the data. Parallel processing `parallel=TRUE` will likely speed up the run
+#' considerably on Mac and Linux systems supporting forking, but will likely
+#' not help much on Windows unless >10 cores are available.
 #'
-#' @importFrom future plan multisession
-#' @importFrom future.apply future_lapply
 #' @importFrom dplyr filter
 #' @importFrom flowCore read.FCS exprs
 #'
@@ -30,6 +30,9 @@
 #' files are read in. If the data is larger, parallel processing may not
 #' accelerate the process much.
 #' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+#' @param threads Numeric, number of threads to use for parallel processing.
+#' Default is `NULL` which will revert to `asp$worker.process.n` if
+#' `parallel=TRUE`.
 #'
 #' @return A list (`flow.control`) with the following components:
 #' - `filename`: Names of the single-color control files.
@@ -61,19 +64,14 @@
 #'
 #' @export
 
-define.flow.control <- function( control.dir, control.def.file, asp,
-                                 gate = TRUE, parallel = FALSE,
-                                 verbose = TRUE )
+define.flow.control <- function( control.dir,
+                                 control.def.file,
+                                 asp,
+                                 gate = TRUE,
+                                 parallel = FALSE,
+                                 verbose = TRUE,
+                                 threads = NULL )
 {
-  # set up parallel processing
-  if ( parallel ){
-    future::plan( future::multisession, workers = asp$worker.process.n )
-    options( future.globals.maxSize = asp$max.memory.n )
-    lapply.function <- future.apply::future_lapply
-  } else {
-    lapply.function <- lapply.sequential
-  }
-
   if ( verbose ) message( "\033[34m Checking control file for errors \033[0m" )
 
   check.control.file( control.dir, control.def.file, asp, strict = TRUE )
@@ -152,21 +150,22 @@ define.flow.control <- function( control.dir, control.def.file, asp,
   # define gates needed
   if ( verbose ) message( "\033[34m Determining the gates that will be needed \033[0m" )
 
-  gate.types <- data.frame( file = control.table$universal.negative,
-                            type = control.table$control.type,
-                            viability = control.table$is.viability,
-                            large.gate = control.table$large.gate )
+  gate.types <- data.frame(
+    file        = control.table$universal.negative,
+    type        = control.table$control.type,
+    viability   = control.table$is.viability,
+    large.gate  = control.table$large.gate,
+    stringsAsFactors = FALSE
+  )
 
-  # fill in filenames for samples being used as universal negatives
-  gate.types$file[ gate.types$file == FALSE ] <- control.table$filename[ control.table$universal.negative == FALSE ]
-
+  # replace FALSE with NA so missing universal negatives will be treated identically
+  gate.types$file[ gate.types$file == FALSE ] <- NA
   unique.gates <- unique( gate.types )
-
   sample.matches <- apply( gate.types, 1, function( row ) {
-    match( TRUE, apply( unique.gates, 1,
-                        function( unique.row ) all( row == unique.row ) ) )
+    match( TRUE, apply( unique.gates, 1, function( unique.row ) {
+      all( row == unique.row | ( is.na( row ) & is.na( unique.row ) ) )
+    } ) )
   } )
-
   control.table$gate <- sample.matches
   flow.gate <- sample.matches
   gate.type <- unique( sample.matches )
@@ -301,31 +300,31 @@ define.flow.control <- function( control.dir, control.def.file, asp,
 
     gate.list <- list()
 
-    for( gate in unique( control.table$gate ) ){
+    for( gate in unique( control.table$gate ) ) {
 
       files.to.gate <- unique( control.table[ control.table$gate == gate, ]$filename )
 
       files.n <- length( files.to.gate )
 
-      downsample.n <- asp$gate.downsample.n.cells / files.n
+      downsample.n <- ceiling( asp$gate.downsample.n.cells / files.n )
 
-      scatter.coords <- lapply.function( files.to.gate, sample.fcs.file,
-                                         control.dir, downsample.n, asp,
-                                         future.seed = asp$gate.downsample.seed )
+      scatter.coords <- lapply( files.to.gate, function( f ) {
+        sample.fcs.file(
+          f,
+          control.dir= control.dir,
+          downsample.n = downsample.n,
+          asp = asp
+        )
+      } )
 
       scatter.coords <- do.call( rbind, scatter.coords )
 
       viability.gate <- unique( control.table[ control.table$gate == gate, ]$is.viability )
-
       is.viability <- ifelse( viability.gate, "viabilityMarker", "nonViability" )
-
       large.gate <- unique( control.table[ control.table$gate == gate, ]$large.gate )
-
       is.large.gate <- ifelse( large.gate, "largeGate", "smallGate" )
-
       control.type <- unique( control.table[ control.table$gate == gate, ]$control.type )
-
-      samp <- paste( control.type,is.viability, is.large.gate, sep = "_" )
+      samp <- paste( control.type, is.viability, is.large.gate, sep = "_" )
 
       gate.boundary <- do.gate( scatter.coords, viability.gate, large.gate,
                                 samp, flow.scatter.and.channel.label, control.type, asp )
@@ -337,26 +336,65 @@ define.flow.control <- function( control.dir, control.def.file, asp,
     # read in fcs files, selecting data within pre-defined gates
     if ( verbose ) message( "\033[34m Reading FCS files \033[0m" )
 
-    flow.expr.data <- lapply.function( flow.sample, FUN = get.gated.flow.expression.data,
-                                       flow.file.name, control.dir,
-                                       scatter.and.spectral.channel = flow.scatter.and.channel.spectral,
-                                       spectral.channel = flow.spectral.channel,
-                                       set.resolution = flow.set.resolution,
-                                       flow.gate = flow.gate, gate.list = gate.list,
-                                       scatter.param = flow.scatter.parameter,
-                                       scatter.and.channel.label = flow.scatter.and.channel.label,
-                                       asp = asp )
+    args.list <- list(
+      file.name = flow.file.name,
+      control.dir = control.dir,
+      scatter.and.spectral.channel = flow.scatter.and.channel.spectral,
+      spectral.channel = flow.spectral.channel,
+      set.resolution = flow.set.resolution,
+      flow.gate = flow.gate,
+      gate.list = gate.list,
+      scatter.param = flow.scatter.parameter,
+      scatter.and.channel.label = flow.scatter.and.channel.label,
+      asp = asp
+    )
+
+    exports <- c( "flow.sample", "args.list", "gate.sample.plot",
+                  "get.gated.flow.expression.data" )
+
+    result <- create.parallel.lapply( asp, exports, parallel = TRUE,
+                                      threads = threads,
+                                      export.env = environment() )
+    lapply.function <- result$lapply
+    # parallel processing
+    flow.expr.data <- tryCatch( {
+      lapply.function( flow.sample, function( f ) {
+        do.call( get.gated.flow.expression.data, c( list( f ), args.list ) )
+      } )
+    }, finally = {
+      # Clean up cluster when done
+      if ( !is.null( result$cleanup ) ) result$cleanup()
+    } )
 
     names( flow.expr.data ) <- flow.sample
 
   } else {
     # read in flow data as is
     if ( verbose ) message( "\033[34m Reading FCS files \033[0m" )
-    flow.expr.data <- lapply.function( flow.sample, FUN = get.ungated.flow.expression.data,
-                                       flow.file.name, control.dir,
-                                       scatter.and.spectral.channel = flow.scatter.and.channel.spectral,
-                                       spectral.channel = flow.spectral.channel,
-                                       set.resolution = flow.set.resolution )
+
+    # Set up parallel processing
+    args.list <- list(
+      file.name = flow.file.name,
+      control.dir = control.dir,
+      scatter.and.spectral.channel = flow.scatter.and.channel.spectral,
+      spectral.channel = flow.spectral.channel,
+      set.resolution = flow.set.resolution
+    )
+    exports <- c( "flow.sample", "args.list", "get.ungated.flow.expression.data" )
+
+    result <- create.parallel.lapply( asp, exports, parallel = TRUE,
+                                      threads = threads,
+                                      export.env = environment() )
+    lapply.function <- result$lapply
+
+    flow.expr.data <- tryCatch( {
+      lapply.function( flow.sample, function( f ) {
+        do.call( get.ungated.flow.expression.data, c( list( f ), args.list ) )
+      } )
+    }, finally = {
+      # Clean up cluster when done
+      if ( !is.null( result$cleanup ) ) result$cleanup()
+    } )
 
     names( flow.expr.data ) <- flow.sample
   }

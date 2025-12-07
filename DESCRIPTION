@@ -46,7 +46,8 @@ Imports:
     tripack,
     utils,
     xml2,
-    lifecycle
+    lifecycle,
+    parallelly
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 URL: https://github.com/DrCytometer/AutoSpectral,

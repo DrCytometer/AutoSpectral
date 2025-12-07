@@ -79,6 +79,7 @@ get.fluor.variants <- function( fluor,
   # get data above threshold in peak channel
   # restrict to top n events
   peak.channel <- flow.channel[ fluor ]
+
   raw.idx <- which( pos.data[ , peak.channel ] > raw.thresholds[ peak.channel ] )
   neg.idx <- setdiff( seq_len( nrow( pos.data ) ), raw.idx )
 
@@ -86,7 +87,6 @@ get.fluor.variants <- function( fluor,
     sorted.idx <- order( pos.data[ raw.idx, peak.channel ],
                          decreasing = TRUE )[ 1:( n.cells * 2 ) ]
     raw.idx <- raw.idx[ sorted.idx ]
-
   }
 
   if ( "AF" %in% rownames( spectra ) )
@@ -108,7 +108,8 @@ get.fluor.variants <- function( fluor,
     colnames( combined.spectra ) <- colnames( fluor.spectrum )
     fluor.af <- c( fluor, "AF" )
     rownames( combined.spectra ) <- fluor.af
-    combined.spectra[ 1, ] <- no.af.spectra
+    combined.spectra[ 1, ] <- fluor.spectrum
+
     # initial residual error
     error <- rowSums( abs( pos.data[ raw.idx, ] - pos.unmixed %*% fluor.spectrum ) )
     # initial AF (0 value)

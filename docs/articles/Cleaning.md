@@ -9,10 +9,10 @@ samples. <https://data.mendeley.com/datasets/y2zp5xx2hg/2>
 
 First off, what do we mean by “cleaning”? When we use single-stained
 cells, they are never really single colour controls. There’s always
-autofluoresences. This is true for beads in a way–they have
+autofluorescence. This is true for beads in a way–they have
 background–however with beads, the background is homogeneous
 (hopefully), whereas with cells we are almost always working with a
-heterogenous mixtures. That means some cells are more autofluorescent
+heterogeneous mixtures. That means some cells are more autofluorescent
 than others, and we can get some cells popping up as “positive” in your
 data for the fluorophores. AutoSpectral provides some tools to help
 reduce the influence of these problems, aiming to give you cleaner
@@ -21,23 +21,27 @@ more reproducible unmixing.
 
 Right, so there are four cleaning options in AutoSpectral:
 
-1.  Trimming. Trimming removes extreme events, usually the top and
-    bottome 0.5%. This was implemented in the original AutoSpill where
-    detector noise was more of an issue. We don’t generally want to use
-    this with spectral data where we have low-noise detectors because it
-    would remove the brightest (and most accurate) events. If you have
-    an issue with aggregates in your single-colour controls (which can
-    happen with nanoparticles, old antibodies and NovaFluors), you can
-    try the trimming. We’re not going to cover it in this article.
+1.  Trimming. *Update* Trimming will be deprecated soon and then phased
+    out as an option. Trimming removes extreme events, usually the top
+    and bottom 0.5%. This was implemented in the original AutoSpill
+    where detector noise was more of an issue. We don’t generally want
+    to use this with spectral data where we have low-noise detectors
+    because it would remove the brightest (and most accurate) events. If
+    you have an issue with aggregates in your single-colour controls
+    (which can happen with nanoparticles, old antibodies and
+    NovaFluors), you can try the trimming. We’re not going to cover it
+    in this article.
 
-2.  Time-based cleaning. We do this with our fully stained data through
-    tools like flowClean, flowAI and PeacoQC. This removes
-    inconsistencies in the flow, which are less accurate. AutoSpectral
-    employs PeacoQC with the “MAD” (robust standard deviation) method to
-    clean controls, if you activate this option. By default, it’s off.
-    This is because it’s fairly slow and time-based variability
-    shouldn’t really be an issue unless you’re doing things like running
-    unfiltered cells on a high flow rate. If you are, try time.clean.
+2.  Time-based cleaning.*Update* Time-based cleaning will be deprecated
+    soon and then phased out as an option. We do this with our fully
+    stained data through tools like flowClean, flowAI and PeacoQC. This
+    removes inconsistencies in the flow, which are less accurate.
+    AutoSpectral employs PeacoQC with the “MAD” (robust standard
+    deviation) method to clean controls, if you activate this option. By
+    default, it’s off. This is because it’s fairly slow and time-based
+    variability shouldn’t really be an issue unless you’re doing things
+    like running unfiltered cells on a high flow rate. If you are, try
+    time.clean.
 
 3.  AF exclusion. For this, we need matching unstained samples.
     AutoSpectral identifies populations of cells with high variance and

@@ -19,13 +19,13 @@ get.spectral.variants(
   spectra,
   af.spectra,
   n.cells = 2000,
-  pos.quantile = 0.995,
-  som.dim = 10,
-  sim.threshold = 0.98,
+  som.dim = 7,
   figures = TRUE,
   output.dir = NULL,
   parallel = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  threads = NULL,
+  ...
 )
 ```
 
@@ -61,27 +61,15 @@ get.spectral.variants(
   Numeric, default `2000`. Number of cells to use for defining the
   variation in spectra. Up to `n.cells` cells will be selected as
   positive events in the peak channel for each fluorophore, above the
-  `pos.quantile` in the unstained sample.
-
-- pos.quantile:
-
-  Numeric, default `0.995`. Threshold for positivity. This quantile will
-  be used to define the maximum extent of the unstained sample in the
-  unmixed space. Anything above that will be considered positive in the
-  single-stained controls.
+  99.5th percentile level in the unstained sample.
 
 - som.dim:
 
-  Numeric, default `10`. Number of x and y dimensions to use in the SOM
-  for clustering the spectral variation.
-
-- sim.threshold:
-
-  Numeric, default `0.98`. Threshold for cosine similarity- based
-  exclusion of spectral variants. Any variant less than `sim.threshold`
-  by `cosine.similarity` from the optimized spectrum for that
-  fluorophore (from `spectra`) will be excluded from output. This helps
-  to exclude autofluorescence contamination.
+  Numeric, default `7`. Number of x and y dimensions to use in the SOM
+  for clustering the spectral variation. The number of spectra returned
+  for each fluorophore will increase with the quadratic of `som.dim`, so
+  for 7, you will get up to 49 variants. Increasing the SOM dimensions
+  does not help. Somewhere between 4 and 7 appears to be optimal.
 
 - figures:
 
@@ -96,13 +84,24 @@ get.spectral.variants(
 - parallel:
 
   Logical, default is `FALSE`, in which case sequential processing will
-  be used. Parallel processing will likely be faster when many small
-  files are read in. If the data is larger, parallel processing may not
-  accelerate the process much or may fail outright.
+  be used. The new parallel processing should always be faster.
 
 - verbose:
 
   Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+
+- threads:
+
+  Numeric, default is `NULL`, in which case `asp$worker.process.n` will
+  be used. `asp$worker.process.n` is set by default to be one less than
+  the available cores on the machine. Multi-threading is only used if
+  `parallel` is `TRUE`.
+
+- ...:
+
+  Ignored. Previously used for deprecated arguments such as
+  `pos.quantile` and `sim.threshold`, which are now fixed internally and
+  no longer user-settable.
 
 ## Value
 

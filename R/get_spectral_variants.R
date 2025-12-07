@@ -15,8 +15,6 @@
 #' @importFrom dplyr filter
 #' @importFrom lifecycle deprecate_warn
 #' @importFrom flowCore read.FCS exprs
-#' @importFrom future plan multisession
-#' @importFrom future.apply future_lapply
 #'
 #' @param control.dir File path to the single-stained control FCS files.
 #' @param control.def.file CSV file defining the single-color control file names,
@@ -42,10 +40,12 @@
 #' @param output.dir File path to whether the figures and .rds data file will be
 #' saved. Default is `NULL`, in which case `asp$variant.dir` will be used.
 #' @param parallel Logical, default is `FALSE`, in which case sequential processing
-#' will be used. Parallel processing will likely be faster when many small
-#' files are read in. If the data is larger, parallel processing may not
-#' accelerate the process much or may fail outright.
+#' will be used. The new parallel processing should always be faster.
 #' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+#' @param threads Numeric, default is `NULL`, in which case `asp$worker.process.n`
+#' will be used. `asp$worker.process.n` is set by default to be one less than the
+#' available cores on the machine. Multi-threading is only used if `parallel` is
+#' `TRUE`.
 #' @param ... Ignored. Previously used for deprecated arguments such as
 #' `pos.quantile` and `sim.threshold`, which are now fixed internally and no
 #' longer user-settable.
@@ -62,6 +62,7 @@ get.spectral.variants <- function( control.dir, control.def.file,
                                    output.dir = NULL,
                                    parallel = FALSE,
                                    verbose = TRUE,
+                                   threads = NULL,
                                    ... ) {
 
   dots <- list( ... )
@@ -155,14 +156,6 @@ get.spectral.variants <- function( control.dir, control.def.file,
     table.fluors <- fluor.to.match[ matching.fluors ]
   }
 
-  if ( parallel ) {
-    future::plan( future::multisession, workers = asp$worker.process.n )
-    options( future.globals.maxSize = asp$max.memory.n )
-    lapply.function <- future.apply::future_lapply
-  } else {
-    lapply.function <- lapply.sequential
-  }
-
   # get thresholds for positivity
   if ( verbose ) message( paste( "\033[33m", "Calculating positivity thresholds", "\033[0m" ) )
   unstained <- suppressWarnings(
@@ -189,26 +182,70 @@ get.spectral.variants <- function( control.dir, control.def.file,
   if ( is.null( names( table.fluors ) ) ) names( table.fluors ) <- table.fluors
 
   # main loop
+  if ( parallel & is.null( threads ) ) threads <- asp$worker.process.n
+
+  # construct list of arguments
+  args.list <- list(
+    file.name = flow.file.name,
+    control.dir = control.dir,
+    asp = asp,
+    spectra = spectra,
+    af.spectra = af.spectra,
+    n.cells = n.cells,
+    som.dim = som.dim,
+    figures = figures,
+    output.dir = output.dir,
+    verbose = verbose,
+    spectral.channel = flow.spectral.channel,
+    universal.negative = universal.negative,
+    control.type = control.type,
+    raw.thresholds = raw.thresholds,
+    unmixed.thresholds = unmixed.thresholds,
+    flow.channel = flow.channel
+  )
+
+  # Set up parallel processing
+  if ( parallel ) {
+    internal.functions <- c( "get.fluor.variants", "cosine.similarity",
+                             "spectral.variant.plot", "unmix.ols" )
+    exports <- c( "args.list", "table.fluors", internal.functions )
+
+    result <- create.parallel.lapply(
+      asp,
+      exports,
+      parallel = parallel,
+      threads = threads,
+      export.env = environment()
+    )
+    lapply.function <- result$lapply
+  } else {
+    lapply.function <- lapply
+    result <- list( cleanup = NULL )
+  }
+
   if ( verbose ) message( paste( "\033[33m", "Getting spectral variants", "\033[0m" ) )
-  spectral.variants <- lapply.function(
-    table.fluors,
-    function( fluor ) {
-      tryCatch(
-        get.fluor.variants(
-          fluor,
-          flow.file.name,
-          control.dir, asp, spectra, af.spectra, n.cells,
-          som.dim, figures, output.dir, verbose,
-          flow.spectral.channel, universal.negative, control.type, raw.thresholds,
-          unmixed.thresholds, flow.channel
-        ),
-        error = function( e ) {
-          message( "Error for fluorophore ", fluor, ": ", conditionMessage( e ) )
-          NULL
-        }
-      )
+
+  spectral.variants <- tryCatch(
+    expr = {
+      lapply.function( table.fluors, function( f ) {
+        tryCatch(
+          expr = {
+            do.call(
+              get.fluor.variants,
+              c( list( f ), args.list )
+            )
+          },
+          error = function( e ) {
+            message( "Error for fluorophore ", f, ": ", conditionMessage( e ) )
+            NULL
+          }
+        )
+      } )
     },
-    future.seed = asp$variant.seed
+    finally = {
+      if ( !is.null( result$cleanup ) )
+        result$cleanup()
+    }
   )
 
   # drop any that are NULL due to error

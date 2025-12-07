@@ -368,14 +368,15 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
   # TBD switch to using SPILL slot
   fluor.n <- nrow( spectra )
   detector.n <- ncol( spectra )
+  fluorophores <- paste0( rownames( spectra ), "-A" )
   vals <- as.vector( t( spectra ) )
   formatted.vals <- formatC( vals, digits = 8, format = "fg", flag = "#" )
   spill.string <- paste(
-    c( fluor.n, detector.n, rownames( spectra ), colnames( spectra ), formatted.vals ),
+    c( fluor.n, detector.n, fluorophores, colnames( spectra ), formatted.vals ),
     collapse = ","
   )
   new.keywords[[ "$SPECTRA" ]] <- spill.string
-  new.keywords[[ "$FLUOROCHROMES" ]] <- paste( rownames( spectra ), collapse = "," )
+  new.keywords[[ "$FLUOROCHROMES" ]] <- paste( fluorophores, collapse = "," )
 
   # add AF spectra if used
   if ( !is.null( af.spectra ) ) {
@@ -390,12 +391,16 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
   }
 
   # define new FCS file
+  fluor.orig <- colnames( unmixed.data )
+  colnames( unmixed.data ) <- paste0( fluor.orig, "-A" )
   flow.frame <- suppressWarnings( flowCore::flowFrame( unmixed.data ) )
   param.desc <- flowCore::parameters( flow.frame )@data$desc
+
+  # add marker names to description
   for ( i in seq_len( n.param ) ) {
-    p.name <- colnames( unmixed.data )[ i ]
+    orig.name <- fluor.orig[ i ]
     # Get the marker from flow.control
-    f.idx <- match( p.name, flow.control$fluorophore )
+    f.idx <- match( orig.name, flow.control$fluorophore )
     if ( !is.na( f.idx ) )
       param.desc[ i ] <- as.character( flow.control$antigen[ f.idx ] )
   }

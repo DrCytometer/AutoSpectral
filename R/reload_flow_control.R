@@ -32,9 +32,12 @@ reload.flow.control <- function( control.dir, control.def.file, asp ) {
 
   flow.set.channel <- colnames(
     suppressWarnings(
-      flowCore::read.FCS( file.path( control.dir, control.table$filename[ 1 ] ),
-                          truncate_max_range = FALSE,
-                          emptyValue = FALSE )
+      flowCore::exprs(
+        flowCore::read.FCS( file.path( control.dir, control.table$filename[ 1 ] ),
+                            transformation = NULL,
+                            truncate_max_range = FALSE,
+                            emptyValue = FALSE )
+      )
     )
   )
 
@@ -50,7 +53,6 @@ reload.flow.control <- function( control.dir, control.def.file, asp ) {
 
   # reorganize channels if necessary
   flow.spectral.channel <- check.channels( flow.spectral.channel, asp )
-
   flow.spectral.channel.n <- length( flow.spectral.channel )
 
   # get fluorophores and markers

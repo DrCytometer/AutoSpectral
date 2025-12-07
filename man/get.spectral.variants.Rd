@@ -16,6 +16,7 @@ get.spectral.variants(
   output.dir = NULL,
   parallel = FALSE,
   verbose = TRUE,
+  threads = NULL,
   ...
 )
 }
@@ -53,11 +54,14 @@ fluorophore is plotted in \code{output.dir}. Default is \code{TRUE}.}
 saved. Default is \code{NULL}, in which case \code{asp$variant.dir} will be used.}
 
 \item{parallel}{Logical, default is \code{FALSE}, in which case sequential processing
-will be used. Parallel processing will likely be faster when many small
-files are read in. If the data is larger, parallel processing may not
-accelerate the process much or may fail outright.}
+will be used. The new parallel processing should always be faster.}
 
 \item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
+
+\item{threads}{Numeric, default is \code{NULL}, in which case \code{asp$worker.process.n}
+will be used. \code{asp$worker.process.n} is set by default to be one less than the
+available cores on the machine. Multi-threading is only used if \code{parallel} is
+\code{TRUE}.}
 
 \item{...}{Ignored. Previously used for deprecated arguments such as
 \code{pos.quantile} and \code{sim.threshold}, which are now fixed internally and no

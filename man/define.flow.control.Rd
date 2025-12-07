@@ -10,7 +10,8 @@ define.flow.control(
   asp,
   gate = TRUE,
   parallel = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  threads = NULL
 )
 }
 \arguments{
@@ -33,6 +34,10 @@ files are read in. If the data is larger, parallel processing may not
 accelerate the process much.}
 
 \item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
+
+\item{threads}{Numeric, number of threads to use for parallel processing.
+Default is \code{NULL} which will revert to \code{asp$worker.process.n} if
+\code{parallel=TRUE}.}
 }
 \value{
 A list (\code{flow.control}) with the following components:
@@ -72,5 +77,7 @@ It reads the metadata file, locates the corresponding FCS files, determines
 the gates needed based on variables such as beads or cells, \code{large.gate}, and
 \code{viability.gate}, and then creates gates for each combination. It imports
 and gates the data in the FCS files and assigns various factors to track
-the data.
+the data. Parallel processing \code{parallel=TRUE} will likely speed up the run
+considerably on Mac and Linux systems supporting forking, but will likely
+not help much on Windows unless >10 cores are available.
 }

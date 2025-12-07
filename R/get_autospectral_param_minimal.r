@@ -50,15 +50,15 @@ get.autospectral.param.minimal <- function()
       bit.depth = "32",
 
       ### general parameters
-      verbose = TRUE,
+      verbose = TRUE, # no longer in use
 
-      parallel = FALSE,
+      parallel = FALSE, # no longer in use
 
-      worker.process.n = max( 1, future::availableCores() - 2 ),
+      worker.process.n = max( 1, parallelly::availableCores() - 1 ),
 
-      max.memory.n = 2 * 1024^3,
+      max.memory.n = 2 * 1024^3, # no longer in use
 
-      antigen.autof = "AF",
+      antigen.autof = "AF", # no longer in use
 
       marker.forbidden.char = " !\"#$%&'*,/:;?@[\\]^{|}~",
       marker.substitution.char = "-",
@@ -199,11 +199,11 @@ get.autospectral.param.minimal <- function()
       af.som.dim = 10,
 
       ### spectral variants parameters
-      variant.n.cells = 2000,
-      variant.som.dim = 10,
-      variant.sim.threshold = 0.98,
-      variant.seed = 42,
-      variant.pos.quantile = 0.995,
+      variant.n.cells = 2000, # no longer in use
+      variant.som.dim = 10, # no longer in use
+      variant.sim.threshold = 0.98, # no longer in use
+      variant.seed = 42, # no longer in use
+      variant.pos.quantile = 0.995, # no longer in use
       variant.dir = "./figure_spectral_variants",
       variant.filename = "Spectral_variants.rds",
 
@@ -212,16 +212,16 @@ get.autospectral.param.minimal <- function()
       rlm.trim.factor = 0.003,
       rlm.downsample.n = 25000,
 
-      rs.iter.max = 100,
+      rs.iter.max = 100, # no longer in use
 
-      rs.lambda.coarse = 1.0,
-      rs.lambda.fine = 0.1,
+      rs.lambda.coarse = 1.0, # no longer in use
+      rs.lambda.fine = 0.1, # no longer in use
 
-      rs.delta.history.n = 10,
+      rs.delta.history.n = 10, # no longer in use
 
-      rs.delta.threshold.untr = 1e-2,
-      rs.delta.threshold.tran = 1e-4,
-      rs.delta.threshold.change = 1e-6,
+      rs.delta.threshold.untr = 1e-2, # no longer in use
+      rs.delta.threshold.tran = 1e-4, # no longer in use
+      rs.delta.threshold.change = 1e-6, # no longer in use
 
       convergence.color.delta = color.pal[ 7 ],    # brown
       convergence.color.delta.max = color.pal[ 5 ],    # orange

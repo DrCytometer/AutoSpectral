@@ -237,10 +237,18 @@ You can install AutoSpectralRcpp like so:
 devtools::install_github("DrCytometer/AutoSpectralRcpp")
 ```
 
-Third, turn on parallel processing in AutoSpectral. At the moment, this
-is not fully optimized in AutoSpectral. The parallel processing in
-AutoSpectralRcpp operates via OpenMP and works well. It is always
-activated, but the number of threads can be configured.
+Third, turn on parallel processing in AutoSpectral. *Update*: This is
+now supported via a `parallel` backend. Importantly, this moves away
+from `future` and `future_lapply`, which were aborting sometimes on
+Windows. More usefully, this is a bit faster in many cases, and should
+support forking via `mclapply` on Mac and Linux systems, which will be
+much faster. Perhaps most usefully, this appears to allow
+parallelization of the native R per-cell fluorophore optimization in
+`unmix.autospectral`, so you should see a nice speed up there.
+
+The parallel processing in AutoSpectralRcpp operates via OpenMP and
+works well. It is always activated, but the number of threads can be
+configured.
 
 To activate parallel processing, check the function arguments for a
 `parallel` option and set it to `TRUE`. Additionally, there is control
@@ -252,6 +260,12 @@ threads to use, check the recommendation for your machine after running
 ``` r
 asp$max.worker.process.n
 ```
+
+Multithreading will always default to this number if you do not
+explicitly set a number of threads and set `parallel=TRUE`. This is one
+less than `parallelly::availableCores()`, so it is designed to allow you
+to keep working on minor stuff while AutoSpectral chugs along in the
+background.
 
 For unmixing larger data sets, you will do well to use a machine with
 more CPUs. Suggestions for faster processing are welcome. Some modest
@@ -271,7 +285,16 @@ improvements are in the works.
   The Hotspot(TM) matrix will be calculated and plotted as per the
   [preprint](https://www.biorxiv.org/content/10.1101/2025.04.17.649396v2.full.pdf)
   by Peter Mage et al.
-- Version 0.9.0: Changes to `get.spectral.variants`, including fixing of
-  previously user-modifiable parameters, low-level denoising of spectra
-  and a bug patch for situations with beads using internal negatives.
-  More checks in `check.control.file`.
+- Version 0.9.0:
+  - Changes to `get.spectral.variants`, including fixing of previously
+    user-modifiable parameters, low-level denoising of spectra and a bug
+    patch for situations with beads using internal negatives.
+  - More checks in `check.control.file`.
+  - New parallel backend.
+  - Faster AutoSpectral unmixing in base R.
+  - Adjustments to reduce any discontinuities produced during unmixing.
+  - See also updates in `AutoSpectralRcpp`, including a large speed up
+    and general improvement to the Poisson IRLS unmixing.
+  - Patch to `reload.flow.control` bug affecting ID7000 samples.
+  - Changes to `solve` in `unmix.ols` and `unmix.wls` as suggested by
+    SamGG.

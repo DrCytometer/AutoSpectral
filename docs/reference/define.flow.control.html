@@ -5,13 +5,17 @@ It reads the metadata file, locates the corresponding FCS files, determines
 the gates needed based on variables such as beads or cells, large.gate, and
 viability.gate, and then creates gates for each combination. It imports
 and gates the data in the FCS files and assigns various factors to track
-the data."><meta property="og:description" content="A complex function designed to convert the single-stained control FCS files
+the data. Parallel processing parallel=TRUE will likely speed up the run
+considerably on Mac and Linux systems supporting forking, but will likely
+not help much on Windows unless &amp;gt;10 cores are available."><meta property="og:description" content="A complex function designed to convert the single-stained control FCS files
 and the metadata control.def.file into a data structure for AutoSpectral.
 It reads the metadata file, locates the corresponding FCS files, determines
 the gates needed based on variables such as beads or cells, large.gate, and
 viability.gate, and then creates gates for each combination. It imports
 and gates the data in the FCS files and assigns various factors to track
-the data."></head><body>
+the data. Parallel processing parallel=TRUE will likely speed up the run
+considerably on Mac and Linux systems supporting forking, but will likely
+not help much on Windows unless &amp;gt;10 cores are available."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -19,7 +23,7 @@ the data."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +66,9 @@ It reads the metadata file, locates the corresponding FCS files, determines
 the gates needed based on variables such as beads or cells, <code>large.gate</code>, and
 <code>viability.gate</code>, and then creates gates for each combination. It imports
 and gates the data in the FCS files and assigns various factors to track
-the data.</p>
+the data. Parallel processing <code>parallel=TRUE</code> will likely speed up the run
+considerably on Mac and Linux systems supporting forking, but will likely
+not help much on Windows unless &gt;10 cores are available.</p>
     </div>
 
     <div class="section level2">
@@ -73,7 +79,8 @@ the data.</p>
 <span>  <span class="va">asp</span>,</span>
 <span>  gate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  threads <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -111,6 +118,12 @@ accelerate the process much.</p></dd>
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical, default is <code>TRUE</code>. Set to <code>FALSE</code> to suppress messages.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>Numeric, number of threads to use for parallel processing.
+Default is <code>NULL</code> which will revert to <code>asp$worker.process.n</code> if
+<code>parallel=TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

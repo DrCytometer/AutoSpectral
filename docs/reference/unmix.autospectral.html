@@ -9,7 +9,7 @@ fluorophore signatures at the single cell level."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,12 +56,15 @@ fluorophore signatures at the single cell level.</p>
 <span>  <span class="va">raw.data</span>,</span>
 <span>  <span class="va">spectra</span>,</span>
 <span>  <span class="va">af.spectra</span>,</span>
+<span>  <span class="va">asp</span>,</span>
 <span>  spectra.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  weighted <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  calculate.error <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  use.dist0 <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  threads <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -84,6 +87,10 @@ and 1, with fluorophores in rows and detectors in columns.</p></dd>
 <dd><p>Spectral signatures of autofluorescences, normalized
 between 0 and 1, with fluorophores in rows and detectors in columns. Prepare
 using <code>get.af.spectra</code>.</p></dd>
+
+
+<dt id="arg-asp">asp<a class="anchor" aria-label="anchor" href="#arg-asp"></a></dt>
+<dd><p>The AutoSpectral parameter list.</p></dd>
 
 
 <dt id="arg-spectra-variants">spectra.variants<a class="anchor" aria-label="anchor" href="#arg-spectra-variants"></a></dt>
@@ -118,6 +125,18 @@ per-cell residual (<code>use.dist0</code> = <code>FALSE</code>). Default is <cod
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical, whether to send messages to the console.
 Default is <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
+<dd><p>Logical, default is <code>FALSE</code>, in which case sequential processing
+will be used. The new parallel processing should always be faster.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>Numeric, default is <code>NULL</code>, in which case <code>asp$worker.process.n</code>
+will be used. <code>asp$worker.process.n</code> is set by default to be one less than the
+available cores on the machine. Multi-threading is only used if <code>parallel</code> is
+<code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

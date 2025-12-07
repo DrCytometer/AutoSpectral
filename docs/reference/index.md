@@ -6,6 +6,8 @@
   : Calculate Condition Number
 - [`calculate.hotspot.matrix()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.hotspot.matrix.md)
   : Calculate Hotspot Matrix
+- [`calculate.weights()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.weights.md)
+  : Calculate Weights
 - [`check.channels()`](https://drcytometer.github.io/AutoSpectral/reference/check.channels.md)
   : Check Channels
 - [`check.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/check.control.file.md)
@@ -26,6 +28,8 @@
   : Create Directory
 - [`create.heatmap()`](https://drcytometer.github.io/AutoSpectral/reference/create.heatmap.md)
   : Create Heatmap Plot
+- [`create.parallel.lapply()`](https://drcytometer.github.io/AutoSpectral/reference/create.parallel.lapply.md)
+  : Create Parallel Lapply
 - [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
   : Define Flow Control
 - [`do.gate.af()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.af.md)
@@ -92,6 +96,8 @@
   : Match Fluorophores
 - [`match.markers()`](https://drcytometer.github.io/AutoSpectral/reference/match.markers.md)
   : Match Markers
+- [`parallel.backend()`](https://drcytometer.github.io/AutoSpectral/reference/parallel.backend.md)
+  : Parallel Backend
 - [`read.bd.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/read.bd.spectra.md)
   : Extract Spectra From BD FCS File
 - [`read.channel()`](https://drcytometer.github.io/AutoSpectral/reference/read.channel.md)
@@ -118,6 +124,8 @@
   : Run Universal Negative
 - [`sample.fcs.file()`](https://drcytometer.github.io/AutoSpectral/reference/sample.fcs.file.md)
   : Sample FCS File
+- [`save.unmixing.matrix()`](https://drcytometer.github.io/AutoSpectral/reference/save.unmixing.matrix.md)
+  : Save Unmixing Matrix
 - [`scatter.match.plot()`](https://drcytometer.github.io/AutoSpectral/reference/scatter.match.plot.md)
   : Plot Scatter-Matching of Universal Negative
 - [`spectral.heatmap()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.heatmap.md)

@@ -74,7 +74,7 @@ check.control.file(control.dir, control.file, asp)
 ```
 
 
-Once, the control file passes the error checks, we can load in the data. This part can be a bit slow, particularly if you have lots of big files. There is a parallelization option, which can cut the time in half. There are some improvements I could make to this, including the gating. These will take time to implement, though, because they affect everything downstream of this, which is to say, everything.
+Once, the control file passes the error checks, we can load in the data. This part can be a bit slow, particularly if you have lots of big files. There is a parallelization option, which can cut the time in half, probably even better on Mac/Linux. There are some improvements I could make to this, including the gating. These will take time to implement, though, because they affect everything downstream of this, which is to say, everything.
 ```{r, eval=FALSE}
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
@@ -88,6 +88,7 @@ Be sure to check the gates that are generated in the `figure_gate` folder--do th
 If everything looks okay with the gating, we proceed to control clean-up. This helps remove noisy events, like autofluorescence spikes, and tries to match the positive events for each control to corresponding cells/beads in the unstained `universal.negative` that you defined in the control.file.
 
 The default settings here are usually best.
+There is a parallelization option, which is being converted to the new parallel backend. Once that is in place, it should be faster.
 ```{r, eval=FALSE}
 flow.control <- clean.controls(flow.control, asp)
 ```
@@ -133,8 +134,8 @@ unmix.fcs(spleen.fcs.file, no.af.spectra, asp, flow.control,
 
 If we have a folder full of FCS files, we can do all the files in the folder. Note that this is essentially just an `lapply` loop over the files. It can, however, be parallelized, which will work as long as you have enough memory to handle the number of threads multiplied by the size of the files. So, if your FCS files are ~100MB, fine, if they're multiple GB, maybe not. May not be much faster.
 ```{r, eval=FALSE}
-unmix.folder("./Raw/Set1/Stained/", spectra, asp, flow.control,
-          method = "OLS", parallel = TRUE, threads = 3)
+unmix.folder("./Raw/Set1/Stained/", spectra, asp, flow.control, 
+             method = "OLS", parallel = TRUE, threads = 3)
 ```
 By default, the unmixed files are generated in `Autospectral_unmixed`, but you can change that by passing a path to `output.dir`.
 
@@ -197,7 +198,7 @@ devtools::install_github("DrCytometer/AutoSpectralRcpp")
 We provide `spleen.af` as the `af.spectra` here because the control samples are from spleen. Provide whatever is the best fit for your single-stained controls. 
 ```{r, eval=FALSE}
 variants <- get.spectral.variants(control.dir, control.file, asp, spectra,
-                                  af.spectra = spleen.af)
+                                  af.spectra = spleen.af, parallel = TRUE)
 ```
 The output of this is saved as an RDS file in folder `figure_spectral_variants`. You can load it back in using the `readRDS()` function in base R.
 
@@ -207,7 +208,7 @@ There are plots of the spectral variation for each fluorophore. For something li
 For PE-Cy7, we get a modest difference in the excitation between the blue and yellow-green lasers, which would cause spread if we had a fluorophore in that range on the blue laser, such as RB780. We don't in this case.
 ![PE-Cy7](figures/Workflow/PECy7_variants.jpg)
 
-We can now pass this to the unmixing call. For best results, we'll set the `speed` to `slow`, which recalculates the unmixing matrix for each variant. This can be a bit slow.
+We can now pass this to the unmixing call. For best results, we'll set the `speed` to `slow`, which recalculates the unmixing matrix for each variant. This can be a bit slow. Parallelization is automatic here if you have installed `AutoSpectralRcpp`. If you are using base R only, try turning on the `parallel=TRUE`.
 ```{r, eval=FALSE}
 unmix.fcs(lung.fcs.file, spectra, asp, flow.control,
           method = "AutoSpectral", af.spectra = lung.af,

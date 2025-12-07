@@ -10,12 +10,15 @@ unmix.autospectral(
   raw.data,
   spectra,
   af.spectra,
+  asp,
   spectra.variants = NULL,
   weighted = FALSE,
   weights = NULL,
   calculate.error = FALSE,
   use.dist0 = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  parallel = TRUE,
+  threads = NULL
 )
 ```
 
@@ -37,6 +40,10 @@ unmix.autospectral(
   Spectral signatures of autofluorescences, normalized between 0 and 1,
   with fluorophores in rows and detectors in columns. Prepare using
   `get.af.spectra`.
+
+- asp:
+
+  The AutoSpectral parameter list.
 
 - spectra.variants:
 
@@ -71,6 +78,18 @@ unmix.autospectral(
 - verbose:
 
   Logical, whether to send messages to the console. Default is `TRUE`.
+
+- parallel:
+
+  Logical, default is `FALSE`, in which case sequential processing will
+  be used. The new parallel processing should always be faster.
+
+- threads:
+
+  Numeric, default is `NULL`, in which case `asp$worker.process.n` will
+  be used. `asp$worker.process.n` is set by default to be one less than
+  the available cores on the machine. Multi-threading is only used if
+  `parallel` is `TRUE`.
 
 ## Value
 

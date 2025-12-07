@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,7 @@
 <div class="section level3">
 <h3 id="latest-release">Latest Release<a class="anchor" aria-label="anchor" href="#latest-release"></a>
 </h3>
-<p><strong>Version 0.8.7</strong></p>
+<p><strong>Version 0.9.0</strong></p>
 <p>To install the latest, hopefully stable version, install using <code>devtools</code> or <code>remotes</code>. You will need to install the Bioconductor packages separately, I believe.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install Bioconductor packages</span></span>
@@ -203,10 +203,12 @@
 <p>You can install AutoSpectralRcpp like so:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectralRcpp"</span><span class="op">)</span></span></code></pre></div>
-<p>Third, turn on parallel processing in AutoSpectral. At the moment, this is not fully optimized in AutoSpectral. The parallel processing in AutoSpectralRcpp operates via OpenMP and works well. It is always activated, but the number of threads can be configured.</p>
+<p>Third, turn on parallel processing in AutoSpectral. <em>Update</em>: This is now supported via a <code>parallel</code> backend. Importantly, this moves away from <code>future</code> and <code>future_lapply</code>, which were aborting sometimes on Windows. More usefully, this is a bit faster in many cases, and should support forking via <code>mclapply</code> on Mac and Linux systems, which will be much faster. Perhaps most usefully, this appears to allow parallelization of the native R per-cell fluorophore optimization in <code>unmix.autospectral</code>, so you should see a nice speed up there.</p>
+<p>The parallel processing in AutoSpectralRcpp operates via OpenMP and works well. It is always activated, but the number of threads can be configured.</p>
 <p>To activate parallel processing, check the function arguments for a <code>parallel</code> option and set it to <code>TRUE</code>. Additionally, there is control over the number of threads used, which should be directly in the function call via a <code>threads</code> argument. If you don’t know how many threads to use, check the recommendation for your machine after running <code><a href="reference/get.autospectral.param.html">get.autospectral.param()</a></code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">asp</span><span class="op">$</span><span class="va">max.worker.process.n</span></span></code></pre></div>
+<p>Multithreading will always default to this number if you do not explicitly set a number of threads and set <code>parallel=TRUE</code>. This is one less than <code><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">parallelly::availableCores()</a></code>, so it is designed to allow you to keep working on minor stuff while AutoSpectral chugs along in the background.</p>
 <p>For unmixing larger data sets, you will do well to use a machine with more CPUs. Suggestions for faster processing are welcome. Some modest improvements are in the works.</p>
 </div>
 <div class="section level2">
@@ -220,6 +222,18 @@
 <li>Version 0.8.5: Improvements to keyword handling in writing FCS files</li>
 <li>Version 0.8.6: Improvements to plotting, fluorophore matching</li>
 <li>Version 0.8.7: Support for Symphony A5 SE and Cytek Northern Lights. More improvements to plotting. Marker names will now be added to the control file based on matches in the FCS file names, where possible. The Hotspot(TM) matrix will be calculated and plotted as per the <a href="https://www.biorxiv.org/content/10.1101/2025.04.17.649396v2.full.pdf" class="external-link">preprint</a> by Peter Mage et al.</li>
+<li>Version 0.9.0:
+<ul>
+<li>Changes to <code>get.spectral.variants</code>, including fixing of previously user-modifiable parameters, low-level denoising of spectra and a bug patch for situations with beads using internal negatives.</li>
+<li>More checks in <code>check.control.file</code>.</li>
+<li>New parallel backend.</li>
+<li>Faster AutoSpectral unmixing in base R.</li>
+<li>Adjustments to reduce any discontinuities produced during unmixing.</li>
+<li>See also updates in <code>AutoSpectralRcpp</code>, including a large speed up and general improvement to the Poisson IRLS unmixing.</li>
+<li>Patch to <code>reload.flow.control</code> bug affecting ID7000 samples.</li>
+<li>Changes to <code>solve</code> in <code>unmix.ols</code> and <code>unmix.wls</code> as suggested by SamGG.</li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
