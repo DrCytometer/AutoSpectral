@@ -298,3 +298,4 @@ improvements are in the works.
   - Patch to `reload.flow.control` bug affecting ID7000 samples.
   - Changes to `solve` in `unmix.ols` and `unmix.wls` as suggested by
     SamGG.
+  - New functions to `save.unmixing.matrix` and `calculate.weights`
