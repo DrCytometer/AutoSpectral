@@ -117,6 +117,7 @@ Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_
   should still work.
 - More stuff in progress will appear in the [Development
   article](https://drcytometer.github.io/AutoSpectral/articles/Development.html)
+- This is my first R package.
 
 If you want to use data from another cytometer and are wiling to provide
 files for establishing the workflow, contact the author/maintainer.
@@ -194,6 +195,57 @@ sample.dir <- "./Raw samples"
 unmix.folder( sample.dir, no.af.spectra, asp, flow.control, method = "WLS" )
 ```
 
+## Installation and Runtime
+
+Installation via GitHub should take only a minute or so. It takes less
+than that on a Dell i7 core laptop.
+
+Occasionally, the help gets corrupted. Just re-install if that happens.
+If you know why this happens, let me know.
+
+Installation of `AutoSpectralRcpp` will take a couple of minutes because
+the code needs to compile. You will also first have to install Rtools to
+have a compiler, and that will take longer, probably 10 minutes or so.
+Upgrading the BLAS and LAPACK (see below) also takes several minutes if
+you’re taking the time to read the instructions carefully.
+
+Runtime will vary considerably depending on the size and quantity of
+files you’re processing. For the benchmark 42-colour Aurora data set
+using single-stained cell controls with plenty of data, the slow steps
+in the pre-processing pipeline are `define.flow.control()` and
+`clean.controls()`. For the same Aurora dataset on the aforementioned i7
+Windows laptop, I get: `define.flow.control()` v0.8.7: 12min sequential,
+9min parallel `define.flow.control()` v0.9.0: 4min sequential, 2min
+parallel `clean.controls()` v0.8.7: 11min sequential, not possible
+parallel `clean.controls()` v0.9.0: 11min sequential, 6.5min parallel,
+not fully optimized `get.spectral.variants()` v.0.8.7: 2min sequential,
+1min parallel `get.spectral.variants()` v.0.9.0: 65sec sequential, 32sec
+parallel
+
+Unmixing time depends on the following variable: - file size (number of
+cells/events, including debris) - number of detectors - number of
+fluorophores - unmixing algorithm. OLS and WLS are fast, per-cell AF
+extraction will be ~50x slower, per-cell fluorophore optimization will
+be 2-4x slower than per-cell AF when running the “fast” approximation
+using AutoSpectralRcpp, or about 20-50x slower when using the “slow”
+exact calculation, again using AutoSpectralRcpp. Using the “fast”
+approximation in pure R will likely be comparable to or slower than the
+“slow” method in C++.
+
+Benchmarks for “C3 Lung_GFP_003_Samples.fcs”, again on the 8-core
+laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:
+`unmix.fcs()` WLS or OLS v0.8.7: 9sec `unmix.fcs()` WLS or OLS v0.9.0:
+9sec `unmix.fcs()` perCell AF extraction v0.8.7: 2min `unmix.fcs()`
+perCell AF extraction v0.9.0: 1min `unmix.fcs()` perCell fluorophore
+optimization “fast” v0.8.7: 9min `unmix.fcs()` perCell fluorophore
+optimization “fast” v0.9.0: 2min `unmix.fcs()` perCell fluorophore
+optimization “slow” v0.8.7: 62min `unmix.fcs()` perCell fluorophore
+optimization “slow” v0.9.0: 15min `unmix.folder()` WLS or OLS, 6 files,
+v0.8.7: 67sec sequential, interrupted parallel `unmix.folder()` WLS or
+OLS, 6 files, v0.9.0: 62sec sequential, 31sec parallel
+
+Still some work to be done.
+
 ## Go Faster
 
 R is not known for its speed.
@@ -221,10 +273,17 @@ appreciated.
 Do not set multiple threads for the BLAS as this will conflict with
 higher level parallelization, either in AutoSpectral or other packages.
 
-Second, install AutoSpectralRcpp. This is fully accessible from R and
+After upgrading the BLAS, you probably need to reinstall `Rcpp` and
+`RcppArmadillo` to have this compiled with the BLAS.
+
+``` r
+install.packages( c( "Rcpp", "RcppArmadillo" ) )
+```
+
+Now, install AutoSpectralRcpp. This is fully accessible from R and
 integrates with AutoSpectral. But, when it gets to the slow bits in the
 unmixing, it switches over to calculating in C++, so it can be 10-100x
-faster.
+faster. Do this after upgrading the BLAS.
 
 [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp)
 
@@ -271,7 +330,7 @@ For unmixing larger data sets, you will do well to use a machine with
 more CPUs. Suggestions for faster processing are welcome. Some modest
 improvements are in the works.
 
-## Updates and bug fixes
+## Updates and news
 
 - Version 0.8.1: More fluorophores, rearranging detectors if needed
 - Version 0.8.2: Support for Mosaic and Xenith cytometers
@@ -299,3 +358,6 @@ improvements are in the works.
   - Changes to `solve` in `unmix.ols` and `unmix.wls` as suggested by
     SamGG.
   - New functions to `save.unmixing.matrix` and `calculate.weights`
+  - Patches to `define.flow.control` that were causing redundant gates
+    to be created.
+  - Code legibility formatting.
