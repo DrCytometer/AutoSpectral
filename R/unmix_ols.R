@@ -22,8 +22,10 @@ unmix.ols <- function( raw.data, spectra, weights = NULL ) {
   spectra <- t( spectra )
 
   unmixing.matrix <- solve( crossprod( spectra ) ) %*% t( spectra )
+  # unmixing.matrix <- solve( crossprod( spectra ), t( spectra ) )  # alt.
 
   unmixed.data <- raw.data %*% t( unmixing.matrix )
+  # unmixed.data <- tcrossprod(raw.data, unmixing.matrix)  # alt.
 
   colnames( unmixed.data ) <- colnames( spectra )
 

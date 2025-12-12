@@ -54,6 +54,7 @@ BugReports: https://github.com/DrCytometer/AutoSpectral/issues
 Suggests: 
     AutoSpectralRcpp,
     knitr,
-    rmarkdown
+    rmarkdown,
+    RcppML
 VignetteBuilder: knitr
 Config/Needs/website: rmarkdown

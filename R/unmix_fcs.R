@@ -181,6 +181,17 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
   unmixed.data <- switch( method,
                          "OLS" = unmix.ols( spectral.exprs, spectra ),
                          "WLS" = unmix.wls( spectral.exprs, spectra, weights ),
+                         "NNLS" = {
+                           if (!requireNamespace("RcppML", quietly = TRUE)) {
+                             stop(
+                               "The package 'RcppML' is required for Non Negative Least Squares.",
+                               "Install it with : install.packages('RcppML')",
+                               call. = FALSE)
+                           }
+                           unmix.nnls( spectral.exprs, spectra )
+                         },
+                         "OLS_pos" = unmix.ols_pos( spectral.exprs, spectra ),
+                         "WLS_qtopbot" = unmix.wls_qtopbot( spectral.exprs, spectra, weights ),
                          "AutoSpectral" = {
                            if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
                                 "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {

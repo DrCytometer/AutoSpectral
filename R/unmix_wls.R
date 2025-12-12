@@ -46,8 +46,11 @@ unmix.wls <- function( raw.data, spectra, weights = NULL ) {
   # Weighted LS solution: (M^T W M)^{-1} M^T W
   unmixing.matrix <- solve( t( spectra ) %*% W %*% spectra ) %*%
     ( t( spectra ) %*% W )
+  # unmixing.matrix <- solve( t( spectra ) %*% W %*% spectra,
+  #   t( spectra ) %*% W )  # alt.
 
   unmixed.data <- raw.data %*% t( unmixing.matrix )
+  # unmixed.data <- tcrossprod(raw.data, unmixing.matrix)  # alt.
 
   colnames( unmixed.data ) <- colnames( spectra )
 
