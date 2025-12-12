@@ -73,7 +73,8 @@ run.peacoQC <- function( expr.data,
       exports,
       parallel = parallel,
       threads = threads,
-      export.env = environment()
+      export.env = environment(),
+      allow.mclapply.mac = TRUE
     )
     lapply.function <- result$lapply
   } else {
