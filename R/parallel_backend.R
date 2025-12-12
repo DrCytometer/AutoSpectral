@@ -9,6 +9,7 @@
 #' @importFrom parallelly makeClusterPSOCK
 #' @importFrom parallel clusterSetRNGStream clusterEvalQ clusterCall stopCluster
 #' @importFrom parallel clusterExport parLapply
+#' @importFrom RhpcBLASctl blas_set_num_threads omp_set_num_threads
 #'
 #' @param asp The AutoSpectral parameter list.
 #' @param exports The vector of variables and functions to pass to the clusters.
@@ -23,9 +24,12 @@
 #' @return An lapply function, either based on parLapply if parallel backend
 #' initialization was successful or using sequential lapply if not.
 
-parallel.backend <- function( asp, exports, threads,
+parallel.backend <- function( asp,
+                              exports,
+                              threads,
                               export.env = parent.frame(),
-                              dev.mode = FALSE, package.path = NULL ) {
+                              dev.mode = FALSE,
+                              package.path = NULL ) {
 
   # Check if parallelly is available
   if ( !requireNamespace( "parallelly", quietly = TRUE ) ) {
@@ -34,10 +38,17 @@ parallel.backend <- function( asp, exports, threads,
     return( list( cl = NULL, lapply = lapply ) )
   }
 
+  # check threads
+  if ( is.null( threads ) || !is.numeric( threads ) || threads < 1 ) {
+    threads <- 1
+  } else {
+    threads <- as.integer( threads )
+  }
+
   cl <- tryCatch( {
     parallelly::makeClusterPSOCK(
       threads,
-      autoStop = TRUE,
+      autoStop = FALSE,
       verbose = FALSE
     )
   }, error = function( e ) {
@@ -63,9 +74,11 @@ parallel.backend <- function( asp, exports, threads,
       } )
 
       # Get all R files
-      r.files <- list.files( file.path( package.path, "R" ),
-                             pattern = "\\.R$",
-                             full.names = TRUE )
+      r.files <- list.files(
+        file.path( package.path, "R" ),
+        pattern = "\\.R$",
+        full.names = TRUE
+        )
 
       # Source all files into global environment
       parallel::clusterCall( cl, function( files ) {
@@ -74,15 +87,47 @@ parallel.backend <- function( asp, exports, threads,
         }
       }, files = r.files )
 
+      # run thread setup
+      parallel::clusterEvalQ(cl, {
+        try( {
+          if ( requireNamespace( "RhpcBLASctl", quietly = TRUE ) ) {
+            RhpcBLASctl::blas_set_num_threads( 1 )
+            RhpcBLASctl::omp_set_num_threads( 1 )
+          } else {
+            Sys.setenv(
+              OMP_NUM_THREADS = "1",
+              OPENBLAS_NUM_THREADS = "1",
+              VECLIB_MAXIMUM_THREADS = "1"
+            )
+          }
+        }, silent = TRUE)
+      } )
+
     } else {
+      # standard, non-dev mode
+      # load AutoSpectral onto clusters
       parallel::clusterEvalQ( cl, {
         library( AutoSpectral )
-        #library( flowCore )
+      } )
+      # run thread setup
+      parallel::clusterEvalQ(cl, {
+        try( {
+          if ( requireNamespace( "RhpcBLASctl", quietly = TRUE ) ) {
+            RhpcBLASctl::blas_set_num_threads( 1 )
+            RhpcBLASctl::omp_set_num_threads( 1 )
+          } else {
+            Sys.setenv(
+              OMP_NUM_THREADS = "1",
+              OPENBLAS_NUM_THREADS = "1",
+              VECLIB_MAXIMUM_THREADS = "1"
+            )
+          }
+        }, silent = TRUE)
       } )
     }
     TRUE
   }, error = function( e ) {
-    parallel::stopCluster( cl )
+    try( parallel::stopCluster( cl ), silent = TRUE )
     message( "Failed to load packages on workers. Falling back to sequential processing." )
     message( "Error: ", e$message )
     return( NULL )
@@ -92,19 +137,21 @@ parallel.backend <- function( asp, exports, threads,
     return( list( cl = NULL, lapply = lapply ) )
   }
 
-  # Export variables
+  # Export variables to workers
   export.result <- tryCatch( {
-    parallel::clusterExport( cl, varlist = exports, envir = export.env )
+    if ( length( exports ) > 0 ) {
+      parallel::clusterExport( cl, varlist = exports, envir = export.env )
+    }
     TRUE
   }, error = function( e ) {
-    parallel::stopCluster( cl )
+    try( parallel::stopCluster( cl ), silent = TRUE )
     message( "Failed to export variables to workers. Falling back to sequential processing." )
     message( "Error: ", e$message )
     return( NULL )
   } )
 
   if ( is.null( export.result ) ) {
-    return( list( cl = NULL, lapply = lapply ) )
+    return( list( cl = NULL, lapply = lapply,cleanup = NULL ) )
   }
 
   # Wrapper lapply function
@@ -112,5 +159,10 @@ parallel.backend <- function( asp, exports, threads,
     parallel::parLapply( cl, x, FUN, ... )
   }
 
-  list( cl = cl, lapply = lapply.fun )
+  cleanup <- function() {
+    # Stop cluster gracefully; ignore errors
+    try( parallel::stopCluster( cl ), silent = TRUE )
+  }
+
+  list( cl = cl, lapply = lapply.fun, cleanup = cleanup )
 }
