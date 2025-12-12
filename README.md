@@ -93,6 +93,8 @@ bugs. Sorry. Thanks to all of you providing feedback. Please submit any
 and all issues either using the Issues page or via email at
 colibri-cytometry at gmail.
 
+I will be taking a break from addressing issues over the holiday period.
+
 To submit a bug report, go to
 [Issues](https://github.com/DrCytometer/AutoSpectral/issues).
 
@@ -370,8 +372,16 @@ improvements are in the works.
   - See also updates in `AutoSpectralRcpp`, including a large speed up
     and general improvement to the Poisson IRLS unmixing.
   - Patch to `reload.flow.control` bug affecting ID7000 samples.
-  - Changes to `solve` in `unmix.ols` and `unmix.wls` as suggested by
-    SamGG.
+  - Patch to `define.flow.control()` affecting universal negative
+    definitions and impacting on `clean.controls()`.
+  - Calculation of the unmixing matrix (Moore-Penrose pseudoinverse)
+    will now be done using singular value decomposition `svd()` for
+    numerical stability for all approaches. Up to now, it has been done
+    with normal equations via `solve()`. This should be better in edge
+    cases. In most cases, the only difference will be floating point
+    error. Calculation time is equivalent because almost all of the
+    computational effort is on projecting the raw data into the unmixed
+    space via the unmixing matrix, not calculating the unmixing matrix.
   - New functions to `save.unmixing.matrix` and `calculate.weights`
   - Patches to `define.flow.control` that were causing redundant gates
     to be created.
