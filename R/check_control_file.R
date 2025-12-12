@@ -353,78 +353,85 @@ check.control.file <- function( control.dir, control.def.file, asp,
   viability.input <- control.table$is.viability
   viability.input.valid.idx <- !is.na( viability.input )
   large.gate.input <- control.table$large.gate
-  large.gate.valid.idx <- !is.na( large.gate.input )
+  acceptable.input <- c( TRUE, FALSE )
 
-  acceptable.input <- c("TRUE", "FALSE")
+  # Logical validity: TRUE/FALSE/NA allowed, anything else triggers error
+  valid.logical <- is.na( large.gate.input ) | large.gate.input %in% acceptable.input
+  non.standard.idx <- !valid.logical
 
   # check for non-standard entries
-  if ( !is.logical( large.gate.input ) ) {
-    non.standard.idx <- large.gate.valid.idx & !( large.gate.input %in% acceptable.input )
+  if ( any( non.standard.idx ) ) {
+    warning( "Only TRUE and FALSE are acceptable options for `large.gate`." )
+    message( paste(
+      "\033[31mOnly `TRUE` and `FALSE` are acceptable options for `large.gate`.",
+      "Enter TRUE, FALSE or leave the field blank (equivalent to FALSE).\033[0m",
+      sep = "\n"
+    ) )
+    message( "Problematic entries:" )
 
-    if ( any( non.standard.idx ) ) {
-      warning( "Only `TRUE` and `FALSE` are acceptable options for `large.gate`." )
-      message( paste(
-        "\033[31mOnly `TRUE` and `FALSE` are acceptable options for `large.gate`.",
-        "Enter TRUE, FALSE or leave the field blank (equivalent to FALSE).\033[0m",
-        sep = "\n"
-      ) )
-      message( "Problematic entry:" )
-
-      # Return filenames of problematic entries
-      large.gate.error <- control.table$filename[ non.standard.idx ]
-      message( paste( large.gate.error, collapse = "\n" ) )
-      errors$large.gate.error <- large.gate.error
-    }
+    # Return filenames of problematic entries
+    large.gate.error <- control.table$filename[ non.standard.idx ]
+    message( paste( large.gate.error, collapse = "\n" ) )
+    errors$large.gate.error <- large.gate.error
   }
 
-  if ( !is.logical( viability.input ) ) {
-    non.standard.idx <- viability.input.valid.idx & !( viability.input %in% acceptable.input )
+  # Logical validity: only TRUE, FALSE, or NA allowed
+  valid.logical <- is.na( viability.input ) | ( viability.input %in% acceptable.input )
+  non.standard.idx <- !valid.logical
 
-    if ( any( non.standard.idx ) ) {
-      warning( "Only `TRUE` and `FALSE` are acceptable options for `is.viability`." )
-      message( paste(
-        "\033[31mOnly `TRUE` and `FALSE` are acceptable options for `is.viability`.",
-        "Enter TRUE, FALSE or leave the field blank (equivalent to FALSE).\033[0m",
-        sep = "\n"
-      ) )
-      message( "Problematic entry:" )
-
-      # Return filenames of problematic entries
-      viability.error <- control.table$filename[ non.standard.idx ]
-      message( paste( viability.error, collapse = "\n" ) )
-      errors$viability.error <- viability.error
-    }
+  if ( any( non.standard.idx ) ) {
+    warning( "Only TRUE and FALSE are acceptable options for `is.viability`." )
+    message( paste(
+      "\033[31mOnly `TRUE` and `FALSE` are acceptable options for `is.viability`.",
+      "Enter TRUE, FALSE or leave the field blank (equivalent to FALSE).\033[0m",
+      sep = "\n"
+    ) )
+    message( "Problematic entries:" )
+    viability.error <- control.table$filename[ non.standard.idx ]
+    message( paste( viability.error, collapse = "\n" ) )
+    errors$viability.error <- viability.error
   }
 
   # check for misallocation of `large.gate` or `is.viability` to bead controls
-  if ( any( large.gate.input ) ) {
-    non.standard.idx <- large.gate.valid.idx & ( control.table$control.type != "cells" )
+  # For entries marked TRUE, ensure they correspond to cell-based controls
+  true.large.gate.idx <- which( !is.na( large.gate.input ) & large.gate.input == TRUE )
 
-    if ( any( non.standard.idx ) ) {
-      warning( "Only cell-based controls should be marked as `TRUE` for `large.gate" )
+  if ( length( true.large.gate.idx ) > 0 ) {
+    # TRUE is allowed only when control.type == "cells"
+    invalid.true.idx <- true.large.gate.idx[
+      control.table$control.type[ true.large.gate.idx ] != "cells" ]
+
+    if ( length( invalid.true.idx ) > 0) {
+      warning( "Only cell-based controls should be marked as TRUE for `large.gate`." )
       message( paste(
-        "\033[31mOnly cell-based controls should be marked as `TRUE` for `large.gate",
-        "For bead-based controls, no matter the marker, leave `large.gate` blank or enter `FALSE`.\033[0m",
-        sep = "\n " ) )
-      message( "Problematic entry:" )
-      large.gate.error2 <- control.table$filename[ non.standard.idx ]
-      message( paste( large.gate.error2, sep = "\n" ) )
+        "\033[31mOnly cell-based controls should be marked as `TRUE` for `large.gate`.",
+        "For bead-based controls, leave `large.gate` blank or set it to FALSE.\033[0m",
+        sep = "\n"
+      ) )
+      message( "Problematic entries:" )
+      large.gate.error2 <- control.table$filename[ invalid.true.idx ]
+      message( paste( large.gate.error2, collapse = "\n" ) )
       errors$large.gate.error2 <- large.gate.error2
     }
   }
 
-  if ( any( viability.input ) ) {
-    non.standard.idx <- viability.input.valid.idx & ( control.table$control.type != "cells" )
+  # For entries that are TRUE, ensure they correspond to cell-based controls
+  true.viability.idx <- which( !is.na( viability.input ) & viability.input == TRUE )
 
-    if ( any( non.standard.idx ) ) {
-      warning( "Only cell-based controls should be marked as `TRUE` for `is.viability." )
+  if ( length( true.viability.idx ) > 0) {
+    invalid.true.idx <- true.viability.idx[
+      control.table$control.type[ true.viability.idx ] != "cells" ]
+
+    if ( length( invalid.true.idx ) > 0 ) {
+      warning( "Only cell-based controls should be marked as TRUE for `is.viability`." )
       message( paste(
-        "\033[31mOnly cell-based controls should be marked as `TRUE` for `is.viability.",
-        "For bead-based viability controls (ArC beads), leave `is.viability` blank or `FALSE`.\033[0m",
-        sep = "\n " ) )
-      message( "Problematic entry:" )
-      viability.gate.error <- control.table$filename[ non.standard.idx ]
-      message( paste( viability.gate.error, sep = "\n" ) )
+        "\033[31mOnly cell-based controls should be marked as `TRUE` for `is.viability`.",
+        "For bead-based viability controls (ArC beads), leave `is.viability` blank or FALSE.\033[0m",
+        sep = "\n"
+      ) )
+      message( "Problematic entries:")
+      viability.gate.error <- control.table$filename[ invalid.true.idx ]
+      message( paste( viability.gate.error, collapse = "\n" ) )
       errors$viability.gate.error <- viability.gate.error
     }
   }
