@@ -11,7 +11,8 @@ create.parallel.lapply(
   threads = NULL,
   export.env = parent.frame(),
   dev.mode = FALSE,
-  package.path = NULL
+  package.path = NULL,
+  allow.mclapply.mac = FALSE
 )
 }
 \arguments{
@@ -35,6 +36,10 @@ Default is \code{FALSE}.}
 \item{package.path}{File.path to the R package files for AutoSpectral to
 permit loading of the functions via \code{devtools::load_all()} while in \code{dev.mode}.
 Default is \code{NULL}.}
+
+\item{allow.mclapply.mac}{Logical, if \code{TRUE} permits \code{mclapply()} forking on
+Mac OS. Default \code{FALSE} forces PSOCK cluster use on Mac to prevent
+multithreaded Accelerate BLAS from crashing parallels when matrix ops are used.}
 }
 \value{
 An lapply function, either based on \code{parLapply} for Windows or \code{mcLapply}
