@@ -7,7 +7,6 @@
 #' rapid unmixing at a later date, without recalculating spectra or gates.
 #'
 #' @importFrom utils read.csv
-#' @importFrom dplyr filter
 #' @importFrom flowCore read.FCS
 #'
 #' @param control.dir file path to the single stained control fcs files
@@ -23,13 +22,21 @@
 
 reload.flow.control <- function( control.dir, control.def.file, asp ) {
 
-  # read channels from controls
+  # read control info
   control.table <- read.csv(
-    control.def.file, na.strings = "",
-    stringsAsFactors = FALSE
+    control.def.file,
+    stringsAsFactors = FALSE,
+    strip.white = TRUE
   )
 
-  control.table <- dplyr::filter( control.table, filename != "" )
+  # trim white space, convert blanks to NAs
+  control.table[] <- lapply( control.table, function( x ) {
+    if ( is.character( x ) ) {
+      x <- trimws( x )
+      x[ x == "" ] <- NA
+      x
+    } else x
+  } )
 
   if ( anyDuplicated( control.table$filename ) != 0 )
     stop( "duplicated filenames in fcs data", call. = FALSE )
