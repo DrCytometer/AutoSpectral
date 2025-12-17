@@ -13,7 +13,8 @@ get.af.spectra(
   figures = TRUE,
   plot.dir = NULL,
   table.dir = NULL,
-  title = NULL
+  title = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -42,6 +43,8 @@ Default is \code{NULL}, which inherits from \code{asp$table.af.dir}.}
 
 \item{title}{Title for the output spectral plots and csv file. Default is
 \verb{Autofluorescence spectra}.}
+
+\item{verbose}{Logical, controls messaging. Default is \code{TRUE}.}
 }
 \value{
 A matrix of autofluorescence spectra.
