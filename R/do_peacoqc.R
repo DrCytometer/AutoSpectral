@@ -39,8 +39,8 @@ do.peacoQC <- function( dirty.expr, sample.name, spectral.channel,
     dir.create( output.dir )
 
   if ( verbose )
-    message( paste( "\033[34m", "Performing time-based cleaning of", sample.name,
-                    "using PeacoQC", "\033[0m" ) )
+    message( paste0( "\033[34m", "Performing time-based cleaning of ", sample.name,
+                     " using PeacoQC", "\033[0m" ) )
 
   transform.list <- flowCore::transformList( spectral.channel, biexp.transform )
 
