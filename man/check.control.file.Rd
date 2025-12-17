@@ -4,13 +4,13 @@
 \alias{check.control.file}
 \title{Check Control File}
 \usage{
-check.control.file(control.dir, control.def.file, asp, strict = FALSE)
+check.control.file(control.def.file, control.dir, asp, strict = FALSE)
 }
 \arguments{
-\item{control.dir}{File path to the single-stained control FCS files.}
-
 \item{control.def.file}{CSV file defining the single-color control file names,
 fluorophores they represent, marker names, peak channels, and gating requirements.}
+
+\item{control.dir}{File path to the single-stained control FCS files.}
 
 \item{asp}{The AutoSpectral parameter list defined
 using \code{get.autospectral.param}.}
@@ -19,7 +19,7 @@ using \code{get.autospectral.param}.}
 continues and outputs a list of errors. Default is \code{FALSE}.}
 }
 \value{
-A named list of errors and warnings intended to help the user fix
+A dataframe of errors and warnings intended to help the user fix
 problems with the \code{control.def.file}.
 }
 \description{
