@@ -75,6 +75,7 @@
 #' will be used. `asp$worker.process.n` is set by default to be one less than the
 #' available cores on the machine. Multi-threading is only used if `parallel` is
 #' `TRUE`.
+#' @param verbose Logical, controls messaging. Default is `TRUE`.
 #'
 #' @return None. Saves the unmixed FCS files to the specified output directory.
 #'
@@ -97,7 +98,8 @@ unmix.folder <- function( fcs.dir, spectra, asp, flow.control,
                           balance.weight = 0.5,
                           speed = "fast",
                           parallel = FALSE,
-                          threads = NULL ) {
+                          threads = NULL,
+                          verbose = TRUE ) {
 
   if ( is.null( output.dir ) )
     output.dir <- asp$unmixed.fcs.dir
@@ -130,7 +132,8 @@ unmix.folder <- function( fcs.dir, spectra, asp, flow.control,
     balance.weight = balance.weight,
     speed = speed,
     parallel = parallel,
-    threads = threads
+    threads = threads,
+    verbose = verbose
   )
 
   # Set up parallel processing
