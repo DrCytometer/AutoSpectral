@@ -15,12 +15,15 @@
 #' @param spectra Spectral signatures of fluorophores, normalized between 0
 #' and 1, with fluorophores in rows and detectors in columns.
 #' @param weights Optional numeric vector of weights, one per fluorescent
-#' detector. Default is `NULL`, in which case weighting will be done by
-#' channel means.
+#' detector. Default is `NULL`, in which case weighting aka scaling is
+#' based on channel top values and a bottom value among the top values.
 #' @param qtop quantile to identify the top value of each channel. Maximum is
-#' an unstable measure.
-#' @param qbot quantile to identify the constant to add to the denominator of
-#' the weight formula.
+#' an unstable measure, so the 99th percentile is used by default.
+#' @param qbot quantile to identify the constant to add to moderate the
+#' weighting. For the channel with the lowest top, 0 results in a weight of
+#' about 2 whereas 1 results in a large weight. The channel with the highest
+#' top value has always a weight of 1. WLS results in much larger weights than
+#' those obtained with qbot = 1.
 #'
 #' @return A matrix containing unnmixed data with cells in rows and
 #' fluorophores in columns.
@@ -36,8 +39,10 @@ unmix.wls_qtopbot <- function(
     # get the top value of each channel; maximum is unstable
     tops <- apply( raw.data, 2, quantile, probs = qtop )
     # converts tops to weights: perfer linear to square, purely arbitrary
-    # weights <- (weights)**2 / (weights**2 + quantile(weights**2, probs = qbot))
-    weights <- (tops) / (tops + quantile(tops, probs = qbot))
+    weights <- ( tops + quantile( tops, probs = qbot ) ) / tops
+    # set minimum to 1, i.e. no change
+    # the minimum is the channel with the highest top
+    weights <- weights / min(weights)
 
   }
 
