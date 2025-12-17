@@ -12,7 +12,6 @@
 #' the `readRDS` function) rather than re-running this process.
 #'
 #' @importFrom EmbedSOM SOM
-#' @importFrom dplyr filter
 #' @importFrom lifecycle deprecate_warn
 #' @importFrom flowCore read.FCS exprs
 #'
@@ -99,12 +98,22 @@ get.spectral.variants <- function( control.dir, control.def.file,
   if ( !file.exists( control.def.file ) )
     stop( paste( "Unable to locate control.def.file:", control.def.file ) )
 
-  if ( verbose ) message( "\033[34m Checking control file for errors \033[0m" )
+  if ( verbose ) message( "\033[34mChecking control file for errors \033[0m" )
   check.control.file( control.dir, control.def.file, asp, strict = TRUE )
 
-  control.table <- read.csv( control.def.file, na.strings = "",
-                             stringsAsFactors = FALSE )
-  control.table <- dplyr::filter( control.table, filename != "" )
+  control.table <- read.csv(
+    control.def.file,
+    stringsAsFactors = FALSE,
+    strip.white = TRUE
+  )
+
+  control.table[] <- lapply( control.table, function( x ) {
+    if ( is.character( x ) ) {
+      x <- trimws( x )
+      x[ x == "" ] <- NA
+      x
+    } else x
+  } )
 
   # set channels to be used
   flow.set.resolution <- asp$expr.data.max
@@ -157,7 +166,7 @@ get.spectral.variants <- function( control.dir, control.def.file,
   }
 
   # get thresholds for positivity
-  if ( verbose ) message( paste( "\033[33m", "Calculating positivity thresholds", "\033[0m" ) )
+  if ( verbose ) message( paste0( "\033[33m", "Calculating positivity thresholds", "\033[0m" ) )
   unstained <- suppressWarnings(
     flowCore::read.FCS(
       file.path( control.dir, flow.file.name[ "AF" ] ),
@@ -233,7 +242,7 @@ get.spectral.variants <- function( control.dir, control.def.file,
     result <- list( cleanup = NULL )
   }
 
-  if ( verbose ) message( paste( "\033[33m", "Getting spectral variants", "\033[0m" ) )
+  if ( verbose ) message( paste0( "\033[33m", "Getting spectral variants", "\033[0m" ) )
 
   spectral.variants <- tryCatch(
     expr = {
@@ -261,7 +270,7 @@ get.spectral.variants <- function( control.dir, control.def.file,
   # drop any that are NULL due to error
   spectral.variants <- spectral.variants[ !sapply( spectral.variants, is.null ) ]
 
-  if ( verbose ) message( paste( "\033[33m", "Spectral variation computed!", "\033[0m" ) )
+  if ( verbose ) message( paste0( "\033[33m", "Spectral variation computed!", "\033[0m" ) )
 
   variants <- list(
     thresholds = unmixed.thresholds,
