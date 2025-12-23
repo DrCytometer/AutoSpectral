@@ -1,4 +1,4 @@
-# AutoSpectral 0.9.0 (2025-12-07)
+# AutoSpectral 0.9.0 (2025-12-23)
 
 ## New features
 - Unmixing matrix can be saved via save.unmixing.matrix()
@@ -30,6 +30,7 @@ get.fluor.variants
 - Patch to `reload.flow.control()` bug affecting ID7000 samples.
 - Patch to `define.flow.control()` affecting universal negative definitions and 
 impacting on `clean.controls()`.
+- Patch to `check.control.file()` affecting Opteon samples.
 
 
 ---
