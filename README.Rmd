@@ -61,7 +61,7 @@ BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC"))
 devtools::install_github("DrCytometer/AutoSpectral")
 ```
 
-As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, probably not perfect. To try it, visit [AutoSpectralHelper](https://github.com/DrCytometer/AutoSpectralHelper).
+As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, probably not perfect. To try it, visit [AutoSpectralHelper](https://github.com/DrCytometer/AutoSpectralHelper). If you update AutoSpectral, I recommend downloading a new version of the app to ensure compatibility.
 
 ```{r}
 # To install a specific release, e.g., the previous one:

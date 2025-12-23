@@ -67,40 +67,27 @@ setting up your AutoSpectral control files. This is an interactive html
 app that opens in RStudio. Hopefully this makes things easier. It is
 new, so again, probably not perfect. To try it, visit
 [AutoSpectralHelper](https://github.com/DrCytometer/AutoSpectralHelper).
+If you update AutoSpectral, I recommend downloading a new version of the
+app to ensure compatibility.
 
 ``` r
 # To install a specific release, e.g., the previous one:
 remotes::install_github("DrCytometer/AutoSpectral@v0.8.7")
 #> Using GitHub PAT from the git credential store.
 #> Downloading GitHub repo DrCytometer/AutoSpectral@v0.8.7
-#> parallelly (1.45.1   -> 1.46.0  ) [CRAN]
-#> BH         (1.87.0-1 -> 1.90.0-1) [CRAN]
-#> Skipping 3 packages not available: flowWorkspace, flowCore, PeacoQC
-#> Installing 2 packages: parallelly, BH
-#> Installing packages into 'C:/Users/Oliver Burton/AppData/Local/Temp/RtmpolsH0c/temp_libpath5b385e185829'
-#> (as 'lib' is unspecified)
-#> 
-#>   There is a binary version available but the source version is later:
-#>      binary   source needs_compilation
-#> BH 1.87.0-1 1.90.0-1             FALSE
-#> 
-#> package 'parallelly' successfully unpacked and MD5 sums checked
-#> 
-#> The downloaded binary packages are in
-#>  C:\Users\Oliver Burton\AppData\Local\Temp\RtmpWaIHME\downloaded_packages
-#> installing the source package 'BH'
+#> Skipping 4 packages not available: flowWorkspace, flowCore, PeacoQC, EmbedSOM
 #> ── R CMD build ─────────────────────────────────────────────────────────────────
-#>       ✔  checking for file 'C:\Users\Oliver Burton\AppData\Local\Temp\RtmpWaIHME\remotes36101ec43ac1\DrCytometer-AutoSpectral-b02433e/DESCRIPTION'
-#>       ─  preparing 'AutoSpectral': (10s)
+#>          checking for file 'C:\Users\Oliver Burton\AppData\Local\Temp\Rtmp8AGana\remotes6098571e2aa5\DrCytometer-AutoSpectral-b02433e/DESCRIPTION' ...  ✔  checking for file 'C:\Users\Oliver Burton\AppData\Local\Temp\Rtmp8AGana\remotes6098571e2aa5\DrCytometer-AutoSpectral-b02433e/DESCRIPTION'
+#>       ─  preparing 'AutoSpectral': (14s)
 #>    checking DESCRIPTION meta-information ...     checking DESCRIPTION meta-information ...   ✔  checking DESCRIPTION meta-information
-#>       ─  checking for LF line-endings in source and make files and shell scripts (362ms)
+#>       ─  checking for LF line-endings in source and make files and shell scripts (430ms)
 #>       ─  checking for empty or unneeded directories
 #>   Removed empty directory      Removed empty directory 'AutoSpectral/vignettes'
 #>      Omitted 'LazyData' from DESCRIPTION
-#>       ─  building 'AutoSpectral_0.8.7.tar.gz'
+#>       ─  building 'AutoSpectral_0.8.7.tar.gz' (384ms)
 #>      
 #> 
-#> Installing package into 'C:/Users/Oliver Burton/AppData/Local/Temp/RtmpolsH0c/temp_libpath5b385e185829'
+#> Installing package into 'C:/Users/Oliver Burton/AppData/Local/Temp/RtmpWOVJmR/temp_libpath41e45dbe6912'
 #> (as 'lib' is unspecified)
 ```
 
