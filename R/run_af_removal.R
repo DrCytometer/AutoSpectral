@@ -71,8 +71,10 @@ run.af.removal <- function( clean.expr,
 
   # set up parallel processing
   if ( parallel ) {
-    if ( verbose )
+    if ( verbose ) {
       message( "\033[34mIdentifying and removing autofluorescence contamination \033[0m" )
+      message( "\033[34mCheck `figure_clean_controls` for plots \033[0m" )
+    }
 
     internal.functions <- c( "remove.af" )
     exports <- c( "args.list", "af.removal.sample", internal.functions )
