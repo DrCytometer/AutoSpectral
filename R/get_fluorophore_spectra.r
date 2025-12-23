@@ -216,11 +216,17 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
     # calculate unmixing matrix using singular value decomposition
     sv <- svd( t( marker.spectra ) )
     unmixing.matrix <- sv$v %*% ( t( sv$u ) / sv$d )
+    colnames( unmixing.matrix ) <- colnames( marker.spectra )
+    rownames( unmixing.matrix ) <- rownames( marker.spectra )
 
     # plot the unmixing matrix as a heatmap
-    spectral.heatmap( unmixing.matrix, paste( title, "unmixing_matrix", sep = "_" ),
-                      plot.dir = asp$figure.spectra.dir,
-                      legend.label = "Coefficients", color.palette = "mako" )
+    spectral.heatmap(
+      spectra = unmixing.matrix,
+      title = paste( title, "unmixing_matrix", sep = "_" ),
+      plot.dir = asp$figure.spectra.dir,
+      legend.label = "Coefficients",
+      color.palette = "mako"
+    )
   }
 
   # save the spectra as a CSV file
