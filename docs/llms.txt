@@ -60,6 +60,15 @@ setting up your AutoSpectral control files. This is an interactive html
 app that opens in RStudio. Hopefully this makes things easier. It is
 new, so again, probably not perfect. To try it, visit
 [AutoSpectralHelper](https://github.com/DrCytometer/AutoSpectralHelper).
+If you update AutoSpectral, I recommend downloading a new version of the
+app to ensure compatibility.
+
+To install a specific release, e.g., the previous one, use the version
+number:
+
+``` r
+remotes::install_github("DrCytometer/AutoSpectral@v0.8.7")
+```
 
 ### Dev branch
 
@@ -85,6 +94,8 @@ AutoSpectral is pretty complex and newly released, so there will be
 bugs. Sorry. Thanks to all of you providing feedback. Please submit any
 and all issues either using the Issues page or via email at
 colibri-cytometry at gmail.
+
+I will be taking a break from addressing issues over the holiday period.
 
 To submit a bug report, go to
 [Issues](https://github.com/DrCytometer/AutoSpectral/issues).
@@ -117,11 +128,26 @@ Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_
   fully supported in flowCore. You may receive warnings, but things
   should still work.
 - More stuff in progress will appear in the [Development
-  article](https://drcytometer.github.io/AutoSpectral/articles/Development.html)
+  article](https://drcytometer.github.io/AutoSpectral/articles/Development.html).
 - This is my first R package.
 
 If you want to use data from another cytometer and are wiling to provide
-files for establishing the workflow, contact the author/maintainer.
+files for establishing the workflow, contact the author/maintainer. See
+existing information, which may also assist you in setting up your
+control file, in the [cytometer
+database](https://docs.google.com/spreadsheets/d/1wj7QPkgpsuPNeVKyt-WWdBu5R48aZTgEbH8-_bpKeBY/edit?usp=sharing).
+
+AutoSpectral relies on a database of information containing fluorophore
+emission details. If your fluorophore is not detected automatically by
+[`create.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/create.control.file.md)
+and you want to add it, visit the Google sheet for the [fluorophore
+database](https://docs.google.com/spreadsheets/d/14j4lAQ6dkjDBKMborDv_MkSptyNBqZiBsq5jNNSCoiQ/edit?usp=sharing)
+and add it there. New fluorophores will be incorporated into updates.
+
+Similarly, there is a marker database to detect (and standardize) marker
+names if they appear in the single-stained FCS control file names. Feel
+free to add more markers or synonyms to the [marker
+database](https://docs.google.com/spreadsheets/d/16FAinR_Nfnl00mpHvmQFJT_uJJY3VUWk29yAaQ7HHn8/edit?usp=sharing).
 
 This work has received funding from the KU Leuven C1 program, the
 European Union’s Horizon 2020 research and innovation programme under
@@ -381,8 +407,20 @@ improvements are in the works.
   - See also updates in `AutoSpectralRcpp`, including a large speed up
     and general improvement to the Poisson IRLS unmixing.
   - Patch to `reload.flow.control` bug affecting ID7000 samples.
-  - Changes to `solve` in `unmix.ols` and `unmix.wls` as suggested by
-    SamGG.
+  - Patch to
+    [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
+    affecting universal negative definitions and impacting on
+    [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md).
+  - Calculation of the unmixing matrix (Moore-Penrose pseudoinverse)
+    will now be done using singular value decomposition
+    [`svd()`](https://rdrr.io/r/base/svd.html) for numerical stability
+    for all approaches. Up to now, it has been done with normal
+    equations via [`solve()`](https://rdrr.io/r/base/solve.html). This
+    should be better in edge cases. In most cases, the only difference
+    will be floating point error. Calculation time is equivalent because
+    almost all of the computational effort is on projecting the raw data
+    into the unmixed space via the unmixing matrix, not calculating the
+    unmixing matrix.
   - New functions to `save.unmixing.matrix` and `calculate.weights`
   - Patches to `define.flow.control` that were causing redundant gates
     to be created.
@@ -426,6 +464,8 @@ improvements are in the works.
   : Do Gate
 - [`do.peacoQC()`](https://drcytometer.github.io/AutoSpectral/reference/do.peacoQC.md)
   : Perform Quality Control on Flow Cytometry Data using PeacoQC
+- [`.new_issue()`](https://drcytometer.github.io/AutoSpectral/reference/dot-new_issue.md)
+  : New Issue
 - [`downsample.control()`](https://drcytometer.github.io/AutoSpectral/reference/downsample.control.md)
   : Downsample Control Data
 - [`fit.af.spline()`](https://drcytometer.github.io/AutoSpectral/reference/fit.af.spline.md)
@@ -536,6 +576,8 @@ improvements are in the works.
   : Unmix Using Poisson Regression
 - [`unmix.wls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.md)
   : Unmix Using Weighted Least Squares
+- [`validate.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.md)
+  : Validate Control File
 
 # Articles
 

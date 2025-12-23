@@ -36,6 +36,8 @@
   : Do Gate
 - [`do.peacoQC()`](https://drcytometer.github.io/AutoSpectral/reference/do.peacoQC.md)
   : Perform Quality Control on Flow Cytometry Data using PeacoQC
+- [`.new_issue()`](https://drcytometer.github.io/AutoSpectral/reference/dot-new_issue.md)
+  : New Issue
 - [`downsample.control()`](https://drcytometer.github.io/AutoSpectral/reference/downsample.control.md)
   : Downsample Control Data
 - [`fit.af.spline()`](https://drcytometer.github.io/AutoSpectral/reference/fit.af.spline.md)
@@ -146,3 +148,5 @@
   : Unmix Using Poisson Regression
 - [`unmix.wls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.md)
   : Unmix Using Weighted Least Squares
+- [`validate.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.md)
+  : Validate Control File

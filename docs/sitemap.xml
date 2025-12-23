@@ -35,6 +35,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/do.gate.af.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/do.gate.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/do.peacoQC.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-new_issue.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/downsample.control.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/estimate.spread.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/fit.af.spline.html</loc></url>
@@ -98,5 +99,6 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.ols.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.poisson.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.html</loc></url>
 </urlset>
 

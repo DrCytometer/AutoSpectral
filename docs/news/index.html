@@ -43,7 +43,7 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.9.0" id="autospectral-090-2025-12-07">AutoSpectral 0.9.0 (2025-12-07)<a class="anchor" aria-label="anchor" href="#autospectral-090-2025-12-07"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.9.0" id="autospectral-090-2025-12-23">AutoSpectral 0.9.0 (2025-12-23)<a class="anchor" aria-label="anchor" href="#autospectral-090-2025-12-23"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-9-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-9-0"></a></h3>
 <ul><li>Unmixing matrix can be saved via save.unmixing.matrix()</li>
@@ -52,19 +52,21 @@
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-9-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-9-0"></a></h3>
-<ul><li>More stable, faster parallel backend</li>
+<ul><li>More stable, faster parallel backend allowing mclapply in Mac when appropriate.</li>
 <li>Changes to get.spectral.variants, including permanent fixing of previously user-modifiable parameters and low-level denoising of spectra.</li>
 <li>More checks in check.control.file.</li>
 <li>Faster AutoSpectral unmixing in base R.</li>
 <li>Adjustments to reduce any discontinuities produced during unmixing.</li>
 <li>See also updates in AutoSpectralRcpp, including a large speed up and general improvement to the Poisson IRLS unmixing.</li>
-<li>Changes to solve in unmix.ols and unmix.wls as suggested by SamGG.</li>
+<li>Calculation of the unmixing matrix (Moore-Penrose pseudoinverse) will now be done using singular value decomposition <code><a href="https://rdrr.io/r/base/svd.html" class="external-link">svd()</a></code> for numerical stability for all approaches. Up to now, it has been done with normal equations via <code><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve()</a></code>. This should be better in edge cases. In most cases, the only difference will be floating point error. Calculation time is equivalent because almost all of the computational effort is on projecting the raw data into the unmixed space via the unmixing matrix, not calculating the unmixing matrix.</li>
 <li>FCS files will now be written with “-A” in the channel names, e.g., “PE-A” rather than just “PE”.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-9-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-9-0"></a></h3>
 <ul><li>Bug patch for situations with beads using internal negatives in get.fluor.variants</li>
-<li>Patch to reload.flow.control bug affecting ID7000 samples.</li>
+<li>Patch to <code><a href="../reference/reload.flow.control.html">reload.flow.control()</a></code> bug affecting ID7000 samples.</li>
+<li>Patch to <code><a href="../reference/define.flow.control.html">define.flow.control()</a></code> affecting universal negative definitions and impacting on <code><a href="../reference/clean.controls.html">clean.controls()</a></code>.</li>
+<li>Patch to <code><a href="../reference/check.control.file.html">check.control.file()</a></code> affecting Opteon samples.</li>
 </ul><hr></div>
 </div>
     <div class="section level2">

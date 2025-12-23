@@ -13,7 +13,8 @@ create.parallel.lapply(
   threads = NULL,
   export.env = parent.frame(),
   dev.mode = FALSE,
-  package.path = NULL
+  package.path = NULL,
+  allow.mclapply.mac = FALSE
 )
 ```
 
@@ -54,6 +55,12 @@ create.parallel.lapply(
   the functions via
   [`devtools::load_all()`](https://devtools.r-lib.org/reference/load_all.html)
   while in `dev.mode`. Default is `NULL`.
+
+- allow.mclapply.mac:
+
+  Logical, if `TRUE` permits `mclapply()` forking on Mac OS. Default
+  `FALSE` forces PSOCK cluster use on Mac to prevent multithreaded
+  Accelerate BLAS from crashing parallels when matrix ops are used.
 
 ## Value
 
