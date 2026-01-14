@@ -188,7 +188,7 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
                     figure.width = asp$figure.similarity.width,
                     figure.height = asp$figure.similarity.height )
 
-    unmixing.matrix <- solve( crossprod( t( marker.spectra ) ) ) %*% marker.spectra
+    unmixing.matrix <- solve( crossprod( t( marker.spectra ) ), marker.spectra)
     spectral.heatmap( unmixing.matrix, paste( title, "unmixing_matrix", sep = "_" ),
                       plot.dir = asp$figure.spectra.dir,
                       legend.label = "Coefficients", color.palette = "mako" )
