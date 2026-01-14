@@ -20,6 +20,7 @@ run.af.removal(
   intermediate.figures = FALSE,
   main.figures = TRUE,
   parallel = FALSE,
+  threads = 1,
   verbose = TRUE
 )
 ```
@@ -88,9 +89,11 @@ run.af.removal(
 - parallel:
 
   Logical, default is `FALSE`, in which case parallel processing will
-  not be used. Parallel processing will likely be faster when many small
-  files are read in. If the data is larger, parallel processing may not
-  accelerate the process much.
+  not be used. Set to `TRUE` to run in parallel.
+
+- threads:
+
+  Number of cores to use for parallel processing, default is `1`.
 
 - verbose:
 

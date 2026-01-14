@@ -35,7 +35,8 @@ clean.controls(
   intermediate.figures = FALSE,
   main.figures = TRUE,
   parallel = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  threads = NULL
 )
 ```
 
@@ -128,6 +129,11 @@ clean.controls(
 - verbose:
 
   Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+
+- threads:
+
+  Numeric, number of threads to use for parallel processing. Default is
+  `NULL` which will revert to `asp$worker.process.n` if `parallel=TRUE`.
 
 ## Value
 

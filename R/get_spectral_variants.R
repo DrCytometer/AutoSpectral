@@ -12,6 +12,8 @@
 #' the `readRDS` function) rather than re-running this process.
 #'
 #' @importFrom EmbedSOM SOM
+#' @importFrom lifecycle deprecate_warn
+#' @importFrom flowCore read.FCS exprs
 #'
 #' @param control.dir File path to the single-stained control FCS files.
 #' @param control.def.file CSV file defining the single-color control file names,
@@ -25,28 +27,27 @@
 #' using `get.af.spectra`.
 #' @param n.cells Numeric, default `2000`. Number of cells to use for defining
 #' the variation in spectra. Up to `n.cells` cells will be selected as positive
-#' events in the peak channel for each fluorophore, above the `pos.quantile` in
-#' the unstained sample.
-#' @param pos.quantile Numeric, default `0.995`. Threshold for positivity. This
-#' quantile will be used to define the maximum extent of the unstained sample in
-#' the unmixed space. Anything above that will be considered positive in the
-#' single-stained controls.
-#' @param som.dim Numeric, default `10`. Number of x and y dimensions to use in
-#' the SOM for clustering the spectral variation.
-#' @param sim.threshold Numeric, default `0.98`. Threshold for cosine similarity-
-#' based exclusion of spectral variants. Any variant less than `sim.threshold`
-#' by `cosine.similarity` from the optimized spectrum for that fluorophore (from
-#' `spectra`) will be excluded from output. This helps to exclude autofluorescence
-#' contamination.
+#' events in the peak channel for each fluorophore, above the 99.5th percentile
+#' level in the unstained sample.
+#' @param som.dim Numeric, default `7`. Number of x and y dimensions to use in
+#' the SOM for clustering the spectral variation. The number of spectra returned
+#' for each fluorophore will increase with the quadratic of `som.dim`, so for 7,
+#' you will get up to 49 variants. Increasing the SOM dimensions does not help.
+#' Somewhere between 4 and 7 appears to be optimal.
 #' @param figures Logical, controls whether the variation in spectra for each
 #' fluorophore is plotted in `output.dir`. Default is `TRUE`.
 #' @param output.dir File path to whether the figures and .rds data file will be
 #' saved. Default is `NULL`, in which case `asp$variant.dir` will be used.
 #' @param parallel Logical, default is `FALSE`, in which case sequential processing
-#' will be used. Parallel processing will likely be faster when many small
-#' files are read in. If the data is larger, parallel processing may not
-#' accelerate the process much or may fail outright.
+#' will be used. The new parallel processing should always be faster.
 #' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+#' @param threads Numeric, default is `NULL`, in which case `asp$worker.process.n`
+#' will be used. `asp$worker.process.n` is set by default to be one less than the
+#' available cores on the machine. Multi-threading is only used if `parallel` is
+#' `TRUE`.
+#' @param ... Ignored. Previously used for deprecated arguments such as
+#' `pos.quantile` and `sim.threshold`, which are now fixed internally and no
+#' longer user-settable.
 #'
 #' @return A vector with the indexes of events inside the initial gate.
 #'
@@ -54,10 +55,23 @@
 
 get.spectral.variants <- function( control.dir, control.def.file,
                                    asp, spectra, af.spectra,
-                                   n.cells = 2000, pos.quantile = 0.995,
-                                   som.dim = 10, sim.threshold = 0.98,
-                                   figures = TRUE, output.dir = NULL,
-                                   parallel = FALSE, verbose = TRUE ) {
+                                   n.cells = 2000,
+                                   som.dim = 7,
+                                   figures = TRUE,
+                                   output.dir = NULL,
+                                   parallel = FALSE,
+                                   verbose = TRUE,
+                                   threads = NULL,
+                                   ... ) {
+
+  dots <- list( ... )
+
+  if ( !is.null( dots$sim.threshold ) ) {
+    lifecycle::deprecate_warn( "0.9.0", "get.spectral.variants(sim.threshold)", "no longer used" )
+  }
+  if ( !is.null( dots$pos.quantile ) ) {
+    lifecycle::deprecate_warn( "0.9.0", "get.spectral.variants(pos.quantile)", "no longer used" )
+  }
 
   if ( is.null( af.spectra ) )
     stop( "Multiple AF spectra must be provided." )
@@ -69,6 +83,14 @@ get.spectral.variants <- function( control.dir, control.def.file,
   if ( !dir.exists( output.dir ) )
     dir.create( output.dir )
 
+  if ( som.dim > 12 )
+    warning( paste(
+      "Argument `som.dim` has been set to", som.dim, "which will produce",
+      som.dim^2, "spectral variants per fluorophore.", "\n",
+      "More spectral variants means slower unmixing and will also require",
+      "proprotionally more cells in `n.cells` as input."
+    ) )
+
   fluorophores <- rownames( spectra )[ rownames( spectra ) != "AF" ]
   spectral.channel <- colnames( spectra )
 
@@ -76,12 +98,22 @@ get.spectral.variants <- function( control.dir, control.def.file,
   if ( !file.exists( control.def.file ) )
     stop( paste( "Unable to locate control.def.file:", control.def.file ) )
 
-  if ( verbose ) message( "\033[34m Checking control file for errors \033[0m" )
+  if ( verbose ) message( "\033[34mChecking control file for errors \033[0m" )
   check.control.file( control.dir, control.def.file, asp, strict = TRUE )
 
-  control.table <- read.csv( control.def.file, na.strings = "",
-                             stringsAsFactors = FALSE )
-  control.table <- dplyr::filter( control.table, filename != "" )
+  control.table <- read.csv(
+    control.def.file,
+    stringsAsFactors = FALSE,
+    strip.white = TRUE
+  )
+
+  control.table[] <- lapply( control.table, function( x ) {
+    if ( is.character( x ) ) {
+      x <- trimws( x )
+      x[ x == "" ] <- NA
+      x
+    } else x
+  } )
 
   # set channels to be used
   flow.set.resolution <- asp$expr.data.max
@@ -105,7 +137,6 @@ get.spectral.variants <- function( control.dir, control.def.file,
   flow.sample <- control.table$sample
   table.fluors <- control.table$fluorophore
   table.fluors <- table.fluors[ !is.na( table.fluors ) ]
-  #table.fluor.n <- length( table.fluors )
   universal.negative <- control.table$universal.negative
   universal.negative[ is.na( universal.negative ) ] <- FALSE
   names( universal.negative ) <- table.fluors
@@ -119,8 +150,6 @@ get.spectral.variants <- function( control.dir, control.def.file,
   # stop if "AF" sample is not present, fluorophore mismatch
   if ( !( "AF" %in% table.fluors ) )
     stop( "Unable to locate `AF` control in control file. An unstained cell control is required" )
-  #if ( length( rownames( spectra ) ) != table.fluor.n )
-  #  stop( "The number of fluorophores in your control file doesn't match that in your spectra." )
 
   if ( ! all( table.fluors %in% fluorophores ) ) {
     # check for 'Negative', 'AF', check for match again
@@ -136,21 +165,16 @@ get.spectral.variants <- function( control.dir, control.def.file,
     table.fluors <- fluor.to.match[ matching.fluors ]
   }
 
-  if ( parallel ) {
-    future::plan( future::multisession, workers = asp$worker.process.n )
-    options( future.globals.maxSize = asp$max.memory.n )
-    lapply.function <- future.apply::future_lapply
-  } else {
-    lapply.function <- lapply.sequential
-  }
-
   # get thresholds for positivity
-  if ( verbose ) message( paste( "\033[33m", "Calculating positivity thresholds", "\033[0m" ) )
+  if ( verbose ) message( paste0( "\033[33m", "Calculating positivity thresholds", "\033[0m" ) )
   unstained <- suppressWarnings(
-    flowCore::read.FCS( file.path( control.dir, flow.file.name[ "AF" ] ),
-                        transformation = NULL,
-                        truncate_max_range = FALSE,
-                        emptyValue = FALSE ) )
+    flowCore::read.FCS(
+      file.path( control.dir, flow.file.name[ "AF" ] ),
+      transformation = NULL,
+      truncate_max_range = FALSE,
+      emptyValue = FALSE
+    )
+  )
 
   # read exprs for spectral channels only
   if ( nrow( unstained ) > asp$gate.downsample.n.cells ) {
@@ -161,24 +185,103 @@ get.spectral.variants <- function( control.dir, control.def.file,
     unstained <- flowCore::exprs( unstained )[ , spectral.channel ]
   }
 
-  raw.thresholds <- apply( unstained, 2, function( col ) quantile( col, pos.quantile ) )
+  raw.thresholds <- apply( unstained, 2, function( col ) quantile( col, 0.995 ) )
 
-  unstained.unmixed <- unmix.autospectral( unstained, spectra, af.spectra, verbose = FALSE )
-  unmixed.thresholds <- apply( unstained.unmixed[ , fluorophores ], 2, function( col )
-    quantile( col, pos.quantile ) )
+  unstained.unmixed <- unmix.autospectral(
+    unstained,
+    spectra,
+    af.spectra,
+    verbose = FALSE
+  )
+  unmixed.thresholds <- apply(
+    unstained.unmixed[ , fluorophores ], 2, function( col )
+      quantile( col, 0.995 )
+  )
+
+  if ( is.null( names( table.fluors ) ) ) names( table.fluors ) <- table.fluors
 
   # main loop
-  if ( verbose ) message( paste( "\033[33m", "Getting spectral variants", "\033[0m" ) )
-  spectral.variants <- lapply.function( table.fluors, get.fluor.variants, flow.file.name,
-                               control.dir, spectra, af.spectra, flow.spectral.channel,
-                               universal.negative, control.type, raw.thresholds,
-                               unmixed.thresholds, flow.channel, som.dim, n.cells,
-                               asp, verbose, output.dir, sim.threshold, figures,
-                               future.seed = asp$variant.seed )
+  if ( parallel & is.null( threads ) ) threads <- asp$worker.process.n
 
-  names( spectral.variants ) <- fluorophores
+  # construct list of arguments
+  args.list <- list(
+    file.name = flow.file.name,
+    control.dir = control.dir,
+    asp = asp,
+    spectra = spectra,
+    af.spectra = af.spectra,
+    n.cells = n.cells,
+    som.dim = som.dim,
+    figures = figures,
+    output.dir = output.dir,
+    verbose = verbose,
+    spectral.channel = flow.spectral.channel,
+    universal.negative = universal.negative,
+    control.type = control.type,
+    raw.thresholds = raw.thresholds,
+    unmixed.thresholds = unmixed.thresholds,
+    flow.channel = flow.channel
+  )
 
-  if ( verbose ) message( paste( "\033[33m", "Spectral variation computed!", "\033[0m" ) )
+  # Set up parallel processing
+  if ( parallel ) {
+    internal.functions <- c( "get.fluor.variants", "cosine.similarity",
+                             "spectral.variant.plot", "unmix.ols" )
+    exports <- c( "args.list", "table.fluors", internal.functions )
+
+    result <- create.parallel.lapply(
+      asp,
+      exports,
+      parallel = parallel,
+      threads = threads,
+      export.env = environment()
+    )
+    lapply.function <- result$lapply
+  } else {
+    lapply.function <- lapply
+    result <- list( cleanup = NULL )
+  }
+
+  if ( verbose ) message( paste0( "\033[33m", "Getting spectral variants", "\033[0m" ) )
+
+  spectral.variants <- tryCatch(
+    expr = {
+      lapply.function( table.fluors, function( f ) {
+        tryCatch(
+          expr = {
+            do.call(
+              get.fluor.variants,
+              c( list( f ), args.list )
+            )
+          },
+          error = function( e ) {
+            message( "Error for fluorophore ", f, ": ", conditionMessage( e ) )
+            NULL
+          }
+        )
+      } )
+    },
+    finally = {
+      if ( !is.null( result$cleanup ) )
+        result$cleanup()
+    }
+  )
+
+  # drop any that are NULL due to error
+  failed <- sapply( spectral.variants, is.null )
+  failed.variants <- names( spectral.variants )[ failed ]
+  spectral.variants <- spectral.variants[ !failed ]
+
+  if ( any( failed ) ) {
+    warning(
+      paste0(
+        "Calculation of spectral variation failed for ",
+        paste( failed.variants, collapse = "\n" )
+      )
+    )
+  }
+
+  if ( verbose ) message( paste0( "\033[33m", "Spectral variation computed!", "\033[0m" ) )
 
   variants <- list(
     thresholds = unmixed.thresholds,

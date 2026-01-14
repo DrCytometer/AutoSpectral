@@ -8,21 +8,20 @@ get.fluor.variants(
   fluor,
   file.name,
   control.dir,
+  asp,
   spectra,
   af.spectra,
+  n.cells,
+  som.dim,
+  figures,
+  output.dir,
+  verbose,
   spectral.channel,
   universal.negative,
   control.type,
   raw.thresholds,
   unmixed.thresholds,
-  flow.channel,
-  som.dim,
-  n.cells,
-  asp,
-  verbose,
-  output.dir,
-  sim.threshold,
-  figures
+  flow.channel
 )
 }
 \arguments{
@@ -32,12 +31,30 @@ get.fluor.variants(
 
 \item{control.dir}{The directory containing the control files.}
 
+\item{asp}{The AutoSpectral parameter list.}
+
 \item{spectra}{A matrix containing the spectral data. Fluorophores in rows,
 detectors in columns.}
 
 \item{af.spectra}{Spectral signatures of autofluorescences, normalized
 between 0 and 1, with fluorophores in rows and detectors in columns. Prepare
 using \code{get.af.spectra}.}
+
+\item{n.cells}{Numeric. Number of cells to use for defining the variation in
+spectra. Up to \code{n.cells} cells will be selected as positive events in the peak
+channel for each fluorophore, above the 99.5th percentile level in the
+unstained sample.}
+
+\item{som.dim}{Numeric. Number of x and y dimensions to use in the SOM for
+clustering the spectral variation.}
+
+\item{figures}{Logical, controls whether the variation in spectra for each
+fluorophore is plotted in \code{output.dir}. Default is \code{TRUE}.}
+
+\item{output.dir}{File path to whether the figures and .rds data file will be
+saved. Default is \code{NULL}, in which case \code{asp$variant.dir} will be used.}
+
+\item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
 
 \item{spectral.channel}{A vector of spectral channels.}
 
@@ -57,31 +74,6 @@ the threshold for positivity in each unmixed channel. Determined by the
 unmixing.}
 
 \item{flow.channel}{A named vector of peak raw channels, one per fluorophore.}
-
-\item{som.dim}{Numeric, default \code{10}. Number of x and y dimensions to use in
-the SOM for clustering the spectral variation.}
-
-\item{n.cells}{Numeric, default \code{2000}. Number of cells to use for defining
-the variation in spectra. Up to \code{n.cells} cells will be selected as positive
-events in the peak channel for each fluorophore, above the \code{pos.quantile} in
-the unstained sample.}
-
-\item{asp}{The AutoSpectral parameter list.
-Prepare using \code{get.autospectral.param}}
-
-\item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
-
-\item{output.dir}{File path to whether the figures and .rds data file will be
-saved. Default is \code{NULL}, in which case \code{asp$variant.dir} will be used.}
-
-\item{sim.threshold}{Numeric, default \code{0.98}. Threshold for cosine similarity-
-based exclusion of spectral variants. Any variant less than \code{sim.threshold}
-by \code{cosine.similarity} from the optimized spectrum for that fluorophore (from
-\code{spectra}) will be excluded from output. This helps to exclude autofluorescence
-contamination.}
-
-\item{figures}{Logical, controls whether the variation in spectra for each
-fluorophore is plotted in \code{output.dir}. Default is \code{TRUE}.}
 }
 \value{
 A matrix with the flow expression data.

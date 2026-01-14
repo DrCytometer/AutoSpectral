@@ -60,14 +60,20 @@ spectral.variant.plot <- function( spectra.variants, median.spectrum,
   )
 
   ggplot( variant.data, aes( x = detector.n ) ) +
-    geom_ribbon( aes( ymin = min, ymax = max ),
-                 fill = variant.fill.color,
-                 alpha = variant.fill.alpha ) +
-    geom_line( aes( y = median, group = 1 ),
-               linewidth = median.linewidth,
-               color = median.line.color ) +
-    scale_x_continuous( breaks = variant.data$detector.n,
-                        labels = variant.data$detector ) +
+    geom_ribbon(
+      aes( ymin = min, ymax = max ),
+      fill = variant.fill.color,
+      alpha = variant.fill.alpha
+    ) +
+    geom_line(
+      aes( y = median, group = 1 ),
+      linewidth = median.linewidth,
+      color = median.line.color
+    ) +
+    scale_x_continuous(
+      breaks = variant.data$detector.n,
+      labels = variant.data$detector
+    ) +
     labs( x = "Detector", y = "Intensity",
          title = title ) +
     theme_minimal() +
@@ -80,8 +86,11 @@ spectral.variant.plot <- function( spectra.variants, median.spectrum,
     if ( !dir.exists( plot.dir ) )
       dir.create( plot.dir )
 
-    ggsave( file.path( plot.dir, paste0( title, ".jpg" ) ),
-            width = plot.width, height = plot.height )
+    ggsave(
+      file.path( plot.dir, paste0( title, ".jpg" ) ),
+      width = plot.width,
+      height = plot.height
+    )
   }
 
 }

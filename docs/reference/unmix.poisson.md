@@ -13,7 +13,7 @@ unmix.poisson(
   asp,
   initial.weights = NULL,
   parallel = TRUE,
-  threads = 1
+  threads = NULL
 )
 ```
 
@@ -45,8 +45,8 @@ unmix.poisson(
 
 - threads:
 
-  Numeric, default is `1`. Multi-threading is only used if `parallel` is
-  `TRUE` and `threads` is greater than 1.
+  Numeric, default is `NULL`, in which case `asp$worker.process.n` will
+  be used if `parallel=TRUE`.
 
 ## Value
 

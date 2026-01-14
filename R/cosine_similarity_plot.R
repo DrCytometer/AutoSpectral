@@ -65,7 +65,8 @@ cosine.similarity.plot <- function( spectra,
     mutate( Fluor2 = factor( Fluor2, levels = rev( colnames( similarity.matrix ) ) ) )
 
   # plotting
-  similarity.heatmap <- ggplot( similarity.df, aes( Fluor1, Fluor2, fill = value ) ) +
+  similarity.heatmap <- ggplot(
+    similarity.df, aes( Fluor1, Fluor2, fill = value ) ) +
     geom_tile() +
     scale_fill_viridis_c( option = color.palette ) +
     theme_minimal() +
@@ -78,9 +79,11 @@ cosine.similarity.plot <- function( spectra,
     similarity.heatmap <- similarity.heatmap + theme( legend.position = "none" )
 
   if ( save )
-    ggsave( filename = file.path( output.dir, similarity.heatmap.filename ),
-            plot = similarity.heatmap,
-            width = figure.width, height = figure.height )
+    ggsave(
+      filename = file.path( output.dir, similarity.heatmap.filename ),
+      plot = similarity.heatmap,
+      width = figure.width, height = figure.height
+      )
   else
     return( similarity.heatmap )
 

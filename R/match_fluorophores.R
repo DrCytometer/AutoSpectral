@@ -42,7 +42,13 @@ match.fluorophores <- function( control.filenames, fluorophore.database ) {
 
         if ( grepl( pattern, filename, ignore.case = TRUE, perl = TRUE ) ) {
           fluorophore <- fluorophore.database$fluorophore[ i ]
-          message( paste( "\033[32mMatch:", fluor, "to", fluorophore, "in", filename, "\033[0m" ) )
+          message(
+            paste0(
+              "\033[32mMatch: ",
+              fluor, " to ", fluorophore, " in ", filename,
+              "\033[0m"
+              )
+            )
           break
         }
       }
@@ -52,7 +58,7 @@ match.fluorophores <- function( control.filenames, fluorophore.database ) {
 
     if ( length( fluorophore ) == 0) {
       fluorophore <- "No match"
-      message( paste( "\033[31mNo Match for:", filename, "\033[0m" ) )
+      message( paste0( "\033[31m", "No Match for: ", filename, "\033[0m" ) )
     }
 
     fluorophore.matches[ filename ] <- fluorophore

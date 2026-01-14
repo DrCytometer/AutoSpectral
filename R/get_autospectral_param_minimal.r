@@ -5,7 +5,7 @@
 #'
 #' @description Returns the base set of AutoSpectral parameters.
 #'
-#' @importFrom future availableCores
+#' @importFrom parallelly availableCores
 #'
 #' @return A list of minimal AutoSpectral parameters.
 #'
@@ -50,15 +50,9 @@ get.autospectral.param.minimal <- function()
       bit.depth = "32",
 
       ### general parameters
-      verbose = TRUE,
+      worker.process.n = max( 1, parallelly::availableCores() - 1 ),
 
-      parallel = FALSE,
-
-      worker.process.n = max( 1, future::availableCores() - 2 ),
-
-      max.memory.n = 2 * 1024^3,
-
-      antigen.autof = "AF",
+      rlm.iter.max = 100,
 
       marker.forbidden.char = " !\"#$%&'*,/:;?@[\\]^{|}~",
       marker.substitution.char = "-",
@@ -92,8 +86,6 @@ get.autospectral.param.minimal <- function()
       af.spline.maxit = 100,
       af.spline.sd.n = 5,
       af.spline.expand = 1.5,
-
-      af.remove.pop = 1,
 
       af.plot.bw.factor = 1,
       af.plot.density.grid.n = 100,
@@ -195,41 +187,11 @@ get.autospectral.param.minimal <- function()
       gate.region.max.density.grid.n.beads = 100,
       gate.downsample.n.beads = 10000,
 
-      ### per-cell autofluorescence parameters
-      af.som.dim = 10,
-
       ### spectral variants parameters
-      variant.n.cells = 2000,
-      variant.som.dim = 10,
-      variant.sim.threshold = 0.98,
-      variant.seed = 42,
-      variant.pos.quantile = 0.995,
       variant.dir = "./figure_spectral_variants",
       variant.filename = "Spectral_variants.rds",
 
-      ### refine spillover (unmixing) parameters
-      rlm.iter.max = 100,
-      rlm.trim.factor = 0.003,
       rlm.downsample.n = 25000,
-
-      rs.iter.max = 100,
-
-      rs.lambda.coarse = 1.0,
-      rs.lambda.fine = 0.1,
-
-      rs.delta.history.n = 10,
-
-      rs.delta.threshold.untr = 1e-2,
-      rs.delta.threshold.tran = 1e-4,
-      rs.delta.threshold.change = 1e-6,
-
-      convergence.color.delta = color.pal[ 7 ],    # brown
-      convergence.color.delta.max = color.pal[ 5 ],    # orange
-      convergence.color.delta.change = color.pal[ 8 ],    # pink
-      convergence.shape.linear = "triangle",
-      convergence.shape.biexp = "circle",
-      convergence.shape.posnegpop = "triangle open",
-
       ### directory parameters
       unmixed.fcs.dir = "AutoSpectral_unmixed",
 
@@ -240,38 +202,26 @@ get.autospectral.param.minimal <- function()
       figure.peacoqc.dir = NULL,
       figure.clean.control.dir = NULL,
       figure.spectral.ribbon.dir = NULL,
-      figure.convergence.dir = NULL,
       figure.spectra.dir = NULL,
-      figure.slope.error.dir = NULL,
+
       figure.similarity.heatmap.dir = NULL,
       figure.similarity.width = 8.0,
       figure.similarity.height = 6.0,
 
-      table.convergence.dir = NULL,
       table.spectra.dir = "table_spectra",
-      table.slope.error.dir = NULL,
 
       ### filename parameters
       # files you can use to load in information
       marker.file.name = NULL,
-      gate.parameter.file.name = "fcs_gate_parameter.csv",
       scatter.parameter.file.name = "fcs_scatter_parameter.csv",
-      transformation.parameter.file.name = "fcs_transformation_parameter.csv",
 
       # how the output files will be called
-      convergence.file.name = "autospectral_convergence",
       af.file.name = "autospectral_autofluorescence",
       spectra.file.name = "autospectral_spectra",
-      slope.error.file.name = "autospectral_slope_error",
       similarity.heatmap.file.name = "autospectral_similarity_matrix",
-      ssm.heatmap.file.name = "autospectral_spread_matrix",
 
       ### plotting parameters
       # color palette for dot plots
-      density.color.single = "blue3",
-      density.color.initial = color.pal[ 3 ],    # green
-      density.color.final = color.pal[ 2 ],    # blue
-      density.color.posnegpop = color.pal[ 1 ],    # red
       density.palette.n = 1000,
       density.palette.base.n = 1000000,
       density.palette.base.color = c( "blue", "cyan", "green", "yellow", "red" ),
@@ -298,15 +248,7 @@ get.autospectral.param.minimal <- function()
       figure.gate.scale.expand = 0.01,
       figure.gate.point.size = 0.8,
       figure.gate.line.size = 0.5,
-      figure.gate.bar.width = 1.0,
-      figure.gate.bar.height = 25.0,
-      figure.gate.bar.margin = 2.0,
 
-      figure.matrix.point.size = 2.5,
-      figure.matrix.line.size = 0.8,
-
-      figure.scatter.alpha.gate.in = 0.8,
-      figure.scatter.alpha.gate.out = 0.1,
       figure.scatter.point.size = 0.8,
       figure.scatter.line.size = 0.6,
       figure.scatter.error.label.size = 4.0,
@@ -316,9 +258,7 @@ get.autospectral.param.minimal <- function()
       figure.scatter.axis.title.size = 12.0,
 
       figure.spectra.line.size = 1,
-      figure.spectra.point.size = 1,
-
-      heatmap.color.palette = "viridis"
+      figure.spectra.point.size = 1
 
     )
 }

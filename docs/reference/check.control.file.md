@@ -33,5 +33,5 @@ check.control.file(control.dir, control.def.file, asp, strict = FALSE)
 
 ## Value
 
-A named list of errors and warnings intended to help the user fix
+A dataframe of errors and warnings intended to help the user fix
 problems with the `control.def.file`.

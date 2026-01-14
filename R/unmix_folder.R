@@ -7,9 +7,6 @@
 #' provided spectra and method, and saves the unmixed FCS files to an output
 #' directory of the user's choice.
 #'
-#' @importFrom future plan multisession
-#' @importFrom future.apply future_lapply
-#'
 #' @param fcs.dir Directory containing FCS files to be unmixed.
 #' @param spectra Matrix containing spectra information.
 #' @param asp The AutoSpectral parameter list.
@@ -73,11 +70,12 @@
 #' slow in the pure R implementation. Installation of `AutoSpectralRcpp` is
 #' strongly encouraged.
 #' @param parallel Logical, default is `FALSE`. Set to `TRUE` to activate parallel
-#' processing using futures for multiple FCS files.
+#' processing for multiple FCS files.
 #' @param threads Numeric, default is `NULL`, in which case `asp$worker.process.n`
 #' will be used. `asp$worker.process.n` is set by default to be one less than the
 #' available cores on the machine. Multi-threading is only used if `parallel` is
 #' `TRUE`.
+#' @param verbose Logical, controls messaging. Default is `TRUE`.
 #'
 #' @return None. Saves the unmixed FCS files to the specified output directory.
 #'
@@ -100,26 +98,69 @@ unmix.folder <- function( fcs.dir, spectra, asp, flow.control,
                           balance.weight = 0.5,
                           speed = "fast",
                           parallel = FALSE,
-                          threads = NULL ) {
+                          threads = NULL,
+                          verbose = TRUE ) {
 
   if ( is.null( output.dir ) )
     output.dir <- asp$unmixed.fcs.dir
+  if ( !dir.exists( output.dir ) )
+    dir.create( output.dir )
+
+  if ( parallel & is.null( threads ) )
+    threads <- asp$worker.process.n
 
   files.to.unmix <- list.files( fcs.dir, pattern = ".fcs", full.names = TRUE )
 
-  # set up parallel processing
+  # construct list of arguments
+  args.list <- list(
+    spectra = spectra,
+    asp = asp,
+    flow.control = flow.control,
+    method = method,
+    weighted = weighted,
+    weights = weights,
+    af.spectra = af.spectra,
+    spectra.variants = spectra.variants,
+    output.dir = output.dir,
+    file.suffix = file.suffix,
+    include.raw = include.raw,
+    include.imaging = include.imaging,
+    calculate.error = calculate.error,
+    use.dist0 = use.dist0,
+    divergence.threshold = divergence.threshold,
+    divergence.handling = divergence.handling,
+    balance.weight = balance.weight,
+    speed = speed,
+    parallel = parallel,
+    threads = threads,
+    verbose = verbose
+  )
+
+  # Set up parallel processing
   if ( parallel && ( method == "OLS" || method == "WLS" ) ) {
-    plan( multisession, workers = ifelse( is.null( threads ), asp$worker.process.n, threads ) )
-    options( future.globals.maxSize = asp$max.memory.n )
-    lapply.function <- future_lapply
+    internal.functions <- c( "unmix.fcs", "unmix.ols", "unmix.wls" )
+    exports <- c( "args.list", "files.to.unmix", internal.functions )
+
+    result <- create.parallel.lapply(
+      asp,
+      exports,
+      parallel = parallel,
+      threads = threads,
+      export.env = environment()
+    )
+    lapply.function <- result$lapply
   } else {
-    lapply.function <- lapply.sequential
+    lapply.function <- lapply
+    result <- list( cleanup = NULL )
   }
 
-  lapply.function( files.to.unmix, FUN = unmix.fcs, spectra, asp, flow.control,
-                   method, weighted, weights, af.spectra, spectra.variants,
-                   output.dir, file.suffix, include.raw,include.imaging,
-                   calculate.error, use.dist0,
-                   divergence.threshold, divergence.handling, balance.weight,
-                   speed, parallel, threads )
+  # unmix all files in list
+  unmixed.data <- tryCatch( {
+    lapply.function( files.to.unmix, function( f ) {
+      do.call( unmix.fcs, c( list( f ), args.list ) )
+    } )
+  }, finally = {
+    # clean up cluster when done if needed
+    if ( !is.null( result$cleanup ) ) result$cleanup()
+  } )
 }

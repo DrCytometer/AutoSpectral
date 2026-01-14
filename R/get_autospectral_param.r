@@ -30,21 +30,18 @@ get.autospectral.param <- function( cytometer = "aurora", figures = TRUE )
     autosp.param$figure.peacoqc.dir <- "figure_peacoQC"
     autosp.param$figure.clean.control.dir <- "figure_clean_controls"
     autosp.param$figure.spectral.ribbon.dir <- "figure_spectral_ribbon"
-    autosp.param$figure.convergence.dir <- "figure_convergence"
     autosp.param$figure.spectra.dir <- "figure_spectra"
-    autosp.param$figure.slope.error.dir <- "figure_slope_error"
     autosp.param$figure.similarity.heatmap.dir <- "figure_similarity_heatmap"
 
-    autosp.param$table.convergence.dir <- "table_convergence"
     autosp.param$table.spectra.dir <- "table_spectra"
-    autosp.param$table.slope.error.dir <- "table_slope_error"
 
   }
 
   # cytometer-specific parameters
   get.param.function <- get0( sprintf( "get.autospectral.param.%s", cytometer ) )
 
-  check.critical( ! is.null( get.param.function ), "unsupported cytometer" )
+  if ( is.null( get.param.function ) )
+    stop( "unsupported cytometer", call. = FALSE )
 
   autosp.param <- get.param.function( autosp.param )
 

@@ -8,12 +8,15 @@ unmix.autospectral(
   raw.data,
   spectra,
   af.spectra,
+  asp,
   spectra.variants = NULL,
   weighted = FALSE,
   weights = NULL,
   calculate.error = FALSE,
   use.dist0 = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  parallel = TRUE,
+  threads = NULL
 )
 }
 \arguments{
@@ -27,6 +30,8 @@ and 1, with fluorophores in rows and detectors in columns.}
 \item{af.spectra}{Spectral signatures of autofluorescences, normalized
 between 0 and 1, with fluorophores in rows and detectors in columns. Prepare
 using \code{get.af.spectra}.}
+
+\item{asp}{The AutoSpectral parameter list.}
 
 \item{spectra.variants}{Named list (names are fluorophores) carrying matrices
 of spectral signature variations for each fluorophore. Prepare using
@@ -49,6 +54,14 @@ per-cell residual (\code{use.dist0} = \code{FALSE}). Default is \code{TRUE}.}
 
 \item{verbose}{Logical, whether to send messages to the console.
 Default is \code{TRUE}.}
+
+\item{parallel}{Logical, default is \code{FALSE}, in which case sequential processing
+will be used. The new parallel processing should always be faster.}
+
+\item{threads}{Numeric, default is \code{NULL}, in which case \code{asp$worker.process.n}
+will be used. \code{asp$worker.process.n} is set by default to be one less than the
+available cores on the machine. Multi-threading is only used if \code{parallel} is
+\code{TRUE}.}
 }
 \value{
 Unmixed data with cells in rows and fluorophores in columns.

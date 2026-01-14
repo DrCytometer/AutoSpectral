@@ -46,7 +46,7 @@ At the moment, the following cytometers are supported:
 
 ### Latest Release
 
-**Version 0.8.7**
+**Version 0.9.0**
 
 To install the latest, hopefully stable version, install using `devtools` or `remotes`. You will need to install the Bioconductor packages separately, I believe.
 
@@ -61,20 +61,34 @@ BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC"))
 devtools::install_github("DrCytometer/AutoSpectral")
 ```
 
-As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, probably not perfect. To try it, visit [AutoSpectralHelper](https://github.com/DrCytometer/AutoSpectralHelper).
+As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, probably not perfect. To try it, visit [AutoSpectralHelper](https://github.com/DrCytometer/AutoSpectralHelper). If you update AutoSpectral, I recommend downloading a new version of the app to ensure compatibility.
+
+
+To install a specific release, e.g., the previous one, use the version number:
+```{r, eval = FALSE}
+remotes::install_github("DrCytometer/AutoSpectral@v0.8.7")
+```
+
 
 ### Dev branch
 
-If you're feeling adventurous or simply want early access to the latest features, you can install the development version of AutoSpectral from [GitHub](https://github.com/) with:
+If you're feeling adventurous or simply want early access to the latest features, you can try the `dev` branch. At any given point, this may not be working well.
+
+AutoSpectral is open source. If you are interested in contributing, please visit [Development](https://drcytometer.github.io/AutoSpectral/articles/Development.html) for suggestions of where help is needed most.
+
+You can install the development version of AutoSpectral from [GitHub](https://github.com/) with:
 
 ``` {r, eval = FALSE}
 devtools::install_github("DrCytometer/AutoSpectral@dev")
 ```
 
 
+
 ## Bug fixes and known issues
 
 AutoSpectral is pretty complex and newly released, so there will be bugs. Sorry. Thanks to all of you providing feedback. Please submit any and all issues either using the Issues page or via email at colibri-cytometry at gmail.
+
+I will be taking a break from addressing issues over the holiday period.
 
 To submit a bug report, go to [Issues](https://github.com/DrCytometer/AutoSpectral/issues).
 
@@ -86,19 +100,27 @@ Please check the [help pages and articles](https://drcytometer.github.io/AutoSpe
 
 In particular, see the [Full Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_Workflow.html).
 
+
 ### Known shortcomings
 
 * Gating. The automated gating is not great. See the [help page](https://drcytometer.github.io/AutoSpectral/articles/Gating.html) for tips. I'm working on an alternative.
 * Please note that FCS 3.2 files from the S8 and A8 cytometers are not fully 
 supported in flowCore. You may receive warnings, but things should still work.
-* More stuff in progress will appear in the [Development article](https://drcytometer.github.io/AutoSpectral/articles/Development.html)
+* More stuff in progress will appear in the [Development article](https://drcytometer.github.io/AutoSpectral/articles/Development.html).
+* This is my first R package.
 
 If you want to use data from another cytometer and are wiling to provide files 
-for establishing the workflow, contact the author/maintainer.
+for establishing the workflow, contact the author/maintainer. See existing information, which may also assist you in setting up your control file, in the [cytometer database](https://docs.google.com/spreadsheets/d/1wj7QPkgpsuPNeVKyt-WWdBu5R48aZTgEbH8-_bpKeBY/edit?usp=sharing).
+
+AutoSpectral relies on a database of information containing fluorophore emission details. If your fluorophore is not detected automatically by `create.control.file()` and you want to add it, visit the Google sheet for the [fluorophore database](https://docs.google.com/spreadsheets/d/14j4lAQ6dkjDBKMborDv_MkSptyNBqZiBsq5jNNSCoiQ/edit?usp=sharing) and add it there. New fluorophores will be incorporated into updates.
+
+Similarly, there is a marker database to detect (and standardize) marker names if they appear in the single-stained FCS control file names. Feel free to add more markers or synonyms to the [marker database](https://docs.google.com/spreadsheets/d/16FAinR_Nfnl00mpHvmQFJT_uJJY3VUWk29yAaQ7HHn8/edit?usp=sharing).
 
 This work has received funding from the KU Leuven C1 program, the European Union’s Horizon 2020 research and innovation programme under grant agreement No 874707 (EXIMIOUS), Wellcome Investigator Award 222442/A/21/Z, and UKRI Proactive Vaccinology Award MR/Y004450/1 (IMMPROVE).
 
 AutoSpectral is provided under an AGPL3 licence.
+
+
 
 ## Example
 
@@ -164,6 +186,47 @@ unmix.folder( sample.dir, no.af.spectra, asp, flow.control, method = "WLS" )
 ```
 
 
+
+## Installation and Runtime
+
+Installation via GitHub should take only a minute or so. It takes less than that on a Dell i7 core laptop.
+
+Occasionally, the help gets corrupted. Just re-install if that happens. If you know why this happens, let me know.
+
+Installation of `AutoSpectralRcpp` will take a couple of minutes because the code needs to compile. You will also first have to install Rtools to have a compiler, and that will take longer, probably 10 minutes or so. Upgrading the BLAS and LAPACK (see below) also takes several minutes if you're taking the time to read the instructions carefully.
+
+Runtime will vary considerably depending on the size and quantity of files you're processing. For the benchmark 42-colour Aurora data set using single-stained cell controls with plenty of data, the slow steps in the pre-processing pipeline are `define.flow.control()` and `clean.controls()`. For the same Aurora dataset on the aforementioned i7 Windows laptop, I get:
+* `define.flow.control()` v0.8.7: 12min sequential, 9min parallel
+* `define.flow.control()` v0.9.0: 4min sequential, 2min parallel
+* `clean.controls()` v0.8.7: 11min sequential, not possible parallel
+* `clean.controls()` v0.9.0: 11min sequential, 6.5min parallel, not fully optimized
+* `get.spectral.variants()` v.0.8.7: 2min sequential, 1min parallel
+* `get.spectral.variants()` v.0.9.0: 65sec sequential, 32sec parallel
+
+Unmixing time depends on the following variable:
+
+* file size (number of cells/events, including debris)
+* number of detectors
+* number of fluorophores
+* unmixing algorithm. OLS and WLS are fast, per-cell AF extraction will be ~50x slower, per-cell fluorophore optimization will be 2-4x slower than per-cell AF when running the "fast" approximation using AutoSpectralRcpp, or about 20-50x slower when using the "slow" exact calculation, again using AutoSpectralRcpp. Using the "fast" approximation in pure R will likely be comparable to or slower than the "slow" method in C++.
+
+Benchmarks for "C3 Lung_GFP_003_Samples.fcs", again on the 8-core laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:
+
+* `unmix.fcs()` WLS or OLS v0.8.7: 9sec
+* `unmix.fcs()` WLS or OLS v0.9.0: 9sec
+* `unmix.fcs()` perCell AF extraction v0.8.7: 2min
+* `unmix.fcs()` perCell AF extraction v0.9.0: 1min
+* `unmix.fcs()` perCell fluorophore optimization "fast" v0.8.7: 9min
+* `unmix.fcs()` perCell fluorophore optimization "fast" v0.9.0: <2min
+* `unmix.fcs()` perCell fluorophore optimization "slow" v0.8.7: 62min
+* `unmix.fcs()` perCell fluorophore optimization "slow" v0.9.0: 19min
+* `unmix.folder()` WLS or OLS, 6 files, v0.8.7: 67sec sequential, interrupted parallel
+* `unmix.folder()` WLS or OLS, 6 files, v0.9.0: 62sec sequential, 31sec parallel
+
+Still some work to be done.
+
+
+
 ## Go Faster
 
 R is not known for its speed.
@@ -185,9 +248,13 @@ Feedback from users on Mac who successfully upgrade their BLAS would be apprecia
 Do not set multiple threads for the BLAS as this will conflict with higher
 level parallelization, either in AutoSpectral or other packages.
 
-Second, install AutoSpectralRcpp. This is fully accessible from R and integrates
-with AutoSpectral. But, when it gets to the slow bits in the unmixing, it 
-switches over to calculating in C++, so it can be 10-100x faster.
+After upgrading the BLAS, you probably need to reinstall `Rcpp` and `RcppArmadillo` to have this compiled with the BLAS.
+
+```r
+install.packages( c( "Rcpp", "RcppArmadillo" ) )
+```
+
+Now, install AutoSpectralRcpp. This is fully accessible from R and integrates with AutoSpectral. But, when it gets to the slow bits in the unmixing, it switches over to calculating in C++, so it can be 10-100x faster. Do this after upgrading the BLAS.
 
 [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp)
 
@@ -197,20 +264,25 @@ You can install AutoSpectralRcpp like so:
 ``` r
 devtools::install_github("DrCytometer/AutoSpectralRcpp")
 ```
-Third, turn on parallel processing in AutoSpectral. At the moment, this is not fully optimized in AutoSpectral. The parallel processing in AutoSpectralRcpp operates via OpenMP and works well. It is always activated, but the number of threads can be configured.
+Third, turn on parallel processing in AutoSpectral.
+*Update*: This is now supported via a `parallel` backend. Importantly, this moves away from `future` and `future_lapply`, which were aborting sometimes on Windows. More usefully, this is a bit faster in many cases, and should support forking via `mclapply` on Mac and Linux systems, which will be much faster. Perhaps most usefully, this appears to allow parallelization of the native R per-cell fluorophore optimization in `unmix.autospectral`, so you should see a nice speed up there.
+
+The parallel processing in AutoSpectralRcpp operates via OpenMP and works well. It is always activated, but the number of threads can be configured.
 
 To activate parallel processing, check the function arguments for a `parallel` option and set it to `TRUE`. Additionally, there is control over the number of threads used, which should be directly in the function call via a `threads` argument. If you don't know how many threads to use, check the recommendation for your machine after running `get.autospectral.param()`:
 
 ``` {r, eval = FALSE }
 asp$max.worker.process.n
 ```
+Multithreading will always default to this number if you do not explicitly set a number of threads and set `parallel=TRUE`. This is one less than `parallelly::availableCores()`, so it is designed to allow you to keep working on minor stuff while AutoSpectral chugs along in the background.
 
 For unmixing larger data sets, you will do well to use a machine with more CPUs.
 Suggestions for faster processing are welcome. Some modest improvements are in 
 the works.
 
 
-## Updates and bug fixes
+
+## Updates and news
 
 * Version 0.8.1: More fluorophores, rearranging detectors if needed
 * Version 0.8.2: Support for Mosaic and Xenith cytometers
@@ -219,6 +291,26 @@ the works.
 * Version 0.8.5: Improvements to keyword handling in writing FCS files
 * Version 0.8.6: Improvements to plotting, fluorophore matching
 * Version 0.8.7: Support for Symphony A5 SE and Cytek Northern Lights. More improvements to plotting. Marker names will now be added to the control file based on matches in the FCS file names, where possible. The Hotspot(TM) matrix will be calculated and plotted as per the [preprint](https://www.biorxiv.org/content/10.1101/2025.04.17.649396v2.full.pdf) by Peter Mage et al.
+* Version 0.9.0: 
+  - Changes to `get.spectral.variants`, including fixing of previously user-modifiable parameters, low-level denoising of spectra and a bug patch for situations with beads using internal negatives. 
+  - More checks in `check.control.file`. 
+  - New parallel backend. 
+  - Faster AutoSpectral unmixing in base R. 
+  - Adjustments to reduce any discontinuities produced during unmixing.
+  - See also updates in `AutoSpectralRcpp`, including a large speed up and general improvement to the Poisson IRLS unmixing.
+  - Patch to `reload.flow.control` bug affecting ID7000 samples.
+  - Patch to `define.flow.control()` affecting universal negative definitions and 
+impacting on `clean.controls()`.
+  - Calculation of the unmixing matrix (Moore-Penrose pseudoinverse) will now be
+done using singular value decomposition `svd()` for numerical stability for all
+approaches. Up to now, it has been done with normal equations via `solve()`.
+This should be better in edge cases. In most cases, the only difference will be
+floating point error. Calculation time is equivalent because almost all of the
+computational effort is on projecting the raw data into the unmixed space via
+the unmixing matrix, not calculating the unmixing matrix.
+  - New functions to `save.unmixing.matrix` and `calculate.weights`
+  - Patches to `define.flow.control` that were causing redundant gates to be created.
+  - Code legibility formatting.
 
 
 

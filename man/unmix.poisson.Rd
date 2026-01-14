@@ -10,7 +10,7 @@ unmix.poisson(
   asp,
   initial.weights = NULL,
   parallel = TRUE,
-  threads = 1
+  threads = NULL
 )
 }
 \arguments{
@@ -28,8 +28,8 @@ channel means.}
 \item{parallel}{Logical, default is \code{TRUE}, which enables parallel processing
 for per-cell unmixing.}
 
-\item{threads}{Numeric, default is \code{1}. Multi-threading is only used if
-\code{parallel} is \code{TRUE} and \code{threads} is greater than 1.}
+\item{threads}{Numeric, default is \code{NULL}, in which case \code{asp$worker.process.n}
+will be used if \code{parallel=TRUE}.}
 }
 \value{
 A matrix containing the unmixed data.

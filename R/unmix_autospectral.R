@@ -14,6 +14,7 @@
 #' @param af.spectra Spectral signatures of autofluorescences, normalized
 #' between 0 and 1, with fluorophores in rows and detectors in columns. Prepare
 #' using `get.af.spectra`.
+#' @param asp The AutoSpectral parameter list.
 #' @param spectra.variants Named list (names are fluorophores) carrying matrices
 #' of spectral signature variations for each fluorophore. Prepare using
 #' `get.spectral.variants`. Default is `NULL`.
@@ -30,17 +31,25 @@
 #' per-cell residual (`use.dist0` = `FALSE`). Default is `TRUE`.
 #' @param verbose Logical, whether to send messages to the console.
 #' Default is `TRUE`.
+#' @param parallel Logical, default is `FALSE`, in which case sequential processing
+#' will be used. The new parallel processing should always be faster.
+#' @param threads Numeric, default is `NULL`, in which case `asp$worker.process.n`
+#' will be used. `asp$worker.process.n` is set by default to be one less than the
+#' available cores on the machine. Multi-threading is only used if `parallel` is
+#' `TRUE`.
 #'
 #' @return Unmixed data with cells in rows and fluorophores in columns.
 #'
 #' @export
 
-unmix.autospectral <- function( raw.data, spectra, af.spectra,
+unmix.autospectral <- function( raw.data, spectra, af.spectra, asp,
                                 spectra.variants = NULL,
                                 weighted = FALSE, weights = NULL,
                                 calculate.error = FALSE,
                                 use.dist0 = TRUE,
-                                verbose = TRUE ) {
+                                verbose = TRUE,
+                                parallel = TRUE,
+                                threads = NULL ) {
 
   # check for AF in spectra, remove if present
   if ( "AF" %in% rownames( spectra ) )
@@ -139,7 +148,13 @@ unmix.autospectral <- function( raw.data, spectra, af.spectra,
   if ( verbose & calculate.error ) {
     af.error.reduction <- ( initial.error - sum( error ) ) / initial.error * 100
     af.error.reduction <- round( af.error.reduction, 2 )
-    message( paste( "Unmixing error reduced by", af.error.reduction, "percent with per-cell AF extraction." ) )
+    message(
+      paste0(
+        "Unmixing error reduced by",
+        af.error.reduction,
+        "percent with per-cell AF extraction."
+      )
+    )
   }
 
   if ( af.only ) {
@@ -185,69 +200,88 @@ unmix.autospectral <- function( raw.data, spectra, af.spectra,
   # for fluor optimization, use raw.data with AF fitted component subtracted
   remaining.raw <- raw.data - fitted.af
 
-  unmixed.opt <- lapply( seq_len( nrow( remaining.raw ) ), function( cell ) {
+  # Set up parallel backend
+  if ( parallel ) {
+    if ( is.null( threads ) ) threads <- asp$worker.process.n
 
-    cell.raw <- remaining.raw[ cell, , drop = FALSE ]
-    cell.unmixed <- unmixed[ cell, fluorophores, drop = FALSE ]
-
-    # identify which fluorophores are present on this cell
-    pos.fluors <- setNames(
-      as.vector( cell.unmixed >= pos.thresholds[ fluorophores ] ),
-      fluorophores
+    result <- create.parallel.lapply(
+      asp,
+      exports = c( "remaining.raw", "unmixed", "fluorophores", "pos.thresholds",
+                   "spectra", "weights", "optimize.fluors", "variants", "unmix" ),
+      parallel = TRUE,
+      threads = threads,
+      export.env = environment()
     )
-    pos.fluor.names <- names( pos.fluors )[ pos.fluors ]
+    lapply.function <- result$lapply
+  } else {
+    lapply.function <- lapply
+    result <- list( cleanup = NULL )
+  }
 
-    if ( !any( pos.fluors ) )
-      return( cell.unmixed )
+  # Main loop
+  unmixed.opt <- tryCatch(
+    expr = {
+      lapply.function( seq_len( nrow( remaining.raw ) ), function( cell ) {
 
-    # set baseline spectra (optimized single spectrum)
-    cell.spectra.final <- spectra
-    # use only fluorophores present for this cell to aid residual-based selection
-    cell.spectra.curr <- cell.spectra.final[ pos.fluors, , drop = FALSE ]
-    cell.unmixed <- unmix( cell.raw, cell.spectra.curr, weights )
+        cell.raw <- remaining.raw[ cell, , drop = FALSE ]
+        cell.unmixed <- unmixed[ cell, fluorophores, drop = FALSE ]
 
-    ## calculate initial residual error based only on fluorophores present in the cell
-    fitted <- cell.unmixed %*% cell.spectra.curr
-    resid  <- cell.raw - fitted
-    error.final <- sum( abs( resid ) )
+        # identify which fluorophores are present on this cell
+        pos.fluors <- setNames(
+          as.vector( cell.unmixed >= pos.thresholds[ fluorophores ] ),
+          fluorophores
+        )
+        pos.fluor.names <- names( pos.fluors )[ pos.fluors ]
 
-    # rank signals from greatest to least
-    fluors.to.sort <- optimize.fluors[ optimize.fluors %in% pos.fluor.names ]
-    if ( length( fluors.to.sort ) == 0)
-      return( cell.unmixed )
+        if ( !any( pos.fluors ) ) return( cell.unmixed )
 
-    fluor.order <- sort( cell.unmixed[ , fluors.to.sort ], decreasing = TRUE )
-    ## construct cell-specific mixing matrix from variants
-    for ( fl in names( fluor.order ) ) {
-      abundance <- cell.unmixed[, fl]
-      if ( abundance <= 0 ) next
-      # current spectrum
-      old.spectrum <- cell.spectra.curr[ fl, ]
-      fl.variants  <- variants[[ fl ]]
+        # set baseline spectra
+        cell.spectra.final <- spectra
+        cell.spectra.curr <- cell.spectra.final[ pos.fluors, , drop = FALSE ]
+        cell.unmixed <- unmix( cell.raw, cell.spectra.curr, weights )
 
-      # matrix of differences (each row = variant - old.spectrum)
-      delta.mat <- sweep( fl.variants, 2, old.spectrum, "-" )
-      # scale by abundance
-      delta.mat <- delta.mat * as.numeric( abundance )
+        fitted <- cell.unmixed %*% cell.spectra.curr
+        resid <- cell.raw - fitted
+        error.final <- sum( abs( resid ) )
 
-      # candidate residuals: resid - delta
-      resid.candidates <- matrix( resid, nrow = nrow( delta.mat ),
-                                  ncol = length( resid ), byrow = TRUE ) - delta.mat
-      errors <- rowSums( abs( resid.candidates ) )
+        fluors.to.sort <- optimize.fluors[ optimize.fluors %in% pos.fluor.names ]
+        if ( length( fluors.to.sort ) == 0 ) return( cell.unmixed )
 
-      # best variant selection
-      best.idx <- which.min( errors )
+        fluor.order <- sort( cell.unmixed[ , fluors.to.sort ], decreasing = TRUE )
+        for ( fl in names( fluor.order ) ) {
+          abundance <- cell.unmixed[ , fl ]
+          if ( abundance <= 0 ) next
 
-      if ( errors[ best.idx ] < error.final ) {
-        error.final <- errors[ best.idx ]
-        resid <- resid.candidates[ best.idx, ]
-        cell.spectra.final[ fl, ] <- fl.variants[ best.idx, ]
-      }
+          old.spectrum <- cell.spectra.curr[ fl, ]
+          fl.variants <- variants[[ fl ]]
+
+          delta.mat <- sweep( fl.variants, 2, old.spectrum, "-" )
+          delta.mat <- delta.mat * as.numeric( abundance )
+
+          resid.candidates <- matrix( resid, nrow = nrow( delta.mat ),
+                                      ncol = length( resid ), byrow = TRUE ) - delta.mat
+          errors <- rowSums( abs( resid.candidates ) )
+
+          best.idx <- which.min( errors )
+          if ( errors[ best.idx] < error.final ) {
+            error.final <- errors[ best.idx ]
+            resid <- resid.candidates[ best.idx, ]
+            best.variant <- fl.variants[ best.idx, ]
+            scaling <- ( abundance - pos.thresholds[ fl ] ) / pos.thresholds[ fl ]
+            new.spectrum <- cell.spectra.final[ fl, ] + best.variant * scaling
+            new.spectrum <- new.spectrum / max( new.spectrum )
+            cell.spectra.final[ fl, ] <- new.spectrum
+          }
+        }
+
+        unmix( cell.raw, cell.spectra.final, weights )
+
+      } )
+    },
+    finally = {
+      if ( !is.null( result$cleanup ) ) result$cleanup()
     }
-    # unmix cell
-    unmix( cell.raw, cell.spectra.final, weights )
-
-  } )
+  )
 
   unmixed.opt <- do.call( rbind, unmixed.opt )
   unmixed[ , fluorophores ] <- unmixed.opt

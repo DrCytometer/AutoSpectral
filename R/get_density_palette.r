@@ -19,16 +19,18 @@
 
 get.density.palette <- function( dens, asp )
 {
-    rainbow.palette <- colorRampPalette( asp$density.palette.base.color )(
-        asp$density.palette.base.n )
+    rainbow.palette <- colorRampPalette(
+      asp$density.palette.base.color )( asp$density.palette.base.n )
 
     dens.range <- range( dens, na.rm = TRUE )
 
-    dens.grid <- seq( dens.range[ 1 ], dens.range[ 2 ],
-        length.out = asp$density.palette.n )
+    dens.grid <- seq(
+      dens.range[ 1 ], dens.range[ 2 ], length.out = asp$density.palette.n
+      )
 
-    density.palette.idx <-
-        round( ecdf( dens )( dens.grid ) * asp$density.palette.base.n )
+    density.palette.idx <- round(
+      ecdf( dens )( dens.grid ) * asp$density.palette.base.n
+      )
 
     rainbow.palette[ density.palette.idx ]
 }

@@ -80,43 +80,45 @@ gate.af.sample.plot <- function( plot.data, samp, af.boundary.upper, asp,
   plot.data$x.trans <- plot.biexp.transform$transform( plot.data$x )
   plot.data$y.trans <- plot.biexp.transform$transform( plot.data$y )
 
-  gate.plot <- ggplot( plot.data, aes( x = x.trans, y = y.trans ) ) +
-    geom_scattermore(
-      # aes( x = x.trans, y = y.trans ),
-      pointsize = asp$figure.gate.point.size,
-      alpha = 1,
-      na.rm = TRUE
-    ) +
-    stat_density_2d(
-      aes( fill = after_stat( level ) ),
-      geom = "polygon",
-      contour = TRUE,
-      na.rm = TRUE ) +
-    scale_x_continuous(
-      name = x.lab,
-      breaks = plot.biexp.transform$transform( breaks ),
-      limits = plot.biexp.transform$transform( limits ),
-      labels = axis.labels
-    ) +
-    scale_y_continuous(
-      name = y.lab,
-      breaks = plot.biexp.transform$transform( breaks ),
-      limits = plot.biexp.transform$transform( limits ),
-      labels = axis.labels
-    ) +
-    theme_bw() +
-    theme(
-      plot.margin = margin( asp$figure.margin, asp$figure.margin,
-                            asp$figure.margin, asp$figure.margin ),
-      legend.position = "none",
-      axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
-      axis.text = element_text( size = asp$figure.axis.text.size ),
-      axis.text.x = element_text( angle = 45, hjust = 1 ),
-      axis.title = element_text( size = asp$figure.axis.title.size ),
-      panel.border = element_rect( linewidth = asp$figure.panel.line.size ),
-      panel.grid.major = element_blank(),
-      panel.grid.minor = element_blank()
-    )
+  gate.plot <- suppressWarnings(
+    ggplot( plot.data, aes( x = x.trans, y = y.trans ) ) +
+      geom_scattermore(
+        # aes( x = x.trans, y = y.trans ),
+        pointsize = asp$figure.gate.point.size,
+        alpha = 1,
+        na.rm = TRUE
+      ) +
+      stat_density_2d(
+        aes( fill = after_stat( level ) ),
+        geom = "polygon",
+        contour = TRUE,
+        na.rm = TRUE ) +
+      scale_x_continuous(
+        name = x.lab,
+        breaks = plot.biexp.transform$transform( breaks ),
+        limits = plot.biexp.transform$transform( limits ),
+        labels = axis.labels
+      ) +
+      scale_y_continuous(
+        name = y.lab,
+        breaks = plot.biexp.transform$transform( breaks ),
+        limits = plot.biexp.transform$transform( limits ),
+        labels = axis.labels
+      ) +
+      theme_bw() +
+      theme(
+        plot.margin = margin( asp$figure.margin, asp$figure.margin,
+                              asp$figure.margin, asp$figure.margin ),
+        legend.position = "none",
+        axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
+        axis.text = element_text( size = asp$figure.axis.text.size ),
+        axis.text.x = element_text( angle = 45, hjust = 1 ),
+        axis.title = element_text( size = asp$figure.axis.title.size ),
+        panel.border = element_rect( linewidth = asp$figure.panel.line.size ),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()
+      )
+  )
 
   if ( !is.null( af.boundary.upper ) ){
     af.boundary.upper.ggp <- data.frame(
@@ -146,9 +148,14 @@ gate.af.sample.plot <- function( plot.data, samp, af.boundary.upper, asp,
                             values = asp$ribbon.scale.values )
   }
 
-  ggsave( file.path( asp$figure.clean.control.dir,
-                     paste( asp$af.plot.filename, samp, ".jpg", sep = "_" ) ),
-          plot = gate.plot, width = asp$figure.width,
-          height = asp$figure.height )
+  suppressWarnings(
+    ggsave(
+      file.path(
+        asp$figure.clean.control.dir,
+        paste( asp$af.plot.filename, samp, ".jpg", sep = "_" ) ),
+      plot = gate.plot, width = asp$figure.width,
+      height = asp$figure.height
+    )
+  )
 
 }

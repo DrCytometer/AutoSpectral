@@ -41,8 +41,9 @@ fit.robust.linear.model <-  function( x.data, y.data, x.name, y.name,
       xy.coef <- c( 0, 0 )
 
     } else {
-      warning( sprintf( "WARNING: rlm of %s ~ %s did not converge - using ols instead\n",
-                    y.name, x.name ), file = stderr() )
+      warning(
+        sprintf( "WARNING: rlm of %s ~ %s did not converge - using ols instead\n",
+                 y.name, x.name ), file = stderr() )
 
       xy.data <- data.frame( x = x.data, y = y.data )
 

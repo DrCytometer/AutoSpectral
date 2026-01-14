@@ -33,10 +33,14 @@ get.gated.flow.expression.data <- function( samp, file.name, control.dir,
 
   flow.file <- file.name[ samp ]
 
-  fcs.data <- suppressWarnings( read.FCS( file.path( control.dir, flow.file ),
-                                          transformation = NULL,
-                                          truncate_max_range = FALSE,
-                                          emptyValue = FALSE ) )
+  fcs.data <- suppressWarnings(
+    flowCore::read.FCS(
+      file.path( control.dir, flow.file ),
+      transformation = NULL,
+      truncate_max_range = FALSE,
+      emptyValue = FALSE
+      )
+    )
 
   # read exprs for scatter and spectral channels only
   expr.data <- flowCore::exprs( fcs.data )[ , scatter.and.spectral.channel ]
@@ -44,9 +48,10 @@ get.gated.flow.expression.data <- function( samp, file.name, control.dir,
   rm( fcs.data )
 
   # remove any out-of-range events
-  below.resolution.limit <- apply( expr.data[ , spectral.channel ], 1,
-                                   function( flow.event ) {
-    all( flow.event < set.resolution ) } )
+  below.resolution.limit <- apply(
+    expr.data[ , spectral.channel ], 1, function( flow.event ) {
+    all( flow.event < set.resolution ) }
+    )
 
   expr.data <- expr.data[ below.resolution.limit, ]
 
@@ -59,17 +64,24 @@ get.gated.flow.expression.data <- function( samp, file.name, control.dir,
 
   gate.population.pip <- sp::point.in.polygon(
     gate.data[ , 1 ], gate.data[ , 2 ],
-    gate.population.boundary$x, gate.population.boundary$y )
+    gate.population.boundary$x, gate.population.boundary$y
+    )
 
   gate.population.idx <- which( gate.population.pip != 0 )
 
   # plot gate applied to sample
   if ( ! is.null( asp$figure.gate.dir ) ) {
-    message( paste( "\033[34m", "Plotting gate for", samp, "\033[0m" ) )
+    message( paste0( "\033[34m", "Plotting gate for: ", samp, "\033[0m" ) )
     suppressWarnings(
-      gate.sample.plot( samp, gate.data, scatter.param,
-                        gate.population.boundary, scatter.and.channel.label,
-                        "cells", asp )
+      gate.sample.plot(
+        samp,
+        gate.data,
+        scatter.param,
+        gate.population.boundary,
+        scatter.and.channel.label,
+        "cells",
+        asp
+      )
     )
   }
 

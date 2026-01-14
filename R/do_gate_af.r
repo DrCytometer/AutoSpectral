@@ -78,8 +78,12 @@ do.gate.af <- function( gate.data, samp, asp, intermediate.figures = FALSE ) {
 
   gate.bound.density.max.n <- nrow( gate.bound.density.max.idx )
 
-  check.critical( gate.bound.density.max.n >= 1,
-                  paste0( "gate error: no population found in sample bound", samp ) )
+  if ( gate.bound.density.max.n < 1 ) {
+    stop(
+      paste0( "gate error: no population found in sample bound ", samp ),
+      call. = FALSE
+    )
+  }
 
   gate.bound.density.max <- data.frame(
     x = gate.bound.density$x[ gate.bound.density.max.idx[ , 1 ] ],
@@ -90,17 +94,19 @@ do.gate.af <- function( gate.data, samp, asp, intermediate.figures = FALSE ) {
     order( gate.bound.density.max$z, decreasing = TRUE ), ]
 
   row.names( gate.bound.density.max ) <- NULL
-  gate.bound.density.max$num.label <- paste0( " ",
-                                              row.names( gate.bound.density.max ) )
+  gate.bound.density.max$num.label <- paste0(
+    " ", row.names( gate.bound.density.max ) )
 
   # Identify the target maximum
   target.max.idx <- asp$af.gate.target.max
   target.max <- gate.bound.density.max[ target.max.idx, ]
 
-  gate.bound.voronoi <- deldir::deldir( gate.bound.density.max,
-                                rw = c( gate.data.x.min, gate.data.x.max,
-                                        gate.data.y.min, gate.data.y.max ),
-                                suppressMsge = TRUE )
+  gate.bound.voronoi <- deldir::deldir(
+    gate.bound.density.max,
+    rw = c( gate.data.x.min, gate.data.x.max,
+            gate.data.y.min, gate.data.y.max ),
+    suppressMsge = TRUE
+    )
 
   tiles <- tile.list( gate.bound.voronoi )
 
@@ -108,13 +114,18 @@ do.gate.af <- function( gate.data, samp, asp, intermediate.figures = FALSE ) {
   target.tile <- tiles[[ target.max.idx ]]
   tile.polygon <- cbind( target.tile$x, target.tile$y )
 
-  gate.region.data.idx <- which( sp::point.in.polygon(
+  gate.region.data.idx <- which(
+    sp::point.in.polygon(
     gate.data[, 1], gate.data[, 2],
-    tile.polygon[ , 1 ], tile.polygon[ , 2 ] ) > 0 )
+    tile.polygon[ , 1 ], tile.polygon[ , 2 ]
+    ) > 0 )
 
-  check.critical( length( gate.region.data.idx ) > 0,
-                  paste( "Error: No points in target Voronoi tile for sample",
-                         samp ) )
+  if ( length( gate.region.data.idx ) == 0 ) {
+    stop(
+      paste( "Error: No points in target Voronoi tile for sample", samp ),
+      call. = FALSE
+    )
+  }
 
   # define region boundaries
   gate.region.data <- gate.data[ gate.region.data.idx, ]
@@ -142,12 +153,20 @@ do.gate.af <- function( gate.data, samp, asp, intermediate.figures = FALSE ) {
   )
 
   if ( asp$figures & intermediate.figures )
-    gate.af.identify.plot( gate.data, samp, gate.region, gate.bound.density, asp )
+    gate.af.identify.plot(
+      gate.data,
+      samp,
+      gate.region,
+      gate.bound.density,
+      asp
+      )
 
-  gate.population.idx <- which( gate.data[ , 1 ] > gate.region.x.low &
-                                  gate.data[ , 1 ] < gate.region.x.high &
-                                  gate.data[ , 2 ] > gate.region.y.low &
-                                  gate.data[ , 2 ] < gate.region.y.high )
+  gate.population.idx <- which(
+    gate.data[ , 1 ] > gate.region.x.low &
+      gate.data[ , 1 ] < gate.region.x.high &
+      gate.data[ , 2 ] > gate.region.y.low &
+      gate.data[ , 2 ] < gate.region.y.high
+    )
 
   return( gate.population.idx )
 }

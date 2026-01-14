@@ -6,7 +6,10 @@ AutoSpectral. It reads the metadata file, locates the corresponding FCS
 files, determines the gates needed based on variables such as beads or
 cells, `large.gate`, and `viability.gate`, and then creates gates for
 each combination. It imports and gates the data in the FCS files and
-assigns various factors to track the data.
+assigns various factors to track the data. Parallel processing
+`parallel=TRUE` will likely speed up the run considerably on Mac and
+Linux systems supporting forking, but will likely not help much on
+Windows unless \>10 cores are available.
 
 ## Usage
 
@@ -17,7 +20,8 @@ define.flow.control(
   asp,
   gate = TRUE,
   parallel = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  threads = NULL
 )
 ```
 
@@ -55,6 +59,11 @@ define.flow.control(
 - verbose:
 
   Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+
+- threads:
+
+  Numeric, number of threads to use for parallel processing. Default is
+  `NULL` which will revert to `asp$worker.process.n` if `parallel=TRUE`.
 
 ## Value
 

@@ -19,7 +19,7 @@ using \code{get.autospectral.param}.}
 continues and outputs a list of errors. Default is \code{FALSE}.}
 }
 \value{
-A named list of errors and warnings intended to help the user fix
+A dataframe of errors and warnings intended to help the user fix
 problems with the \code{control.def.file}.
 }
 \description{

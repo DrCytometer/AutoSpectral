@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -133,10 +133,9 @@ in the peak channel, and cluster those to get variants.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">variants</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.spectral.variants.html">get.spectral.variants</a></span><span class="op">(</span> <span class="va">control.dir</span>, <span class="va">control.file</span>, <span class="va">asp</span>, </span>
 <span>                                   <span class="va">spectra</span>, <span class="va">af.spectra</span>,</span>
-<span>                                   parallel <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span> <span class="op">)</span></span></code></pre></div>
-<p>Set <code>parallel</code> to <code>TRUE</code> for faster processing
-with <code>futures</code> if you have enough memory available. This
-should take a couple of minutes.</p>
+<span>                                   parallel <span class="op">=</span> <span class="cn">TRUE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span> <span class="op">)</span></span></code></pre></div>
+<p>Set <code>parallel</code> to <code>TRUE</code> for faster processing.
+This should take a couple of minutes.</p>
 <p>This outputs a list containing: 1) The thresholds for positivity in
 each unmixed channel, as determined by the 99.5th percentile on the
 <code>AF</code> sample in <code>flow.control</code>. If you refer back

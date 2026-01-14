@@ -34,6 +34,15 @@ gate.af.identify.plot <- function( gate.data, samp, gate.region,
                                    gate.bound.density, asp,
                                    color.palette = "rainbow" ) {
 
+  if ( nrow( gate.data ) == 0 ||
+      all( is.na( gate.data[ , 1 ] ) ) ||
+      all( is.na( gate.data[ , 2 ] ) ) ) {
+
+    warning( "gate.data has no valid x/y values; skipping density plot." )
+
+    return( invisible( NULL ) )
+  }
+
   gate.data.ggp <- data.frame(
     x = gate.data[ , 1 ],
     y = gate.data[ , 2 ]
@@ -52,40 +61,43 @@ gate.af.identify.plot <- function( gate.data, samp, gate.region,
   x.breaks <- round( seq( x.min, x.max, length.out = 10 ) )
   y.breaks <- round( seq( y.min, y.max, length.out = 10 ) )
 
-  gate.plot <- ggplot( gate.data.ggp, aes( .data$x, .data$y ) ) +
-    geom_scattermore(
-      pointsize = 1.2 * asp$figure.gate.point.size,
-      alpha = 1, na.rm = TRUE ) +
-    stat_density_2d(
-      aes( fill = after_stat( level ) ),
-      geom = "polygon",
-      contour = TRUE,
-      na.rm = TRUE ) +
-    scale_x_continuous(
-      name = axes.labels[ 1 ],
-      breaks = x.breaks,
-      labels = x.breaks,
-      limits = c( x.min, x.max ),
-      expand = expansion( asp$af.figure.gate.scale.expand ) ) +
-    scale_y_continuous(
-      name = axes.labels[ 2 ],
-      breaks = y.breaks,
-      labels = y.breaks,
-      limits = c( y.min, y.max ),
-      expand = expansion( asp$af.figure.gate.scale.expand ) ) +
-    geom_path( aes( .data$x, .data$y, color = NULL ),
-               data = gate.region, linewidth = asp$figure.gate.line.size ) +
-    theme_bw() +
-    theme( plot.margin = margin( asp$figure.margin, asp$figure.margin,
-                                 asp$figure.margin, asp$figure.margin ),
-           legend.position = "none",
-           axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
-           axis.text = element_text( size = asp$figure.axis.text.size ),
-           axis.text.x = element_text( angle = 45, hjust = 1 ),
-           axis.title = element_text( size = asp$figure.axis.title.size ),
-           panel.border = element_rect( linewidth = asp$figure.panel.line.size ),
-           panel.grid.major = element_blank(),
-           panel.grid.minor = element_blank() )
+  gate.plot <- suppressWarnings(
+    ggplot( gate.data.ggp, aes( .data$x, .data$y ) ) +
+      geom_scattermore(
+        pointsize = 1.2 * asp$figure.gate.point.size,
+        alpha = 1, na.rm = TRUE ) +
+      stat_density_2d(
+        aes( fill = after_stat( level ) ),
+        geom = "polygon",
+        contour = TRUE,
+        na.rm = TRUE ) +
+      scale_x_continuous(
+        name = axes.labels[ 1 ],
+        breaks = x.breaks,
+        labels = x.breaks,
+        limits = c( x.min, x.max ),
+        expand = expansion( asp$af.figure.gate.scale.expand ) ) +
+      scale_y_continuous(
+        name = axes.labels[ 2 ],
+        breaks = y.breaks,
+        labels = y.breaks,
+        limits = c( y.min, y.max ),
+        expand = expansion( asp$af.figure.gate.scale.expand ) ) +
+      geom_path( aes( .data$x, .data$y, color = NULL ),
+                 data = gate.region, linewidth = asp$figure.gate.line.size ) +
+      theme_bw() +
+      theme( plot.margin = margin(
+        asp$figure.margin, asp$figure.margin,
+        asp$figure.margin, asp$figure.margin ),
+        legend.position = "none",
+        axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
+        axis.text = element_text( size = asp$figure.axis.text.size ),
+        axis.text.x = element_text( angle = 45, hjust = 1 ),
+        axis.title = element_text( size = asp$figure.axis.title.size ),
+        panel.border = element_rect( linewidth = asp$figure.panel.line.size ),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank() )
+  )
 
   # color options
   virids.colors <- c( "magma", "inferno", "plasma", "viridis", "cividis",
@@ -95,13 +107,18 @@ gate.af.identify.plot <- function( gate.data, samp, gate.region,
       scale_fill_viridis_c( option = color.palette )
   } else {
     gate.plot <- gate.plot +
-      scale_fill_gradientn( colours = asp$density.palette.base.color,
-                            values = asp$ribbon.scale.values )
+      scale_fill_gradientn(
+        colours = asp$density.palette.base.color, values = asp$ribbon.scale.values )
   }
 
-  ggsave( file.path( asp$figure.clean.control.dir,
-                     paste( asp$af.plot.define.filename, samp, ".jpg", sep = "_" ) ),
-          plot = gate.plot, width = asp$figure.width,
-          height = asp$figure.height )
+  suppressWarnings(
+    ggsave(
+      file.path(
+        asp$figure.clean.control.dir,
+        paste( asp$af.plot.define.filename, samp, ".jpg", sep = "_" ) ),
+      plot = gate.plot, width = asp$figure.width,
+      height = asp$figure.height
+    )
+  )
 
 }

@@ -35,11 +35,17 @@
 #'
 #' @export
 
-spectral.heatmap <- function( spectra, title = NULL, plot.dir = NULL,
-                              legend.label = "Intensity",
-                              color.palette = "viridis",
-                              save = TRUE, show.legend = TRUE,
-                              plot.width = NULL, plot.height = NULL ) {
+spectral.heatmap <- function(
+    spectra,
+    title = NULL,
+    plot.dir = NULL,
+    legend.label = "Intensity",
+    color.palette = "viridis",
+    save = TRUE,
+    show.legend = TRUE,
+    plot.width = NULL,
+    plot.height = NULL
+  ) {
 
   if ( !is.null( title ) )
     heatmap.filename <- paste( title, "spectral_heatmap.jpg" )
@@ -61,9 +67,15 @@ spectral.heatmap <- function( spectra, title = NULL, plot.dir = NULL,
   heatmap.df$Fluorophore <- row.levels
 
   heatmap.long <- heatmap.df %>%
-    tidyr::pivot_longer( cols = -Fluorophore, names_to = "Detector", values_to = "value" ) %>%
-    dplyr::mutate( Fluorophore = factor( Fluorophore, levels = rev( row.levels ) ),
-            Detector = factor( Detector, levels = col.levels ) )
+    tidyr::pivot_longer(
+      cols = -Fluorophore,
+      names_to = "Detector",
+      values_to = "value"
+    ) %>%
+    dplyr::mutate(
+      Fluorophore = factor( Fluorophore, levels = rev( row.levels ) ),
+      Detector = factor( Detector, levels = col.levels )
+    )
 
   heatmap.plot <- ggplot( heatmap.long, aes( Detector, Fluorophore, fill = value ) ) +
     geom_tile() +
@@ -77,9 +89,12 @@ spectral.heatmap <- function( spectra, title = NULL, plot.dir = NULL,
     heatmap.plot <- heatmap.plot + theme( legend.position = "none" )
 
   if ( save )
-    ggsave( filename = file.path( plot.dir, heatmap.filename ),
-            plot = heatmap.plot,
-            width = plot.width, height = plot.height )
+    ggsave(
+      filename = file.path( plot.dir, heatmap.filename ),
+      plot = heatmap.plot,
+      width = plot.width,
+      height = plot.height
+    )
   else
     return( heatmap.plot )
 }

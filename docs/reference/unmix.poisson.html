@@ -11,7 +11,7 @@ that fail to converge."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@ that fail to converge.</p>
 <span>  <span class="va">asp</span>,</span>
 <span>  initial.weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  threads <span class="op">=</span> <span class="fl">1</span></span>
+<span>  threads <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -94,8 +94,8 @@ for per-cell unmixing.</p></dd>
 
 
 <dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
-<dd><p>Numeric, default is <code>1</code>. Multi-threading is only used if
-<code>parallel</code> is <code>TRUE</code> and <code>threads</code> is greater than 1.</p></dd>
+<dd><p>Numeric, default is <code>NULL</code>, in which case <code>asp$worker.process.n</code>
+will be used if <code>parallel=TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

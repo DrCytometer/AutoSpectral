@@ -77,6 +77,7 @@
 #' will be used. `asp$worker.process.n` is set by default to be one less than the
 #' available cores on the machine. Multi-threading is only used if `parallel` is
 #' `TRUE`.
+#' @param verbose Logical, controls messaging. Default is `TRUE`.
 #'
 #' @return None. The function writes the unmixed FCS data to a file.
 #'
@@ -99,10 +100,13 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
                        balance.weight = 0.5,
                        speed = "fast",
                        parallel = TRUE,
-                       threads = NULL ) {
+                       threads = NULL,
+                       verbose = TRUE ) {
 
   if ( is.null( output.dir ) )
     output.dir <- asp$unmixed.fcs.dir
+  if ( !dir.exists( output.dir ) )
+    dir.create( output.dir )
 
   if ( is.null( threads ) )
     threads <- asp$worker.process.n
@@ -122,8 +126,12 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
 
   # import fcs, without warnings for fcs 3.2
   fcs.data <- suppressWarnings(
-    flowCore::read.FCS( fcs.file, transformation = FALSE,
-                        truncate_max_range = FALSE, emptyValue = FALSE )
+    flowCore::read.FCS(
+      fcs.file,
+      transformation = FALSE,
+      truncate_max_range = FALSE,
+      emptyValue = FALSE
+    )
   )
 
   fcs.keywords <- flowCore::keyword( fcs.data )
@@ -178,89 +186,105 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
   }
 
   # apply unmixing using selected method ---------------
-  unmixed.data <- switch( method,
-                         "OLS" = unmix.ols( spectral.exprs, spectra ),
-                         "WLS" = unmix.wls( spectral.exprs, spectra, weights ),
-                         "NNLS" = {
-                           if (!requireNamespace("RcppML", quietly = TRUE)) {
-                             stop(
-                               "The package 'RcppML' is required for Non Negative Least Squares.",
-                               "Install it with : install.packages('RcppML')",
-                               call. = FALSE)
-                           }
-                           unmix.nnls( spectral.exprs, spectra )
-                         },
-                         "OLS_pos" = unmix.ols_pos( spectral.exprs, spectra ),
-                         "WLS_qtopbot" = unmix.wls_qtopbot( spectral.exprs, spectra, weights ),
-                         "AutoSpectral" = {
-                           if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
-                                "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
-                             tryCatch(
-                               AutoSpectralRcpp::unmix.autospectral.rcpp( raw.data = spectral.exprs,
-                                                                          spectra = spectra,
-                                                                          af.spectra = af.spectra,
-                                                                          spectra.variants = spectra.variants,
-                                                                          weighted = weighted,
-                                                                          weights = weights,
-                                                                          calculate.error = calculate.error,
-                                                                          use.dist0 = use.dist0,
-                                                                          verbose = asp$verbose,
-                                                                          parallel = parallel,
-                                                                          threads = threads,
-                                                                          speed = speed ),
-                               error = function( e ) {
-                                 warning( "AutoSpectralRcpp unmixing failed, falling back to standard AutoSpectral: ", e$message )
-                                 unmix.autospectral( raw.data = spectral.exprs,
-                                                     spectra = spectra,
-                                                     af.spectra = af.spectra,
-                                                     spectra.variants = spectra.variants,
-                                                     weighted = weighted,
-                                                     weights = weights,
-                                                     calculate.error = calculate.error,
-                                                     use.dist0 = use.dist0,
-                                                     verbose = asp$verbose )
-                               }
-                             )
-                           } else {
-                             warning( "AutoSpectralRcpp not available, falling back to standard AutoSpectral" )
-                             unmix.autospectral( raw.data = spectral.exprs,
-                                                 spectra = spectra,
-                                                 af.spectra = af.spectra,
-                                                 spectra.variants = spectra.variants,
-                                                 weighted = weighted,
-                                                 weights = weights,
-                                                 calculate.error = calculate.error,
-                                                 use.dist0 = use.dist0,
-                                                 verbose = asp$verbose )
-                           }
-                         },
-                         "Poisson" = unmix.poisson( spectral.exprs, spectra, asp, weights ),
-                         "FastPoisson" = {
-                           if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
-                               "unmix.poisson.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
-                             tryCatch(
-                               AutoSpectralRcpp::unmix.poisson.fast( spectral.exprs,
-                                                                     spectra,
-                                                                     weights = weights,
-                                                                     maxit = asp$rlm.iter.max,
-                                                                     tol = 1e-6,
-                                                                     n_threads = threads,
-                                                                     divergence.threshold = divergence.threshold,
-                                                                     divergence.handling = divergence.handling,
-                                                                     balance.weight = balance.weight ),
-                               error = function( e ) {
-                                 warning( "FastPoisson failed, falling back to standard Poisson: ", e$message )
-                                 unmix.poisson( spectral.exprs, spectra, asp, weights,
-                                                parallel, threads )
-                               }
-                             )
-                           } else {
-                             warning( "AutoSpectralRcpp not available, falling back to standard Poisson." )
-                             unmix.poisson( spectral.exprs, spectra, asp, weights,
-                                            parallel, threads )
-                           }
-                         },
-                         stop( "Unknown method" )
+  unmixed.data <- switch(
+    method,
+    "OLS" = unmix.ols( spectral.exprs, spectra ),
+    "WLS" = unmix.wls( spectral.exprs, spectra, weights ),
+    "NNLS" = {
+      if (!requireNamespace("RcppML", quietly = TRUE)) {
+        stop(
+          "The package 'RcppML' is required for Non Negative Least Squares.",
+          "Install it with : install.packages('RcppML')",
+          call. = FALSE)
+      }
+      unmix.nnls( spectral.exprs, spectra )
+    },
+    "OLS_pos" = unmix.ols_pos( spectral.exprs, spectra ),
+    "WLS_qtopbot" = unmix.wls_qtopbot( spectral.exprs, spectra, weights ),
+    "AutoSpectral" = {
+      if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+           "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+        tryCatch(
+          AutoSpectralRcpp::unmix.autospectral.rcpp(
+            raw.data = spectral.exprs,
+            spectra = spectra,
+            af.spectra = af.spectra,
+            spectra.variants = spectra.variants,
+            weighted = weighted,
+            weights = weights,
+            calculate.error = calculate.error,
+            use.dist0 = use.dist0,
+            verbose = verbose,
+            parallel = parallel,
+            threads = threads,
+            speed = speed
+          ),
+          error = function( e ) {
+            warning( "AutoSpectralRcpp unmixing failed, falling back to standard AutoSpectral: ", e$message )
+            unmix.autospectral(
+              raw.data = spectral.exprs,
+              spectra = spectra,
+              af.spectra = af.spectra,
+              spectra.variants = spectra.variants,
+              weighted = weighted,
+              weights = weights,
+              calculate.error = calculate.error,
+              use.dist0 = use.dist0,
+              verbose = verbose
+            )
+          }
+        )
+      } else {
+        warning( "AutoSpectralRcpp not available, falling back to standard AutoSpectral" )
+        unmix.autospectral(
+          raw.data = spectral.exprs,
+          spectra = spectra,
+          af.spectra = af.spectra,
+          spectra.variants = spectra.variants,
+          weighted = weighted,
+          weights = weights,
+          calculate.error = calculate.error,
+          use.dist0 = use.dist0,
+          verbose = verbose
+        )
+      }
+    },
+    "Poisson" = unmix.poisson( spectral.exprs, spectra, asp, weights ),
+    "FastPoisson" = {
+      if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+           "unmix.poisson.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+        tryCatch(
+          AutoSpectralRcpp::unmix.poisson.fast(
+            spectral.exprs,
+            spectra,
+            weights = weights,
+            maxit = asp$rlm.iter.max,
+            tol = 1e-6,
+            n_threads = threads,
+            divergence.threshold = divergence.threshold,
+            divergence.handling = divergence.handling,
+            balance.weight = balance.weight
+          ),
+          error = function( e ) {
+            warning( "FastPoisson failed, falling back to standard Poisson: ", e$message )
+            unmix.poisson( spectral.exprs, spectra, asp, weights,
+                           parallel, threads )
+          }
+        )
+      } else {
+        warning( "AutoSpectralRcpp not available, falling back to standard Poisson." )
+        unmix.poisson(
+          spectral.exprs,
+          spectra,
+          asp,
+          weights,
+          parallel,
+          threads
+        )
+      }
+    },
+    stop( "Unknown method" )
+>>>>>>> upstream/master
   )
 
   # calculate model accuracy if desired
@@ -377,14 +401,15 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
   # TBD switch to using SPILL slot
   fluor.n <- nrow( spectra )
   detector.n <- ncol( spectra )
+  fluorophores <- paste0( rownames( spectra ), "-A" )
   vals <- as.vector( t( spectra ) )
   formatted.vals <- formatC( vals, digits = 8, format = "fg", flag = "#" )
   spill.string <- paste(
-    c( fluor.n, detector.n, rownames( spectra ), colnames( spectra ), formatted.vals ),
+    c( fluor.n, detector.n, fluorophores, colnames( spectra ), formatted.vals ),
     collapse = ","
   )
   new.keywords[[ "$SPECTRA" ]] <- spill.string
-  new.keywords[[ "$FLUOROCHROMES" ]] <- paste( rownames( spectra ), collapse = "," )
+  new.keywords[[ "$FLUOROCHROMES" ]] <- paste( fluorophores, collapse = "," )
 
   # add AF spectra if used
   if ( !is.null( af.spectra ) ) {
@@ -399,12 +424,16 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
   }
 
   # define new FCS file
+  fluor.orig <- colnames( unmixed.data )
+  colnames( unmixed.data ) <- paste0( fluor.orig, "-A" )
   flow.frame <- suppressWarnings( flowCore::flowFrame( unmixed.data ) )
   param.desc <- flowCore::parameters( flow.frame )@data$desc
+
+  # add marker names to description
   for ( i in seq_len( n.param ) ) {
-    p.name <- colnames( unmixed.data )[ i ]
+    orig.name <- fluor.orig[ i ]
     # Get the marker from flow.control
-    f.idx <- match( p.name, flow.control$fluorophore )
+    f.idx <- match( orig.name, flow.control$fluorophore )
     if ( !is.na( f.idx ) )
       param.desc[ i ] <- as.character( flow.control$antigen[ f.idx ] )
   }

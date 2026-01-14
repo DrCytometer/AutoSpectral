@@ -22,38 +22,43 @@
 
 unmix.wls <- function( raw.data, spectra, weights = NULL ) {
 
-  spectra <- t( spectra )
-
+  # set up weights correctly
   if ( is.null( weights ) ) {
     # weights are inverse of channel variances (mean if Poisson)
     weights <- pmax( abs( colMeans( raw.data ) ), 1e-6 )
     weights <- 1 / weights
-    W <- diag( weights )
+    W.half <- diag( sqrt( weights ) )
 
   } else {
     if ( !is.numeric( weights ) )
       stop( "Weights must be a numeric vector." )
 
-    if ( length( weights ) != nrow( spectra ) )
+    if ( length( weights ) != ncol( spectra ) )
       stop( "Mismatch between supplied weights and detectors in spectra" )
 
     if ( length( weights ) != ncol( raw.data ) )
       stop( "Mismatch between supplied weights and detectors in raw.data" )
 
-    W <- diag( as.numeric( weights ) )
+    W.half <- diag( as.numeric( sqrt( weights ) ) )
   }
 
-  # Weighted LS solution: (M^T W M)^{-1} M^T W
-  unmixing.matrix <- solve( t( spectra ) %*% W %*% spectra ) %*%
-    ( t( spectra ) %*% W )
-  # unmixing.matrix <- solve( t( spectra ) %*% W %*% spectra,
-  #   t( spectra ) %*% W )  # alt.
+  # transpose spectra to be detectors x fluorophores
+  A <- t( spectra )
 
-  unmixed.data <- raw.data %*% t( unmixing.matrix )
-  # unmixed.data <- tcrossprod(raw.data, unmixing.matrix)  # alt.
+  # Weighted design--solving via singular value decomposition for stability
+  A.star <- W.half %*% A
 
-  colnames( unmixed.data ) <- colnames( spectra )
+  # SVD of weighted design
+  sv <- svd( A.star )
 
+  # Weighted pseudoinverse A+_W
+  A.pinv.w <- sv$v %*% ( t( sv$u ) / sv$d )
+
+  # Multiply by W.half: (A.star)^+ W.half = (A^T W A)^-1 A^T W
+  unmixing.matrix <- A.pinv.w %*% W.half
+
+  unmixed.data <- tcrossprod( raw.data, unmixing.matrix )
+  colnames( unmixed.data ) <- rownames( spectra )
   return( unmixed.data )
 
 }

@@ -5,8 +5,8 @@
 \title{Remove Autofluorescence Contamination}
 \usage{
 remove.af(
-  clean.expr,
   samp,
+  clean.expr,
   spectral.channel,
   peak.channel,
   universal.negative,
@@ -21,9 +21,9 @@ remove.af(
 )
 }
 \arguments{
-\item{clean.expr}{List containing cleaned expression data.}
-
 \item{samp}{Sample identifier.}
+
+\item{clean.expr}{List containing cleaned expression data.}
 
 \item{spectral.channel}{Vector of spectral channel names.}
 

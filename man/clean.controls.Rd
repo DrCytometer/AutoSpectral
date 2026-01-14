@@ -20,7 +20,8 @@ clean.controls(
   intermediate.figures = FALSE,
   main.figures = TRUE,
   parallel = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  threads = NULL
 )
 }
 \arguments{
@@ -79,6 +80,10 @@ files are read in. If the data is larger, parallel processing may not
 accelerate the process much.}
 
 \item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
+
+\item{threads}{Numeric, number of threads to use for parallel processing.
+Default is \code{NULL} which will revert to \code{asp$worker.process.n} if
+\code{parallel=TRUE}.}
 }
 \value{
 Returns a modified \code{flow.control} with the original data intact. New, cleaned

@@ -11,7 +11,7 @@
 #' @importFrom tidyr pivot_longer
 #' @importFrom ggplot2 ggplot aes scale_y_continuous geom_bin2d facet_wrap xlab
 #' @importFrom ggplot2 ylab scale_fill_gradientn theme_minimal theme element_text
-#' @importFrom ggplot2 element_blank ggsave
+#' @importFrom ggplot2 element_blank ggsave scale_fill_viridis_c
 #' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom scales trans_new
 #'
@@ -101,9 +101,15 @@ spectral.ribbon.plot <- function(
 
     if ( !af ) {
       # scatter matching with background subtraction
-      pos.mfi <- apply( neg.expr.data[ , spectral.channel, drop = FALSE ], 2, median )
-      pos.minus.bg <- sweep( pos.expr.data[ , spectral.channel, drop = FALSE ], 2,
-                          pos.mfi, FUN = "-" )
+      pos.mfi <- apply(
+        neg.expr.data[ , spectral.channel, drop = FALSE ], 2, median
+      )
+      pos.minus.bg <- sweep(
+        pos.expr.data[ , spectral.channel, drop = FALSE ],
+        2,
+        pos.mfi,
+        FUN = "-"
+      )
       data.frames <- list(
         pos.minus.bg,
         pos.expr.data[ , spectral.channel, drop = FALSE ],
@@ -202,9 +208,17 @@ spectral.ribbon.plot <- function(
         limits = ribbon.limits,
         labels = ribbon.labels
       ) +
-      geom_bin2d( bins = c( length( unique( ribbon.plot.long$channel ) ),
-                     asp$ribbon.bins ),
-                 boundary = 0.5 ) +
+      geom_bin2d(
+        bins = c(
+          length(
+            unique(
+              ribbon.plot.long$channel
+            )
+          ),
+          asp$ribbon.bins
+        ),
+        boundary = 0.5
+      ) +
       facet_wrap( ~group, ncol = 1 ) +
       xlab( "Detector" ) +
       ylab( "Intensity" ) +
@@ -232,14 +246,19 @@ spectral.ribbon.plot <- function(
       scale_fill_viridis_c( option = color.palette )
   } else {
     ribbon.plot <- ribbon.plot +
-      scale_fill_gradientn( colours = asp$density.palette.base.color,
-                            values = asp$ribbon.scale.values )
+      scale_fill_gradientn(
+        colours = asp$density.palette.base.color,
+        values = asp$ribbon.scale.values
+      )
   }
 
   # save or return
   if ( save ) {
-    ribbon.plot.filename <- paste( title, fluor.name, asp$ribbon.plot.filename,
-                                   sep = "_" )
+    ribbon.plot.filename <- paste(
+      title, fluor.name, asp$ribbon.plot.filename,
+      sep = "_"
+    )
+
     suppressWarnings(
       ggsave(
         ribbon.plot.filename,

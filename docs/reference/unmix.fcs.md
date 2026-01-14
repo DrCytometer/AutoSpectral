@@ -27,7 +27,8 @@ unmix.fcs(
   balance.weight = 0.5,
   speed = "fast",
   parallel = TRUE,
-  threads = NULL
+  threads = NULL,
+  verbose = TRUE
 )
 ```
 
@@ -164,6 +165,10 @@ unmix.fcs(
   be used. `asp$worker.process.n` is set by default to be one less than
   the available cores on the machine. Multi-threading is only used if
   `parallel` is `TRUE`.
+
+- verbose:
+
+  Logical, controls messaging. Default is `TRUE`.
 
 ## Value
 

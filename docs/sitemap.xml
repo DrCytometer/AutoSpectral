@@ -15,8 +15,10 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/index.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/LICENSE-text.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/LICENSE.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/news/index.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/calculate.condition.number.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/calculate.hotspot.matrix.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/calculate.weights.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/check.channels.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/check.control.file.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/check.critical.html</loc></url>
@@ -28,10 +30,12 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/create.control.file.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/create.directory.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/create.heatmap.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/create.parallel.lapply.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/do.gate.af.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/do.gate.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/do.peacoQC.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-new_issue.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/downsample.control.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/estimate.spread.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/fit.af.spline.html</loc></url>
@@ -65,6 +69,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/lapply.sequential.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/match.fluorophores.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/match.markers.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/parallel.backend.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.bd.spectra.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.channel.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.scatter.parameter.html</loc></url>
@@ -81,6 +86,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/run.trim.events.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/run.universal.negative.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/sample.fcs.file.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/save.unmixing.matrix.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/scatter.match.plot.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/spectral.heatmap.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/spectral.ribbon.plot.html</loc></url>
@@ -93,5 +99,6 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.ols.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.poisson.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.html</loc></url>
 </urlset>
 

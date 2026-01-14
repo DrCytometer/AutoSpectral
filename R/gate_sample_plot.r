@@ -54,7 +54,7 @@ gate.sample.plot <- function( samp, gate.data, gate.marker, gate.boundary,
   y.lab.idx <- which( scatter.and.channel.label == gate.marker[ 2 ] )
   y.lab <- names( scatter.and.channel.label[ y.lab.idx ] )
 
-  gate.plot <- ggplot(gate.data.ggp, aes(x = .data$x, y = .data$y)) +
+  gate.plot <- ggplot( gate.data.ggp, aes( x = .data$x, y = .data$y ) ) +
     geom_scattermore(
       pointsize = asp$figure.gate.point.size,
       alpha = 1, na.rm = TRUE
@@ -65,37 +65,46 @@ gate.sample.plot <- function( samp, gate.data, gate.marker, gate.boundary,
       contour = TRUE,
       na.rm = TRUE ) +
     geom_path(
-      aes(x = .data$x, y = .data$y),
+      aes( x = .data$x, y = .data$y ),
       data = gate.boundary.ggp,
       color = "black",
       linewidth = asp$figure.gate.line.size
     ) +
     scale_x_continuous(
       name = x.lab,
-      breaks = seq(asp$scatter.data.min.x, asp$scatter.data.max.x, asp$data.step),
-      labels = paste0(round(seq(asp$scatter.data.min.x, asp$scatter.data.max.x,
-                                asp$data.step) / 1e6, 1), "e6"),
-      limits = c(asp$scatter.data.min.x, asp$scatter.data.max.x),
-      expand = expansion(asp$figure.gate.scale.expand)
+      breaks = seq(
+        asp$scatter.data.min.x, asp$scatter.data.max.x, asp$data.step
+        ),
+      labels = paste0(
+        round(
+          seq(
+            asp$scatter.data.min.x, asp$scatter.data.max.x, asp$data.step
+            ) / 1e6, 1 ), "e6" ),
+      limits = c( asp$scatter.data.min.x, asp$scatter.data.max.x ),
+      expand = expansion( asp$figure.gate.scale.expand )
     ) +
     scale_y_continuous(
       name = y.lab,
-      breaks = seq(asp$scatter.data.min.y, asp$scatter.data.max.y, asp$data.step),
-      labels = paste0(round(seq(asp$scatter.data.min.y, asp$scatter.data.max.y,
-                                asp$data.step) / 1e6, 1), "e6"),
-      limits = c(asp$scatter.data.min.y, asp$scatter.data.max.y),
-      expand = expansion(asp$figure.gate.scale.expand)
+      breaks = seq( asp$scatter.data.min.y, asp$scatter.data.max.y, asp$data.step ),
+      labels = paste0(
+        round(
+          seq(
+            asp$scatter.data.min.y, asp$scatter.data.max.y, asp$data.step
+            ) / 1e6, 1 ), "e6" ),
+      limits = c( asp$scatter.data.min.y, asp$scatter.data.max.y ),
+      expand = expansion( asp$figure.gate.scale.expand )
     ) +
     theme_bw() +
     theme(
-      plot.margin = margin(asp$figure.margin, asp$figure.margin,
-                           asp$figure.margin, asp$figure.margin),
+      plot.margin = margin(
+        asp$figure.margin, asp$figure.margin,
+        asp$figure.margin, asp$figure.margin ),
       legend.position = "none",
-      axis.ticks = element_line(linewidth = asp$figure.panel.line.size),
-      axis.text = element_text(size = asp$figure.axis.text.size),
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      axis.title = element_text(size = asp$figure.axis.title.size),
-      panel.border = element_rect(linewidth = asp$figure.panel.line.size),
+      axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
+      axis.text = element_text( size = asp$figure.axis.text.size ),
+      axis.text.x = element_text( angle = 45, hjust = 1 ),
+      axis.title = element_text( size = asp$figure.axis.title.size ),
+      panel.border = element_rect( linewidth = asp$figure.panel.line.size ),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()
     )
@@ -108,12 +117,15 @@ gate.sample.plot <- function( samp, gate.data, gate.marker, gate.boundary,
       scale_fill_viridis_c( option = color.palette )
   } else {
     gate.plot <- gate.plot +
-      scale_fill_gradientn( colours = asp$density.palette.base.color,
-                            values = asp$ribbon.scale.values )
+      scale_fill_gradientn(
+        colours = asp$density.palette.base.color, values = asp$ribbon.scale.values )
   }
 
-  ggsave( file.path( asp$figure.gate.dir, sprintf( "%s.jpg", samp ) ),
-          plot = gate.plot, width = asp$figure.width,
-          height = asp$figure.height )
+  ggsave(
+    file.path( asp$figure.gate.dir, sprintf( "%s.jpg", samp ) ),
+    plot = gate.plot,
+    width = asp$figure.width,
+    height = asp$figure.height
+    )
 
 }

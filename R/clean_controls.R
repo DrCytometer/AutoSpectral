@@ -54,6 +54,9 @@
 #' files are read in. If the data is larger, parallel processing may not
 #' accelerate the process much.
 #' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+#' @param threads Numeric, number of threads to use for parallel processing.
+#' Default is `NULL` which will revert to `asp$worker.process.n` if
+#' `parallel=TRUE`.
 #'
 #' @return
 #' Returns a modified `flow.control` with the original data intact. New, cleaned
@@ -61,7 +64,8 @@
 #'
 #' @export
 
-clean.controls <- function( flow.control, asp,
+clean.controls <- function( flow.control,
+                            asp,
                             time.clean = FALSE,
                             trim = FALSE,
                             trim.factor = NULL,
@@ -75,10 +79,19 @@ clean.controls <- function( flow.control, asp,
                             intermediate.figures = FALSE,
                             main.figures = TRUE,
                             parallel = FALSE,
-                            verbose = TRUE ) {
+                            verbose = TRUE,
+                            threads = NULL ) {
 
-  if ( intermediate.figures & !main.figures )
-    main.figures <- TRUE
+  if ( intermediate.figures & !main.figures ) main.figures <- TRUE
+
+  if ( parallel & is.null( threads ) )
+    threads <- asp$worker.process.n
+
+  if ( parallel )
+    threads <- max( floor( threads / 2 ), 1 )
+
+  if ( parallel )
+    warning( "Parallelization has not been fully optimized for `clean.controls`." )
 
   flow.sample <- flow.control$sample
   flow.sample.n <- length( flow.sample )
@@ -125,9 +138,16 @@ clean.controls <- function( flow.control, asp,
     if ( !dir.exists( asp$figure.peacoqc.dir ) & main.figures )
       dir.create( asp$figure.peacoqc.dir )
 
-    clean.expr <- run.peacoQC( clean.expr, spectral.channel, all.channels, asp,
-                               figures = main.figures, parallel = parallel,
-                               verbose = verbose )
+    clean.expr <- run.peacoQC(
+      expr.data = clean.expr,
+      spectral.channel = spectral.channel,
+      all.channels = all.channels,
+      asp = asp,
+      figures = main.figures,
+      parallel = parallel,
+      threads = threads,
+      verbose = verbose
+    )
   }
 
   ### Stage 2: Trimming -----------------
@@ -142,17 +162,18 @@ clean.controls <- function( flow.control, asp,
     }
 
     # trim fluorophore controls only
-    trim.sample <- flow.control$fluorophore[ ! grepl( "AF|negative",
-                                                      flow.control$fluorophore,
-                                                      ignore.case = TRUE ) ]
+    trim.sample <- flow.control$fluorophore[
+      !grepl( "AF|negative", flow.control$fluorophore, ignore.case = TRUE ) ]
 
-    trim.peak.channels <- flow.control$channel[ flow.control$fluorophore
-                                                %in% trim.sample ]
+    trim.peak.channels <- flow.control$channel[
+      flow.control$fluorophore %in% trim.sample ]
 
     trim.sample.data <- clean.expr[ trim.sample ]
 
-    trimmed.expr <- run.trim.events( trim.sample.data, trim.sample,
-                                     trim.peak.channels, trim.factor, asp )
+    trimmed.expr <- run.trim.events(
+      trim.sample.data, trim.sample,
+      trim.peak.channels, trim.factor, asp
+    )
 
     rm( trim.sample.data )
 
@@ -165,7 +186,6 @@ clean.controls <- function( flow.control, asp,
   # clean by removing autofluorescence contamination
   # recommended for controls from tissues (e.g., mouse splenocytes)
   # not needed for PBMCs
-  # can be done on a per control basis by specifying clean = TRUE in the fcs_control_file
 
   if ( af.remove ) {
     if ( main.figures ) {
@@ -182,8 +202,9 @@ clean.controls <- function( flow.control, asp,
     univ.neg <- univ.neg[ !is.null( univ.neg ) ]
     univ.neg <- univ.neg[ !is.na( univ.neg ) ]
     univ.neg <- univ.neg[ univ.neg != FALSE ]
-    univ.neg.sample <- flow.control$sample[ flow.control.type == "cells" &
-                                              flow.sample %in% univ.neg ]
+
+    univ.neg.sample <- flow.control$sample[
+      flow.control.type == "cells" & flow.sample %in% univ.neg ]
     # create new negative slot
     clean.universal.negative <- flow.negative
     flow.control$clean.universal.negative <- clean.universal.negative
@@ -192,32 +213,45 @@ clean.controls <- function( flow.control, asp,
 
       # select cell-based single-stained samples to be used
       # must be cells and must have a corresponding universal negative
-      af.removal.sample <- flow.sample[ flow.control.type == "cells" &
-                                          flow.negative %in% univ.neg ]
+      af.removal.sample <- flow.sample[
+        flow.control.type == "cells" & flow.negative %in% univ.neg ]
 
       # don't remove AF from negatives (to allow scatter matching)
-      af.removal.sample <- af.removal.sample[ !( af.removal.sample  %in% univ.neg.sample ) ]
+      af.removal.sample <- af.removal.sample[
+        !( af.removal.sample  %in% univ.neg.sample ) ]
 
       # check that we have samples to work with
       if ( length( af.removal.sample ) > 0 ) {
-        af.remove.peak.channels <- flow.control$channel[ flow.control$fluorophore
-                                                         %in% af.removal.sample ]
+        af.remove.peak.channels <- flow.control$channel[
+          flow.control$fluorophore %in% af.removal.sample ]
 
         # remove identified AF from single-color controls
-        af.removed.expr <- run.af.removal( clean.expr, af.removal.sample,
-                                           spectral.channel, af.remove.peak.channels,
-                                           flow.negative, asp,
-                                           flow.control$scatter.parameter,
-                                           negative.n, positive.n, scatter.match,
-                                           intermediate.figures, main.figures,
-                                           parallel = parallel, verbose = verbose )
+        af.removed.expr <- run.af.removal(
+          clean.expr = clean.expr,
+          af.removal.sample = af.removal.sample,
+          spectral.channel = spectral.channel,
+          peak.channel = af.remove.peak.channels,
+          universal.negative = flow.negative,
+          asp = asp,
+          scatter.param = flow.control$scatter.parameter,
+          negative.n = negative.n,
+          positive.n = positive.n,
+          scatter.match = scatter.match,
+          intermediate.figures = intermediate.figures,
+          main.figures = main.figures,
+          parallel = parallel,
+          threads = threads,
+          verbose = verbose
+        )
 
         # store cleaned data
         cleaned.samples <- names( af.removed.expr )
         clean.expr[ cleaned.samples ] <- af.removed.expr[ cleaned.samples ]
 
       } else {
-        warning( "No cell-based universal negative samples could be identified for `af.remove`." )
+        warning(
+          "No cell-based universal negative samples could be identified for `af.remove`."
+          )
         message(
           "\033[31m",
           paste(
@@ -232,11 +266,20 @@ clean.controls <- function( flow.control, asp,
         )
       }
     } else {
-      warning( "No cell-based universal negative samples could be identified.
+      warning(
+      "No cell-based universal negative samples could be identified.
       To perform autofluorescence removal, you must have single-stained cells,
-      and specify a universal negative in the fcs_control_file." )
-      message( "\033[31mNo cell-based universal negative samples could be identified.
-      Skipping autofluorescence removal.\033[0m" )
+      and specify a universal negative in the fcs_control_file."
+      )
+      message(
+        paste0(
+          "\033[31m",
+          "No cell-based universal negative samples could be identified.",
+          "\n",
+          "Skipping autofluorescence removal.",
+          "\033[0m"
+        )
+      )
     }
   }
 
@@ -261,37 +304,46 @@ clean.controls <- function( flow.control, asp,
       flow.negative
 
     # select fluorophore samples to be used
-    univ.sample <- flow.control$fluorophore[ ! grepl( "negative",
-                                                      flow.control$fluorophore,
-                                                      ignore.case = TRUE ) &
-                                               flow.negative != FALSE ]
+    univ.sample <- flow.control$fluorophore[
+      !grepl(
+        "negative",
+        flow.control$fluorophore,
+        ignore.case = TRUE
+      ) & flow.negative != FALSE ]
 
     # exclude AF
     univ.sample <- univ.sample[ univ.sample != "AF" ]
 
     # if AF removal has been done with scatter-matching, run only on beads
     if ( af.remove ) {
-      univ.sample.type <- flow.control.type[ names( flow.control.type ) %in% univ.sample ]
+      univ.sample.type <- flow.control.type[
+        names( flow.control.type ) %in% univ.sample ]
       univ.sample <- univ.sample[ univ.sample.type == "beads" ]
     }
 
     # check for remaining samples
     if ( length( univ.sample ) != 0 ) {
 
-      univ.peak.channels <- flow.control$channel[ flow.control$fluorophore
-                                                  %in% univ.sample ]
+      univ.peak.channels <- flow.control$channel[
+        flow.control$fluorophore %in% univ.sample ]
 
-      univ.neg.expr <- run.universal.negative( clean.expr, univ.sample,
-                                               flow.negative,
-                                               flow.control$scatter.parameter,
-                                               univ.peak.channels, downsample,
-                                               negative.n, positive.n,
-                                               spectral.channel, asp,
-                                               flow.control.type,
-                                               scatter.match,
-                                               intermediate.figures,
-                                               main.figures,
-                                               verbose )
+      univ.neg.expr <- run.universal.negative(
+        clean.expr = clean.expr,
+        univ.sample = univ.sample,
+        universal.negatives = flow.negative,
+        scatter.param = flow.control$scatter.parameter,
+        peak.channels = univ.peak.channels,
+        downsample = downsample,
+        negative.n = negative.n,
+        positive.n = positive.n,
+        spectral.channel = spectral.channel,
+        asp = asp,
+        control.type = flow.control.type,
+        scatter.match = scatter.match,
+        intermediate.figures = intermediate.figures,
+        main.figures = main.figures,
+        verbose = verbose
+      )
 
       # merge in cleaned data
       clean.expr[ names( univ.neg.expr ) ] <- univ.neg.expr
@@ -317,16 +369,20 @@ clean.controls <- function( flow.control, asp,
     }
 
     # select fluorophore samples to be used
-    downsample.sample <- flow.control$fluorophore[ ! grepl( "AF|negative",
-                                                            flow.control$fluorophore,
-                                                            ignore.case = TRUE ) ]
+    downsample.sample <- flow.control$fluorophore[
+      !grepl( "AF|negative", flow.control$fluorophore, ignore.case = TRUE ) ]
 
-    downsample.peak.channels <- flow.control$channel[ flow.control$fluorophore
-                                                      %in% downsample.sample ]
+    downsample.peak.channels <- flow.control$channel[
+      flow.control$fluorophore %in% downsample.sample ]
 
-    downsample.expr <- run.downsample( clean.expr, downsample.sample,
-                                       downsample.peak.channels,
-                                       negative.n, positive.n, verbose )
+    downsample.expr <- run.downsample(
+      clean.expr.data = clean.expr,
+      downsample.sample = downsample.sample,
+      peak.channels = downsample.peak.channels,
+      negative.n = negative.n,
+      positive.n = positive.n,
+      verbose = verbose
+    )
 
     # merge in cleaned data
     clean.expr[ names( downsample.expr ) ] <- downsample.expr
@@ -342,14 +398,25 @@ clean.controls <- function( flow.control, asp,
   {
     flow.sample.event.number <- nrow( clean.expr[[ fs.idx ]]  )
 
-    rownames( clean.expr[[ fs.idx ]] ) <- paste( flow.sample[ fs.idx ],
-                                                 seq_len( flow.sample.event.number ),
-                                                 sep = "_")
+    rownames( clean.expr[[ fs.idx ]] ) <- paste(
+      flow.sample[ fs.idx ],
+      seq_len( flow.sample.event.number ),
+      sep = "_"
+    )
 
-    if ( flow.sample.event.number < asp$min.cell.warning.n )
-      warning( paste( "\033[31m", "Fewer than", asp$min.cell.warning.n,
-                      "gated events in",
-                      names( clean.expr )[ fs.idx ], "\033[0m", "\n" ) )
+    if ( flow.sample.event.number < asp$min.cell.warning.n ) {
+      warning(
+        paste0(
+          "\033[31m",
+          "Fewer than ",
+          asp$min.cell.warning.n,
+          " gated events in ",
+          names( clean.expr )[ fs.idx ],
+          "\033[0m",
+          "\n"
+        )
+      )
+    }
 
     if ( flow.sample.event.number > flow.sample.event.number.max )
       flow.sample.event.number.max <- flow.sample.event.number
@@ -365,8 +432,10 @@ clean.controls <- function( flow.control, asp,
     flow.sample.event.number <- nrow( clean.expr[[ fs.idx ]]  )
     flow.the.sample <- flow.sample[ fs.idx ]
 
-    flow.the.event <- sprintf( "%s.%0*d", flow.the.sample,
-                               flow.event.number.width, 1 : flow.sample.event.number )
+    flow.the.event <- sprintf(
+      "%s.%0*d", flow.the.sample,
+      flow.event.number.width, 1 : flow.sample.event.number
+    )
     rownames( clean.expr[[ fs.idx ]] ) <- flow.the.event
   }
 
@@ -381,9 +450,11 @@ clean.controls <- function( flow.control, asp,
 
   event.type.factor <- flow.sample
   names( event.type.factor ) <- flow.control$control.type
-  flow.event.type <- factor( flow.event.sample,
-                             levels = event.type.factor,
-                             labels = names( event.type.factor ) )
+  flow.event.type <- factor(
+    flow.event.sample,
+    levels = event.type.factor,
+    labels = names( event.type.factor )
+    )
 
   # store in flow.control
   flow.control$clean.expr <- clean.expr

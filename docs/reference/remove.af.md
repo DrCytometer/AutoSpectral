@@ -7,8 +7,8 @@ using the specified parameters and settings.
 
 ``` r
 remove.af(
-  clean.expr,
   samp,
+  clean.expr,
   spectral.channel,
   peak.channel,
   universal.negative,
@@ -25,13 +25,13 @@ remove.af(
 
 ## Arguments
 
-- clean.expr:
-
-  List containing cleaned expression data.
-
 - samp:
 
   Sample identifier.
+
+- clean.expr:
+
+  List containing cleaned expression data.
 
 - spectral.channel:
 

@@ -29,6 +29,7 @@
 #' Default is `NULL`, which inherits from `asp$table.af.dir`.
 #' @param title Title for the output spectral plots and csv file. Default is
 #' `Autofluorescence spectra`.
+#' @param verbose Logical, controls messaging. Default is `TRUE`.
 #'
 #' @return A matrix of autofluorescence spectra.
 #'
@@ -41,7 +42,8 @@ get.af.spectra <- function( unstained.sample,
                             figures = TRUE,
                             plot.dir = NULL,
                             table.dir = NULL,
-                            title = NULL ) {
+                            title = NULL,
+                            verbose = TRUE ) {
 
   # set defaults
   if ( is.null( plot.dir ) )
@@ -58,8 +60,11 @@ get.af.spectra <- function( unstained.sample,
 
   # import unstained sample
   unstained.ff <- suppressWarnings(
-    flowCore::read.FCS( unstained.sample, transformation = FALSE,
-                        truncate_max_range = FALSE, emptyValue = FALSE )
+    flowCore::read.FCS(
+      unstained.sample,
+      transformation = FALSE,
+      truncate_max_range = FALSE,
+      emptyValue = FALSE )
   )
 
   unstained.exprs <- flowCore::exprs( unstained.ff )[ , spectral.channels ]
@@ -69,14 +74,15 @@ get.af.spectra <- function( unstained.sample,
   cluster.data <- cbind( unstained.exprs, unmixed )
 
   # get cluster of AF from unstained
-  if ( asp$verbose )
-    message( "Creating a self-organizing map of the autofluorescence" )
+  if ( verbose ) message( "Creating a self-organizing map of the autofluorescence" )
 
   set.seed( 42 )
-  map <- EmbedSOM::SOM( cluster.data,
-                        xdim = som.dim, ydim = som.dim,
-                        batch = TRUE, parallel = TRUE,
-                        threads = threads )
+  map <- EmbedSOM::SOM(
+    cluster.data,
+    xdim = som.dim, ydim = som.dim,
+    batch = TRUE, parallel = TRUE,
+    threads = threads
+    )
 
   af.spectra <- t(
     apply( map$codes[ , spectral.channels ], 1, function( x ) {
@@ -99,8 +105,7 @@ get.af.spectra <- function( unstained.sample,
   write.csv( af.spectra, file = file.path( table.dir, af.file.name ) )
 
   if ( figures ) {
-    if ( asp$verbose )
-      message( "Plotting spectra" )
+    if ( verbose ) message( "Plotting spectra" )
 
     if ( !dir.exists( plot.dir ) )
       dir.create( plot.dir )
@@ -108,11 +113,13 @@ get.af.spectra <- function( unstained.sample,
     if ( is.null( title ) )
       title <- asp$af.file.name
 
-    spectral.trace( spectral.matrix = af.spectra,
-                    asp = asp,
-                    title = title,
-                    plot.dir = plot.dir,
-                    split.lasers = FALSE )
+    spectral.trace(
+      spectral.matrix = af.spectra,
+      asp = asp,
+      title = title,
+      plot.dir = plot.dir,
+      split.lasers = FALSE
+      )
 
     spectral.heatmap( af.spectra, title, plot.dir )
   }

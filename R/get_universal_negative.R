@@ -9,6 +9,7 @@
 #' @importFrom stats quantile median mad
 #' @importFrom sp point.in.polygon Polygon Polygons SpatialPolygons
 #' @importFrom grDevices contourLines
+#' @importFrom tripack tri.mesh convex.hull
 #'
 #' @param clean.expr.data List containing cleaned expression data.
 #' @param samp Sample identifier.
@@ -50,7 +51,7 @@ get.universal.negative <- function( clean.expr.data, samp,
                                     verbose = TRUE ) {
 
   if ( verbose )
-    message( paste( "\033[34m", "Getting universal negative for", samp, "\033[0m" ) )
+    message( paste0( "\033[34m", "Getting universal negative for: ", samp, "\033[0m" ) )
 
   pos.control.expr <- clean.expr.data[[ samp ]]
   neg.control.expr <- clean.expr.data[[ universal.negatives[ samp ] ]]
@@ -69,15 +70,35 @@ get.universal.negative <- function( clean.expr.data, samp,
   pos.above.threshold <- pos.peak.channel[ pos.peak.channel > positivity.threshold ]
 
   # warn if few events in positive
-  if ( length( pos.above.threshold ) < asp$min.cell.warning.n )
-    warning( paste( "\033[31m", "Warning! Fewer than",  asp$min.cell.warning.n,
-                    "positive events in", samp,  "\033[0m", "\n" )  )
+  if ( length( pos.above.threshold ) < asp$min.cell.warning.n ) {
+    warning(
+      paste0(
+        "\033[31m",
+        "Warning! Fewer than ",
+        asp$min.cell.warning.n,
+        " positive events in ",
+        samp,
+        "\033[0m",
+        "\n"
+      )
+    )
+  }
 
   # stop if fewer than minimum acceptable events, returning original data
   if ( length( pos.above.threshold ) < asp$min.cell.stop.n ) {
-    warning( paste( "\033[31m", "Warning! Fewer than",  asp$min.cell.stop.n,
-                    "positive events in", samp, "\n",
-                    "Returning original data", "\033[0m", "\n" )  )
+    warning(
+      paste0(
+        "\033[31m",
+        "Warning! Fewer than ",
+        asp$min.cell.stop.n,
+        " positive events in ",
+        samp,
+        "\n",
+        "Returning original data.",
+        "\033[0m",
+        "\n"
+      )
+    )
     return( rbind( pos.control.expr, neg.control.expr ) )
   }
 
@@ -102,10 +123,13 @@ get.universal.negative <- function( clean.expr.data, samp,
 
     pos.scatter.coord <- unique( pos.selected.expr[ , scatter.param ] )
     pos.scatter.gate <- suppressWarnings(
-      convex.hull( tri.mesh(
-      pos.scatter.coord[ , 1 ],
-      pos.scatter.coord[ , 2 ]
-    ) ) )
+      tripack::convex.hull(
+        tripack::tri.mesh(
+          pos.scatter.coord[ , 1 ],
+          pos.scatter.coord[ , 2 ]
+        )
+      )
+    )
 
     neg.scatter.matched.pip <- sp::point.in.polygon(
       neg.control.expr[ , scatter.param[ 1 ] ],
@@ -116,15 +140,34 @@ get.universal.negative <- function( clean.expr.data, samp,
 
     # warn if few events in negative
     if ( length( neg.population.idx ) < asp$min.cell.warning.n ) {
-      warning( paste( "\033[31m", "Warning! Fewer than",  asp$min.cell.warning.n,
-                      "scatter-matched negative events for", samp,  "\033[0m", "\n" )  )
+      warning(
+        paste0(
+          "\033[31m",
+          "Warning! Fewer than ",
+          asp$min.cell.warning.n,
+          " scatter-matched negative events for ",
+          samp,
+          "\033[0m",
+          "\n"
+        )
+      )
     }
 
     # stop if fewer than minimum acceptable events, returning original negative
     if ( length( neg.population.idx ) < asp$min.cell.stop.n ) {
-      warning( paste( "\033[31m", "Warning! Fewer than",  asp$min.cell.stop.n,
-                      "scatter-matched negative events for", samp, "\n",
-                      "Reverting to original negative. \n",  "\033[0m" ) )
+      warning(
+        paste0(
+          "\033[31m",
+          "Warning! Fewer than ",
+          asp$min.cell.stop.n,
+          " scatter-matched negative events for ",
+          samp,
+          "\n",
+          "Reverting to original negative.",
+          "\n",
+          "\033[0m"
+        )
+      )
 
       # downsample original negative
       if ( nrow( neg.control.expr ) > negative.n ) {
@@ -151,17 +194,22 @@ get.universal.negative <- function( clean.expr.data, samp,
 
 
   if ( main.figures ) {
-    scatter.match.plot( pos.expr.data = pos.selected.expr,
-                        neg.expr.data = neg.scatter.matched,
-                        fluor.name = samp,
-                        scatter.param = scatter.param,
-                        asp = asp )
+    scatter.match.plot(
+      pos.expr.data = pos.selected.expr,
+      neg.expr.data = neg.scatter.matched,
+      fluor.name = samp,
+      scatter.param = scatter.param,
+      asp = asp
+      )
 
     if ( intermediate.figures )
-      spectral.ribbon.plot( pos.expr.data = pos.selected.expr,
-                            neg.expr.data = neg.scatter.matched,
-                            spectral.channel = spectral.channel,
-                            asp = asp, fluor.name = samp )
+      spectral.ribbon.plot(
+        pos.expr.data = pos.selected.expr,
+        neg.expr.data = neg.scatter.matched,
+        spectral.channel = spectral.channel,
+        asp = asp,
+        fluor.name = samp
+        )
   }
 
   return( rbind( pos.selected.expr, neg.scatter.matched ) )

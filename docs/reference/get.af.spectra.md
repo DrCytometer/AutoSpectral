@@ -16,7 +16,8 @@ get.af.spectra(
   figures = TRUE,
   plot.dir = NULL,
   table.dir = NULL,
-  title = NULL
+  title = NULL,
+  verbose = TRUE
 )
 ```
 
@@ -65,6 +66,10 @@ get.af.spectra(
 
   Title for the output spectral plots and csv file. Default is
   `Autofluorescence spectra`.
+
+- verbose:
+
+  Logical, controls messaging. Default is `TRUE`.
 
 ## Value
 

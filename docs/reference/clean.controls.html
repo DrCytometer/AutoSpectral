@@ -27,7 +27,7 @@ from matching negative, and downsampling to speed up RLM spectra optimization.
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,7 +92,8 @@ from matching negative, and downsampling to speed up RLM spectra optimization.</
 <span>  intermediate.figures <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  main.figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  threads <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -186,6 +187,12 @@ accelerate the process much.</p></dd>
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical, default is <code>TRUE</code>. Set to <code>FALSE</code> to suppress messages.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>Numeric, number of threads to use for parallel processing.
+Default is <code>NULL</code> which will revert to <code>asp$worker.process.n</code> if
+<code>parallel=TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

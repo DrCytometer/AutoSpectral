@@ -21,13 +21,17 @@ run.downsample <- function( clean.expr.data, downsample.sample, peak.channels,
 
   downsample.expr <- lapply( downsample.sample, function( sample.name ){
 
-    downsample.control( clean.expr.data, sample.name, peak.channels,
-                        negative.n, positive.n, verbose )
-
+    downsample.control(
+      clean.expr.data,
+      sample.name,
+      peak.channels,
+      negative.n,
+      positive.n,
+      verbose
+    )
   } )
 
   names( downsample.expr ) <- downsample.sample
 
   return( downsample.expr )
-
 }

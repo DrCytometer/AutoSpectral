@@ -113,9 +113,10 @@ create.heatmap <- function( matrix,
     heatmap.plot <- heatmap.plot + theme( legend.position = "none" )
 
   if ( save )
-    ggsave( filename = file.path( plot.dir, heatmap.filename ),
-            plot = heatmap.plot,
-            width = figure.width, height = figure.height )
+    ggsave(
+      filename = file.path( plot.dir, heatmap.filename ),
+      plot = heatmap.plot,
+      width = figure.width, height = figure.height )
   else
     return( heatmap.plot )
 }

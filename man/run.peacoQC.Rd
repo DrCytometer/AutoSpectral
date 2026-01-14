@@ -11,6 +11,7 @@ run.peacoQC(
   asp,
   figures = TRUE,
   parallel = FALSE,
+  threads = 1,
   verbose = TRUE
 )
 }
@@ -29,9 +30,9 @@ impact of intrusive autofluorescent event removal and scatter-matching for
 the negatives.}
 
 \item{parallel}{Logical, default is \code{FALSE}, in which case parallel processing
-will not be used. Parallel processing will likely be faster when many small
-files are read in. If the data is larger, parallel processing may not
-accelerate the process much.}
+will not be used. Set to \code{TRUE} to run in parallel.}
+
+\item{threads}{Number of cores to use for parallel processing, default is \code{1}.}
 
 \item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
 }

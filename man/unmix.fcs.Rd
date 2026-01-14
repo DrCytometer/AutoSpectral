@@ -25,7 +25,8 @@ unmix.fcs(
   balance.weight = 0.5,
   speed = "fast",
   parallel = TRUE,
-  threads = NULL
+  threads = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -117,6 +118,8 @@ for per-cell unmixing methods.}
 will be used. \code{asp$worker.process.n} is set by default to be one less than the
 available cores on the machine. Multi-threading is only used if \code{parallel} is
 \code{TRUE}.}
+
+\item{verbose}{Logical, controls messaging. Default is \code{TRUE}.}
 }
 \value{
 None. The function writes the unmixed FCS data to a file.

@@ -6,9 +6,6 @@
 #' This function runs the autofluorescence removal process on a list of samples,
 #' using the specified parameters and settings.
 #'
-#' @importFrom future plan multisession
-#' @importFrom future.apply future_lapply
-#'
 #' @param clean.expr List containing cleaned expression data.
 #' @param af.removal.sample Vector of sample names for which autofluorescence
 #' removal is to be performed.
@@ -33,37 +30,75 @@
 #' impact of intrusive autofluorescent event removal and scatter-matching for
 #' the negatives.
 #' @param parallel Logical, default is `FALSE`, in which case parallel processing
-#' will not be used. Parallel processing will likely be faster when many small
-#' files are read in. If the data is larger, parallel processing may not
-#' accelerate the process much.
+#' will not be used. Set to `TRUE` to run in parallel.
+#' @param threads Number of cores to use for parallel processing, default is `1`.
 #' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
 #'
 #' @return A list containing the expression data with autofluorescent events
 #' removed for each sample.
 
-run.af.removal <- function( clean.expr, af.removal.sample, spectral.channel,
-                            peak.channel, universal.negative, asp, scatter.param,
-                            negative.n = 500, positive.n = 1000,
+run.af.removal <- function( clean.expr,
+                            af.removal.sample,
+                            spectral.channel,
+                            peak.channel,
+                            universal.negative,
+                            asp,
+                            scatter.param,
+                            negative.n = 500,
+                            positive.n = 1000,
                             scatter.match = TRUE,
-                            intermediate.figures = FALSE, main.figures = TRUE,
-                            parallel = FALSE, verbose = TRUE ) {
+                            intermediate.figures = FALSE,
+                            main.figures = TRUE,
+                            parallel = FALSE,
+                            threads = 1,
+                            verbose = TRUE ) {
+
+  # construct arguments list
+  args.list <- list(
+    clean.expr = clean.expr,
+    spectral.channel = spectral.channel,
+    peak.channel = peak.channel,
+    universal.negative = universal.negative,
+    asp = asp,
+    scatter.param = scatter.param,
+    negative.n = negative.n,
+    positive.n = positive.n,
+    scatter.match = scatter.match,
+    main.figures = main.figures,
+    intermediate.figures = intermediate.figures,
+    verbose = verbose
+  )
 
   # set up parallel processing
-  if ( parallel ){
-    future::plan( future::multisession, workers = asp$worker.process.n )
-    options( future.globals.maxSize = asp$max.memory.n )
-    lapply.function <- future.apply::future_lapply
+  if ( parallel ) {
+    if ( verbose ) {
+      message( "\033[34mIdentifying and removing autofluorescence contamination \033[0m" )
+      message( "\033[34mCheck `figure_clean_controls` for plots \033[0m" )
+    }
+
+    internal.functions <- c( "remove.af" )
+    exports <- c( "args.list", "af.removal.sample", internal.functions )
+    result <- create.parallel.lapply(
+      asp,
+      exports,
+      parallel = parallel,
+      threads = threads,
+      export.env = environment()
+    )
+    lapply.function <- result$lapply
   } else {
-    lapply.function <- lapply.sequential
+    lapply.function <- lapply
+    result <- list( cleanup = NULL )
   }
 
-  af.remove.expr <- lapply.function( af.removal.sample, function( sample.name ){
-
-    remove.af( clean.expr, sample.name, spectral.channel, peak.channel,
-               universal.negative, asp, scatter.param,
-               negative.n, positive.n, scatter.match,
-               main.figures, intermediate.figures, verbose )
-
+  # main loop
+  af.remove.expr <- tryCatch( {
+    lapply.function( af.removal.sample, function( s ) {
+      do.call( remove.af, c( list( s ), args.list ) )
+    } )
+  }, finally = {
+    # clean up cluster when done
+    if ( !is.null( result$cleanup ) ) result$cleanup()
   } )
 
   names( af.remove.expr ) <- af.removal.sample

@@ -31,17 +31,19 @@ get.autospectral.param.opteon <- function( autosp.param )
 
   autosp.param$default.scatter.parameter <- c( "FSC-A", "VSSC-A" )
 
+  autosp.param$default.time.parameter <- "Time"
+
   autosp.param$default.transformation.param <- list(
           length = 256,
-          max.range = 100000,
+          max.range = 1e7,
           pos = 6.68,
           neg = 0,
-          width = -3000
+          width = -1000
         )
 
   autosp.param$non.spectral.channel <- c( "Time", "SSC", "FSC", "-H", "Width" )
 
-  autosp.param$af.channel <- "V525-A"
+  autosp.param$af.channel <- "UV508-A"
 
   autosp.param$data.step <- 3e6
 

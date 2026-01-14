@@ -24,13 +24,14 @@ trim.extreme.events <- function( expr.data, peak.channel, trim.factor ){
   expr.trim.n <- round( peak.channel.expr.n * trim.factor ) + 1
 
   peak.channel.expr.low <- sort( peak.channel.expr )[ expr.trim.n ]
-  peak.channel.expr.high <- sort( peak.channel.expr,
-                                  decreasing = TRUE )[ expr.trim.n ]
+  peak.channel.expr.high <- sort(
+    peak.channel.expr, decreasing = TRUE )[ expr.trim.n ]
 
   expr.trim.idx <- which (
     peak.channel.expr > peak.channel.expr.low &
-      peak.channel.expr < peak.channel.expr.high )
+      peak.channel.expr < peak.channel.expr.high
+    )
 
-  expr.data[ expr.trim.idx, ]
+  return( expr.data[ expr.trim.idx, ] )
 
 }

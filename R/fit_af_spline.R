@@ -53,7 +53,8 @@ fit.af.spline <- function( af.cells, non.af.cells, asp ) {
 
   sd.residuals <- sd( model.data$residuals )
 
-  model.fit <- model.data[ abs( model.data$residuals ) <= asp$af.spline.sd.n * sd.residuals, ]
+  model.fit <- model.data[ abs(
+    model.data$residuals ) <= asp$af.spline.sd.n * sd.residuals, ]
 
   model.fit.data <- model.fit[ which( model.fit$x > x.bound.low ), ]
 
@@ -88,8 +89,10 @@ fit.af.spline <- function( af.cells, non.af.cells, asp ) {
   expanded.points <- unique( expanded.points )
 
   # get the boundary of those events
-  af.remove.boundary <- tripack::convex.hull( tripack::tri.mesh(
-    expanded.points$x, expanded.points$y ) )
+  af.remove.boundary <- tripack::convex.hull(
+    tripack::tri.mesh(
+      expanded.points$x, expanded.points$y
+    ) )
 
   if ( length( af.remove.boundary ) == 1 )
     stop( "Failed to identify autofluorescence" )

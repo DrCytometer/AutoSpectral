@@ -6,8 +6,6 @@
 #' This function runs PeacoQC to remove flow fluctuation errors from expression
 #' data using parallel processing if specified.
 #'
-#' @importFrom future plan multisession
-#' @importFrom future.apply future_lapply
 #' @importFrom flowWorkspace flowjo_biexp
 #'
 #' @param expr.data A list containing the expression data for each sample.
@@ -19,24 +17,20 @@
 #' impact of intrusive autofluorescent event removal and scatter-matching for
 #' the negatives.
 #' @param parallel Logical, default is `FALSE`, in which case parallel processing
-#' will not be used. Parallel processing will likely be faster when many small
-#' files are read in. If the data is larger, parallel processing may not
-#' accelerate the process much.
+#' will not be used. Set to `TRUE` to run in parallel.
+#' @param threads Number of cores to use for parallel processing, default is `1`.
 #' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
 #'
 #' @return A list containing the cleaned expression data for each sample.
 
-run.peacoQC <- function( expr.data, spectral.channel, all.channels, asp,
-                         figures = TRUE, parallel = FALSE, verbose = TRUE ) {
-
-  # set up parallel processing
-  if ( parallel ){
-    plan( multisession, workers = asp$worker.process.n )
-    options( future.globals.maxSize = asp$max.memory.n )
-    lapply.function <- future_lapply
-  } else {
-    lapply.function <- lapply.sequential
-  }
+run.peacoQC <- function( expr.data,
+                         spectral.channel,
+                         all.channels,
+                         asp,
+                         figures = TRUE,
+                         parallel = FALSE,
+                         threads = 1,
+                         verbose = TRUE ) {
 
   # define parameters for peacoQC
   biexp.transform <- flowWorkspace::flowjo_biexp(
@@ -57,16 +51,46 @@ run.peacoQC <- function( expr.data, spectral.channel, all.channels, asp,
     inverse = TRUE
   )
 
-  time.param <- asp$default.time.parameter
+  # construct arguments list
+  args.list <- list(
+    spectral.channel = spectral.channel,
+    biexp.transform = biexp.transform,
+    transform.inv = transform.inv,
+    output.dir = asp$figure.peacoqc.dir,
+    time.param = asp$default.time.parameter,
+    all.channels = all.channels,
+    method = asp$peacoqc.method,
+    figures = figures,
+    verbose = verbose
+  )
+
+  # set up parallel processing
+  if ( parallel ) {
+    internal.functions <- c( "do.peacoQC" )
+    exports <- c( "args.list", "expr.data", internal.functions )
+    result <- create.parallel.lapply(
+      asp,
+      exports,
+      parallel = parallel,
+      threads = threads,
+      export.env = environment(),
+      allow.mclapply.mac = TRUE
+    )
+    lapply.function <- result$lapply
+  } else {
+    lapply.function <- lapply
+    result <- list( cleanup = NULL )
+  }
 
   # run peacoQC to remove flow fluctuation errors
-  clean.expr <- lapply.function( names( expr.data ), function( sample.name ) {
-    do.peacoQC( expr.data[[ sample.name ]], sample.name,
-                spectral.channel, biexp.transform, transform.inv,
-                asp$figure.peacoqc.dir, time.param, all.channels,
-                asp$peacoqc.method, figures, verbose )
-
-  }, future.seed = asp$gate.downsample.seed )
+  clean.expr <- tryCatch( {
+    lapply.function( names( expr.data ), function( f ) {
+      do.call( do.peacoQC, c( list( expr.data[[ f ]], f ), args.list ) )
+    } )
+  }, finally = {
+    # clean up cluster when done
+    if ( !is.null( result$cleanup ) ) result$cleanup()
+  } )
 
   # note that PeacoQC will only run on MAD for low n samples like controls
   # do.peacoQC is therefore set to run with MAD only
@@ -79,11 +103,19 @@ run.peacoQC <- function( expr.data, spectral.channel, all.channels, asp,
 
   low.sample.n <- which( clean.expr.n < asp$min.cell.warning.n )
 
-  if ( any( clean.expr.n < asp$min.cell.warning.n ) ){
-    warning( paste( "\033[31m", "Warning! Fewer than", asp$min.cell.warning.n,
-                "gated events in", names( low.sample.n ), "\033[0m", "\n"  ) )
+  if ( any( clean.expr.n < asp$min.cell.warning.n ) ) {
+    warning(
+      paste0(
+        "\033[31m",
+        "Warning! Fewer than ",
+        asp$min.cell.warning.n,
+        " gated events in ",
+        names( low.sample.n ),
+        "\033[0m",
+        "\n"
+      )
+    )
   }
 
   return( clean.expr )
-
 }

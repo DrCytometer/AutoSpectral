@@ -11,7 +11,7 @@ events in the file."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,21 +59,20 @@ events in the file.</p>
 <span>  <span class="va">fluor</span>,</span>
 <span>  <span class="va">file.name</span>,</span>
 <span>  <span class="va">control.dir</span>,</span>
+<span>  <span class="va">asp</span>,</span>
 <span>  <span class="va">spectra</span>,</span>
 <span>  <span class="va">af.spectra</span>,</span>
+<span>  <span class="va">n.cells</span>,</span>
+<span>  <span class="va">som.dim</span>,</span>
+<span>  <span class="va">figures</span>,</span>
+<span>  <span class="va">output.dir</span>,</span>
+<span>  <span class="va">verbose</span>,</span>
 <span>  <span class="va">spectral.channel</span>,</span>
 <span>  <span class="va">universal.negative</span>,</span>
 <span>  <span class="va">control.type</span>,</span>
 <span>  <span class="va">raw.thresholds</span>,</span>
 <span>  <span class="va">unmixed.thresholds</span>,</span>
-<span>  <span class="va">flow.channel</span>,</span>
-<span>  <span class="va">som.dim</span>,</span>
-<span>  <span class="va">n.cells</span>,</span>
-<span>  <span class="va">asp</span>,</span>
-<span>  <span class="va">verbose</span>,</span>
-<span>  <span class="va">output.dir</span>,</span>
-<span>  <span class="va">sim.threshold</span>,</span>
-<span>  <span class="va">figures</span></span>
+<span>  <span class="va">flow.channel</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -93,6 +92,10 @@ events in the file.</p>
 <dd><p>The directory containing the control files.</p></dd>
 
 
+<dt id="arg-asp">asp<a class="anchor" aria-label="anchor" href="#arg-asp"></a></dt>
+<dd><p>The AutoSpectral parameter list.</p></dd>
+
+
 <dt id="arg-spectra">spectra<a class="anchor" aria-label="anchor" href="#arg-spectra"></a></dt>
 <dd><p>A matrix containing the spectral data. Fluorophores in rows,
 detectors in columns.</p></dd>
@@ -102,6 +105,32 @@ detectors in columns.</p></dd>
 <dd><p>Spectral signatures of autofluorescences, normalized
 between 0 and 1, with fluorophores in rows and detectors in columns. Prepare
 using <code>get.af.spectra</code>.</p></dd>
+
+
+<dt id="arg-n-cells">n.cells<a class="anchor" aria-label="anchor" href="#arg-n-cells"></a></dt>
+<dd><p>Numeric. Number of cells to use for defining the variation in
+spectra. Up to <code>n.cells</code> cells will be selected as positive events in the peak
+channel for each fluorophore, above the 99.5th percentile level in the
+unstained sample.</p></dd>
+
+
+<dt id="arg-som-dim">som.dim<a class="anchor" aria-label="anchor" href="#arg-som-dim"></a></dt>
+<dd><p>Numeric. Number of x and y dimensions to use in the SOM for
+clustering the spectral variation.</p></dd>
+
+
+<dt id="arg-figures">figures<a class="anchor" aria-label="anchor" href="#arg-figures"></a></dt>
+<dd><p>Logical, controls whether the variation in spectra for each
+fluorophore is plotted in <code>output.dir</code>. Default is <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-output-dir">output.dir<a class="anchor" aria-label="anchor" href="#arg-output-dir"></a></dt>
+<dd><p>File path to whether the figures and .rds data file will be
+saved. Default is <code>NULL</code>, in which case <code>asp$variant.dir</code> will be used.</p></dd>
+
+
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
+<dd><p>Logical, default is <code>TRUE</code>. Set to <code>FALSE</code> to suppress messages.</p></dd>
 
 
 <dt id="arg-spectral-channel">spectral.channel<a class="anchor" aria-label="anchor" href="#arg-spectral-channel"></a></dt>
@@ -133,45 +162,6 @@ unmixing.</p></dd>
 
 <dt id="arg-flow-channel">flow.channel<a class="anchor" aria-label="anchor" href="#arg-flow-channel"></a></dt>
 <dd><p>A named vector of peak raw channels, one per fluorophore.</p></dd>
-
-
-<dt id="arg-som-dim">som.dim<a class="anchor" aria-label="anchor" href="#arg-som-dim"></a></dt>
-<dd><p>Numeric, default <code>10</code>. Number of x and y dimensions to use in
-the SOM for clustering the spectral variation.</p></dd>
-
-
-<dt id="arg-n-cells">n.cells<a class="anchor" aria-label="anchor" href="#arg-n-cells"></a></dt>
-<dd><p>Numeric, default <code>2000</code>. Number of cells to use for defining
-the variation in spectra. Up to <code>n.cells</code> cells will be selected as positive
-events in the peak channel for each fluorophore, above the <code>pos.quantile</code> in
-the unstained sample.</p></dd>
-
-
-<dt id="arg-asp">asp<a class="anchor" aria-label="anchor" href="#arg-asp"></a></dt>
-<dd><p>The AutoSpectral parameter list.
-Prepare using <code>get.autospectral.param</code></p></dd>
-
-
-<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>Logical, default is <code>TRUE</code>. Set to <code>FALSE</code> to suppress messages.</p></dd>
-
-
-<dt id="arg-output-dir">output.dir<a class="anchor" aria-label="anchor" href="#arg-output-dir"></a></dt>
-<dd><p>File path to whether the figures and .rds data file will be
-saved. Default is <code>NULL</code>, in which case <code>asp$variant.dir</code> will be used.</p></dd>
-
-
-<dt id="arg-sim-threshold">sim.threshold<a class="anchor" aria-label="anchor" href="#arg-sim-threshold"></a></dt>
-<dd><p>Numeric, default <code>0.98</code>. Threshold for cosine similarity-
-based exclusion of spectral variants. Any variant less than <code>sim.threshold</code>
-by <code>cosine.similarity</code> from the optimized spectrum for that fluorophore (from
-<code>spectra</code>) will be excluded from output. This helps to exclude autofluorescence
-contamination.</p></dd>
-
-
-<dt id="arg-figures">figures<a class="anchor" aria-label="anchor" href="#arg-figures"></a></dt>
-<dd><p>Logical, controls whether the variation in spectra for each
-fluorophore is plotted in <code>output.dir</code>. Default is <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

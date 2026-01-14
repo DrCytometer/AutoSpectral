@@ -19,7 +19,7 @@ the readRDS function) rather than re-running this process."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,13 +74,13 @@ the <code>readRDS</code> function) rather than re-running this process.</p>
 <span>  <span class="va">spectra</span>,</span>
 <span>  <span class="va">af.spectra</span>,</span>
 <span>  n.cells <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  pos.quantile <span class="op">=</span> <span class="fl">0.995</span>,</span>
-<span>  som.dim <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  sim.threshold <span class="op">=</span> <span class="fl">0.98</span>,</span>
+<span>  som.dim <span class="op">=</span> <span class="fl">7</span>,</span>
 <span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  output.dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -116,28 +116,16 @@ using <code>get.af.spectra</code>.</p></dd>
 <dt id="arg-n-cells">n.cells<a class="anchor" aria-label="anchor" href="#arg-n-cells"></a></dt>
 <dd><p>Numeric, default <code>2000</code>. Number of cells to use for defining
 the variation in spectra. Up to <code>n.cells</code> cells will be selected as positive
-events in the peak channel for each fluorophore, above the <code>pos.quantile</code> in
-the unstained sample.</p></dd>
-
-
-<dt id="arg-pos-quantile">pos.quantile<a class="anchor" aria-label="anchor" href="#arg-pos-quantile"></a></dt>
-<dd><p>Numeric, default <code>0.995</code>. Threshold for positivity. This
-quantile will be used to define the maximum extent of the unstained sample in
-the unmixed space. Anything above that will be considered positive in the
-single-stained controls.</p></dd>
+events in the peak channel for each fluorophore, above the 99.5th percentile
+level in the unstained sample.</p></dd>
 
 
 <dt id="arg-som-dim">som.dim<a class="anchor" aria-label="anchor" href="#arg-som-dim"></a></dt>
-<dd><p>Numeric, default <code>10</code>. Number of x and y dimensions to use in
-the SOM for clustering the spectral variation.</p></dd>
-
-
-<dt id="arg-sim-threshold">sim.threshold<a class="anchor" aria-label="anchor" href="#arg-sim-threshold"></a></dt>
-<dd><p>Numeric, default <code>0.98</code>. Threshold for cosine similarity-
-based exclusion of spectral variants. Any variant less than <code>sim.threshold</code>
-by <code>cosine.similarity</code> from the optimized spectrum for that fluorophore (from
-<code>spectra</code>) will be excluded from output. This helps to exclude autofluorescence
-contamination.</p></dd>
+<dd><p>Numeric, default <code>7</code>. Number of x and y dimensions to use in
+the SOM for clustering the spectral variation. The number of spectra returned
+for each fluorophore will increase with the quadratic of <code>som.dim</code>, so for 7,
+you will get up to 49 variants. Increasing the SOM dimensions does not help.
+Somewhere between 4 and 7 appears to be optimal.</p></dd>
 
 
 <dt id="arg-figures">figures<a class="anchor" aria-label="anchor" href="#arg-figures"></a></dt>
@@ -152,13 +140,24 @@ saved. Default is <code>NULL</code>, in which case <code>asp$variant.dir</code> 
 
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
 <dd><p>Logical, default is <code>FALSE</code>, in which case sequential processing
-will be used. Parallel processing will likely be faster when many small
-files are read in. If the data is larger, parallel processing may not
-accelerate the process much or may fail outright.</p></dd>
+will be used. The new parallel processing should always be faster.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical, default is <code>TRUE</code>. Set to <code>FALSE</code> to suppress messages.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>Numeric, default is <code>NULL</code>, in which case <code>asp$worker.process.n</code>
+will be used. <code>asp$worker.process.n</code> is set by default to be one less than the
+available cores on the machine. Multi-threading is only used if <code>parallel</code> is
+<code>TRUE</code>.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Ignored. Previously used for deprecated arguments such as
+<code>pos.quantile</code> and <code>sim.threshold</code>, which are now fixed internally and no
+longer user-settable.</p></dd>
 
 </dl></div>
     <div class="section level2">

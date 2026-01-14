@@ -16,14 +16,17 @@
 read.scatter.parameter <- function( asp )
 {
     if ( ! is.null( asp$scatter.parameter.file.name ) &&
-            file.exists( asp$scatter.parameter.file.name ) )
-        scatter.parameter <- read.csv( asp$scatter.parameter.file.name,
-            stringsAsFactors = FALSE )
+         file.exists( asp$scatter.parameter.file.name ) )
+        scatter.parameter <- read.csv(
+          asp$scatter.parameter.file.name,
+          stringsAsFactors = FALSE
+        )
     else
         scatter.parameter <- data.frame(
-            parameter = asp$default.scatter.parameter,
-            stringsAsFactors = FALSE )
+          parameter = asp$default.scatter.parameter,
+          stringsAsFactors = FALSE
+        )
 
-    scatter.parameter$parameter
+    return( scatter.parameter$parameter )
 }
 

@@ -19,16 +19,14 @@
 
 unmix.ols <- function( raw.data, spectra, weights = NULL ) {
 
-  spectra <- t( spectra )
+  sv <- svd( t( spectra ) )
+  # solve unmixing matrix via singular value decomposition
+  # more stable than normal equations
+  # this is the Moore-Penrose pseudoinverse
+  unmixing.matrix <- sv$v %*% ( t( sv$u ) / sv$d )
 
-  unmixing.matrix <- solve( crossprod( spectra ) ) %*% t( spectra )
-  # unmixing.matrix <- solve( crossprod( spectra ), t( spectra ) )  # alt.
-
-  unmixed.data <- raw.data %*% t( unmixing.matrix )
-  # unmixed.data <- tcrossprod(raw.data, unmixing.matrix)  # alt.
-
-  colnames( unmixed.data ) <- colnames( spectra )
-
+  unmixed.data <- tcrossprod( raw.data, unmixing.matrix )
+  colnames( unmixed.data ) <- rownames( spectra )
   return( unmixed.data )
 
 }

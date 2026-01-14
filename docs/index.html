@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,7 @@
 <div class="section level3">
 <h3 id="latest-release">Latest Release<a class="anchor" aria-label="anchor" href="#latest-release"></a>
 </h3>
-<p><strong>Version 0.8.7</strong></p>
+<p><strong>Version 0.9.0</strong></p>
 <p>To install the latest, hopefully stable version, install using <code>devtools</code> or <code>remotes</code>. You will need to install the Bioconductor packages separately, I believe.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install Bioconductor packages</span></span>
@@ -96,13 +96,18 @@
 <span><span class="co"># You'll need devtools or remotes to install from GitHub.</span></span>
 <span><span class="co"># install.packages("devtools")</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
-<p>As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, probably not perfect. To try it, visit <a href="https://github.com/DrCytometer/AutoSpectralHelper" class="external-link">AutoSpectralHelper</a>.</p>
+<p>As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, probably not perfect. To try it, visit <a href="https://github.com/DrCytometer/AutoSpectralHelper" class="external-link">AutoSpectralHelper</a>. If you update AutoSpectral, I recommend downloading a new version of the app to ensure compatibility.</p>
+<p>To install a specific release, e.g., the previous one, use the version number:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@v0.8.7"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="dev-branch">Dev branch<a class="anchor" aria-label="anchor" href="#dev-branch"></a>
 </h3>
-<p>If you’re feeling adventurous or simply want early access to the latest features, you can install the development version of AutoSpectral from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<p>If you’re feeling adventurous or simply want early access to the latest features, you can try the <code>dev</code> branch. At any given point, this may not be working well.</p>
+<p>AutoSpectral is open source. If you are interested in contributing, please visit <a href="https://drcytometer.github.io/AutoSpectral/articles/Development.html">Development</a> for suggestions of where help is needed most.</p>
+<p>You can install the development version of AutoSpectral from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -110,6 +115,7 @@
 <h2 id="bug-fixes-and-known-issues">Bug fixes and known issues<a class="anchor" aria-label="anchor" href="#bug-fixes-and-known-issues"></a>
 </h2>
 <p>AutoSpectral is pretty complex and newly released, so there will be bugs. Sorry. Thanks to all of you providing feedback. Please submit any and all issues either using the Issues page or via email at colibri-cytometry at gmail.</p>
+<p>I will be taking a break from addressing issues over the holiday period.</p>
 <p>To submit a bug report, go to <a href="https://github.com/DrCytometer/AutoSpectral/issues" class="external-link">Issues</a>.</p>
 <p>For more general problems, like not being clear on how to do things, something doesn’t work well, or maybe you have an idea for something new or better, visit the <a href="https://github.com/DrCytometer/AutoSpectral/discussions" class="external-link">Discussions page</a>.</p>
 <p>Since one of my recent updates broke things, I’ll be moving to using tagged releases that should be easier to install if the latest version has flaws. I’ve also set up a separate development branch, which will get the updates first. Things probably should have been that way from the start, but this is all new to me.</p>
@@ -121,10 +127,12 @@
 <ul>
 <li>Gating. The automated gating is not great. See the <a href="https://drcytometer.github.io/AutoSpectral/articles/Gating.html">help page</a> for tips. I’m working on an alternative.</li>
 <li>Please note that FCS 3.2 files from the S8 and A8 cytometers are not fully supported in flowCore. You may receive warnings, but things should still work.</li>
-<li>More stuff in progress will appear in the <a href="https://drcytometer.github.io/AutoSpectral/articles/Development.html">Development article</a>
-</li>
+<li>More stuff in progress will appear in the <a href="https://drcytometer.github.io/AutoSpectral/articles/Development.html">Development article</a>.</li>
+<li>This is my first R package.</li>
 </ul>
-<p>If you want to use data from another cytometer and are wiling to provide files for establishing the workflow, contact the author/maintainer.</p>
+<p>If you want to use data from another cytometer and are wiling to provide files for establishing the workflow, contact the author/maintainer. See existing information, which may also assist you in setting up your control file, in the <a href="https://docs.google.com/spreadsheets/d/1wj7QPkgpsuPNeVKyt-WWdBu5R48aZTgEbH8-_bpKeBY/edit?usp=sharing" class="external-link">cytometer database</a>.</p>
+<p>AutoSpectral relies on a database of information containing fluorophore emission details. If your fluorophore is not detected automatically by <code><a href="reference/create.control.file.html">create.control.file()</a></code> and you want to add it, visit the Google sheet for the <a href="https://docs.google.com/spreadsheets/d/14j4lAQ6dkjDBKMborDv_MkSptyNBqZiBsq5jNNSCoiQ/edit?usp=sharing" class="external-link">fluorophore database</a> and add it there. New fluorophores will be incorporated into updates.</p>
+<p>Similarly, there is a marker database to detect (and standardize) marker names if they appear in the single-stained FCS control file names. Feel free to add more markers or synonyms to the <a href="https://docs.google.com/spreadsheets/d/16FAinR_Nfnl00mpHvmQFJT_uJJY3VUWk29yAaQ7HHn8/edit?usp=sharing" class="external-link">marker database</a>.</p>
 <p>This work has received funding from the KU Leuven C1 program, the European Union’s Horizon 2020 research and innovation programme under grant agreement No 874707 (EXIMIOUS), Wellcome Investigator Award 222442/A/21/Z, and UKRI Proactive Vaccinology Award MR/Y004450/1 (IMMPROVE).</p>
 <p>AutoSpectral is provided under an AGPL3 licence.</p>
 </div>
@@ -134,7 +142,7 @@
 </h2>
 <p>Below is a basic example of the workflow, using samples from the ID7000. This only illustrates weighted least squares unmixing. For per-cell autofluorescence extraction or per-cell fluorophore optimization, see the articles on those topics.</p>
 <p>Please see the <a href="https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_Workflow.html">Full Workflow</a></p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span> <span class="va"><a href="https://github.com/DrCytometer/AutoSpectral" class="external-link">AutoSpectral</a></span> <span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Define the location of the single-stained control files.</span></span>
@@ -189,6 +197,45 @@
 <span><span class="fu"><a href="reference/unmix.folder.html">unmix.folder</a></span><span class="op">(</span> <span class="va">sample.dir</span>, <span class="va">no.af.spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>, method <span class="op">=</span> <span class="st">"WLS"</span> <span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="installation-and-runtime">Installation and Runtime<a class="anchor" aria-label="anchor" href="#installation-and-runtime"></a>
+</h2>
+<p>Installation via GitHub should take only a minute or so. It takes less than that on a Dell i7 core laptop.</p>
+<p>Occasionally, the help gets corrupted. Just re-install if that happens. If you know why this happens, let me know.</p>
+<p>Installation of <code>AutoSpectralRcpp</code> will take a couple of minutes because the code needs to compile. You will also first have to install Rtools to have a compiler, and that will take longer, probably 10 minutes or so. Upgrading the BLAS and LAPACK (see below) also takes several minutes if you’re taking the time to read the instructions carefully.</p>
+<p>Runtime will vary considerably depending on the size and quantity of files you’re processing. For the benchmark 42-colour Aurora data set using single-stained cell controls with plenty of data, the slow steps in the pre-processing pipeline are <code><a href="reference/define.flow.control.html">define.flow.control()</a></code> and <code><a href="reference/clean.controls.html">clean.controls()</a></code>. For the same Aurora dataset on the aforementioned i7 Windows laptop, I get: * <code><a href="reference/define.flow.control.html">define.flow.control()</a></code> v0.8.7: 12min sequential, 9min parallel * <code><a href="reference/define.flow.control.html">define.flow.control()</a></code> v0.9.0: 4min sequential, 2min parallel * <code><a href="reference/clean.controls.html">clean.controls()</a></code> v0.8.7: 11min sequential, not possible parallel * <code><a href="reference/clean.controls.html">clean.controls()</a></code> v0.9.0: 11min sequential, 6.5min parallel, not fully optimized * <code><a href="reference/get.spectral.variants.html">get.spectral.variants()</a></code> v.0.8.7: 2min sequential, 1min parallel * <code><a href="reference/get.spectral.variants.html">get.spectral.variants()</a></code> v.0.9.0: 65sec sequential, 32sec parallel</p>
+<p>Unmixing time depends on the following variable:</p>
+<ul>
+<li>file size (number of cells/events, including debris)</li>
+<li>number of detectors</li>
+<li>number of fluorophores</li>
+<li>unmixing algorithm. OLS and WLS are fast, per-cell AF extraction will be ~50x slower, per-cell fluorophore optimization will be 2-4x slower than per-cell AF when running the “fast” approximation using AutoSpectralRcpp, or about 20-50x slower when using the “slow” exact calculation, again using AutoSpectralRcpp. Using the “fast” approximation in pure R will likely be comparable to or slower than the “slow” method in C++.</li>
+</ul>
+<p>Benchmarks for “C3 Lung_GFP_003_Samples.fcs”, again on the 8-core laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:</p>
+<ul>
+<li>
+<code><a href="reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v0.8.7: 9sec</li>
+<li>
+<code><a href="reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v0.9.0: 9sec</li>
+<li>
+<code><a href="reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v0.8.7: 2min</li>
+<li>
+<code><a href="reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v0.9.0: 1min</li>
+<li>
+<code><a href="reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast” v0.8.7: 9min</li>
+<li>
+<code><a href="reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast” v0.9.0: &lt;2min</li>
+<li>
+<code><a href="reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow” v0.8.7: 62min</li>
+<li>
+<code><a href="reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow” v0.9.0: 19min</li>
+<li>
+<code><a href="reference/unmix.folder.html">unmix.folder()</a></code> WLS or OLS, 6 files, v0.8.7: 67sec sequential, interrupted parallel</li>
+<li>
+<code><a href="reference/unmix.folder.html">unmix.folder()</a></code> WLS or OLS, 6 files, v0.9.0: 62sec sequential, 31sec parallel</li>
+</ul>
+<p>Still some work to be done.</p>
+</div>
+<div class="section level2">
 <h2 id="go-faster">Go Faster<a class="anchor" aria-label="anchor" href="#go-faster"></a>
 </h2>
 <p>R is not known for its speed.</p>
@@ -197,20 +244,25 @@
 <p>On Windows, simply swapping out your .dll files as in this tutorial can give speed ups of 5x. <a href="https://github.com/david-cortes/R-openblas-in-windows" class="external-link">Install OpenBLAS</a> All this involves is downloading the files from the internet, placing them in the right folder and doing a quick restart.</p>
 <p>On Mac, you likely want to use the vecLib library BLAS that ships with Mac OS. The following articles may be helpful in setting this as the default BLAS for use in R: <a href="https://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html#Which-BLAS-is-used-and-how-can-it-be-changed_003f" class="external-link">BLAS for Mac in R</a> <a href="https://csantill.github.io/RPerformanceWBLAS/" class="external-link">Performance BLAS</a> Feedback from users on Mac who successfully upgrade their BLAS would be appreciated.</p>
 <p>Do not set multiple threads for the BLAS as this will conflict with higher level parallelization, either in AutoSpectral or other packages.</p>
-<p>Second, install AutoSpectralRcpp. This is fully accessible from R and integrates with AutoSpectral. But, when it gets to the slow bits in the unmixing, it switches over to calculating in C++, so it can be 10-100x faster.</p>
+<p>After upgrading the BLAS, you probably need to reinstall <code>Rcpp</code> and <code>RcppArmadillo</code> to have this compiled with the BLAS.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span> <span class="st">"Rcpp"</span>, <span class="st">"RcppArmadillo"</span> <span class="op">)</span> <span class="op">)</span></span></code></pre></div>
+<p>Now, install AutoSpectralRcpp. This is fully accessible from R and integrates with AutoSpectral. But, when it gets to the slow bits in the unmixing, it switches over to calculating in C++, so it can be 10-100x faster. Do this after upgrading the BLAS.</p>
 <p><a href="https://github.com/DrCytometer/AutoSpectralRcpp" class="external-link">AutoSpectralRcpp</a></p>
 <p>You will need <a href="https://cran.r-project.org/bin/windows/Rtools/" class="external-link">Rtools</a> to compile this.</p>
 <p>You can install AutoSpectralRcpp like so:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectralRcpp"</span><span class="op">)</span></span></code></pre></div>
-<p>Third, turn on parallel processing in AutoSpectral. At the moment, this is not fully optimized in AutoSpectral. The parallel processing in AutoSpectralRcpp operates via OpenMP and works well. It is always activated, but the number of threads can be configured.</p>
+<p>Third, turn on parallel processing in AutoSpectral. <em>Update</em>: This is now supported via a <code>parallel</code> backend. Importantly, this moves away from <code>future</code> and <code>future_lapply</code>, which were aborting sometimes on Windows. More usefully, this is a bit faster in many cases, and should support forking via <code>mclapply</code> on Mac and Linux systems, which will be much faster. Perhaps most usefully, this appears to allow parallelization of the native R per-cell fluorophore optimization in <code>unmix.autospectral</code>, so you should see a nice speed up there.</p>
+<p>The parallel processing in AutoSpectralRcpp operates via OpenMP and works well. It is always activated, but the number of threads can be configured.</p>
 <p>To activate parallel processing, check the function arguments for a <code>parallel</code> option and set it to <code>TRUE</code>. Additionally, there is control over the number of threads used, which should be directly in the function call via a <code>threads</code> argument. If you don’t know how many threads to use, check the recommendation for your machine after running <code><a href="reference/get.autospectral.param.html">get.autospectral.param()</a></code>:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">asp</span><span class="op">$</span><span class="va">max.worker.process.n</span></span></code></pre></div>
+<p>Multithreading will always default to this number if you do not explicitly set a number of threads and set <code>parallel=TRUE</code>. This is one less than <code><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">parallelly::availableCores()</a></code>, so it is designed to allow you to keep working on minor stuff while AutoSpectral chugs along in the background.</p>
 <p>For unmixing larger data sets, you will do well to use a machine with more CPUs. Suggestions for faster processing are welcome. Some modest improvements are in the works.</p>
 </div>
 <div class="section level2">
-<h2 id="updates-and-bug-fixes">Updates and bug fixes<a class="anchor" aria-label="anchor" href="#updates-and-bug-fixes"></a>
+<h2 id="updates-and-news">Updates and news<a class="anchor" aria-label="anchor" href="#updates-and-news"></a>
 </h2>
 <ul>
 <li>Version 0.8.1: More fluorophores, rearranging detectors if needed</li>
@@ -220,6 +272,23 @@
 <li>Version 0.8.5: Improvements to keyword handling in writing FCS files</li>
 <li>Version 0.8.6: Improvements to plotting, fluorophore matching</li>
 <li>Version 0.8.7: Support for Symphony A5 SE and Cytek Northern Lights. More improvements to plotting. Marker names will now be added to the control file based on matches in the FCS file names, where possible. The Hotspot(TM) matrix will be calculated and plotted as per the <a href="https://www.biorxiv.org/content/10.1101/2025.04.17.649396v2.full.pdf" class="external-link">preprint</a> by Peter Mage et al.</li>
+<li>Version 0.9.0:
+<ul>
+<li>Changes to <code>get.spectral.variants</code>, including fixing of previously user-modifiable parameters, low-level denoising of spectra and a bug patch for situations with beads using internal negatives.</li>
+<li>More checks in <code>check.control.file</code>.</li>
+<li>New parallel backend.</li>
+<li>Faster AutoSpectral unmixing in base R.</li>
+<li>Adjustments to reduce any discontinuities produced during unmixing.</li>
+<li>See also updates in <code>AutoSpectralRcpp</code>, including a large speed up and general improvement to the Poisson IRLS unmixing.</li>
+<li>Patch to <code>reload.flow.control</code> bug affecting ID7000 samples.</li>
+<li>Patch to <code><a href="reference/define.flow.control.html">define.flow.control()</a></code> affecting universal negative definitions and impacting on <code><a href="reference/clean.controls.html">clean.controls()</a></code>.</li>
+<li>Calculation of the unmixing matrix (Moore-Penrose pseudoinverse) will now be done using singular value decomposition <code><a href="https://rdrr.io/r/base/svd.html" class="external-link">svd()</a></code> for numerical stability for all approaches. Up to now, it has been done with normal equations via <code><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve()</a></code>. This should be better in edge cases. In most cases, the only difference will be floating point error. Calculation time is equivalent because almost all of the computational effort is on projecting the raw data into the unmixed space via the unmixing matrix, not calculating the unmixing matrix.</li>
+<li>New functions to <code>save.unmixing.matrix</code> and <code>calculate.weights</code>
+</li>
+<li>Patches to <code>define.flow.control</code> that were causing redundant gates to be created.</li>
+<li>Code legibility formatting.</li>
+</ul>
+</li>
 </ul>
 </div>
 </div>

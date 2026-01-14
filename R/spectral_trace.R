@@ -80,24 +80,33 @@ spectral.trace <- function( spectral.matrix,
 
   if ( asp$cytometer == "Aurora" ) {
     if ( asp$cytometer.version == "NL" ) {
-      detectors <- setNames( cytometer.database$NorthernLights, cytometer.database$NorthernLights_laser )
+      detectors <- setNames(
+        cytometer.database$NorthernLights, cytometer.database$NorthernLights_laser )
     } else {
-      detectors <- setNames( cytometer.database$Aurora, cytometer.database$Aurora_laser )
+      detectors <- setNames(
+        cytometer.database$Aurora, cytometer.database$Aurora_laser )
     }
   } else if ( asp$cytometer == "ID7000" ) {
-    detectors <- setNames( cytometer.database$ID7000, cytometer.database$ID7000_laser )
+    detectors <- setNames(
+      cytometer.database$ID7000, cytometer.database$ID7000_laser )
   } else if ( asp$cytometer == "FACSDiscover A8" ) {
-    detectors <- setNames( cytometer.database$Discover, cytometer.database$Discover_laser )
+    detectors <- setNames(
+      cytometer.database$Discover, cytometer.database$Discover_laser )
   } else if ( asp$cytometer == "FACSDiscover S8" ) {
-    detectors <- setNames( cytometer.database$Discover, cytometer.database$Discover_laser )
+    detectors <- setNames(
+      cytometer.database$Discover, cytometer.database$Discover_laser )
   } else if ( asp$cytometer == "Opteon" ) {
-    detectors <- setNames( cytometer.database$Opteon, cytometer.database$Opteon_laser )
+    detectors <- setNames(
+      cytometer.database$Opteon, cytometer.database$Opteon_laser )
   } else if ( asp$cytometer == "Mosaic" ) {
-    detectors <- setNames( cytometer.database$Mosaic, cytometer.database$Mosaic_laser )
+    detectors <- setNames(
+      cytometer.database$Mosaic, cytometer.database$Mosaic_laser )
   } else if ( asp$cytometer == "Xenith" ) {
-    detectors <- setNames( cytometer.database$Xenith, cytometer.database$Xenith_laser )
+    detectors <- setNames(
+      cytometer.database$Xenith, cytometer.database$Xenith_laser )
   } else if ( asp$cytometer == "Symphony" ) {
-    detectors <- setNames( cytometer.database$A5SE, cytometer.database$A5SE_laser )
+    detectors <- setNames(
+      cytometer.database$A5SE, cytometer.database$A5SE_laser )
   } else {
     warning( "Unsupported cytometer" )
     split.lasers <- FALSE
@@ -111,8 +120,10 @@ spectral.trace <- function( spectral.matrix,
 
   fluor.spectra.plotting$Laser <- names( detectors )[ laser.idx ]
   fluor.spectra.plotting$Laser[ is.na( fluor.spectra.plotting$Laser ) ] <- "Violet"
-  fluor.spectra.plotting$Laser <- factor( fluor.spectra.plotting$Laser,
-                                          levels = laser.order )
+  fluor.spectra.plotting$Laser <- factor(
+    fluor.spectra.plotting$Laser,
+    levels = laser.order
+  )
 
   if ( is.null( plot.width ) )
     plot.width <- max( ( ( ncol( fluor.spectra.plotting ) - 1 ) / 64 * 12 ), 3 )
@@ -120,18 +131,28 @@ spectral.trace <- function( spectral.matrix,
   if ( is.null( plot.height ) )
     plot.height <- 5 + round( nrow( fluor.spectra.plotting ) / 8, 0 )
 
-  fluor.spectra.long <- tidyr::pivot_longer( fluor.spectra.plotting,
-                                             -c( Fluorophore, Laser ),
-                                      names_to = "Detector",
-                                      values_to = "Intensity" )
+  fluor.spectra.long <- tidyr::pivot_longer(
+    fluor.spectra.plotting,
+    -c( Fluorophore, Laser ),
+    names_to = "Detector",
+    values_to = "Intensity"
+  )
 
-  fluor.spectra.long$Detector <-  factor( fluor.spectra.long$Detector,
-                                         levels = unique( fluor.spectra.long$Detector ),
-                                         ordered = TRUE )
+  fluor.spectra.long$Detector <-  factor(
+    fluor.spectra.long$Detector,
+    levels = unique( fluor.spectra.long$Detector ),
+    ordered = TRUE
+  )
 
-  spectra.plot <- ggplot( fluor.spectra.long,
-                         aes( x = Detector, y = Intensity,
-                             group = Fluorophore, color = Fluorophore ) ) +
+  spectra.plot <- ggplot(
+    fluor.spectra.long,
+    aes(
+      x = Detector,
+      y = Intensity,
+      group = Fluorophore,
+      color = Fluorophore
+      )
+    ) +
     geom_path( linewidth = figure.spectra.line.size ) +
     geom_point( size = figure.spectra.point.size ) +
     labs( title = title,
@@ -163,16 +184,23 @@ spectral.trace <- function( spectral.matrix,
 
     plot.height <- ( plot.height - 1 ) * laser.n
 
-    spectra.plot.split <- ggplot( fluor.spectra.long,
-                                  aes( x = Detector, y = Intensity,
-                                       group = Fluorophore,
-                                       color = Fluorophore ) ) +
+    spectra.plot.split <- ggplot(
+      fluor.spectra.long,
+      aes(
+        x = Detector,
+        y = Intensity,
+        group = Fluorophore,
+        color = Fluorophore
+        )
+      ) +
       geom_path( linewidth = figure.spectra.line.size ) +
       geom_point( size = figure.spectra.point.size ) +
       facet_wrap( ~ Laser, nrow = laser.n ) +
-      labs( title = title,
-            x = "Detector",
-            y = "Normalized Intensity" ) +
+      labs(
+        title = title,
+        x = "Detector",
+        y = "Normalized Intensity"
+      ) +
       theme_minimal() +
       theme( axis.text.x = element_text( angle = 45, hjust = 1 )  ) +
       theme( legend.position = "bottom" )
@@ -185,10 +213,13 @@ spectral.trace <- function( spectral.matrix,
       spectra.plot.split <- spectra.plot.split + theme( legend.position = "none" )
 
     if ( save ) {
-      ggsave( file.path( plot.dir, sprintf( "%s by laser.jpg", title ) ),
-              spectra.plot.split,
-              width = plot.width, height = plot.height,
-              limitsize = FALSE )
+      ggsave(
+        file.path( plot.dir, sprintf( "%s by laser.jpg", title ) ),
+        spectra.plot.split,
+        width = plot.width,
+        height = plot.height,
+        limitsize = FALSE
+      )
     } else {
       return( spectra.plot.split )
     }

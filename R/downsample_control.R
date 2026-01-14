@@ -20,7 +20,7 @@ downsample.control <- function( clean.expr.data, samp, peak.channels,
                                 negative.n = 500, positive.n = 1000,
                                 verbose = TRUE ) {
 
-  if ( verbose ) message( paste( "\033[34m", "Downsampling", samp, "\033[0m" ) )
+  if ( verbose ) message( paste0( "\033[34m", "Downsampling ", samp, "\033[0m" ) )
 
   # should just pass control's data
   pos.control.expr <- clean.expr.data[[ samp ]]

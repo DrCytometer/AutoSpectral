@@ -23,10 +23,14 @@ get.ungated.flow.expression.data <- function( samp, file.name, control.dir,
 
   flow.file <- file.name[ samp ]
 
-  fcs.data <- suppressWarnings( read.FCS( file.path( control.dir, flow.file ),
-                                          transformation = NULL,
-                                          truncate_max_range = FALSE,
-                                          emptyValue = FALSE ) )
+  fcs.data <- suppressWarnings(
+    flowCore::read.FCS(
+      file.path( control.dir, flow.file ),
+      transformation = NULL,
+      truncate_max_range = FALSE,
+      emptyValue = FALSE
+    )
+  )
 
   # read exprs for spectral channels only
   expr.data <- flowCore::exprs( fcs.data )[ , scatter.and.spectral.channel ]
@@ -34,9 +38,10 @@ get.ungated.flow.expression.data <- function( samp, file.name, control.dir,
   rm( fcs.data )
 
   # remove any out-of-range events
-  below.resolution.limit <- apply( expr.data[ , spectral.channel ], 1,
-                                   function( flow.event ){
-                                     all( flow.event < set.resolution ) } )
+  below.resolution.limit <- apply(
+    expr.data[ , spectral.channel ], 1, function( flow.event ) {
+      all( flow.event < set.resolution ) }
+    )
 
   expr.data <- expr.data[ below.resolution.limit, ]
 

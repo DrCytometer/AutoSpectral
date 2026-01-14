@@ -22,14 +22,24 @@
 #'
 #' @export
 
-read.spectra <- function( spectra.file, spectra.dir = "./table_spectra",
-                          remove.af = FALSE, af.param = "AF" ) {
+read.spectra <- function( spectra.file,
+                          spectra.dir = "./table_spectra",
+                          remove.af = FALSE,
+                          af.param = "AF" ) {
 
-  spectral.matrix <- as.matrix( read.csv( file.path( spectra.dir, spectra.file ),
-                       check.names = FALSE,
-                       row.names = 1 ) )
+  spectral.matrix <- as.matrix(
+    read.csv(
+      file.path( spectra.dir, spectra.file ),
+      check.names = FALSE,
+      row.names = 1
+    )
+  )
+
   # normalize
-  spectral.matrix <- t( apply( spectral.matrix, 1, function( x ) x / max( x ) ) )
+  spectral.matrix <- t(
+    apply(
+      spectral.matrix, 1, function( x ) x / max( x ) )
+  )
 
   if ( remove.af )
     spectral.matrix <- spectral.matrix[ !rownames( spectral.matrix ) %in% af.param, ]

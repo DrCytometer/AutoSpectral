@@ -96,10 +96,11 @@ check.control.file(control.dir, control.file, asp)
 
 Once, the control file passes the error checks, we can load in the data.
 This part can be a bit slow, particularly if you have lots of big files.
-There is a parallelization option, which can cut the time in half. There
-are some improvements I could make to this, including the gating. These
-will take time to implement, though, because they affect everything
-downstream of this, which is to say, everything.
+There is a parallelization option, which can cut the time in half,
+probably even better on Mac/Linux. There are some improvements I could
+make to this, including the gating. These will take time to implement,
+though, because they affect everything downstream of this, which is to
+say, everything.
 
 ``` r
 flow.control <- define.flow.control(control.dir, control.file, asp)
@@ -123,7 +124,9 @@ and tries to match the positive events for each control to corresponding
 cells/beads in the unstained `universal.negative` that you defined in
 the control.file.
 
-The default settings here are usually best.
+The default settings here are usually best. There is a parallelization
+option, which is being converted to the new parallel backend. Once that
+is in place, it should be faster.
 
 ``` r
 flow.control <- clean.controls(flow.control, asp)
@@ -192,8 +195,8 @@ size of the files. So, if your FCS files are ~100MB, fine, if they’re
 multiple GB, maybe not. May not be much faster.
 
 ``` r
-unmix.folder("./Raw/Set1/Stained/", spectra, asp, flow.control,
-          method = "OLS", parallel = TRUE, threads = 3)
+unmix.folder("./Raw/Set1/Stained/", spectra, asp, flow.control, 
+             method = "OLS", parallel = TRUE, threads = 3)
 ```
 
 By default, the unmixed files are generated in `Autospectral_unmixed`,
@@ -300,7 +303,7 @@ single-stained controls.
 
 ``` r
 variants <- get.spectral.variants(control.dir, control.file, asp, spectra,
-                                  af.spectra = spleen.af)
+                                  af.spectra = spleen.af, parallel = TRUE)
 ```
 
 The output of this is saved as an RDS file in folder
@@ -319,7 +322,9 @@ this case. ![PE-Cy7](figures/Workflow/PECy7_variants.jpg)
 
 We can now pass this to the unmixing call. For best results, we’ll set
 the `speed` to `slow`, which recalculates the unmixing matrix for each
-variant. This can be a bit slow.
+variant. This can be a bit slow. Parallelization is automatic here if
+you have installed `AutoSpectralRcpp`. If you are using base R only, try
+turning on the `parallel=TRUE`.
 
 ``` r
 unmix.fcs(lung.fcs.file, spectra, asp, flow.control,
