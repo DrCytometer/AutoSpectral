@@ -7,6 +7,8 @@
 #' provided spectra and method, and saves the unmixed FCS files to an output
 #' directory of the user's choice.
 #'
+#' @importFrom lifecycle deprecate_warn
+#'
 #' @param fcs.dir Directory containing FCS files to be unmixed.
 #' @param spectra Matrix containing spectra information.
 #' @param asp The AutoSpectral parameter list.
@@ -43,8 +45,6 @@
 #' written FCS file. Default is `FALSE`
 #' @param include.imaging Logical indicating whether to include imaging data in
 #' the written FCS file: relevant for S8 and A8. Default is `FALSE`
-#' @param calculate.error Logical, whether to calculate the RMSE unmixing model
-#' accuracy and include it as a keyword in the FCS file.
 #' @param use.dist0 Logical, controls whether the selection of the optimal AF
 #' signature for each cell is determined by which unmixing brings the fluorophore
 #' signals closest to 0 (`use.dist0` = `TRUE`) or by which unmixing minimizes the
@@ -76,31 +76,50 @@
 #' available cores on the machine. Multi-threading is only used if `parallel` is
 #' `TRUE`.
 #' @param verbose Logical, controls messaging. Default is `TRUE`.
+#' @param ... Ignored. Previously used for deprecated arguments such as
+#' `calculate.error`.
 #'
 #' @return None. Saves the unmixed FCS files to the specified output directory.
 #'
 #' @export
 
-unmix.folder <- function( fcs.dir, spectra, asp, flow.control,
-                          method = "Automatic",
-                          weighted = FALSE,
-                          weights = NULL,
-                          af.spectra = NULL,
-                          spectra.variants = NULL,
-                          output.dir = NULL,
-                          file.suffix = NULL,
-                          include.raw = FALSE,
-                          include.imaging = FALSE,
-                          calculate.error = FALSE,
-                          use.dist0 = TRUE,
-                          divergence.threshold = 1e4,
-                          divergence.handling = "Balance",
-                          balance.weight = 0.5,
-                          speed = "fast",
-                          parallel = FALSE,
-                          threads = NULL,
-                          verbose = TRUE ) {
+unmix.folder <- function(
+    fcs.dir,
+    spectra,
+    asp,
+    flow.control,
+    method = "Automatic",
+    weighted = FALSE,
+    weights = NULL,
+    af.spectra = NULL,
+    spectra.variants = NULL,
+    output.dir = NULL,
+    file.suffix = NULL,
+    include.raw = FALSE,
+    include.imaging = FALSE,
+    use.dist0 = TRUE,
+    divergence.threshold = 1e4,
+    divergence.handling = "Balance",
+    balance.weight = 0.5,
+    speed = "fast",
+    parallel = FALSE,
+    threads = NULL,
+    verbose = TRUE,
+    ...
+) {
 
+  # warn regarding deprecated arguments
+  dots <- list( ... )
+
+  if ( !is.null( dots$calculate.error ) ) {
+    lifecycle::deprecate_warn(
+      "0.9.1",
+      "unmix.folder(calculate.error)",
+      "no longer used"
+    )
+  }
+
+  # set up, create output folders where FCS files will go
   if ( is.null( output.dir ) )
     output.dir <- asp$unmixed.fcs.dir
   if ( !dir.exists( output.dir ) )
@@ -125,7 +144,6 @@ unmix.folder <- function( fcs.dir, spectra, asp, flow.control,
     file.suffix = file.suffix,
     include.raw = include.raw,
     include.imaging = include.imaging,
-    calculate.error = calculate.error,
     use.dist0 = use.dist0,
     divergence.threshold = divergence.threshold,
     divergence.handling = divergence.handling,

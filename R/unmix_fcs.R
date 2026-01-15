@@ -8,6 +8,7 @@
 #' @importFrom flowCore read.FCS keyword exprs flowFrame parameters
 #' @importFrom flowCore write.FCS parameters<-
 #' @importFrom utils packageVersion modifyList
+#' @importFrom lifecycle deprecate_warn
 #'
 #' @param fcs.file A character string specifying the path to the FCS file.
 #' @param spectra A matrix containing the spectral data.
@@ -45,8 +46,6 @@
 #' expression data in the written FCS file. Default is `FALSE`.
 #' @param include.imaging A logical value indicating whether to include imaging
 #' parameters in the written FCS file. Default is `FALSE`.
-#' @param calculate.error Logical, whether to calculate the RMSE unmixing model
-#' accuracy and include it as a keyword in the FCS file.
 #' @param use.dist0 Logical, controls whether the selection of the optimal AF
 #' signature for each cell is determined by which unmixing brings the fluorophore
 #' signals closest to 0 (`use.dist0` = `TRUE`) or by which unmixing minimizes the
@@ -78,30 +77,48 @@
 #' available cores on the machine. Multi-threading is only used if `parallel` is
 #' `TRUE`.
 #' @param verbose Logical, controls messaging. Default is `TRUE`.
+#' @param ... Ignored. Previously used for deprecated arguments such as
+#' `calculate.error`.
 #'
 #' @return None. The function writes the unmixed FCS data to a file.
 #'
 #' @export
 
-unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
-                       method = "Automatic",
-                       weighted = FALSE,
-                       weights = NULL,
-                       af.spectra = NULL,
-                       spectra.variants = NULL,
-                       output.dir = NULL,
-                       file.suffix = NULL,
-                       include.raw = FALSE,
-                       include.imaging = FALSE,
-                       calculate.error = FALSE,
-                       use.dist0 = TRUE,
-                       divergence.threshold = 1e4,
-                       divergence.handling = "Balance",
-                       balance.weight = 0.5,
-                       speed = "fast",
-                       parallel = TRUE,
-                       threads = NULL,
-                       verbose = TRUE ) {
+unmix.fcs <- function(
+    fcs.file,
+    spectra,
+    asp,
+    flow.control,
+    method = "Automatic",
+    weighted = FALSE,
+    weights = NULL,
+    af.spectra = NULL,
+    spectra.variants = NULL,
+    output.dir = NULL,
+    file.suffix = NULL,
+    include.raw = FALSE,
+    include.imaging = FALSE,
+    use.dist0 = TRUE,
+    divergence.threshold = 1e4,
+    divergence.handling = "Balance",
+    balance.weight = 0.5,
+    speed = "fast",
+    parallel = TRUE,
+    threads = NULL,
+    verbose = TRUE,
+    ...
+) {
+
+  # warn regarding deprecated arguments
+  dots <- list( ... )
+
+  if ( !is.null( dots$calculate.error ) ) {
+    lifecycle::deprecate_warn(
+      "0.9.1",
+      "unmix.fcs(calculate.error)",
+      "no longer used"
+    )
+  }
 
   if ( is.null( output.dir ) )
     output.dir <- asp$unmixed.fcs.dir
@@ -136,12 +153,15 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
 
   fcs.keywords <- flowCore::keyword( fcs.data )
   file.name <- flowCore::keyword( fcs.data, "$FIL" )
-  RMSE <- NULL
 
   # deal with manufacturer peculiarities in writing fcs files
   if ( asp$cytometer %in% c( "ID7000", "Mosaic" ) ) {
-    file.name <- sub( "([ _])Raw(\\.fcs$|\\s|$)", paste0("\\1", method, "\\2"),
-                      file.name, ignore.case = TRUE )
+    file.name <- sub(
+      "([ _])Raw(\\.fcs$|\\s|$)",
+      paste0("\\1", method, "\\2"),
+      file.name,
+      ignore.case = TRUE
+    )
   } else if ( grepl( "Discover", asp$cytometer ) ) {
     file.name <- fcs.keywords$FILENAME
     file.name <- sub( ".*\\/", "", file.name )
@@ -201,7 +221,6 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
             spectra.variants = spectra.variants,
             weighted = weighted,
             weights = weights,
-            calculate.error = calculate.error,
             use.dist0 = use.dist0,
             verbose = verbose,
             parallel = parallel,
@@ -217,7 +236,6 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
               spectra.variants = spectra.variants,
               weighted = weighted,
               weights = weights,
-              calculate.error = calculate.error,
               use.dist0 = use.dist0,
               verbose = verbose
             )
@@ -232,7 +250,6 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
           spectra.variants = spectra.variants,
           weighted = weighted,
           weights = weights,
-          calculate.error = calculate.error,
           use.dist0 = use.dist0,
           verbose = verbose
         )
@@ -244,8 +261,8 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
            "unmix.poisson.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
         tryCatch(
           AutoSpectralRcpp::unmix.poisson.fast(
-            spectral.exprs,
-            spectra,
+            raw.data = spectral.exprs,
+            spectra = spectra,
             weights = weights,
             maxit = asp$rlm.iter.max,
             tol = 1e-6,
@@ -256,36 +273,30 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
           ),
           error = function( e ) {
             warning( "FastPoisson failed, falling back to standard Poisson: ", e$message )
-            unmix.poisson( spectral.exprs, spectra, asp, weights,
-                           parallel, threads )
+            unmix.poisson(
+              raw.data = spectral.exprs,
+              spectra = spectra,
+              asp = asp,
+              initial.weights = weights,
+              parallel = parallel,
+              threads = threads
+            )
           }
         )
       } else {
         warning( "AutoSpectralRcpp not available, falling back to standard Poisson." )
         unmix.poisson(
-          spectral.exprs,
-          spectra,
-          asp,
-          weights,
-          parallel,
-          threads
+          raw.data = spectral.exprs,
+          spectra = spectra,
+          asp = asp,
+          initial.weights = weights,
+          parallel = parallel,
+          threads = threads
         )
       }
     },
     stop( "Unknown method" )
   )
-
-  # calculate model accuracy if desired
-  if ( calculate.error & method != "AutoSpectral" ) {
-    # for AutoSpectral unmixing, get error directly from the function call
-    residual <- rowSums( ( spectral.exprs - ( unmixed.data %*% spectra ) )^2 )
-    RMSE <- sqrt( mean( residual ) )
-  }
-
-  if ( method == "AutoSpectral" & calculate.error ) {
-    RMSE <- unmixed.data$RMSE
-    unmixed.data <- unmixed.data$unmixed.data
-  }
 
   # add back raw exprs and others columns as desired
   if ( include.raw ) {
@@ -373,10 +384,6 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
     )
   )
 
-  # RMSE
-  if ( calculate.error & !is.null( RMSE ) )
-    new.keywords[[ "$RMSE" ]] <- RMSE
-
   # weighting
   if ( !is.null( weights ) ) {
     weights.str <- paste( c( length( spectral.channel ),
@@ -413,7 +420,7 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
 
   # define new FCS file
   fluor.orig <- colnames( unmixed.data )
-  colnames( unmixed.data ) <- paste0( fluor.orig, "-A" )
+  colnames( unmixed.data ) <- paste0( fluor.orig, "-A" ) # this line is the problem
   flow.frame <- suppressWarnings( flowCore::flowFrame( unmixed.data ) )
   param.desc <- flowCore::parameters( flow.frame )@data$desc
 
@@ -429,6 +436,9 @@ unmix.fcs <- function( fcs.file, spectra, asp, flow.control,
   keyword( flow.frame ) <- new.keywords
 
   # save file ---------
-  write.FCS( flow.frame, filename = file.path( output.dir, file.name ) )
+  write.FCS(
+    flow.frame,
+    filename = file.path( output.dir, file.name )
+  )
 
 }
