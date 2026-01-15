@@ -7,7 +7,7 @@
 #' with `unmix.autospectral`. Uses FlowSOM (EmbedSOM) clustering for rapid
 #' identification of cells with similar AF profiles.
 #'
-#' @importFrom EmbedSOM SOM
+#' @importFrom FlowSOM SOM
 #' @importFrom stats na.omit
 #' @importFrom flowCore read.FCS exprs
 #' @importFrom utils write.csv
@@ -18,8 +18,6 @@
 #' @param asp The AutoSpectral parameter list.
 #' @param spectra Spectral signatures of fluorophores, normalized between 0
 #' and 1, with fluorophores in rows and detectors in columns.
-#' @param threads Numeric. Number of threads to use for parallel processing in
-#' the creation of the SOM. Default `NULL` reverts to `asp$worker.process.n`.
 #' @param som.dim Number of x and y dimensions for the SOM. Default is `10`.
 #' @param figures Logical, whether to plot the spectral traces and heatmap for
 #' the AF signatures. Default is `TRUE`.
@@ -35,22 +33,21 @@
 #'
 #' @export
 
-get.af.spectra <- function( unstained.sample,
-                            asp, spectra,
-                            threads = NULL,
-                            som.dim = 10,
-                            figures = TRUE,
-                            plot.dir = NULL,
-                            table.dir = NULL,
-                            title = NULL,
-                            verbose = TRUE ) {
+get.af.spectra <- function(
+    unstained.sample,
+    asp,
+    spectra,
+    som.dim = 10,
+    figures = TRUE,
+    plot.dir = NULL,
+    table.dir = NULL,
+    title = NULL,
+    verbose = TRUE
+) {
 
   # set defaults
   if ( is.null( plot.dir ) )
     plot.dir <- asp$figure.af.dir
-
-  if ( is.null( threads ) )
-    threads <- asp$worker.process.n
 
   # check for AF in spectra, remove if present
   if ( "AF" %in% rownames( spectra ) )
@@ -73,22 +70,23 @@ get.af.spectra <- function( unstained.sample,
 
   cluster.data <- cbind( unstained.exprs, unmixed )
 
-  # get cluster of AF from unstained
+  # get clusters of AF from unstained
   if ( verbose ) message( "Creating a self-organizing map of the autofluorescence" )
 
   set.seed( 42 )
-  map <- EmbedSOM::SOM(
+  map <- FlowSOM::SOM(
     cluster.data,
-    xdim = som.dim, ydim = som.dim,
-    batch = TRUE, parallel = TRUE,
-    threads = threads
-    )
+    xdim = som.dim,
+    ydim = som.dim,
+    silent = TRUE
+  )
 
+  # flip the sign of any negatively vectored AF spectra (occurs on S8, A8)
   af.spectra <- t(
     apply( map$codes[ , spectral.channels ], 1, function( x ) {
       max.x <- ifelse( max( abs( x ) ) > max( x ), min( x ), max( x ) )
       x / max.x } )
-    )
+  )
   rownames( af.spectra ) <- paste0( "AF", 1:nrow( af.spectra ) )
 
   af.spectra <- as.matrix( na.omit( af.spectra ) )
@@ -119,7 +117,7 @@ get.af.spectra <- function( unstained.sample,
       title = title,
       plot.dir = plot.dir,
       split.lasers = FALSE
-      )
+    )
 
     spectral.heatmap( af.spectra, title, plot.dir )
   }

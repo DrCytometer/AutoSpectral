@@ -8,7 +8,7 @@
 #' events in the file.
 #'
 #' @importFrom flowCore read.FCS exprs
-#' @importFrom EmbedSOM SOM
+#' @importFrom FlowSOM SOM
 #'
 #' @param fluor The name of the fluorophore.
 #' @param file.name A named vector of file names for the samples.
@@ -46,23 +46,25 @@
 #'
 #' @return A matrix with the flow expression data.
 
-get.fluor.variants <- function( fluor,
-                                file.name,
-                                control.dir,
-                                asp,
-                                spectra,
-                                af.spectra,
-                                n.cells,
-                                som.dim,
-                                figures,
-                                output.dir,
-                                verbose,
-                                spectral.channel,
-                                universal.negative,
-                                control.type,
-                                raw.thresholds,
-                                unmixed.thresholds,
-                                flow.channel ) {
+get.fluor.variants <- function(
+    fluor,
+    file.name,
+    control.dir,
+    asp,
+    spectra,
+    af.spectra,
+    n.cells,
+    som.dim,
+    figures,
+    output.dir,
+    verbose,
+    spectral.channel,
+    universal.negative,
+    control.type,
+    raw.thresholds,
+    unmixed.thresholds,
+    flow.channel
+) {
 
   if ( verbose )
     message( paste0( "\033[34m", "Getting spectral variants for ", fluor, "\033[0m" ) )
@@ -157,7 +159,12 @@ get.fluor.variants <- function( fluor,
     # cluster
     som.input <- cbind( pos.unmixed, remaining.raw )
     set.seed( 42 )
-    map <- EmbedSOM::SOM( som.input, xdim = som.dim, ydim = som.dim )
+    map <- FlowSOM::SOM(
+      som.input,
+      xdim = som.dim,
+      ydim = som.dim,
+      silent = TRUE
+    )
 
     # get spectra
     variant.spectra <- t(
@@ -223,11 +230,12 @@ get.fluor.variants <- function( fluor,
     # cluster
     som.input <- cbind( pos.unmixed, pos.data[ raw.idx, ] )
     set.seed( 42 )
-    map <- EmbedSOM::SOM(
+    map <- FlowSOM::SOM(
       som.input,
       xdim = som.dim,
-      ydim = som.dim
-      )
+      ydim = som.dim,
+      silent = TRUE
+    )
 
     # get spectra, subtracting background from unstained/negative
     variant.spectra <- sweep(
