@@ -1,3 +1,39 @@
+# AutoSpectral 0.9.2 (2026-01-25)
+
+## Improvements
+- Faster base R per-cell optimization.
+
+## Bug fixes
+- Patch to writing of "-A" in the channel names of FCS files. This was 
+implemented in 0.9.0 but was incorrectly applied to all channels rather than
+just the fluorescence parameters.
+
+# AutoSpectral 0.9.1 (2026-01-15)
+
+## Improvements
+- Faster OLS and WLS unmixing for per-cell optimization in R in 
+`unmix.autospectral()`. Perhaps this should be classified as a bug fix. The use
+of singular value decomposition rolled out in 0.9.0 will remain for matrix
+unmixing, but for per-cell optimization loops where the unmixing matrix is
+recalculated multiple times, a faster version is needed. `unmix.ols.fast()` and
+`unmix.wls.fast()` use `solve()` for this and have been benchmarked as the best
+among variously tested options for base R unmixing.
+
+## Lifecycle warnings
+- The `calculate.error` option for calculation of root mean squared error (RMSE)
+will be deprecated as it slows down the unmixing and does not meaningfully
+measure the unmixing improvement.
+- The `time.clean` option for `clean.controls()` will be deprecated. This uses
+PeacoQC for time-based cleaning of single-stained control files. I've yet to see
+this have an impact.
+- The `trim` option for `clean.controls()` will be deprecated.
+
+## Bug fixes
+- Switch to FlowSOM for `SOM()` support. `EmbedSOM::SOM()` appears to have a
+compilation error for Mac and has been removed from CRAN. Note that FlowSOM must
+be installed separately using BiocManager.
+
+
 # AutoSpectral 0.9.0 (2025-12-23)
 
 ## New features

@@ -46,7 +46,7 @@ At the moment, the following cytometers are supported:
 
 ### Latest Release
 
-**Version 0.9.0**
+**Version 0.9.1**
 
 To install the latest, hopefully stable version, install using `devtools` or `remotes`. You will need to install the Bioconductor packages separately, I believe.
 
@@ -54,7 +54,7 @@ To install the latest, hopefully stable version, install using `devtools` or `re
 # Install Bioconductor packages
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
-BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC"))
+BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC", "FlowSOM"))
 
 # You'll need devtools or remotes to install from GitHub.
 # install.packages("devtools")
@@ -87,8 +87,6 @@ devtools::install_github("DrCytometer/AutoSpectral@dev")
 ## Bug fixes and known issues
 
 AutoSpectral is pretty complex and newly released, so there will be bugs. Sorry. Thanks to all of you providing feedback. Please submit any and all issues either using the Issues page or via email at colibri-cytometry at gmail.
-
-I will be taking a break from addressing issues over the holiday period.
 
 To submit a bug report, go to [Issues](https://github.com/DrCytometer/AutoSpectral/issues).
 
@@ -214,12 +212,16 @@ Benchmarks for "C3 Lung_GFP_003_Samples.fcs", again on the 8-core laptop, using 
 
 * `unmix.fcs()` WLS or OLS v0.8.7: 9sec
 * `unmix.fcs()` WLS or OLS v0.9.0: 9sec
+* `unmix.fcs()` WLS or OLS v1.0.0: 
 * `unmix.fcs()` perCell AF extraction v0.8.7: 2min
 * `unmix.fcs()` perCell AF extraction v0.9.0: 1min
+* `unmix.fcs()` perCell AF extraction v1.0.0: 
 * `unmix.fcs()` perCell fluorophore optimization "fast" v0.8.7: 9min
 * `unmix.fcs()` perCell fluorophore optimization "fast" v0.9.0: <2min
+* `unmix.fcs()` perCell fluorophore optimization "fast" v1.0.0: 
 * `unmix.fcs()` perCell fluorophore optimization "slow" v0.8.7: 62min
 * `unmix.fcs()` perCell fluorophore optimization "slow" v0.9.0: 19min
+* `unmix.fcs()` perCell fluorophore optimization "slow" v1.0.0: 
 * `unmix.folder()` WLS or OLS, 6 files, v0.8.7: 67sec sequential, interrupted parallel
 * `unmix.folder()` WLS or OLS, 6 files, v0.9.0: 62sec sequential, 31sec parallel
 
@@ -311,6 +313,16 @@ the unmixing matrix, not calculating the unmixing matrix.
   - New functions to `save.unmixing.matrix` and `calculate.weights`
   - Patches to `define.flow.control` that were causing redundant gates to be created.
   - Code legibility formatting.
+* Version 0.9.1:
+ - Switch to `FlowSOM::SOM()` from `EmbedSOM::SOM()`.
+ - Patch to appending "-A" suffix to parameter names.
+* Version 0.9.2:
+ - Faster base R per-cell optimization.
+ - Patch to writing of "-A" in the channel names of FCS files. 
+ 
+
+* Version 1.0.0: 
+ - Changes to `unmix.autospectral()` to speed up processing massively and reduce discontinuities in the resulting unmixed data.
 
 
 
