@@ -1,7 +1,7 @@
-# Plot Gate Autofluorescence Sample
+# Plot Autofluorescence Gates on Samples
 
-This function plots the gate autofluorescence sample, including upper
-and lower boundaries, using ggplot2 and other necessary packages.
+This function plots the autofluorescence exclusion gate on the
+sample(s).
 
 ## Usage
 

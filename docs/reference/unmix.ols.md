@@ -1,4 +1,4 @@
-# unmix.ols
+# Unmix OLS
 
 Performs spectral unmixing using ordinary least squares
 

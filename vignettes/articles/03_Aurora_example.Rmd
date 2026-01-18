@@ -1,5 +1,5 @@
 ---
-title: "Aurora AutoSpectral Example"
+title: "03 Aurora AutoSpectral Example"
 ---
 
 ```{r, include = FALSE}

@@ -11,7 +11,6 @@ get.af.spectra(
   unstained.sample,
   asp,
   spectra,
-  threads = NULL,
   som.dim = 10,
   figures = TRUE,
   plot.dir = NULL,
@@ -37,11 +36,6 @@ get.af.spectra(
 
   Spectral signatures of fluorophores, normalized between 0 and 1, with
   fluorophores in rows and detectors in columns.
-
-- threads:
-
-  Numeric. Number of threads to use for parallel processing in the
-  creation of the SOM. Default `NULL` reverts to `asp$worker.process.n`.
 
 - som.dim:
 

@@ -69,7 +69,10 @@ get.spectral.variants(
   for clustering the spectral variation. The number of spectra returned
   for each fluorophore will increase with the quadratic of `som.dim`, so
   for 7, you will get up to 49 variants. Increasing the SOM dimensions
-  does not help. Somewhere between 4 and 7 appears to be optimal.
+  further does not help. Somewhere between 4 and 7 appears to be
+  sufficient, but with the pruning of variants implemented in
+  [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
+  in v1.0.0, this is less important.
 
 - figures:
 

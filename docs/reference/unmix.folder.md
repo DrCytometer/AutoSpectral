@@ -21,7 +21,6 @@ unmix.folder(
   file.suffix = NULL,
   include.raw = FALSE,
   include.imaging = FALSE,
-  calculate.error = FALSE,
   use.dist0 = TRUE,
   divergence.threshold = 10000,
   divergence.handling = "Balance",
@@ -29,7 +28,8 @@ unmix.folder(
   speed = "fast",
   parallel = FALSE,
   threads = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 ```
 
@@ -111,11 +111,6 @@ unmix.folder(
   Logical indicating whether to include imaging data in the written FCS
   file: relevant for S8 and A8. Default is `FALSE`
 
-- calculate.error:
-
-  Logical, whether to calculate the RMSE unmixing model accuracy and
-  include it as a keyword in the FCS file.
-
 - use.dist0:
 
   Logical, controls whether the selection of the optimal AF signature
@@ -170,6 +165,11 @@ unmix.folder(
 - verbose:
 
   Logical, controls messaging. Default is `TRUE`.
+
+- ...:
+
+  Ignored. Previously used for deprecated arguments such as
+  `calculate.error`.
 
 ## Value
 

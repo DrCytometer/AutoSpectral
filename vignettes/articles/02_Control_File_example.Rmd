@@ -1,5 +1,5 @@
 ---
-title: "Creating the control file"
+title: "02 Creating the control file"
 ---
 
 ```{r, include = FALSE}

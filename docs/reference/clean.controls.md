@@ -1,18 +1,12 @@
 # Clean Controls
 
-A four-part function to clean single-color controls in order to extract
+A multi-part function to clean single-color controls in order to extract
 fluorophore signatures. Any part can be run independently:
 
-- **Stage 1**: PeacoQC to eliminate flow artefacts. Not required in most
-  cases.
-
-- **Stage 2**: Trimming to eliminate extreme events. Not recommended for
-  most use cases.
-
-- **Stage 3**: Autofluorescence noise removal using PCA unmixing on
+- **Stage 1**: Autofluorescence noise removal using PCA unmixing on
   matching unstained (cells only).
 
-- **Stage 4**: Brightest event selection from positive, universal
+- **Stage 2**: Brightest event selection from positive, universal
   negative from matching negative, and downsampling to speed up RLM
   spectra optimization.
 
@@ -60,11 +54,12 @@ clean.controls(
 - trim:
 
   Logical, default is `FALSE`. Whether to remove extreme events
-  (positive and negative) from controls.
+  (positive and negative) from controls. Deprecated.
 
 - trim.factor:
 
   Numeric. Default is `asp$rlm.trim.factor`. Required if `trim = TRUE`.
+  Deprecated.
 
 - af.remove:
 
@@ -103,7 +98,7 @@ clean.controls(
 - scrub:
 
   Logical, if `TRUE` allows for re-cleaning of already cleaned data,
-  provided there are clean data in `flow.control`.
+  provided there are clean data in `flow.control`. Deprecated.
 
 - intermediate.figures:
 

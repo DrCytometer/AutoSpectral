@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,16 +18,19 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/Aurora_example.html">Aurora AutoSpectral Example</a></li>
-    <li><a class="dropdown-item" href="../articles/Cleaning.html">Control clean-up</a></li>
-    <li><a class="dropdown-item" href="../articles/Control_File_example.html">Creating the control file</a></li>
-    <li><a class="dropdown-item" href="../articles/Development.html">Development</a></li>
-    <li><a class="dropdown-item" href="../articles/Full_AutoSpectral_Workflow.html">Full Workflow Example</a></li>
-    <li><a class="dropdown-item" href="../articles/Gating.html">Gating</a></li>
-    <li><a class="dropdown-item" href="../articles/Per_Cell_Optimization.html">Per Cell Optimization</a></li>
-    <li><a class="dropdown-item" href="../articles/Plotting.html">Plotting</a></li>
-    <li><a class="dropdown-item" href="../articles/Reload_AutoSpectral.html">Re-running AutoSpectral</a></li>
-    <li><a class="dropdown-item" href="../articles/Single_Cell_AutoFluorescence.html">Single Cell Autofluorescence</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/01_Full_AutoSpectral_Workflow.html">01 Full Workflow Example</a></li>
+    <li><a class="dropdown-item" href="../articles/02_Control_File_example.html">02 Creating the control file</a></li>
+    <li><a class="dropdown-item" href="../articles/03_Aurora_example.html">03 Aurora AutoSpectral Example</a></li>
+    <li><a class="dropdown-item" href="../articles/04_Gating.html">04 Gating</a></li>
+    <li><a class="dropdown-item" href="../articles/05_Cleaning.html">05 Control clean-up</a></li>
+    <li><a class="dropdown-item" href="../articles/06_Single_Cell_AutoFluorescence.html">06 Single Cell Autofluorescence</a></li>
+    <li><a class="dropdown-item" href="../articles/07_Per_Cell_Optimization.html">07 Per Cell Optimization</a></li>
+    <li><a class="dropdown-item" href="../articles/08_Reload_AutoSpectral.html">08 Re-running AutoSpectral</a></li>
+    <li><a class="dropdown-item" href="../articles/09_Plotting.html">09 Plotting</a></li>
+    <li><a class="dropdown-item" href="../articles/10_Development.html">10 Development</a></li>
+    <li><a class="dropdown-item" href="../articles/11_Speed_It_Up.html">11 Speed It Up (Why So Slow?)</a></li>
+    <li><a class="dropdown-item" href="../articles/12_Updates_And_Issues.html">12 Updates and Issues</a></li>
+    <li><a class="dropdown-item" href="../articles/13_ID7000_WLS_example.html">13 ID7000 WLS Example</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/DrCytometer/AutoSpectral/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
@@ -42,6 +45,28 @@
       <small>Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.9.1" id="autospectral-091-2026-01-15">AutoSpectral 0.9.1 (2026-01-15)<a class="anchor" aria-label="anchor" href="#autospectral-091-2026-01-15"></a></h2>
+<div class="section level3">
+<h3 id="improvements-0-9-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-9-1"></a></h3>
+<ul><li>Faster OLS and WLS unmixing for per-cell optimization in R in <code><a href="../reference/unmix.autospectral.html">unmix.autospectral()</a></code>. Perhaps this should be classified as a bug fix. The use of singular value decomposition rolled out in 0.9.0 will remain for matrix unmixing, but for per-cell optimization loops where the unmixing matrix is recalculated multiple times, a faster version is needed. <code><a href="../reference/unmix.ols.fast.html">unmix.ols.fast()</a></code> and <code><a href="../reference/unmix.wls.fast.html">unmix.wls.fast()</a></code> use <code><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve()</a></code> for this and have been benchmarked as the best among variously tested options for base R unmixing.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="lifecycle-warnings-0-9-1">Lifecycle warnings<a class="anchor" aria-label="anchor" href="#lifecycle-warnings-0-9-1"></a></h3>
+<ul><li>The <code>calculate.error</code> option for calculation of root mean squared error (RMSE) has been deprecated as it slows down the unmixing and does not meaningfully measure the unmixing improvement.</li>
+<li>The <code>time.clean</code> option for <code><a href="../reference/clean.controls.html">clean.controls()</a></code> will be deprecated. This uses PeacoQC for time-based cleaning of single-stained control files. I’ve yet to see this have an impact.</li>
+<li>The <code>trim</code> option for <code><a href="../reference/clean.controls.html">clean.controls()</a></code> will be deprecated.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-9-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-9-1"></a></h3>
+<ul><li>Switch to FlowSOM for <code>SOM()</code> support. <code><a href="https://rdrr.io/pkg/EmbedSOM/man/SOM.html" class="external-link">EmbedSOM::SOM()</a></code> appears to have a compilation error for Mac and has been removed from CRAN. Note that FlowSOM must be installed separately using BiocManager.</li>
+<li>Patch to writing of “-A” in the channel names of FCS files. This was implemented in 0.9.0 but was incorrectly applied to all channels rather than just the fluorescence parameters.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="notes-0-9-1">Notes<a class="anchor" aria-label="anchor" href="#notes-0-9-1"></a></h3>
+<ul><li>Dependencies have been slimmed down. <code>tidyr</code>, <code>dplyr</code> and <code>rlang</code> have all been removed in favor of base R. Base R packages <code>stats</code>, <code>utils</code> and <code>grDevices</code> are called via <code>::</code> rather than imported into the NAMESPACE.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.9.0" id="autospectral-090-2025-12-23">AutoSpectral 0.9.0 (2025-12-23)<a class="anchor" aria-label="anchor" href="#autospectral-090-2025-12-23"></a></h2>
 <div class="section level3">

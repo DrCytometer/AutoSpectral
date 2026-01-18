@@ -47,7 +47,7 @@
 - [`gate.af.identify.plot()`](https://drcytometer.github.io/AutoSpectral/reference/gate.af.identify.plot.md)
   : Plot Autofluorescence Identification Gate
 - [`gate.af.sample.plot()`](https://drcytometer.github.io/AutoSpectral/reference/gate.af.sample.plot.md)
-  : Plot Gate Autofluorescence Sample
+  : Plot Autofluorescence Gates on Samples
 - [`gate.define.plot()`](https://drcytometer.github.io/AutoSpectral/reference/gate.define.plot.md)
   : Gate Definition Plot
 - [`gate.sample.plot()`](https://drcytometer.github.io/AutoSpectral/reference/gate.sample.plot.md)
@@ -142,10 +142,14 @@
   : Unmix FCS Data
 - [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
   : Unmix All FCS Files in a Directory
+- [`unmix.ols.fast()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.ols.fast.md)
+  : Unmix OLS Fast
 - [`unmix.ols()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.ols.md)
-  : unmix.ols
+  : Unmix OLS
 - [`unmix.poisson()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.poisson.md)
   : Unmix Using Poisson Regression
+- [`unmix.wls.fast()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.fast.md)
+  : Unmix WLS Fast
 - [`unmix.wls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.md)
   : Unmix Using Weighted Least Squares
 - [`validate.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.md)

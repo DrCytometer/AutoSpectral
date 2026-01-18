@@ -14,11 +14,11 @@ unmix.autospectral(
   spectra.variants = NULL,
   weighted = FALSE,
   weights = NULL,
-  calculate.error = FALSE,
   use.dist0 = TRUE,
   verbose = TRUE,
   parallel = TRUE,
-  threads = NULL
+  threads = NULL,
+  ...
 )
 ```
 
@@ -62,11 +62,6 @@ unmix.autospectral(
   Default is `NULL`, in which case weighting will be done by channel
   means (Poisson variance). Only used if `weighted`.
 
-- calculate.error:
-
-  Logical, whether to calculate the RMSE unmixing model accuracy and
-  include it as an output. Default is `FALSE`.
-
 - use.dist0:
 
   Logical, controls whether the selection of the optimal AF signature
@@ -90,6 +85,11 @@ unmix.autospectral(
   be used. `asp$worker.process.n` is set by default to be one less than
   the available cores on the machine. Multi-threading is only used if
   `parallel` is `TRUE`.
+
+- ...:
+
+  Ignored. Previously used for deprecated arguments such as
+  `calculate.error`.
 
 ## Value
 
