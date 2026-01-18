@@ -7,7 +7,6 @@
 #'
 #' @importFrom flowCore read.FCS keyword exprs flowFrame parameters
 #' @importFrom flowCore write.FCS parameters<-
-#' @importFrom utils packageVersion modifyList
 #' @importFrom lifecycle deprecate_warn
 #'
 #' @param fcs.file A character string specifying the path to the FCS file.
@@ -241,11 +240,14 @@ unmix.fcs <- function(
               raw.data = spectral.exprs,
               spectra = spectra,
               af.spectra = af.spectra,
+              asp = asp,
               spectra.variants = spectra.variants,
               weighted = weighted,
               weights = weights,
               use.dist0 = use.dist0,
-              verbose = verbose
+              verbose = verbose,
+              parallel = parallel,
+              threads = threads
             )
           }
         )
@@ -255,11 +257,14 @@ unmix.fcs <- function(
           raw.data = spectral.exprs,
           spectra = spectra,
           af.spectra = af.spectra,
+          asp = asp,
           spectra.variants = spectra.variants,
           weighted = weighted,
           weights = weights,
           use.dist0 = use.dist0,
-          verbose = verbose
+          verbose = verbose,
+          parallel = parallel,
+          threads = threads
         )
       }
     },
@@ -331,7 +336,7 @@ unmix.fcs <- function(
     p.idx <- sub( "\\$?P(\\d+)N", "\\1", k )
     matches <- grep( paste0( "^\\$?P", p.idx, "(?:[A-Z]+)$" ), names( fcs.keywords ),
                      value = TRUE )
-    setNames( fcs.keywords[ matches], matches )
+    stats::setNames( fcs.keywords[ matches], matches )
   } )
   # name the list by parameter name
   names( param.lookup ) <- sapply( pN.keys, function( k ) fcs.keywords[[ k ]])
@@ -383,13 +388,13 @@ unmix.fcs <- function(
   }
 
   # combine new keywords with original keywords
-  new.keywords <- modifyList(
-    modifyList( non.param.keys, param.keywords ),
+  new.keywords <- utils::modifyList(
+    utils::modifyList( non.param.keys, param.keywords ),
     list(
       "$FIL" = file.name,
       "$PAR" = as.character( n.param ),
       "$UNMIXINGMETHOD" = method,
-      "$AUTOSPECTRAL" = as.character( packageVersion( "AutoSpectral" ) )
+      "$AUTOSPECTRAL" = as.character( utils::packageVersion( "AutoSpectral" ) )
     )
   )
 

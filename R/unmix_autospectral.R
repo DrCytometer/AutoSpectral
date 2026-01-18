@@ -207,7 +207,7 @@ unmix.autospectral <- function(
         cell.unmixed <- unmixed[ cell, fluorophores, drop = FALSE ]
 
         # identify which fluorophores are present on this cell
-        pos.fluors <- setNames(
+        pos.fluors <- stats::setNames(
           as.vector( cell.unmixed >= pos.thresholds[ fluorophores ] ),
           fluorophores
         )
