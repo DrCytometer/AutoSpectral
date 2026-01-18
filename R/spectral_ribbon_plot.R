@@ -101,7 +101,7 @@ spectral.ribbon.plot <- function(
     if ( !af ) {
       # scatter matching with background subtraction
       pos.mfi <- apply(
-        neg.expr.data[ , spectral.channel, drop = FALSE ], 2, median
+        neg.expr.data[ , spectral.channel, drop = FALSE ], 2, stats::median
       )
       pos.minus.bg <- sweep(
         pos.expr.data[ , spectral.channel, drop = FALSE ],

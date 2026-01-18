@@ -112,7 +112,7 @@ get.spectral.variants <- function(
   if ( verbose ) message( "\033[34mChecking control file for errors \033[0m" )
   check.control.file( control.dir, control.def.file, asp, strict = TRUE )
 
-  control.table <- read.csv(
+  control.table <- utils::read.csv(
     control.def.file,
     stringsAsFactors = FALSE,
     strip.white = TRUE
@@ -196,7 +196,7 @@ get.spectral.variants <- function(
     unstained <- flowCore::exprs( unstained )[ , spectral.channel ]
   }
 
-  raw.thresholds <- apply( unstained, 2, function( col ) quantile( col, 0.995 ) )
+  raw.thresholds <- apply( unstained, 2, function( col ) stats::quantile( col, 0.995 ) )
 
   unstained.unmixed <- unmix.autospectral(
     unstained,
@@ -206,7 +206,7 @@ get.spectral.variants <- function(
   )
   unmixed.thresholds <- apply(
     unstained.unmixed[ , fluorophores ], 2, function( col )
-      quantile( col, 0.995 )
+      stats::quantile( col, 0.995 )
   )
 
   if ( is.null( names( table.fluors ) ) ) names( table.fluors ) <- table.fluors

@@ -52,7 +52,7 @@ calculate.weights <- function( fcs.file, spectral.channels,
   names( weights ) <- spectral.channels
 
   if ( save )
-    write.csv( weights, file = file.path( output.dir, filename ) )
+    utils::write.csv( weights, file = file.path( output.dir, filename ) )
 
   return( weights )
 }

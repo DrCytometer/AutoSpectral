@@ -153,7 +153,7 @@ gate.define.plot <- function(
       ) +
     geom_text(
       data = gate.bound$density.max,
-      aes( label = .data$num.label ),
+      aes( label = num.label ),
       hjust = 0, vjust = 0, size = asp$figure.axis.text.size / 2.5,
       color = asp$gate.tesselation.color
       ) +

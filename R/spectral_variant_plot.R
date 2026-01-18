@@ -39,22 +39,24 @@
 #'
 #' @export
 
-spectral.variant.plot <- function( spectra.variants, median.spectrum,
-                                   title = "Spectral_variants",
-                                   save = FALSE,
-                                   plot.width = NULL, plot.height = 5,
-                                   plot.dir = "./figure_spectral_variants",
-                                   variant.fill.color = "red",
-                                   variant.fill.alpha = 0.7,
-                                   median.line.color = "black",
-                                   median.linewidth = 1 ) {
+spectral.variant.plot <- function(
+    spectra.variants, median.spectrum,
+    title = "Spectral_variants",
+    save = FALSE,
+    plot.width = NULL, plot.height = 5,
+    plot.dir = "./figure_spectral_variants",
+    variant.fill.color = "red",
+    variant.fill.alpha = 0.7,
+    median.line.color = "black",
+    median.linewidth = 1
+  ) {
 
   detector.names <- colnames( spectra.variants )
 
   variant.data <- data.frame(
     detector.n = seq_len( ncol( spectra.variants ) ),
     detector = factor( detector.names, levels = detector.names ),
-    median = median.spectrum,
+    median.spec = median.spectrum,
     min = apply( spectra.variants, 2, min, na.rm = TRUE ),
     max = apply( spectra.variants, 2, max, na.rm = TRUE )
   )
@@ -66,7 +68,7 @@ spectral.variant.plot <- function( spectra.variants, median.spectrum,
       alpha = variant.fill.alpha
     ) +
     geom_line(
-      aes( y = median, group = 1 ),
+      aes( y = median.spec, group = 1 ),
       linewidth = median.linewidth,
       color = median.line.color
     ) +

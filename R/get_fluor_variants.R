@@ -172,7 +172,7 @@ get.fluor.variants <- function(
         map$codes[ , spectral.channel ], 1, function( x ) x / max( x )
         )
       )
-    variant.spectra <- as.matrix( na.omit( variant.spectra ) )
+    variant.spectra <- as.matrix( stats::na.omit( variant.spectra ) )
     rownames( variant.spectra ) <- paste0( fluor, "_", 1:nrow( variant.spectra ) )
 
   } else { # get bead control data and spectral variation
@@ -246,7 +246,7 @@ get.fluor.variants <- function(
         variant.spectra, 1, function( x ) x / max( x )
         )
       )
-    variant.spectra <- as.matrix( na.omit( variant.spectra ) )
+    variant.spectra <- as.matrix( stats::na.omit( variant.spectra ) )
     rownames( variant.spectra ) <- paste0( fluor, "_", 1:nrow( variant.spectra ) )
   }
 

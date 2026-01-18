@@ -53,7 +53,7 @@ create.control.file <- function( control.dir, asp ){
   fluor.data.path <- system.file(
     "extdata", "fluorophore_database.csv", package = "AutoSpectral"
     )
-  fluorophore.database <- read.csv( fluor.data.path )
+  fluorophore.database <- utils::read.csv( fluor.data.path )
   fluorophore.database[ fluorophore.database == "" ] <- NA
   fluorophore.matches <- match.fluorophores( control.files, fluorophore.database )
 
@@ -63,7 +63,7 @@ create.control.file <- function( control.dir, asp ){
   marker.data.path <- system.file(
     "extdata", "marker_database.csv", package = "AutoSpectral"
     )
-  marker.database <- read.csv( marker.data.path )
+  marker.database <- utils::read.csv( marker.data.path )
   marker.database[ marker.database == "" ] <- NA
   marker.matches <- match.markers( control.files, marker.database )
   control.def.file$marker <- marker.matches[ control.def.file$filename ]
@@ -153,7 +153,11 @@ create.control.file <- function( control.dir, asp ){
   control.def.file[ is.na( control.def.file ) ] <- ""
   control.def.file[ control.def.file == "NA" ] <- ""
 
-  write.csv( control.def.file, file = control.file.name, row.names = FALSE )
+  utils::write.csv(
+    control.def.file,
+    file = control.file.name,
+    row.names = FALSE
+  )
 
   # check for duplicate fluorophores
   duplicate.fluorophores <- anyDuplicated( control.def.file$fluorophore )

@@ -30,8 +30,8 @@ fit.af.spline <- function( af.cells, non.af.cells, asp ) {
   )
 
   # set lower bound based on non-AF cells
-  x.bound.low <- quantile( non.af.cells[ , 1 ], asp$af.density.threshold )
-  y.bound.low <- quantile( non.af.cells[ , 2 ], asp$af.density.threshold )
+  x.bound.low <- stats::quantile( non.af.cells[ , 1 ], asp$af.density.threshold )
+  y.bound.low <- stats::quantile( non.af.cells[ , 2 ], asp$af.density.threshold )
 
   # fit a spline using rlm
   model.data <- data.frame( rbind( af.cells, non.af.cells ) )
@@ -69,8 +69,8 @@ fit.af.spline <- function( af.cells, non.af.cells, asp ) {
     stop( "Failed to identify autofluorescence" )
 
   # expand upper points outwards to catch more highly autofluorescent events
-  x.q75 <- quantile( model.fit.data$x, 0.75 )
-  y.q75 <- quantile( model.fit.data$y, 0.75 )
+  x.q75 <- stats::quantile( model.fit.data$x, 0.75 )
+  y.q75 <- stats::quantile( model.fit.data$y, 0.75 )
 
   upper.points <- model.fit.data[
     model.fit.data$x >= x.q75 | model.fit.data$y >= y.q75,

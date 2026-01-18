@@ -314,7 +314,7 @@ remove.af <- function(
     neg.peak.channel <- expr.data.neg[ gate.neg.idx, fluor.peak ]
 
     # determine threshold for positivity based on cleaned negative
-    positivity.threshold <- quantile( neg.peak.channel, threshold )
+    positivity.threshold <- stats::quantile( neg.peak.channel, threshold )
     pos.above.threshold <- pos.peak.channel[ pos.peak.channel > positivity.threshold ]
 
     # warn if few events in positive

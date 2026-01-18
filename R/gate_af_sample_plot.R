@@ -129,7 +129,7 @@ gate.af.sample.plot <- function(
 
     gate.plot <- gate.plot +
       geom_path(
-        aes( .data$x, .data$y, color = NULL ),
+        aes( x, y, color = NULL ),
         data = af.boundary.upper.ggp,
         linewidth = asp$figure.gate.line.size
       )

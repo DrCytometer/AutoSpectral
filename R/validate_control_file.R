@@ -216,7 +216,7 @@ validate.control.file <- function( control.dir, control.def.file, asp ) {
                 message = "No universal negative specified" )
   }
 
-  un <- na.omit( unique( ct$universal.negative ) )
+  un <- stats::na.omit( unique( ct$universal.negative ) )
   absent <- setdiff( un, ct$filename )
   if ( length( absent ) > 0) {
     issues[[ length( issues ) + 1 ]] <-

@@ -484,8 +484,8 @@ do.gate <- function( gate.data, viability.gate, large.gate,
       x.hull <- original.hull$x
       y.hull <- original.hull$y
 
-      threshold.x <- quantile( x.hull, asp$large.gate.quantile )
-      threshold.y <- quantile( y.hull, asp$large.gate.quantile )
+      threshold.x <- stats::quantile( x.hull, asp$large.gate.quantile )
+      threshold.y <- stats::quantile( y.hull, asp$large.gate.quantile )
 
       upper.idx.x <- which( x.hull > threshold.x )
       upper.idx.y <- which( y.hull > threshold.y & x.hull > threshold.x )
