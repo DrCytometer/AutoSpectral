@@ -65,23 +65,9 @@
 </h1></div>
 <!-- badges: start -->
 <!-- badges: end -->
-<p><strong>Version 0.9.1</strong></p>
-<p>Welcome to the Development branch of AutoSpectral.</p>
-<p>This will always be a work-in-progress, and will not necessarily be stable at any given point. At the moment, most of the changes taking place relate to speeding things up or fixing any reported bugs.</p>
-<p>To install the development version, run the code below in your R/RStudio. This will overwrite any prior installation of AutoSpectral. To restore the stable version of AutoSpectral, simply re-run the <code>install_github()</code> command without the @dev bit.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Install Bioconductor packages</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
-<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"flowWorkspace"</span>, <span class="st">"flowCore"</span>, <span class="st">"PeacoQC"</span>, <span class="st">"FlowSOM"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># You'll need devtools or remotes to install from GitHub.</span></span>
-<span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level1">
-<h1 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
-</h1>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
 <p>AutoSpectral is AutoSpill updated for the spectral flow era.</p>
 <p>The goal of AutoSpectral is to provide you with the best possible spectral signatures of the fluorophores in your single-stained controls. Whether or not these accurately model your fully stained samples will depend on what you’ve chosen to use for the controls, how they were prepared and other factors such as machine condition and any divergence in handling between samples and controls.</p>
 <p>More to the point, AutoSpectral is intended to make working with messy cell-based controls as easy as compensation beads. This should give you better accuracy and precision in your spectral definition and thus in your unmixing.</p>
@@ -99,6 +85,7 @@
 <li>Beckman Coulter CytoFLEX mosaic (“mosaic”)</li>
 <li>ThermoFisher Attune Xenith (“xenith”)</li>
 </ul>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -106,9 +93,9 @@
 <div class="section level3">
 <h3 id="latest-stable-release">Latest Stable Release<a class="anchor" aria-label="anchor" href="#latest-stable-release"></a>
 </h3>
-<p><strong>Version 0.9.0</strong></p>
-<p>To install the latest, hopefully stable version, install using <code>devtools</code> or <code>remotes</code>. You will need to install the Bioconductor packages separately.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<p><strong>Version 0.9.1</strong></p>
+<p>To install the latest, hopefully stable version, install using <code>devtools</code> or <code>remotes</code>. You will need to install the Bioconductor packages separately. As of version 0.9.1, AutoSpectral relies on <code>FlowSOM</code> rather than <code>EmbedSOM</code>, so you will need to install <code>FlowSOM</code> via Bioconductor.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install Bioconductor packages</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
@@ -119,7 +106,7 @@
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
 <p>As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, probably not perfect. To try it, visit <a href="https://github.com/DrCytometer/AutoSpectralHelper" class="external-link">AutoSpectralHelper</a>. If you update AutoSpectral, I recommend downloading a new version of the app to ensure compatibility.</p>
 <p>To install a specific release, e.g., a previous one, use the version number:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@v0.8.7"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -128,7 +115,7 @@
 <p>If you’re feeling adventurous or simply want early access to the latest features, you can try the <code>dev</code> branch. At any given point, this may not be working well.</p>
 <p>AutoSpectral is open source. If you are interested in contributing, please visit <a href="https://drcytometer.github.io/AutoSpectral/articles/Development.html">Development</a> for suggestions of where help is needed most.</p>
 <p>You can install the development version of AutoSpectral from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -177,7 +164,6 @@
 <p>See the article “Updates and Issues” for more on this, or read the NEWS with the latest release.</p>
 </div>
 </div>
-
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">

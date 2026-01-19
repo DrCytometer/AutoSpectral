@@ -1,30 +1,6 @@
 # AutoSpectral
 
-**Version 0.9.1**
-
-Welcome to the Development branch of AutoSpectral.
-
-This will always be a work-in-progress, and will not necessarily be
-stable at any given point. At the moment, most of the changes taking
-place relate to speeding things up or fixing any reported bugs.
-
-To install the development version, run the code below in your
-R/RStudio. This will overwrite any prior installation of AutoSpectral.
-To restore the stable version of AutoSpectral, simply re-run the
-`install_github()` command without the @dev bit.
-
-``` r
-# Install Bioconductor packages
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC", "FlowSOM"))
-
-# You'll need devtools or remotes to install from GitHub.
-# install.packages("devtools")
-devtools::install_github("DrCytometer/AutoSpectral@dev")
-```
-
-# Introduction
+## Introduction
 
 AutoSpectral is AutoSpill updated for the spectral flow era.
 
@@ -69,11 +45,13 @@ At the moment, the following cytometers are supported:
 
 ### Latest Stable Release
 
-**Version 0.9.0**
+**Version 0.9.1**
 
 To install the latest, hopefully stable version, install using
 `devtools` or `remotes`. You will need to install the Bioconductor
-packages separately.
+packages separately. As of version 0.9.1, AutoSpectral relies on
+`FlowSOM` rather than `EmbedSOM`, so you will need to install `FlowSOM`
+via Bioconductor.
 
 ``` r
 # Install Bioconductor packages
