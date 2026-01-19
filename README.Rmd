@@ -101,17 +101,17 @@ Since one of my recent updates broke things, I'll be moving to using tagged rele
 
 Please check the [help pages and articles](https://drcytometer.github.io/AutoSpectral/) if you're struggling to understand how to do something. There's a lot of info there.
 
-In particular, see the [Full Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_Workflow.html).
+In particular, see the [Full Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html).
 
-Resolved issues, bug patches and improvements will be announced via the NEWS and also tracked in the [Updates and Issues]() article.
+Resolved issues, bug patches and improvements will be announced via the NEWS and also tracked in the [Updates and Issues](https://drcytometer.github.io/AutoSpectral/articles/12_Updates_And_Issues.html) article.
 
 
 ### Known shortcomings
 
-* Gating. The automated gating is not great. See the [help page](https://drcytometer.github.io/AutoSpectral/articles/Gating.html) for tips. I'm working on an alternative.
+* Gating. The automated gating is not great. See the [help page](https://drcytometer.github.io/AutoSpectral/articles/04_Gating.html) for tips. I'm working on an alternative.
 * Please note that FCS 3.2 files from the S8 and A8 cytometers are not fully 
 supported in flowCore. You may receive warnings, but things should still work.
-* More stuff in progress will appear in the [Development article](https://drcytometer.github.io/AutoSpectral/articles/Development.html).
+* More stuff in progress will appear in the [Development article](https://drcytometer.github.io/AutoSpectral/articles/10_Development.html).
 * This is my first R package.
 
 If you want to use data from another cytometer and are wiling to provide files 
@@ -128,23 +128,23 @@ AutoSpectral is provided under an AGPL3 licence.
 
 ## Installation and Runtime
 
-Installation via GitHub should take only a minute or so. It takes less than that on a Dell i7 core laptop.
+Installation via GitHub should take only a minute or so. It takes less than that on a Dell i7 core laptop, but that might be because the dependencies are already installed.
 
 Occasionally, the help gets corrupted. Just re-install if that happens. If you know why this happens, let me know.
 
 Installation of `AutoSpectralRcpp` will take a couple of minutes because the code needs to compile. You will also first have to install Rtools to have a compiler, and that will take longer, probably 10 minutes or so.
 
-For more details and benchmarking of specific functions with an example 40-color cell control data set, see the article on "Speed".
+For more details and benchmarking of specific functions with an example 40-color cell control data set, see the article on [Speed](https://drcytometer.github.io/AutoSpectral/articles/11_Speed_It_Up.html).
 
 
 ## Go Faster
 
-See the article on "Speed" for details on how to improve AutoSpectral's performance on your system.
+See the article on "[Speed](https://drcytometer.github.io/AutoSpectral/articles/11_Speed_It_Up.html) for details on how to improve AutoSpectral's performance on your system.
 
 
 ## Updates and news
 
-See the article "Updates and Issues" for more on this, or read the NEWS with the latest release.
+See the article [Updates and Issues](https://drcytometer.github.io/AutoSpectral/articles/12_Updates_And_Issues.html) for more on this, or read the NEWS with the latest release.
 
 
 
