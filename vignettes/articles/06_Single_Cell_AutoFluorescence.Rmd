@@ -74,7 +74,7 @@ Okay, now we're ready to unmix with per-cell AF extraction.
 
 If you are working with multiple sources like in this example, be sure to provide the corresponding AF for the unmixing. For example, for lung cells, provide the lung AF spectra. If you provide a non-matching AF, it won't create problems (based on both theory and empirical testing), but the results will not be as good as if a matching one were used, simply because the best match won't be present for all cells. Note that this means you can use pooled samples as long as you have enough events acquired, although you may need to increase `som.dim` if there are a lot of AF signatures present in each part of the pool.
 
-While you can call `unmix.autospectral` directly, this requires reading in the FCS file into R, extracting the expression data and so on. The better option is to just call unmix.fcs directly, which will create an unmixed FCS file from your raw FCS file.
+While you can call `unmix.autospectral()` directly, this requires reading in the FCS file into R, extracting the expression data and so on. The better option is to just call unmix.fcs directly, which will create an unmixed FCS file from your raw FCS file.
 
 
 ```{r, eval=FALSE}

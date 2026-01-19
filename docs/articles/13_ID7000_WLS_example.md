@@ -12,7 +12,7 @@ WLSM unmixing. The workflow here just uses weighted least squares (WLS)
 for unmixing.
 
 Please see the [Full
-Workflow](https://drcytometer.github.io/AutoSpectral/articles/Full_AutoSpectral_Workflow.html)
+Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html)
 
 ``` r
 library( AutoSpectral )

@@ -50,7 +50,7 @@ control.dir <- "./Raw/Set1/Reference Group"
 ```
 
 
-Create the control file. You will need to manually edit your control file, telling AutoSpectral what's going on. It will try to fill in some stuff for you, but you should check this. See the article on this on [GitHub](https://drcytometer.github.io/AutoSpectral/articles/Control_File_example.html) or [Colibri Cytometry](https://www.colibri-cytometry.com/post/autospectral-creating-the-control-file).
+Create the control file. You will need to manually edit your control file, telling AutoSpectral what's going on. It will try to fill in some stuff for you, but you should check this. See the article on this on [GitHub](https://drcytometer.github.io/AutoSpectral/articles/02_Control_File_example.html) or [Colibri Cytometry](https://www.colibri-cytometry.com/post/autospectral-creating-the-control-file).
 
 ```{r, eval=FALSE}
 create.control.file(control.dir, asp)
@@ -78,7 +78,7 @@ Once, the control file passes the error checks, we can load in the data. This pa
 ```{r, eval=FALSE}
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
-Be sure to check the gates that are generated in the `figure_gate` folder--do they look right? If not, go to the Gating article on [GitHub](https://drcytometer.github.io/AutoSpectral/articles/Gating.html) [Colibri](https://www.colibri-cytometry.com/post/autospectral-gating) for tips on how fix it.
+Be sure to check the gates that are generated in the `figure_gate` folder--do they look right? If not, go to the Gating article on [GitHub](https://drcytometer.github.io/AutoSpectral/articles/04_Gating.html) [Colibri](https://www.colibri-cytometry.com/post/autospectral-gating) for tips on how fix it.
 
 ![Cell Gate](figures/Workflow/cell_gate.jpg)
 
@@ -87,7 +87,7 @@ Be sure to check the gates that are generated in the `figure_gate` folder--do th
 
 If everything looks okay with the gating, we proceed to control clean-up. This helps remove noisy events, like autofluorescence spikes, and tries to match the positive events for each control to corresponding cells/beads in the unstained `universal.negative` that you defined in the control.file.
 
-The default settings here are usually best. See more on the cleaning article on [GitHub](https://drcytometer.github.io/AutoSpectral/articles/Cleaning.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-cleaning). There is a parallelization option, which is being converted to the new parallel backend. Once that is in place, it should be faster.
+The default settings here are usually best. See more on the cleaning article on [GitHub](https://drcytometer.github.io/AutoSpectral/articles/05_Cleaning.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-cleaning). There is a parallelization option, which is being converted to the new parallel backend. Once that is in place, it should be faster.
 ```{r, eval=FALSE}
 flow.control <- clean.controls(flow.control, asp)
 ```
@@ -167,7 +167,7 @@ We get the distribution of autofluorescence spectra as a spectral trace and as a
 
 ![Spleen AF](figures/Workflow/spleen_af_variation.jpg)
 
-If you want to do this with samples containing different autofluorescence profiles, such as we have here, we extract the AF spectral variation from each type of unstained sample. We then provide the corresponding `af.spectra` to each unmixing call. The unmixing call can be to a single FCS file, or it can be, as above, to a folder. So, if you have a whole set of stained lung samples, you'd pull your AF spectra from the unstained lung sample, and then call `unmix.folder` on the folder containing your lung (and only lung) samples. Repeat for each type of autofluorescence sample.  Read more about how the per-cell autofluorescence extraction works in the [GitHub](https://drcytometer.github.io/AutoSpectral/articles/Single_Cell_AutoFluorescence.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-single-cell-autofluorescence) article.
+If you want to do this with samples containing different autofluorescence profiles, such as we have here, we extract the AF spectral variation from each type of unstained sample. We then provide the corresponding `af.spectra` to each unmixing call. The unmixing call can be to a single FCS file, or it can be, as above, to a folder. So, if you have a whole set of stained lung samples, you'd pull your AF spectra from the unstained lung sample, and then call `unmix.folder` on the folder containing your lung (and only lung) samples. Repeat for each type of autofluorescence sample.  Read more about how the per-cell autofluorescence extraction works in the [GitHub](https://drcytometer.github.io/AutoSpectral/articles/06_Single_Cell_AutoFluorescence.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-single-cell-autofluorescence) article.
 
 In this case, we have three types of samples: spleen, liver and lung tissues. If you are working with human PBMCs, usually a single (optionally pooled) unstained PBMC sample is fine. If, however, you have samples from very sick donors, you might consider collecting unstained sample from each donor and matching the autofluorescence more closely.
 
@@ -187,7 +187,7 @@ unmix.fcs(liver.fcs.file, spectra, asp, flow.control,
           file.suffix = "per-cell AF extraction")
 ```
 
-To do per-cell fluorophore optimization, we will first measure the variation in the spectrum for each fluorophore. For the unmixing, we'll supply the `af.spectra` and the `spectra.variants`, calling `AutoSpectral` unmixing. For best results, you should install `AutoSpectralRcpp`, for which you will need Rtools. Read more about how the per-cell fluorophore optimization works in the [GitHub](https://drcytometer.github.io/AutoSpectral/articles/Per_Cell_Optimization.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization) article.
+To do per-cell fluorophore optimization, we will first measure the variation in the spectrum for each fluorophore. For the unmixing, we'll supply the `af.spectra` and the `spectra.variants`, calling `AutoSpectral` unmixing. For best results, you should install `AutoSpectralRcpp`, for which you will need Rtools. Read more about how the per-cell fluorophore optimization works in the [GitHub](https://drcytometer.github.io/AutoSpectral/articles/07_Per_Cell_Optimization.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization) article.
 
 ```{r, eval=FALSE}
 devtools::install_github("DrCytometer/AutoSpectralRcpp")
@@ -218,7 +218,7 @@ unmix.fcs(lung.fcs.file, spectra, asp, flow.control,
 
 Please note that if you are comparing the output FCS files from AutoSpectral to others you may have from the cytometer and you are doing this in FlowJo, FlowJo V10 is still terrible at handling scales. You must set the transformations on the axes to be the same for all coefficients in order to do a fair comparison. Otherwise you'll see whatever you've already done to tune your display (e.g., biexponential width basis) for your existing files versus some random default selection by FlowJo for AutoSpectral's files. Nothing to do with me.
 
-You can do a comparison using the plotting functions in AutoSpectral, but a dedicated flow cytometry analysis program with a graphical interface will be better. More on plotting on the dedicated article on [GitHub](https://drcytometer.github.io/AutoSpectral/articles/Plotting.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-plotting).
+You can do a comparison using the plotting functions in AutoSpectral, but a dedicated flow cytometry analysis program with a graphical interface will be better. More on plotting on the dedicated article on [GitHub](https://drcytometer.github.io/AutoSpectral/articles/09_Plotting.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-plotting).
 
 ```{r, eval=FALSE}
 autospectral.unmixed.lung <- "AutoSpectral_unmixed/D5 Lung_Set1 AutoSpectral per-cell AF and fluorophore optimization.fcs"

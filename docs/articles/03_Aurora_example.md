@@ -27,7 +27,7 @@ create.control.file(control.dir, asp)
 ```
 
 For now, we’ll use the pre-filled control file, which you can get from
-Mendeley Data at <https://data.mendeley.com/datasets/xzt3h3gnx9/1>
+[Mendeley Data](https://data.mendeley.com/datasets/xzt3h3gnx9/1).
 
 ``` r
 control.file <- "~/AutoSpectral_data/Aurora_example/aurora_fcs_control_file.csv"

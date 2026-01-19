@@ -28,13 +28,16 @@ this will manifest as a skew in the distribution of the unmixed data
 reasons, including tandem breakdown, improperly prepared controls,
 bead-based controls, low brightness or autofluorescence (AF)
 contamination of the spectrum. The first part of AutoSpectral–getting
-the optimized single spectra using `clean.controls` and
-`get.fluorophore.spectra`, gets you as far as it can with a single
-spectrum per fluorophore. This is the next step.
+the optimized single spectra using
+[`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+and
+[`get.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluorophore.spectra.md),
+gets you as far as it can with a single spectrum per fluorophore. This
+is the next step.
 
 What we are going to do is similar to what we did with the single cell
 AF extraction. We will start by mapping the variation in the
-single-colour controls for each fluorophore using a self-organizing map
+single-color controls for each fluorophore using a self-organizing map
 (SOM).
 
 ``` r
@@ -74,9 +77,15 @@ single-colour control, identify the brightest non-autofluorescent events
 in the peak channel, and cluster those to get variants.
 
 ``` r
-variants <- get.spectral.variants( control.dir, control.file, asp, 
-                                   spectra, af.spectra,
-                                   parallel = TRUE, verbose = TRUE )
+variants <- get.spectral.variants(
+   control.dir,
+   control.file,
+   asp,
+   spectra,
+   af.spectra,
+   parallel = TRUE,
+   verbose = TRUE 
+)
 ```
 
 Set `parallel` to `TRUE` for faster processing. This should take a
@@ -90,7 +99,9 @@ be an unstained cell control matching the single-colour controls in
 `control.file` and hence `flow.control`. 2) A named list of matrices,
 one per fluorophore in `flow.control`. Each matrix contains up to 100
 spectra per fluorophore. This number can be adjusted by argument
-`som.dim` to `get.spectral.variants`, which is by default `10`.
+`som.dim` to
+[`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md),
+which is by default `10`.
 
 This is saved as an R object in a .rds file. This will be in the same
 folder as the output plots, unless you change the specified location

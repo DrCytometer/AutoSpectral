@@ -26,7 +26,7 @@ On Windows, simply swapping out your .dll files as in this tutorial can give spe
 All this involves is downloading the files from the internet, placing them in 
 the right folder and doing a quick restart.
 
-On Mac, you likely want to use the vecLib library BLAS that ships with Mac OS. The following articles may be helpful in setting this as the default BLAS for use in R:
+On Mac, you can use the vecLib library BLAS that ships with Mac OS as this should be optimized for your system. The following articles may be helpful in setting this as the default BLAS for use in R:
 [BLAS for Mac in R](https://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html#Which-BLAS-is-used-and-how-can-it-be-changed_003f)
 [Performance BLAS](https://csantill.github.io/RPerformanceWBLAS/)
 Feedback from users on Mac who successfully upgrade their BLAS would be appreciated.
@@ -60,6 +60,7 @@ To activate parallel processing, check the function arguments for a `parallel` o
 ``` {r, eval = FALSE}
 asp$max.worker.process.n
 ```
+
 Multithreading will always default to this number if you do not explicitly set a number of threads and set `parallel=TRUE`. This is one less than `parallelly::availableCores()`, so it is designed to allow you to keep working on minor stuff while AutoSpectral chugs along in the background.
 
 For unmixing larger data sets, you will do well to use a machine with more CPUs.

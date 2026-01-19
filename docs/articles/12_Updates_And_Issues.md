@@ -69,5 +69,5 @@
 
 - Changes to
   [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
-  to speed up processing massively and reduce discontinuities in the
-  resulting unmixed data.
+  to speed up processing and reduce discontinuities in the resulting
+  unmixed data.

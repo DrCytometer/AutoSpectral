@@ -46,5 +46,5 @@ the unmixing matrix, not calculating the unmixing matrix.
  
 
 * Version 1.0.0: 
- - Changes to `unmix.autospectral()` to speed up processing massively and reduce discontinuities in the resulting unmixed data.
+ - Changes to `unmix.autospectral()` to speed up processing and reduce discontinuities in the resulting unmixed data.
 

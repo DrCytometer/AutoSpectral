@@ -13,9 +13,9 @@ The aim of this article is to explain a bit more about how we go about optimizin
 
 Okay, so we're basically going to play some Tetris with your unmixing. You can also think of this as "theme and variations" if you're musically inclined, or multiverse unmixing, if you prefer comics.
 
-The aim here is to deal with the inherent variability that exists in the emissions from the fluorophores. This variability manifests at the level of the cell (or particle/data point) as spread. Spread is a population-level thing; individual cells do not have spread, they have exact positions. We get spread in the unmixing (and compensation in conventional flow) because we have a *distribution* of outcomes in the spillover/spectra for the fluorophores and we unmix using only a single (hopefully) best fit spectrum. This means there are data on both sides of that single best fit (think of it as a median or average for the distribution), both in the raw data and the unmixed. If there is a mismatch between the single-colour control used to generate the fluorophore's spectrum and the actual data in the fully stained sample, this will manifest as a skew in the distribution of the unmixed data (i.e., unmixing error). These mismatches can occur for a multitude of reasons, including tandem breakdown, improperly prepared controls, bead-based controls, low brightness or autofluorescence (AF) contamination of the spectrum. The first part of AutoSpectral--getting the optimized single spectra using `clean.controls` and `get.fluorophore.spectra`, gets you as far as it can with a single spectrum per fluorophore. This is the next step.
+The aim here is to deal with the inherent variability that exists in the emissions from the fluorophores. This variability manifests at the level of the cell (or particle/data point) as spread. Spread is a population-level thing; individual cells do not have spread, they have exact positions. We get spread in the unmixing (and compensation in conventional flow) because we have a *distribution* of outcomes in the spillover/spectra for the fluorophores and we unmix using only a single (hopefully) best fit spectrum. This means there are data on both sides of that single best fit (think of it as a median or average for the distribution), both in the raw data and the unmixed. If there is a mismatch between the single-colour control used to generate the fluorophore's spectrum and the actual data in the fully stained sample, this will manifest as a skew in the distribution of the unmixed data (i.e., unmixing error). These mismatches can occur for a multitude of reasons, including tandem breakdown, improperly prepared controls, bead-based controls, low brightness or autofluorescence (AF) contamination of the spectrum. The first part of AutoSpectral--getting the optimized single spectra using `clean.controls()` and `get.fluorophore.spectra()`, gets you as far as it can with a single spectrum per fluorophore. This is the next step.
 
-What we are going to do is similar to what we did with the single cell AF extraction. We will start by mapping the variation in the single-colour controls for each fluorophore using a self-organizing map (SOM). 
+What we are going to do is similar to what we did with the single cell AF extraction. We will start by mapping the variation in the single-color controls for each fluorophore using a self-organizing map (SOM). 
 
 ```{r setup}
 library( AutoSpectral )
@@ -40,15 +40,21 @@ Now we are ready to go variant hunting.
 For the variants, we're going to load in the FCS file for each single-colour control, identify the brightest non-autofluorescent events in the peak channel, and cluster those to get variants.
 
 ```{r, eval=FALSE}
-variants <- get.spectral.variants( control.dir, control.file, asp, 
-                                   spectra, af.spectra,
-                                   parallel = TRUE, verbose = TRUE )
+variants <- get.spectral.variants(
+   control.dir,
+   control.file,
+   asp,
+   spectra,
+   af.spectra,
+   parallel = TRUE,
+   verbose = TRUE 
+)
 ```
 
 Set `parallel` to `TRUE` for faster processing. This should take a couple of minutes.
 
 This outputs a list containing:
-1) The thresholds for positivity in each unmixed channel, as determined by the 99.5th percentile on the `AF` sample in `flow.control`. If you refer back to your `control.file`, this will be whichever sample contains "AF" as the fluorophore. This should be an unstained cell control matching the single-colour controls in `control.file` and hence `flow.control`. 2) A named list of matrices, one per fluorophore in `flow.control`. Each matrix contains up to 100 spectra per fluorophore. This number can be adjusted by argument `som.dim` to `get.spectral.variants`, which is by default `10`.
+1) The thresholds for positivity in each unmixed channel, as determined by the 99.5th percentile on the `AF` sample in `flow.control`. If you refer back to your `control.file`, this will be whichever sample contains "AF" as the fluorophore. This should be an unstained cell control matching the single-colour controls in `control.file` and hence `flow.control`. 2) A named list of matrices, one per fluorophore in `flow.control`. Each matrix contains up to 100 spectra per fluorophore. This number can be adjusted by argument `som.dim` to `get.spectral.variants()`, which is by default `10`.
 
 This is saved as an R object in a .rds file. This will be in the same folder as the output plots, unless you change the specified location using the argument `output.dir`. By default, you should get "Spectral_variants.rds" in folder `figure_spectral_variants`. This can be accessed later using the `readRDS()` base function in R.
 

@@ -18,10 +18,12 @@ appreciated.
     Mac/Linux is being implemented in `dev` branch. This should
     gracefully fall back to sequential `lapply` processing if it runs
     into any problems when being set-up.
-  - There is currently a problem with the new backend in
-    `get.spectral.variants` where in some cases it does not assess all
-    fluorophores. Presumably there are some items missing from the
-    exports to the clusters, but I don’t know.
+  - Parallelization of
+    [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
+    in base R can be ~30% faster for per-cell unmixing if we use
+    `foreach` with `doParallel`, but this introduces at least three new
+    dependencies and is a minor improvement compared with running via
+    Rcpp.
 
 - Code clean-up for `define.flow.control`.
 
@@ -71,6 +73,9 @@ appreciated.
     large expression matrix to different cores.
   - Approaches using `lapply` and `vapply` were slower and required more
     memory.
+  - Probably the best approach will be to figure out what each cell’s AF
+    signature is without unmixing each AF possibility on all cells. That
+    is rather harder.
 
 - Speed up per-cell fluorophore optimization.
 
@@ -88,10 +93,9 @@ appreciated.
   - The pure R version will now benefit from parallelization,
     particularly on Mac/Linux.
   - Update Jan-2026:
-  - Parallelization via foreach will be faster and should not suffer
-    from issues with memory overflow.
   - Speed up is now possible through strategic screening of variants for
-    alignment with each cell’s profile/residual.
+    alignment with each cell’s profile/residual. This will be
+    implemented in v1.0.0.
 
 - Fix the issue causing discontinuities.
 
@@ -117,13 +121,13 @@ appreciated.
     approach can be deprecated. Alternatively, some degree of smoothing
     based on kNN or regularization may be required.
   - Update Jan-2026: The “slow” method should now be fast enough to fix
-    most of the issue.
+    most of the issue in v1.0.0.
 
 - Better correction of unmixing errors
 
   - There are several strategies I’m investigating to handling the cases
-    where the multi-colour samples contain obvious errors outside the
-    range of variation seen in the single-colour controls. This is not
+    where the multi-color samples contain obvious errors outside the
+    range of variation seen in the single-color controls. This is not
     stuff I’m going to put online, so get in touch if you’d like to work
     on this.
 

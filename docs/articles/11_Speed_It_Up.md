@@ -33,9 +33,10 @@ OpenBLAS](https://github.com/david-cortes/R-openblas-in-windows) All
 this involves is downloading the files from the internet, placing them
 in the right folder and doing a quick restart.
 
-On Mac, you likely want to use the vecLib library BLAS that ships with
-Mac OS. The following articles may be helpful in setting this as the
-default BLAS for use in R: [BLAS for Mac in
+On Mac, you can use the vecLib library BLAS that ships with Mac OS as
+this should be optimized for your system. The following articles may be
+helpful in setting this as the default BLAS for use in R: [BLAS for Mac
+in
 R](https://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html#Which-BLAS-is-used-and-how-can-it-be-changed_003f)
 [Performance BLAS](https://csantill.github.io/RPerformanceWBLAS/)
 Feedback from users on Mac who successfully upgrade their BLAS would be

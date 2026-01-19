@@ -127,10 +127,11 @@ means you can use pooled samples as long as you have enough events
 acquired, although you may need to increase `som.dim` if there are a lot
 of AF signatures present in each part of the pool.
 
-While you can call `unmix.autospectral` directly, this requires reading
-in the FCS file into R, extracting the expression data and so on. The
-better option is to just call unmix.fcs directly, which will create an
-unmixed FCS file from your raw FCS file.
+While you can call
+[`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
+directly, this requires reading in the FCS file into R, extracting the
+expression data and so on. The better option is to just call unmix.fcs
+directly, which will create an unmixed FCS file from your raw FCS file.
 
 ``` r
 fully.stained.dir <- "./Fully stained"
