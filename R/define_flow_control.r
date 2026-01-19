@@ -439,6 +439,8 @@ define.flow.control <- function(
 
     # set up parallel processing
     if ( parallel ) {
+      if ( verbose ) message( "\033[34mPlotting gates... \033[0m" )
+
       exports <- c( "flow.sample", "args.list", "gate.sample.plot",
                     "get.gated.flow.expression.data" )
       result <- create.parallel.lapply(
@@ -469,7 +471,7 @@ define.flow.control <- function(
 
   } else {
     # read in flow data as is
-    if ( verbose ) message( "\033[34mReading FCS files \033[0m" )
+    if ( verbose ) message( "\033[34mReading FCS files without gating \033[0m" )
 
     args.list <- list(
       file.name = flow.file.name,
