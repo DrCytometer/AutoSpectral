@@ -23,13 +23,17 @@
 #'
 #' @return An lapply function, either based on parLapply if parallel backend
 #' initialization was successful or using sequential lapply if not.
+#'
+#' @export
 
-parallel.backend <- function( asp,
-                              exports,
-                              threads,
-                              export.env = parent.frame(),
-                              dev.mode = FALSE,
-                              package.path = NULL ) {
+parallel.backend <- function(
+    asp,
+    exports,
+    threads,
+    export.env = parent.frame(),
+    dev.mode = FALSE,
+    package.path = NULL
+  ) {
 
   # Check if parallelly is available
   if ( !requireNamespace( "parallelly", quietly = TRUE ) ) {

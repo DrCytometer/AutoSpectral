@@ -31,15 +31,19 @@
 #' @return An lapply function, either based on `parLapply` for Windows or `mcLapply`
 #' on Mac OS and Linux. If parallel backend initialization fails, sequential
 #' `lapply` is returned.
+#'
+#' @export
 
-create.parallel.lapply <- function( asp,
-                                    exports,
-                                    parallel = TRUE,
-                                    threads = NULL,
-                                    export.env = parent.frame(),
-                                    dev.mode = FALSE,
-                                    package.path = NULL,
-                                    allow.mclapply.mac = FALSE ) {
+create.parallel.lapply <- function(
+    asp,
+    exports,
+    parallel = TRUE,
+    threads = NULL,
+    export.env = parent.frame(),
+    dev.mode = FALSE,
+    package.path = NULL,
+    allow.mclapply.mac = FALSE
+  ) {
 
   if ( is.null( threads ) ) threads <- asp$worker.process.n
   if ( is.null( threads ) || !is.numeric( threads ) ) threads <- 1
