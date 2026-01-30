@@ -264,6 +264,7 @@ unmix.autospectral <- function(
       } )
     },
     finally = {
+      # shut down parallel clusters
       if ( !is.null( result$cleanup ) ) result$cleanup()
     }
   )

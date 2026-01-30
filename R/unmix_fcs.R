@@ -6,13 +6,13 @@
 #' This function performs spectral unmixing on FCS data using various methods.
 #'
 #' @importFrom flowCore read.FCS keyword exprs flowFrame parameters
-#' @importFrom flowCore write.FCS parameters<-
+#' @importFrom flowCore write.FCS parameters<- keyword<-
 #' @importFrom lifecycle deprecate_warn
 #'
 #' @param fcs.file A character string specifying the path to the FCS file.
 #' @param spectra A matrix containing the spectral data.
-#' @param asp The AutoSpectral parameter list.
-#' Prepare using `get.autospectral.param`
+#' @param asp The AutoSpectral parameter list. Prepare using
+#' `get.autospectral.param`.
 #' @param flow.control A list containing flow cytometry control parameters.
 #' @param method A character string specifying the unmixing method to use.
 #' The default is `Automatic`, which uses `AutoSpectral` for AF extraction if

@@ -34,8 +34,8 @@ unmix.fcs(
 
 \item{spectra}{A matrix containing the spectral data.}
 
-\item{asp}{The AutoSpectral parameter list.
-Prepare using \code{get.autospectral.param}}
+\item{asp}{The AutoSpectral parameter list. Prepare using
+\code{get.autospectral.param}.}
 
 \item{flow.control}{A list containing flow cytometry control parameters.}
 
