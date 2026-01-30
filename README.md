@@ -157,6 +157,9 @@ there.
 In particular, see the [Full
 Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html).
 
+All functions available in AutoSpectral can be viewed
+[here](https://drcytometer.github.io/AutoSpectral/reference/index.html).
+
 Resolved issues, bug patches and improvements will be announced via the
 NEWS and also tracked in the [Updates and
 Issues](https://drcytometer.github.io/AutoSpectral/articles/12_Updates_And_Issues.html)

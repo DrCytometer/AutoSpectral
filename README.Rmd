@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 **Version 1.0.0**
   
-  Welcome to the Development branch of AutoSpectral.
+Welcome to the Development branch of AutoSpectral.
 
 This will always be a work-in-progress, and will not necessarily be stable at any given point. At the moment, most of the changes taking place relate to speeding things up or fixing any reported bugs.
 
@@ -122,6 +122,8 @@ Since one of my recent updates broke things, I'll be moving to using tagged rele
 Please check the [help pages and articles](https://drcytometer.github.io/AutoSpectral/) if you're struggling to understand how to do something. There's a lot of info there.
 
 In particular, see the [Full Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html).
+
+All functions available in AutoSpectral can be viewed [here](https://drcytometer.github.io/AutoSpectral/reference/index.html).
 
 Resolved issues, bug patches and improvements will be announced via the NEWS and also tracked in the [Updates and Issues](https://drcytometer.github.io/AutoSpectral/articles/12_Updates_And_Issues.html) article.
 
