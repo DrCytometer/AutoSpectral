@@ -235,7 +235,11 @@ unmix.fcs <- function(
             speed = speed
           ),
           error = function( e ) {
-            warning( "AutoSpectralRcpp unmixing failed, falling back to standard AutoSpectral: ", e$message )
+            warning(
+              "AutoSpectralRcpp unmixing failed, falling back to standard AutoSpectral: ",
+              e$message,
+              call. = FALSE
+            )
             unmix.autospectral(
               raw.data = spectral.exprs,
               spectra = spectra,
@@ -285,7 +289,11 @@ unmix.fcs <- function(
             balance.weight = balance.weight
           ),
           error = function( e ) {
-            warning( "FastPoisson failed, falling back to standard Poisson: ", e$message )
+            warning(
+              "FastPoisson failed, falling back to standard Poisson: ",
+              e$message,
+              call. = FALSE
+            )
             unmix.poisson(
               raw.data = spectral.exprs,
               spectra = spectra,
