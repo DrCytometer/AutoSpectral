@@ -13,7 +13,8 @@ gate.define.plot(
   gate.population,
   scatter.and.channel.label,
   asp,
-  color.palette = "rainbow"
+  color.palette = "rainbow",
+  max.points = 1e+05
 )
 }
 \arguments{
@@ -40,6 +41,9 @@ palette to be used for the fluorophore traces. Default is \code{rainbow}, which 
 be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
 options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
 and \code{turbo}.}
+
+\item{max.points}{Number of points to plot (speeds up plotting). Default is
+\code{1e5}.}
 }
 \value{
 Saves the plot as a JPEG file in the specified directory.

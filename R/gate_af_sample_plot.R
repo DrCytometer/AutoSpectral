@@ -57,12 +57,12 @@ gate.af.sample.plot <- function(
     inverse = FALSE )
 
   # downsample data
-  if ( nrow( plot.data ) < max.points )
-    max.points <- nrow( plot.data )
+  if ( nrow( plot.data ) > max.points )
+    plot.data <- plot.data[ 1:max.points, ]
 
   plot.data <- data.frame(
-    x = plot.data[ 1:max.points, 1 ],
-    y = plot.data[ 1:max.points, 2 ]
+    x = plot.data[ , 1 ],
+    y = plot.data[ , 2 ]
   )
 
   # create main plot

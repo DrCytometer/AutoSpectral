@@ -26,6 +26,8 @@
 #' be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
 #' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
 #' and `turbo`.
+#' @param max.points Number of points to plot (speeds up plotting). Default is
+#' `1e5`.
 #'
 #' @return Saves the plot as a JPEG file in the specified directory.
 
@@ -37,13 +39,20 @@ gate.sample.plot <- function(
     scatter.and.channel.label,
     control.type,
     asp,
-    color.palette = "rainbow"
+    color.palette = "rainbow",
+    max.points = 1e5
   ) {
 
+  # downsample (faster plotting)
+  if ( nrow( gate.data ) > max.points )
+    gate.data <- gate.data[ 1:max.points, ]
+
+  # convert to data fram for plotting
   gate.data.ggp <- data.frame(
     x = gate.data[ , 1 ],
     y = gate.data[ , 2 ] )
 
+  # ensure gate limits are drawn onscale
   gate.boundary$x[ gate.boundary$x > asp$scatter.data.max.x ] <- asp$scatter.data.max.x
   gate.boundary$y[ gate.boundary$y > asp$scatter.data.max.y ] <- asp$scatter.data.max.y
 
@@ -54,6 +63,7 @@ gate.sample.plot <- function(
            gate.boundary$y[ 1 ] )
   )
 
+  # get axis labels
   x.lab.idx <- which( scatter.and.channel.label == gate.marker[ 1 ] )
   x.lab <- names( scatter.and.channel.label[ x.lab.idx ] )
   y.lab.idx <- which( scatter.and.channel.label == gate.marker[ 2 ] )
