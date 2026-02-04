@@ -22,9 +22,15 @@
 #'
 #' @export
 
-get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
-                                     af.spectra = NULL, title = NULL )
-{
+get.fluorophore.spectra <- function(
+    flow.control,
+    asp,
+    use.clean.expr = TRUE,
+    af.spectra = NULL,
+    title = NULL
+  ) {
+
+  # empty collection vector
   spectra.zero <- rep( 0, flow.control$spectral.channel.n )
   names( spectra.zero ) <- flow.control$spectral.channel
 

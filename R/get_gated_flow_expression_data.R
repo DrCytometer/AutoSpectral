@@ -24,13 +24,21 @@
 #'
 #' @return A matrix with the gated expression data.
 
-get.gated.flow.expression.data <- function( samp, file.name, control.dir,
-                                            scatter.and.spectral.channel,
-                                            spectral.channel, set.resolution,
-                                            flow.gate, gate.list, scatter.param,
-                                            scatter.and.channel.label, asp
-                                            ) {
+get.gated.flow.expression.data <- function(
+    samp,
+    file.name,
+    control.dir,
+    scatter.and.spectral.channel,
+    spectral.channel,
+    set.resolution,
+    flow.gate,
+    gate.list,
+    scatter.param,
+    scatter.and.channel.label,
+    asp
+) {
 
+  # read in the FCS file
   flow.file <- file.name[ samp ]
 
   fcs.data <- suppressWarnings(
@@ -39,8 +47,8 @@ get.gated.flow.expression.data <- function( samp, file.name, control.dir,
       transformation = NULL,
       truncate_max_range = FALSE,
       emptyValue = FALSE
-      )
     )
+  )
 
   # read exprs for scatter and spectral channels only
   expr.data <- flowCore::exprs( fcs.data )[ , scatter.and.spectral.channel ]

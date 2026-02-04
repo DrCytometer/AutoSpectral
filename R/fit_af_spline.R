@@ -21,7 +21,11 @@
 #'
 #' @export
 
-fit.af.spline <- function( af.cells, non.af.cells, asp ) {
+fit.af.spline <- function(
+    af.cells,
+    non.af.cells,
+    asp
+) {
 
   # set up boundaries structure for two gates
   af.boundaries <- list(

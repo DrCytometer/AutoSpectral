@@ -123,6 +123,7 @@ get.autospectral.param.minimal <- function()
       ribbon.plot.strip.text.face = "bold",
 
       ### gating parameters
+
       # gate parameters for cells
       default.gate.param.cells = list(
         density.threshold = 0.05,

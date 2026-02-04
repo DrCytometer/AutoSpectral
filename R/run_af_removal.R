@@ -37,21 +37,23 @@
 #' @return A list containing the expression data with autofluorescent events
 #' removed for each sample.
 
-run.af.removal <- function( clean.expr,
-                            af.removal.sample,
-                            spectral.channel,
-                            peak.channel,
-                            universal.negative,
-                            asp,
-                            scatter.param,
-                            negative.n = 500,
-                            positive.n = 1000,
-                            scatter.match = TRUE,
-                            intermediate.figures = FALSE,
-                            main.figures = TRUE,
-                            parallel = FALSE,
-                            threads = 1,
-                            verbose = TRUE ) {
+run.af.removal <- function(
+    clean.expr,
+    af.removal.sample,
+    spectral.channel,
+    peak.channel,
+    universal.negative,
+    asp,
+    scatter.param,
+    negative.n = 500,
+    positive.n = 1000,
+    scatter.match = TRUE,
+    intermediate.figures = FALSE,
+    main.figures = TRUE,
+    parallel = FALSE,
+    threads = 1,
+    verbose = TRUE
+  ) {
 
   # construct arguments list
   args.list <- list(

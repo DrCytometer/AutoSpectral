@@ -26,10 +26,13 @@
 #' @export
 
 
-calculate.weights <- function( fcs.file, spectral.channels,
-                               save = FALSE,
-                               output.dir = "./table_spectra",
-                               filename = "weights.csv" ) {
+calculate.weights <- function(
+    fcs.file,
+    spectral.channels,
+    save = FALSE,
+    output.dir = "./table_spectra",
+    filename = "weights.csv"
+  ) {
 
   if ( save & !dir.exists( output.dir ) )
     dir.create( output.dir )

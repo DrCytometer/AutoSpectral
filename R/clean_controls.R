@@ -63,23 +63,25 @@
 #'
 #' @export
 
-clean.controls <- function( flow.control,
-                            asp,
-                            time.clean = FALSE,
-                            trim = FALSE,
-                            trim.factor = NULL,
-                            af.remove = TRUE,
-                            universal.negative = TRUE,
-                            downsample = TRUE,
-                            negative.n = asp$negative.n,
-                            positive.n = asp$positive.n,
-                            scatter.match = TRUE,
-                            scrub = FALSE,
-                            intermediate.figures = FALSE,
-                            main.figures = TRUE,
-                            parallel = FALSE,
-                            verbose = TRUE,
-                            threads = NULL ) {
+clean.controls <- function(
+    flow.control,
+    asp,
+    time.clean = FALSE,
+    trim = FALSE,
+    trim.factor = NULL,
+    af.remove = TRUE,
+    universal.negative = TRUE,
+    downsample = TRUE,
+    negative.n = asp$negative.n,
+    positive.n = asp$positive.n,
+    scatter.match = TRUE,
+    scrub = FALSE,
+    intermediate.figures = FALSE,
+    main.figures = TRUE,
+    parallel = FALSE,
+    verbose = TRUE,
+    threads = NULL
+  ) {
 
   if ( intermediate.figures & !main.figures ) main.figures <- TRUE
 
