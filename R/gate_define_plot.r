@@ -201,8 +201,9 @@ gate.define.plot <- function(
     file.path( asp$figure.gate.dir, sprintf( "%s.jpg", samp ) ),
     plot = gate.plot,
     width = asp$figure.width,
-    height = asp$figure.height
-    )
+    height = asp$figure.height,
+    limitsize = FALSE
+  )
 
 }
 

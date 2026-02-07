@@ -159,8 +159,10 @@ gate.af.sample.plot <- function(
       file.path(
         asp$figure.clean.control.dir,
         paste( asp$af.plot.filename, samp, ".jpg", sep = "_" ) ),
-      plot = gate.plot, width = asp$figure.width,
-      height = asp$figure.height
+      plot = gate.plot,
+      width = asp$figure.width,
+      height = asp$figure.height,
+      limitsize = FALSE
     )
   )
 

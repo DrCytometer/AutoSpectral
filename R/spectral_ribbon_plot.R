@@ -268,6 +268,7 @@ spectral.ribbon.plot <- function(
         path = figure.dir,
         width = plot.width,
         height = plot.height,
+        limitsize = FALSE,
         create.dir = TRUE
       )
     )

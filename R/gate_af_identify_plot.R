@@ -134,8 +134,10 @@ gate.af.identify.plot <- function(
       file.path(
         asp$figure.clean.control.dir,
         paste( asp$af.plot.define.filename, samp, ".jpg", sep = "_" ) ),
-      plot = gate.plot, width = asp$figure.width,
-      height = asp$figure.height
+      plot = gate.plot,
+      width = asp$figure.width,
+      height = asp$figure.height,
+      limitsize = FALSE
     )
   )
 

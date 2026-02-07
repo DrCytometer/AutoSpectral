@@ -239,7 +239,8 @@ create.biplot <- function(
       file.path( output.dir, sprintf( "%s.jpg", title ) ),
       plot = biplot,
       width = width,
-      height = height
+      height = height,
+      limitsize = FALSE
     )
   else
     return( biplot )

@@ -157,7 +157,8 @@ scatter.match.plot <- function(
       path = asp$figure.scatter.dir.base,
       plot = scatter.plot,
       width = asp$scatter.match.plot.width,
-      height = asp$scatter.match.plot.height
+      height = asp$scatter.match.plot.height,
+      limitsize = FALSE
     )
   )
 

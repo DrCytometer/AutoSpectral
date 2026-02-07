@@ -82,8 +82,14 @@ spectral.heatmap <- function(
   )
 
   # convert to factors
-  heatmap.long$Fluorophore <- factor( heatmap.long$Fluorophore, levels = rev( row.levels ) )
-  heatmap.long$Detector    <- factor( heatmap.long$Detector, levels = col.levels )
+  heatmap.long$Fluorophore <- factor(
+    heatmap.long$Fluorophore,
+    levels = rev( row.levels )
+  )
+  heatmap.long$Detector <- factor(
+    heatmap.long$Detector,
+    levels = col.levels
+  )
 
   heatmap.plot <- ggplot(
     heatmap.long,
@@ -108,7 +114,8 @@ spectral.heatmap <- function(
       filename = file.path( plot.dir, heatmap.filename ),
       plot = heatmap.plot,
       width = plot.width,
-      height = plot.height
+      height = plot.height,
+      limitsize = FALSE
     )
   else
     return( heatmap.plot )

@@ -93,7 +93,8 @@ spectral.variant.plot <- function(
     ggsave(
       file.path( plot.dir, paste0( title, ".jpg" ) ),
       width = plot.width,
-      height = plot.height
+      height = plot.height,
+      limitsize = FALSE
     )
   }
 
