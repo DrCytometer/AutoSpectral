@@ -235,9 +235,12 @@ create.biplot <- function(
 
   # save or return the plot
   if ( save )
-    ggsave( file.path( output.dir, sprintf( "%s.jpg", title ) ),
-            plot = biplot,
-            width = width, height = height )
+    ggsave(
+      file.path( output.dir, sprintf( "%s.jpg", title ) ),
+      plot = biplot,
+      width = width,
+      height = height
+    )
   else
     return( biplot )
 
