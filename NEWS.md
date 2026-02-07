@@ -1,3 +1,23 @@
+# AutoSpectral 1.0.0 (2026-02-10)
+
+## Improvements
+- Version 1.0.0 brings a revamp to how AutoSpectral identifies the best spectra
+on a per-cell basis. The theory behind it remains the same--we are still trying
+to identify the variation in the autofluorescence and fluorophores that best
+reduces the residual on a per-cell basis. Now, however, we do not need to do that
+using brute force. Instead, we can search only through variants (or 
+autofluorescences) that align with a given cell's residual. Thus we can pre-screen
+the variants to a select few and then test just those. This means we can figure
+out the solution in way less time. It also means that a native R implementation
+of the algorithm is possible in R in a somewhat reasonable time frame. So, that
+may help for anyone struggling to use the fast C++ version in `AutoSpectralRcpp`.
+Specifics on this will be detailed in an article on GitHub and Colibri Cytometry.
+- Since we can now quickly identify which variants are useful for a given cell,
+we can test more variants, allowing a finer-grained view of the variation, which
+may improve unmixing quality.
+
+## Bug fixes
+
 # AutoSpectral 0.9.1 (2026-01-15)
 
 ## Improvements
