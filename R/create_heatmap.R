@@ -92,10 +92,16 @@ create.heatmap <- function(
     heatmap.long <- heatmap.long[ keep, ]
 
     # reverse Fluor2 levels for plotting
-    heatmap.long$Fluor2 <- factor(heatmap.long$Fluor2, levels = rev( col.levels ) )
+    heatmap.long$Fluor2 <- factor(
+      heatmap.long$Fluor2,
+      levels = rev( col.levels )
+    )
   } else {
     # full heatmap: reverse Fluor1 for plotting
-    heatmap.long$Fluor1 <- factor( heatmap.long$Fluor1, levels = rev( row.levels ) )
+    heatmap.long$Fluor1 <- factor(
+      heatmap.long$Fluor1,
+      levels = rev( row.levels )
+    )
   }
 
   # plot and save
@@ -142,7 +148,10 @@ create.heatmap <- function(
     ggsave(
       filename = file.path( plot.dir, heatmap.filename ),
       plot = heatmap.plot,
-      width = figure.width, height = figure.height )
+      width = figure.width,
+      height = figure.height,
+      limitsize = FALSE
+    )
   else
     return( heatmap.plot )
 }

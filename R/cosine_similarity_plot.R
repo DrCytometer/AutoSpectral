@@ -65,10 +65,10 @@ cosine.similarity.plot <- function(
       each = ncol(similarity.df)
     ),
     Fluor2 = rep(
-      colnames(similarity.df),
-      times = nrow(similarity.df)
+      colnames( similarity.df ),
+      times = nrow( similarity.df )
     ),
-    value = as.vector(t(similarity.df)),
+    value = as.vector( t( similarity.df ) ),
     stringsAsFactors = FALSE
   )
 
@@ -80,7 +80,7 @@ cosine.similarity.plot <- function(
 
   similarity.df.long$Fluor2 <- factor(
     similarity.df.long$Fluor2,
-    levels = rev(colnames(similarity.matrix))
+    levels = rev( colnames( similarity.matrix ) )
   )
 
   # plotting
@@ -104,7 +104,9 @@ cosine.similarity.plot <- function(
     ggsave(
       filename = file.path( output.dir, similarity.heatmap.filename ),
       plot = similarity.heatmap,
-      width = figure.width, height = figure.height
+      width = figure.width,
+      height = figure.height,
+      limitsize = FALSE
       )
   else
     return( similarity.heatmap )
