@@ -361,7 +361,8 @@ unmix.fcs <- function(
           }
         )
       } else {
-        warning( "AutoSpectralRcpp not available, falling back to standard Poisson." )
+        warning( "AutoSpectralRcpp not available, falling back to standard Poisson.",
+                 call. = FALSE )
         unmix.poisson(
           raw.data = spectral.exprs,
           spectra = spectra,
