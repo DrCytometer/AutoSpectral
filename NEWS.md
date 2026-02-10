@@ -15,8 +15,24 @@ Specifics on this will be detailed in an article on GitHub and Colibri Cytometry
 - Since we can now quickly identify which variants are useful for a given cell,
 we can test more variants, allowing a finer-grained view of the variation, which
 may improve unmixing quality.
+- Autofluorescence extraction and fluorophore variation extraction are now
+modified to search for more variation, focusing on "problematic" cells that remain
+far from where they should be when the first batch of variation is applied. This
+is most helpful for extracting autofluorescence in complex tissue samples, where
+AutoSpectral previously struggled to deal with the last few messy cells.
+- Speed in unmixing should be the biggest change, particularly if you run using
+`AutoSpectralRcpp`.
+- Autofluorescence is now assigned to each cell using a shortcut to "project"
+where the AF will impact on fluorophore or residual space. This is especially fast
+for residual-based assignment.
+- Perhaps most importantly, discontinuities that sometimes appeared in the data
+after unmixing using per-cell-fluorophore optimization, particularly with the
+"fast" approximation, should now be gone or at least greatly diminished.
 
 ## Bug fixes
+- Deprecation warnings in 0.9.1 were not done properly, causing errors when the
+deprecated arguments were specified. That should now be fixed.
+
 
 # AutoSpectral 0.9.1 (2026-01-15)
 
