@@ -45,6 +45,17 @@
 #' will be used. `asp$worker.process.n` is set by default to be one less than the
 #' available cores on the machine. Multi-threading is only used if `parallel` is
 #' `TRUE`.
+#' @param refine Logical, default is `TRUE`. Controls whether to perform a second
+#' round of variation measurement on "problem cells", which are those with the
+#' highest spillover, as defined by `problem.quantile`.
+#' @param problem.quantile Numeric, default `0.95`. The quantile for determining
+#' which cells will be considered "problematic" after unmixing with per-cell AF
+#' extraction. Cells in the `problem.quantile` or above with respect to total
+#' signal in the fluorophore (non-AF) channels after per-cell AF extraction will
+#' be used to determine additional autofluorescence spectra, using a second round
+#' of clustering and modulation of the previously selected autofluroescence
+#' spectra. A value of `0.95` means the top 5% of cells, those farthest from zero,
+#' will be selected for further investigation.
 #' @param ... Ignored. Previously used for deprecated arguments such as
 #' `pos.quantile` and `sim.threshold`, which are now fixed internally and no
 #' longer user-settable.
@@ -54,8 +65,11 @@
 #' @export
 
 get.spectral.variants <- function(
-    control.dir, control.def.file,
-    asp, spectra, af.spectra,
+    control.dir,
+    control.def.file,
+    asp,
+    spectra,
+    af.spectra,
     n.cells = 2000,
     som.dim = 10,
     figures = TRUE,
@@ -63,6 +77,8 @@ get.spectral.variants <- function(
     parallel = FALSE,
     verbose = TRUE,
     threads = NULL,
+    refine = TRUE,
+    problem.quantile = 0.95,
     ...
 ) {
 
@@ -72,14 +88,14 @@ get.spectral.variants <- function(
     lifecycle::deprecate_warn(
       "0.9.0",
       "get.spectral.variants(sim.threshold)",
-      "no longer used"
+      details = "no longer used"
     )
   }
   if ( !is.null( dots$pos.quantile ) ) {
     lifecycle::deprecate_warn(
       "0.9.0",
       "get.spectral.variants(pos.quantile)",
-      "no longer used"
+      details = "no longer used"
     )
   }
 
@@ -103,12 +119,14 @@ get.spectral.variants <- function(
     dir.create( output.dir )
 
   if ( som.dim > 20 ) {
+    n.cells <- min( 5000, n.cells )
     warning(
       paste(
         "Argument `som.dim` has been set to", som.dim, "which will produce",
         som.dim^2, "spectral variants per fluorophore.", "\n",
         "This requires proprotionally more cells in `n.cells` as input,",
-        "and may trigger failure."
+        "and may trigger failure.",
+        "`n.cells` has been automatically adjusted to a minimum of 5000."
       ),
       call. = FALSE
     )
@@ -125,7 +143,7 @@ get.spectral.variants <- function(
     )
   }
 
-  if ( verbose ) message( "\033[34mChecking control file for errors \033[0m" )
+  if ( verbose ) message( "\033[32mChecking control file for errors \033[0m" )
   check.control.file( control.dir, control.def.file, asp, strict = TRUE )
 
   control.table <- utils::read.csv(
@@ -143,24 +161,17 @@ get.spectral.variants <- function(
   } )
 
   # set channels to be used
-  flow.set.resolution <- asp$expr.data.max
-  flow.set.channel.table <- read.channel( control.dir, control.def.file, asp )
-  flow.set.channel <- flow.set.channel.table[[ 1 ]]
-  non.spectral.channel <- asp$non.spectral.channel
-  non.spectral.channel <- paste0( non.spectral.channel, collapse = "|" )
-
-  flow.spectral.channel <- flow.set.channel[
-    !grepl( non.spectral.channel, flow.set.channel ) ]
+  spectral.channel <- colnames( spectra )
   flow.scatter.parameter <- read.scatter.parameter( asp )
   flow.scatter.and.channel.spectral <- c(
     asp$default.time.parameter,
     flow.scatter.parameter,
-    flow.spectral.channel
+    spectral.channel
   )
 
   if ( grepl( "Discover", asp$cytometer ) ) {
-    flow.spectral.channel <- flow.spectral.channel[
-      grep( asp$spectral.channel, flow.spectral.channel ) ]
+    spectral.channel <- spectral.channel[
+      grep( asp$spectral.channel, spectral.channel ) ]
   }
 
   # define list of samples
@@ -183,7 +194,25 @@ get.spectral.variants <- function(
       "Unable to locate `AF` control in control file. An unstained cell control is required.",
       call. = FALSE
     )
+  }
 
+  # check for data/spectra column matching
+  spectra.cols <- colnames( spectra )
+
+  if ( !identical( spectral.channel, spectra.cols ) ) {
+
+    # ensure both actually have the same columns before reordering
+    if ( all( spectra.cols %in% spectral.channel ) &&
+        length( spectra.cols ) == length( spectral.channel ) ) {
+      # reorder raw.data to match the order of spectra
+      spectra <- spectra[ , spectral.channel ]
+      message( "Columns of spectra reordered to match data" )
+    } else {
+      stop(
+        "Column names in spectra and raw.data do not match perfectly;
+        cannot reorder by name alone."
+      )
+    }
   }
 
   if ( ! all( table.fluors %in% fluorophores ) ) {
@@ -203,7 +232,7 @@ get.spectral.variants <- function(
   }
 
   # get thresholds for positivity
-  if ( verbose ) message( paste0( "\033[33m", "Calculating positivity thresholds", "\033[0m" ) )
+  if ( verbose ) message( paste0( "\033[32m", "Calculating positivity thresholds", "\033[0m" ) )
   unstained <- suppressWarnings(
     flowCore::read.FCS(
       file.path( control.dir, flow.file.name[ "AF" ] ),
@@ -252,12 +281,14 @@ get.spectral.variants <- function(
     figures = figures,
     output.dir = output.dir,
     verbose = verbose,
-    spectral.channel = flow.spectral.channel,
+    spectral.channel = spectral.channel,
     universal.negative = universal.negative,
     control.type = control.type,
     raw.thresholds = raw.thresholds,
     unmixed.thresholds = unmixed.thresholds,
-    flow.channel = flow.channel
+    flow.channel = flow.channel,
+    refine = refine,
+    problem.quantile = problem.quantile
   )
 
   # Set up parallel processing
@@ -266,7 +297,8 @@ get.spectral.variants <- function(
       "get.fluor.variants",
       "cosine.similarity",
       "spectral.variant.plot",
-      "unmix.ols"
+      "unmix.ols",
+      "assign.af.residuals"
     )
     exports <- c( "args.list", "table.fluors", internal.functions )
 
@@ -278,16 +310,24 @@ get.spectral.variants <- function(
       export.env = environment()
     )
     lapply.function <- result$lapply
+
   } else {
     lapply.function <- lapply
     result <- list( cleanup = NULL )
   }
 
-  if ( verbose ) message( paste0( "\033[33m", "Getting spectral variants", "\033[0m" ) )
+  if ( verbose ) message( paste0( "\033[34m", "Identifying spectral variation", "\033[0m" ) )
 
-  spectral.variants <- tryCatch(
+  # initialize with base spectra for safety
+  spectral.variants <- lapply( table.fluors, function( fl ) {
+    spectra[ fl, , drop = FALSE ]
+  } )
+  names( spectral.variants ) <- table.fluors
+
+  # update with real variants where possible
+  tryCatch(
     expr = {
-      lapply.function( table.fluors, function( f ) {
+      updated.variants <- lapply.function( table.fluors, function( f ) {
         tryCatch(
           expr = {
             do.call(
@@ -301,6 +341,18 @@ get.spectral.variants <- function(
           }
         )
       } )
+      names( updated.variants ) <- table.fluors
+
+      # replace base spectra only if updated.variants[[f]] is not NULL
+      for ( f in table.fluors ) {
+        if ( !is.null( updated.variants[[ f ]] ) ) {
+          spectral.variants[[ f ]] <- updated.variants[[ f ]]
+        } else {
+          warning(
+            paste( "Calculation failed for:", f, "- using base spectrum as fallback." )
+          )
+        }
+      }
     },
     finally = {
       if ( !is.null( result$cleanup ) )
@@ -308,31 +360,33 @@ get.spectral.variants <- function(
     }
   )
 
-  ### Check structure, ensure all fluorophores are accounted for ###
-  ### include dummy matrices if not present
-  #
-  # drop any that are NULL due to error
-  failed <- sapply( spectral.variants, is.null )
-  failed.variants <- names( spectral.variants )[ failed ]
-  spectral.variants <- spectral.variants[ !failed ]
-
-  if ( any( failed ) ) {
-    warning(
-      paste0(
-        "Calculation of spectral variation failed for ",
-        paste( failed.variants, collapse = "\n" )
-      )
-    )
-  }
-
   ### calculate deltas, delta.norms
 
+  # calculate deltas for each fluorophore's variants
+  delta.list <- lapply( names( spectral.variants ), function( fl ) {
+    spectral.variants[[ fl ]] - matrix(
+      spectra[ fl, ],
+      nrow = nrow( spectral.variants[[ fl ]] ),
+      ncol = ncol( spectra ),
+      byrow = TRUE
+    )
+  } )
+  names( delta.list ) <- names( spectral.variants )
+
+  # precompute delta norms
+  delta.norms <- lapply( delta.list, function( d ) {
+    sqrt( rowSums( d^2 ) )
+  } )
+  names( delta.norms ) <- names( spectral.variants )
+
   if ( verbose )
-    message( paste0( "\033[33m", "Spectral variation computed!", "\033[0m" ) )
+    message( paste0( "\033[34m", "Spectral variation computed!", "\033[0m" ) )
 
   variants <- list(
     thresholds = unmixed.thresholds,
-    variants = spectral.variants
+    variants = spectral.variants,
+    delta.list = delta.list,
+    delta.norms = delta.norms
   )
 
   saveRDS( variants, file = file.path( output.dir, asp$variant.filename ) )

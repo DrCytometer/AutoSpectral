@@ -17,6 +17,8 @@ get.spectral.variants(
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
+  refine = TRUE,
+  problem.quantile = 0.95,
   ...
 )
 }
@@ -63,6 +65,19 @@ will be used. The new parallel processing should always be faster.}
 will be used. \code{asp$worker.process.n} is set by default to be one less than the
 available cores on the machine. Multi-threading is only used if \code{parallel} is
 \code{TRUE}.}
+
+\item{refine}{Logical, default is \code{TRUE}. Controls whether to perform a second
+round of variation measurement on "problem cells", which are those with the
+highest spillover, as defined by \code{problem.quantile}.}
+
+\item{problem.quantile}{Numeric, default \code{0.95}. The quantile for determining
+which cells will be considered "problematic" after unmixing with per-cell AF
+extraction. Cells in the \code{problem.quantile} or above with respect to total
+signal in the fluorophore (non-AF) channels after per-cell AF extraction will
+be used to determine additional autofluorescence spectra, using a second round
+of clustering and modulation of the previously selected autofluroescence
+spectra. A value of \code{0.95} means the top 5\% of cells, those farthest from zero,
+will be selected for further investigation.}
 
 \item{...}{Ignored. Previously used for deprecated arguments such as
 \code{pos.quantile} and \code{sim.threshold}, which are now fixed internally and no
