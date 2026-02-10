@@ -7,7 +7,7 @@
 unmix.ols.fast(raw.data, spectra, weights = NULL)
 }
 \arguments{
-\item{raw.data}{Expression data from raw fcs files. Cells in rows and
+\item{raw.data}{Expression data from raw FCS files. Cells in rows and
 detectors in columns. Columns should be fluorescent data only and must
 match the columns in spectra.}
 
