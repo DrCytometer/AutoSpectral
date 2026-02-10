@@ -7,8 +7,8 @@
 #' space to determine which best fits each cell (event). A fast approximation for
 #' brute force sequential unmixing method in early versions of AutoSpectral.
 #' Provides essentially identical results to minimization of fluorophore signal
-#' (dist0 method), with minor differences being primarily due to the use of L2
-#' (squared) error, rather than L1 (absolute) error. Substantially faster.
+#' (dist0 method). Substantially faster. Use L1 (absolute value) minimization,
+#' which works better than the standard L2 (squared error).
 #'
 #' @param raw.data Expression data from raw FCS files. Cells in rows and
 #' detectors in columns. Columns should be fluorescent data only and must
@@ -27,12 +27,17 @@ assign.af.fluorophores <- function(
     spectra,
     af.spectra
 ) {
+
+  # how many AF spectra do we have?
+  af.n <- nrow( af.spectra )
+
   # calculate pseudoinverse
   S <- t( spectra )
-  P <- solve( t( S ) %*% S ) %*% t( S )
+  XtX <- tcrossprod( spectra )
+  unmixing.matrix <- solve.default( XtX, spectra )
 
-  # how much each AF variant 'looks like' each fluorophore
-  v.library <- P %*% t( af.spectra )
+  # how much each AF variant looks like each fluorophore
+  v.library <- unmixing.matrix %*% t( af.spectra )
   # squared norms
   v.norms.sq <- colSums( v.library^2 )
 
@@ -49,15 +54,29 @@ assign.af.fluorophores <- function(
   k.matrix <- sweep( numerator, 2, denominator, "/" )
 
   # initial unmix (no AF)
-  unmixed <- raw.data %*% t( P )
+  unmixed <- raw.data %*% t( unmixing.matrix )
 
-  # minimize L2 error via dot product of unmixed signal x AFs
-  dot.product <- unmixed %*% v.library
+  # Initialize a matrix to store the 'error' (abs sum of fluors) for each AF choice
+  error.matrix <- matrix(
+    0,
+    nrow = nrow( raw.data ),
+    ncol = af.n
+  )
 
-  # score the AF variants
-  scores <- ( 2 * k.matrix * dot.product ) - sweep( k.matrix^2, 2, v.norms.sq, "*" )
+  for ( i in seq_len( af.n ) ) {
+    # predicted intensity of AF variant i
+    k_i <- k.matrix[ , i, drop = FALSE ]
 
-  # maximum score corresponds to the minimum L2 error
-  return( max.col( scores ) )
+    # dye-leakage signature of AF variant i
+    v_i <- t( v.library[, i, drop = FALSE ] )
 
+    # adjusted fluorophore values for all cells using variant i
+    adjusted.fluors <- unmixed - ( k_i %*% v_i )
+
+    # worst-case' scenario: sum of absolute fluorophore signals
+    error.matrix[ , i ] <- rowSums( abs( adjusted.fluors ) )
+  }
+
+  # maximum score corresponds to the minimum L1 error (max of negative is min)
+  return( max.col( -error.matrix ) )
 }
