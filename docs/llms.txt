@@ -50,6 +50,18 @@ in a manner specific to that cell, producing better unmixing with less
 spread. Per-cell fluorescence spectral optimization can reduce unmixing
 errors.
 
+The central ideas are as follows:
+
+- Encode Roederer’s Rules for controls as much as possible.
+- Deal with cellular autofluorescence interfering with identifying
+  fluorophore signatures.
+- Autofluorescence is variable on a cell-to-cell basis, both in
+  magnitude and in type. We can figure out, more or less, what this
+  should be for each cell.
+- Fluorophore emissions are variable, and this variability manifests on
+  the level of the cell. Again, we can sort of figure this out and deal
+  with it.
+
 At the moment, the following cytometers are supported:
 
 - Cytek Aurora (“aurora”)
@@ -69,7 +81,13 @@ At the moment, the following cytometers are supported:
 
 ### Latest Stable Release
 
-**Version 0.9.1**
+**Version 1.0.0**
+
+Version 1.0.0 is intended to greatly speed up the process of unmixing.
+This is done by pre-screening the variation in autofluorescence and
+fluorophore variation for each cell, identifying likely “best”
+candidates rather than using a brute force approach. If you are using
+AutoSpectralRcpp, you will need to update that for compatibility.
 
 To install the latest, hopefully stable version, install using
 `devtools` or `remotes`. You will need to install the Bioconductor
@@ -150,6 +168,9 @@ there.
 In particular, see the [Full
 Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html).
 
+All functions available in AutoSpectral can be viewed
+[here](https://drcytometer.github.io/AutoSpectral/reference/index.html).
+
 Resolved issues, bug patches and improvements will be announced via the
 NEWS and also tracked in the [Updates and
 Issues](https://drcytometer.github.io/AutoSpectral/articles/12_Updates_And_Issues.html)
@@ -226,6 +247,10 @@ for more on this, or read the NEWS with the latest release.
 
 ## All functions
 
+- [`assign.af.fluorophores()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.fluorophores.md)
+  : Assign AF Spectrum By Fluorophore Projection
+- [`assign.af.residuals()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.residuals.md)
+  : Assign AF Spectrum By Residual Alignment
 - [`calculate.condition.number()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.condition.number.md)
   : Calculate Condition Number
 - [`calculate.hotspot.matrix()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.hotspot.matrix.md)
@@ -318,6 +343,8 @@ for more on this, or read the NEWS with the latest release.
   : Match Fluorophores
 - [`match.markers()`](https://drcytometer.github.io/AutoSpectral/reference/match.markers.md)
   : Match Markers
+- [`optimize.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/optimize.unmix.md)
+  : Optimize Spectral Unmixing
 - [`parallel.backend()`](https://drcytometer.github.io/AutoSpectral/reference/parallel.backend.md)
   : Parallel Backend
 - [`read.bd.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/read.bd.spectra.md)
@@ -374,6 +401,8 @@ for more on this, or read the NEWS with the latest release.
   : Unmix Using Poisson Regression
 - [`unmix.wls.fast()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.fast.md)
   : Unmix WLS Fast
+- [`unmix.wls.per.cell()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.per.cell.md)
+  : Unmix WLS Per Cell
 - [`unmix.wls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.md)
   : Unmix Using Weighted Least Squares
 - [`validate.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.md)

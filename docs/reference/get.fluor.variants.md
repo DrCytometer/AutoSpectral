@@ -24,7 +24,9 @@ get.fluor.variants(
   control.type,
   raw.thresholds,
   unmixed.thresholds,
-  flow.channel
+  flow.channel,
+  refine = TRUE,
+  problem.quantile = 0.95
 )
 ```
 
@@ -113,6 +115,24 @@ get.fluor.variants(
 - flow.channel:
 
   A named vector of peak raw channels, one per fluorophore.
+
+- refine:
+
+  Logical, default is `TRUE`. Controls whether to perform a second round
+  of variation measurement on "problem cells", which are those with the
+  highest spillover, as defined by `problem.quantile`.
+
+- problem.quantile:
+
+  Numeric, default `0.95`. The quantile for determining which cells will
+  be considered "problematic" after unmixing with per-cell AF
+  extraction. Cells in the `problem.quantile` or above with respect to
+  total signal in the fluorophore (non-AF) channels after per-cell AF
+  extraction will be used to determine additional autofluorescence
+  spectra, using a second round of clustering and modulation of the
+  previously selected autofluroescence spectra. A value of `0.95` means
+  the top 5% of cells, those farthest from zero, will be selected for
+  further investigation.
 
 ## Value
 

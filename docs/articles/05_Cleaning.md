@@ -32,7 +32,7 @@ Right, so there are four cleaning options in AutoSpectral:
     NovaFluors), you can try the trimming. We’re not going to cover it
     in this article.
 
-2.  Time-based cleaning.*Update* Time-based cleaning will be deprecated
+2.  Time-based cleaning. *Update* Time-based cleaning will be deprecated
     soon and then phased out as an option. We do this with our fully
     stained data through tools like flowClean, flowAI and PeacoQC. This
     removes inconsistencies in the flow, which are less accurate.

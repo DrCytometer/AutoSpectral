@@ -9,7 +9,7 @@ fluorophore signatures at the single cell level."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,12 +61,12 @@ fluorophore signatures at the single cell level.</p>
 <span>  <span class="va">af.spectra</span>,</span>
 <span>  <span class="va">asp</span>,</span>
 <span>  spectra.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  weighted <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use.dist0 <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  speed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"slow"</span>, <span class="st">"medium"</span>, <span class="st">"fast"</span><span class="op">)</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  k <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -102,17 +102,6 @@ of spectral signature variations for each fluorophore. Prepare using
 <code>get.spectral.variants</code>. Default is <code>NULL</code>.</p></dd>
 
 
-<dt id="arg-weighted">weighted<a class="anchor" aria-label="anchor" href="#arg-weighted"></a></dt>
-<dd><p>Logical, whether to use ordinary or weighted least squares
-unmixing as the base algorithm. Default is <code>FALSE</code> and will use OLS.</p></dd>
-
-
-<dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
-<dd><p>Optional numeric vector of weights (one per fluorescent
-detector). Default is <code>NULL</code>, in which case weighting will be done by
-channel means (Poisson variance). Only used if <code>weighted</code>.</p></dd>
-
-
 <dt id="arg-use-dist-">use.dist0<a class="anchor" aria-label="anchor" href="#arg-use-dist-"></a></dt>
 <dd><p>Logical, controls whether the selection of the optimal AF
 signature for each cell is determined by which unmixing brings the fluorophore
@@ -125,9 +114,20 @@ per-cell residual (<code>use.dist0</code> = <code>FALSE</code>). Default is <cod
 Default is <code>TRUE</code>.</p></dd>
 
 
+<dt id="arg-speed">speed<a class="anchor" aria-label="anchor" href="#arg-speed"></a></dt>
+<dd><p>Selector for the precision-speed trade-off in AutoSpectral per-cell
+fluorophore optimization. Options are <code>slow</code>, <code>medium</code> and <code>fast</code>. From v1.0.0,
+this controls the number of variants tested per cell (and per fluorophore).
+More variants takes longer, but gives better resolution in the unmixed data.
+When <code>speed = fast</code>, as single variant will be tested; for <code>medium</code>, three
+will be tested and for <code>slow</code>, 10 variants will be tested. From AutoSpectral
+v1.0.0, <code>slow</code> is the default and is available in the pure R version.
+Installation of <code>AutoSpectralRcpp</code> is strongly encouraged for speed, though.</p></dd>
+
+
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
-<dd><p>Logical, default is <code>FALSE</code>, in which case sequential processing
-will be used. The new parallel processing should always be faster.</p></dd>
+<dd><p>Logical, default is <code>TRUE</code>. The new parallel processing
+should always be faster.</p></dd>
 
 
 <dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
@@ -135,6 +135,14 @@ will be used. The new parallel processing should always be faster.</p></dd>
 will be used. <code>asp$worker.process.n</code> is set by default to be one less than the
 available cores on the machine. Multi-threading is only used if <code>parallel</code> is
 <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
+<dd><p>Number of variants (and autofluorescence spectra) to test per cell.
+Allows explicit control over the number used, as opposed to <code>speed</code>, which
+selects from pre-defined choices. Providing a numeric value to <code>k</code> will
+override <code>speed</code>, allowing up to <code>k</code> (or the max available) variants to be
+tested. The default is <code>NULL</code>, in which case <code>k</code> will be ignored.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

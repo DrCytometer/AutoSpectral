@@ -185,8 +185,7 @@ unmix.fcs <- function(
         paste(
           "For AutoSpectral unmixing, providing fluorophore variation with",
           "`spectra.variants` may give better results. See `?get.spectral.variants`."
-        ),
-        call. = FALSE
+        )
       )
     }
     # check for AutoSpectralRcpp

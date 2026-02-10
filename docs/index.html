@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,6 +86,13 @@
 <p>More to the point, AutoSpectral is intended to make working with messy cell-based controls as easy as compensation beads. This should give you better accuracy and precision in your spectral definition and thus in your unmixing.</p>
 <p>AutoSpectral aims to provide reproducible unmixing, meaning that anyone should be able to obtain reliably good (probably better) unmixing from the same set of controls. The aim is to remove the human “fiddling” part, which is slow and not always so scientific.</p>
 <p>Plus, you can extract each cell’s individual autofluorescent background in a manner specific to that cell, producing better unmixing with less spread. Per-cell fluorescence spectral optimization can reduce unmixing errors.</p>
+<p>The central ideas are as follows:</p>
+<ul>
+<li>Encode Roederer’s Rules for controls as much as possible.</li>
+<li>Deal with cellular autofluorescence interfering with identifying fluorophore signatures.</li>
+<li>Autofluorescence is variable on a cell-to-cell basis, both in magnitude and in type. We can figure out, more or less, what this should be for each cell.</li>
+<li>Fluorophore emissions are variable, and this variability manifests on the level of the cell. Again, we can sort of figure this out and deal with it.</li>
+</ul>
 <p>At the moment, the following cytometers are supported:</p>
 <ul>
 <li>Cytek Aurora (“aurora”)</li>
@@ -106,7 +113,8 @@
 <div class="section level3">
 <h3 id="latest-stable-release">Latest Stable Release<a class="anchor" aria-label="anchor" href="#latest-stable-release"></a>
 </h3>
-<p><strong>Version 0.9.1</strong></p>
+<p><strong>Version 1.0.0</strong></p>
+<p>Version 1.0.0 is intended to greatly speed up the process of unmixing. This is done by pre-screening the variation in autofluorescence and fluorophore variation for each cell, identifying likely “best” candidates rather than using a brute force approach. If you are using AutoSpectralRcpp, you will need to update that for compatibility.</p>
 <p>To install the latest, hopefully stable version, install using <code>devtools</code> or <code>remotes</code>. You will need to install the Bioconductor packages separately. As of version 0.9.1, AutoSpectral relies on <code>FlowSOM</code> rather than <code>EmbedSOM</code>, so you will need to install <code>FlowSOM</code> via Bioconductor.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install Bioconductor packages</span></span>
@@ -141,6 +149,7 @@
 <p>Since one of my recent updates broke things, I’ll be moving to using tagged releases that should be easier to install if the latest version has flaws. I’ve also set up a separate development branch, which will get the updates first. Things probably should have been that way from the start, but this is all new to me.</p>
 <p>Please check the <a href="https://drcytometer.github.io/AutoSpectral/">help pages and articles</a> if you’re struggling to understand how to do something. There’s a lot of info there.</p>
 <p>In particular, see the <a href="https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html">Full Workflow</a>.</p>
+<p>All functions available in AutoSpectral can be viewed <a href="https://drcytometer.github.io/AutoSpectral/reference/index.html">here</a>.</p>
 <p>Resolved issues, bug patches and improvements will be announced via the NEWS and also tracked in the <a href="https://drcytometer.github.io/AutoSpectral/articles/12_Updates_And_Issues.html">Updates and Issues</a> article.</p>
 <div class="section level3">
 <h3 id="known-shortcomings">Known shortcomings<a class="anchor" aria-label="anchor" href="#known-shortcomings"></a>

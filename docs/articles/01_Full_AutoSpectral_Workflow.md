@@ -8,11 +8,11 @@ If you need to install AutoSpectral, run this bit first:
 # Install Bioconductor packages
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
-BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC"))
+BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC", "FlowSOM"))
 
 # You'll need devtools or remotes to install from GitHub.
-install.packages("devtools")
-devtools::install_github("DrCytometer/AutoSpectral")
+install.packages("remotes")
+remotes::install_github("DrCytometer/AutoSpectral")
 ```
 
 ## Get the data
@@ -189,11 +189,26 @@ To unmix, specify the file (and path) of the FCS file you want to unmix:
 
 ``` r
 spleen.fcs.file <- "./Raw/Set1/Stained/D4 Spleen_Set1.fcs"
-unmix.fcs(spleen.fcs.file, spectra, asp, flow.control,
-          method = "OLS", file.suffix = "with AF extraction")
-unmix.fcs(spleen.fcs.file, no.af.spectra, asp, flow.control,
-          method = "OLS", file.suffix = "without AF extraction")
+unmix.fcs(
+  spleen.fcs.file,
+  spectra, asp,
+  flow.control,
+  method = "OLS",
+  file.suffix = "with AF extraction"
+)
+unmix.fcs(
+  spleen.fcs.file,
+  no.af.spectra,
+  asp,
+  flow.control,
+  method = "OLS",
+  file.suffix = "without AF extraction"
+)
 ```
+
+Note that this is just using OLS–this is not the “AutoSpectral” unmixing
+method, we are just using the AutoSpectral R package to perform bog
+standard unmixing.
 
 If we have a folder full of FCS files, we can do all the files in the
 folder. Note that this is essentially just an `lapply` loop over the
@@ -231,18 +246,19 @@ look at how to use those in the unmixing. We’ll also get information
 about the fluorophore emission variability and use that to try to
 improve the unmixing.
 
-When we go to use this information in the unmixing, we can select either
-`method = AutoSpectral` or the default `method = Automatic`. `Automatic`
-selects based on what you give the function. If you give it files from
-an ID7000 without any autofluorescence spectra variations, it will do
-WLS. If you do the same, but the files are from an Aurora, it will do
-OLS. If you give it autofluorescence spectra, it will switch to using
-per-cell autofluorescence extraction. If you want more direct control
-over what’s happening, which will trigger errors if you fail to provide
-the right information, use “`AutoSpectral`. That’s what we’ll do here.
+When we go to use this information in the unmixing, we select
+`method = AutoSpectral`.
 
-If this is confusing, let me know and provide some suggestions for
-simplification.
+As of version 1.0.0, per-cell autofluorescence extraction will be faster
+using `AutoSpectralRcpp`. On Windows, you will first need to install
+Rtools.
+
+``` r
+devtools::install_github("DrCytometer/AutoSpectralRcpp")
+```
+
+Once `AutoSpectralRcpp` is installed, it takes over when the unmixing
+starts. You don’t need to do anything else.
 
 To use per-cell autofluorescence extraction only, no fluorophore
 optimization, do this:
@@ -250,9 +266,15 @@ optimization, do this:
 ``` r
 spleen.unstained <- "./Raw/Set1/Unstained/D1 Spleen_Set1.fcs"
 spleen.af <- get.af.spectra(spleen.unstained, asp, spectra)
-unmix.fcs(spleen.fcs.file, spectra, asp, flow.control, 
-          method = "AutoSpectral", af.spectra = spleen.af,
-          file.suffix = "per-cell AF extraction")
+unmix.fcs(
+  spleen.fcs.file,
+  spectra,
+  asp,
+  flow.control,
+  method = "AutoSpectral",
+  af.spectra = spleen.af,
+  file.suffix = "per-cell AF extraction"
+)
 ```
 
 We get the distribution of autofluorescence spectra as a spectral trace
@@ -288,42 +310,55 @@ sample from each donor and matching the autofluorescence more closely.
 lung.unstained <- "./Raw/Set1/Unstained/D2 Lung_Set1.fcs"
 lung.af <- get.af.spectra(lung.unstained, asp, spectra)
 lung.fcs.file <- "./Raw/Set1/Stained/D5 Lung_Set1.fcs"
-unmix.fcs(lung.fcs.file, spectra, asp, flow.control,
-          method = "AutoSpectral", af.spectra = lung.af,
-          file.suffix = "per-cell AF extraction")
+unmix.fcs(
+  lung.fcs.file,
+  spectra,
+  asp,
+  flow.control,
+  method = "AutoSpectral",
+  af.spectra = lung.af,
+  file.suffix = "per-cell AF extraction"
+)
 
 liver.unstained <- "./Raw/Set1/Unstained/D3 Liver_Set1.fcs"
 liver.af <- get.af.spectra(liver.unstained, asp, spectra)
 liver.fcs.file <- "./Raw/Set1/Stained/D6 Liver_Set1.fcs"
-unmix.fcs(liver.fcs.file, spectra, asp, flow.control,
-          method = "AutoSpectral", af.spectra = liver.af,
-          file.suffix = "per-cell AF extraction")
+unmix.fcs(
+  liver.fcs.file,
+  spectra,
+  asp,
+  flow.control,
+  method = "AutoSpectral",
+  af.spectra = liver.af,
+  file.suffix = "per-cell AF extraction"
+)
 ```
 
 To do per-cell fluorophore optimization, we will first measure the
 variation in the spectrum for each fluorophore. For the unmixing, we’ll
 supply the `af.spectra` and the `spectra.variants`, calling
-`AutoSpectral` unmixing. For best results, you should install
-`AutoSpectralRcpp`, for which you will need Rtools. Read more about how
-the per-cell fluorophore optimization works in the
+`AutoSpectral` unmixing. Read more about how the per-cell fluorophore
+optimization works in the
 [GitHub](https://drcytometer.github.io/AutoSpectral/articles/07_Per_Cell_Optimization.html)
 or
 [Colibri](https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization)
 article.
 
-``` r
-devtools::install_github("DrCytometer/AutoSpectralRcpp")
-```
-
 We provide `spleen.af` as the `af.spectra` here because the control
 samples are from spleen. Provide whatever is the best fit for your
 single-stained controls. The point here is to match the AF of the
 controls so that we isolate the variation in the fluorophore signatures
-idependnet of any AF variation.
+independent of any AF variation.
 
 ``` r
-variants <- get.spectral.variants(control.dir, control.file, asp, spectra,
-                                  af.spectra = spleen.af, parallel = TRUE)
+variants <- get.spectral.variants(
+  control.dir,
+  control.file,
+  asp,
+  spectra,
+  af.spectra = spleen.af,
+  parallel = FALSE
+)
 ```
 
 The output of this is saved as an RDS file in folder
@@ -340,18 +375,24 @@ blue and yellow-green lasers, which would cause spread if we had a
 fluorophore in that range on the blue laser, such as RB780. We don’t in
 this case. ![PE-Cy7](figures/Workflow/PECy7_variants.jpg)
 
-We can now pass this to the unmixing call. For best results, we’ll set
-the `speed` to `slow`, which recalculates the unmixing matrix for each
-variant. This can be a bit slow. Parallelization is automatic here if
-you have installed `AutoSpectralRcpp`. If you are using base R only, try
+We can now pass this to the unmixing call. For quicker results, we’ll
+set the `speed` to `fast`, which checks fewer pre-screened variants per
+cell. This can be a bit slow. Parallelization is automatic here if you
+have installed `AutoSpectralRcpp`. If you are using base R only, try
 turning on the `parallel=TRUE`.
 
 ``` r
-unmix.fcs(lung.fcs.file, spectra, asp, flow.control,
-          method = "AutoSpectral", af.spectra = lung.af,
-          spectra.variants = variants,
-          file.suffix = "per-cell AF and fluorophore optimization",
-          speed = "slow")
+unmix.fcs(
+  lung.fcs.file,
+  spectra,
+  asp,
+  flow.control,
+  method = "AutoSpectral",
+  af.spectra = lung.af,
+  spectra.variants = variants,
+  file.suffix = "per-cell AF and fluorophore optimization",
+  speed = "fast"
+)
 ```
 
 Please note that if you are comparing the output FCS files from

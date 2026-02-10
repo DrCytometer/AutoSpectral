@@ -19,7 +19,7 @@ the readRDS function) rather than re-running this process."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,12 +77,14 @@ the <code>readRDS</code> function) rather than re-running this process.</p>
 <span>  <span class="va">spectra</span>,</span>
 <span>  <span class="va">af.spectra</span>,</span>
 <span>  n.cells <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  som.dim <span class="op">=</span> <span class="fl">7</span>,</span>
+<span>  som.dim <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  output.dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  refine <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  problem.quantile <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -124,13 +126,12 @@ level in the unstained sample.</p></dd>
 
 
 <dt id="arg-som-dim">som.dim<a class="anchor" aria-label="anchor" href="#arg-som-dim"></a></dt>
-<dd><p>Numeric, default <code>7</code>. Number of x and y dimensions to use in
+<dd><p>Numeric, default <code>10</code>. Number of x and y dimensions to use in
 the SOM for clustering the spectral variation. The number of spectra returned
-for each fluorophore will increase with the quadratic of <code>som.dim</code>, so for 7,
-you will get up to 49 variants. Increasing the SOM dimensions further does
-not help. Somewhere between 4 and 7 appears to be sufficient, but with the
-pruning of variants implemented in <code><a href="unmix.autospectral.html">unmix.autospectral()</a></code> in v1.0.0, this is
-less important.</p></dd>
+for each fluorophore will increase with the quadratic of <code>som.dim</code>, so for 10,
+you will get up to 100 variants. Somewhere between 4 and 7 appears to be
+sufficient, but with the pruning of variants implemented in
+<code><a href="unmix.autospectral.html">unmix.autospectral()</a></code> in v1.0.0, this is less important.</p></dd>
 
 
 <dt id="arg-figures">figures<a class="anchor" aria-label="anchor" href="#arg-figures"></a></dt>
@@ -157,6 +158,23 @@ will be used. The new parallel processing should always be faster.</p></dd>
 will be used. <code>asp$worker.process.n</code> is set by default to be one less than the
 available cores on the machine. Multi-threading is only used if <code>parallel</code> is
 <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-refine">refine<a class="anchor" aria-label="anchor" href="#arg-refine"></a></dt>
+<dd><p>Logical, default is <code>TRUE</code>. Controls whether to perform a second
+round of variation measurement on "problem cells", which are those with the
+highest spillover, as defined by <code>problem.quantile</code>.</p></dd>
+
+
+<dt id="arg-problem-quantile">problem.quantile<a class="anchor" aria-label="anchor" href="#arg-problem-quantile"></a></dt>
+<dd><p>Numeric, default <code>0.95</code>. The quantile for determining
+which cells will be considered "problematic" after unmixing with per-cell AF
+extraction. Cells in the <code>problem.quantile</code> or above with respect to total
+signal in the fluorophore (non-AF) channels after per-cell AF extraction will
+be used to determine additional autofluorescence spectra, using a second round
+of clustering and modulation of the previously selected autofluroescence
+spectra. A value of <code>0.95</code> means the top 5% of cells, those farthest from zero,
+will be selected for further investigation.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

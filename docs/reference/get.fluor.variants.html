@@ -11,7 +11,7 @@ events in the file."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,7 +75,9 @@ events in the file.</p>
 <span>  <span class="va">control.type</span>,</span>
 <span>  <span class="va">raw.thresholds</span>,</span>
 <span>  <span class="va">unmixed.thresholds</span>,</span>
-<span>  <span class="va">flow.channel</span></span>
+<span>  <span class="va">flow.channel</span>,</span>
+<span>  refine <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  problem.quantile <span class="op">=</span> <span class="fl">0.95</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -165,6 +167,23 @@ unmixing.</p></dd>
 
 <dt id="arg-flow-channel">flow.channel<a class="anchor" aria-label="anchor" href="#arg-flow-channel"></a></dt>
 <dd><p>A named vector of peak raw channels, one per fluorophore.</p></dd>
+
+
+<dt id="arg-refine">refine<a class="anchor" aria-label="anchor" href="#arg-refine"></a></dt>
+<dd><p>Logical, default is <code>TRUE</code>. Controls whether to perform a second
+round of variation measurement on "problem cells", which are those with the
+highest spillover, as defined by <code>problem.quantile</code>.</p></dd>
+
+
+<dt id="arg-problem-quantile">problem.quantile<a class="anchor" aria-label="anchor" href="#arg-problem-quantile"></a></dt>
+<dd><p>Numeric, default <code>0.95</code>. The quantile for determining
+which cells will be considered "problematic" after unmixing with per-cell AF
+extraction. Cells in the <code>problem.quantile</code> or above with respect to total
+signal in the fluorophore (non-AF) channels after per-cell AF extraction will
+be used to determine additional autofluorescence spectra, using a second round
+of clustering and modulation of the previously selected autofluroescence
+spectra. A value of <code>0.95</code> means the top 5% of cells, those farthest from zero,
+will be selected for further investigation.</p></dd>
 
 </dl></div>
     <div class="section level2">

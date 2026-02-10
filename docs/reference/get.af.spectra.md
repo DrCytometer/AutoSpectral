@@ -15,8 +15,10 @@ get.af.spectra(
   figures = TRUE,
   plot.dir = NULL,
   table.dir = NULL,
-  title = NULL,
-  verbose = TRUE
+  title = "Autofluorescence spectra",
+  verbose = TRUE,
+  refine = TRUE,
+  problem.quantile = 0.99
 )
 ```
 
@@ -64,6 +66,24 @@ get.af.spectra(
 - verbose:
 
   Logical, controls messaging. Default is `TRUE`.
+
+- refine:
+
+  Logical, default is `TRUE`. Controls whether to perform a second round
+  of autofluorescence measurement on "problem cells", which are those
+  with the highest spillover, as defined by `problem.quantile`.
+
+- problem.quantile:
+
+  Numeric, default `0.99`. The quantile for determining which cells will
+  be considered "problematic" after unmixing with per-cell AF
+  extraction. Cells in the `problem.quantile` or above with respect to
+  total signal in the fluorophore (non-AF) channels after per-cell AF
+  extraction will be used to determine additional autofluorescence
+  spectra, using a second round of clustering and modulation of the
+  previously selected autofluorescence spectra. A value of `0.99` means
+  the top 1% of cells, those farthest from zero, will be selected for
+  further investigation.
 
 ## Value
 

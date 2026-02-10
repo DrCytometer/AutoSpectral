@@ -50,6 +50,18 @@ in a manner specific to that cell, producing better unmixing with less
 spread. Per-cell fluorescence spectral optimization can reduce unmixing
 errors.
 
+The central ideas are as follows:
+
+- Encode Roederer’s Rules for controls as much as possible.
+- Deal with cellular autofluorescence interfering with identifying
+  fluorophore signatures.
+- Autofluorescence is variable on a cell-to-cell basis, both in
+  magnitude and in type. We can figure out, more or less, what this
+  should be for each cell.
+- Fluorophore emissions are variable, and this variability manifests on
+  the level of the cell. Again, we can sort of figure this out and deal
+  with it.
+
 At the moment, the following cytometers are supported:
 
 - Cytek Aurora (“aurora”)
@@ -69,7 +81,13 @@ At the moment, the following cytometers are supported:
 
 ### Latest Stable Release
 
-**Version 0.9.1**
+**Version 1.0.0**
+
+Version 1.0.0 is intended to greatly speed up the process of unmixing.
+This is done by pre-screening the variation in autofluorescence and
+fluorophore variation for each cell, identifying likely “best”
+candidates rather than using a brute force approach. If you are using
+AutoSpectralRcpp, you will need to update that for compatibility.
 
 To install the latest, hopefully stable version, install using
 `devtools` or `remotes`. You will need to install the Bioconductor
@@ -149,6 +167,9 @@ there.
 
 In particular, see the [Full
 Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html).
+
+All functions available in AutoSpectral can be viewed
+[here](https://drcytometer.github.io/AutoSpectral/reference/index.html).
 
 Resolved issues, bug patches and improvements will be announced via the
 NEWS and also tracked in the [Updates and

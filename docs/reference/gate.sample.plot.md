@@ -14,7 +14,8 @@ gate.sample.plot(
   scatter.and.channel.label,
   control.type,
   asp,
-  color.palette = "rainbow"
+  color.palette = "rainbow",
+  max.points = 1e+05
 )
 ```
 
@@ -56,6 +57,10 @@ gate.sample.plot(
   similar to FlowJo or SpectroFlo. Other pptions are the viridis color
   options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`,
   `mako` and `turbo`.
+
+- max.points:
+
+  Number of points to plot (speeds up plotting). Default is `1e5`.
 
 ## Value
 

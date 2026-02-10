@@ -9,7 +9,7 @@ necessary packages."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,8 @@ necessary packages.</p>
 <span>  <span class="va">scatter.and.channel.label</span>,</span>
 <span>  <span class="va">control.type</span>,</span>
 <span>  <span class="va">asp</span>,</span>
-<span>  color.palette <span class="op">=</span> <span class="st">"rainbow"</span></span>
+<span>  color.palette <span class="op">=</span> <span class="st">"rainbow"</span>,</span>
+<span>  max.points <span class="op">=</span> <span class="fl">1e+05</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -107,6 +108,11 @@ palette to be used for the fluorophore traces. Default is <code>rainbow</code>, 
 be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
 options: <code>magma</code>, <code>inferno</code>, <code>plasma</code>, <code>viridis</code>, <code>cividis</code>, <code>rocket</code>, <code>mako</code>
 and <code>turbo</code>.</p></dd>
+
+
+<dt id="arg-max-points">max.points<a class="anchor" aria-label="anchor" href="#arg-max-points"></a></dt>
+<dd><p>Number of points to plot (speeds up plotting). Default is
+<code>1e5</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

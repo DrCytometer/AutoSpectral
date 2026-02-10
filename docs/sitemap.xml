@@ -39,6 +39,8 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/LICENSE-text.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/LICENSE.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/news/index.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/assign.af.fluorophores.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/assign.af.residuals.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/calculate.condition.number.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/calculate.hotspot.matrix.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/calculate.weights.html</loc></url>
@@ -92,6 +94,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/lapply.sequential.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/match.fluorophores.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/match.markers.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/optimize.unmix.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/parallel.backend.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.bd.spectra.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.channel.html</loc></url>
@@ -124,6 +127,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.poisson.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.fast.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.per.cell.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.html</loc></url>
 </urlset>
 

@@ -12,7 +12,8 @@ get.fluorophore.spectra(
   asp,
   use.clean.expr = TRUE,
   af.spectra = NULL,
-  title = NULL
+  title = NULL,
+  figures = TRUE
 )
 ```
 
@@ -41,6 +42,11 @@ get.fluorophore.spectra(
   Optional prefix for plot titles, default is `NULL`, which gives
   "Initial" when `use.clean.expr` is `FALSE` and "Clean" when
   `use.clean.expr` is `TRUE`.
+
+- figures:
+
+  Logical, default is `TRUE`. Whether to produce plots of the
+  fluorophore spectra and cosine similarity.
 
 ## Value
 
