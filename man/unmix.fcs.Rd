@@ -22,10 +22,11 @@ unmix.fcs(
   divergence.threshold = 10000,
   divergence.handling = "Balance",
   balance.weight = 0.5,
-  speed = "slow",
+  speed = c("slow", "medium", "fast"),
   parallel = TRUE,
   threads = NULL,
   verbose = TRUE,
+  k = NULL,
   ...
 )
 }
@@ -48,10 +49,11 @@ fluorophore spectra, provide \code{spectra.variants}. To perform other types of
 unmixing, select from the options: \code{OLS}, \code{WLS}, \code{Poisson} or \code{FastPoisson}.
 \code{FastPoisson} requires installation of \code{AutoSpectralRcpp}.There is also
 \code{Automatic}, which switches depending on the inputs provided: it uses
-\code{AutoSpectral} for AF extraction if af.spectra are provided, and automatically
-selects \code{OLS} or \code{WLS} depending on which is normal for the given cytometer
-in \code{asp$cytometer}. This means that files from the ID7000, A8 and S8 will be
-unmixed using \code{WLS} while others will be unmixed with \code{OLS}.}
+\code{AutoSpectral} for AF extraction if \code{af.spectra} are provided, and
+automatically selects \code{OLS} or \code{WLS} depending on which is normal for the
+given cytometer in \code{asp$cytometer}. This means that files from the ID7000,
+A8 and S8 will be unmixed using \code{WLS} while others will be unmixed with \code{OLS},
+if AutoSpectral unmixing is not activated.}
 
 \item{weighted}{Logical, whether to use ordinary or weighted least squares
 unmixing as the base algorithm in AutoSpectral unmixing.
@@ -128,6 +130,12 @@ available cores on the machine. Multi-threading is only used if \code{parallel} 
 
 \item{verbose}{Logical, controls messaging. Default is \code{TRUE}. Set to \code{FALSE}
 to have it shut up.}
+
+\item{k}{Number of variants (and autofluorescence spectra) to test per cell.
+Allows explicit control over the number used, as opposed to \code{speed}, which
+selects from pre-defined choices. Providing a numeric value to \code{k} will
+override \code{speed}, allowing up to \code{k} (or the max available) variants to be
+tested. The default is \code{NULL}, in which case \code{k} will be ignored.}
 
 \item{...}{Ignored. Previously used for deprecated arguments such as
 \code{calculate.error}.}

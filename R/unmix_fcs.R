@@ -23,10 +23,11 @@
 #' unmixing, select from the options: `OLS`, `WLS`, `Poisson` or `FastPoisson`.
 #' `FastPoisson` requires installation of `AutoSpectralRcpp`.There is also
 #' `Automatic`, which switches depending on the inputs provided: it uses
-#' `AutoSpectral` for AF extraction if af.spectra are provided, and automatically
-#' selects `OLS` or `WLS` depending on which is normal for the given cytometer
-#' in `asp$cytometer`. This means that files from the ID7000, A8 and S8 will be
-#' unmixed using `WLS` while others will be unmixed with `OLS`.
+#' `AutoSpectral` for AF extraction if `af.spectra` are provided, and
+#' automatically selects `OLS` or `WLS` depending on which is normal for the
+#' given cytometer in `asp$cytometer`. This means that files from the ID7000,
+#' A8 and S8 will be unmixed using `WLS` while others will be unmixed with `OLS`,
+#' if AutoSpectral unmixing is not activated.
 #' @param weighted Logical, whether to use ordinary or weighted least squares
 #' unmixing as the base algorithm in AutoSpectral unmixing.
 #' Default is `FALSE` and will use OLS.
@@ -87,6 +88,11 @@
 #' `TRUE`. If working on a computing cluster, try `parallelly::availableCores()`.
 #' @param verbose Logical, controls messaging. Default is `TRUE`. Set to `FALSE`
 #' to have it shut up.
+#' @param k Number of variants (and autofluorescence spectra) to test per cell.
+#' Allows explicit control over the number used, as opposed to `speed`, which
+#' selects from pre-defined choices. Providing a numeric value to `k` will
+#' override `speed`, allowing up to `k` (or the max available) variants to be
+#' tested. The default is `NULL`, in which case `k` will be ignored.
 #' @param ... Ignored. Previously used for deprecated arguments such as
 #' `calculate.error`.
 #'
@@ -112,10 +118,11 @@ unmix.fcs <- function(
     divergence.threshold = 1e4,
     divergence.handling = "Balance",
     balance.weight = 0.5,
-    speed = "slow",
+    speed = c("slow", "medium", "fast"),
     parallel = TRUE,
     threads = NULL,
     verbose = TRUE,
+    k = NULL,
     ...
 ) {
 
@@ -126,8 +133,32 @@ unmix.fcs <- function(
     lifecycle::deprecate_warn(
       "0.9.1",
       "unmix.fcs(calculate.error)",
-      "no longer used"
+      details = "The 'calculate.error' argument is no longer used."
     )
+    dots$calculate.error <- NULL
+  }
+
+  # check for other odd stuff being passed
+  if ( length( dots ) > 0 ) {
+    stop(
+      paste(
+        "Unknown arguments detected:",
+        paste( names( dots ), collapse = ", " )
+      )
+    )
+  }
+
+  # logic for default unmixing with cytometer-based selection
+  if ( method == "Automatic" ) {
+    if ( !is.null( af.spectra ) ) {
+      method <- "AutoSpectral"
+      if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8", "ID7000" ) )
+        weighted <- TRUE
+    } else if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8", "ID7000" ) ) {
+      method <- "WLS"
+    } else {
+      method <- "OLS"
+    }
   }
 
   # include checks on inputs if AutoSpectral unmixing has been selected
@@ -159,7 +190,7 @@ unmix.fcs <- function(
     # check for AutoSpectralRcpp
     if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) ) {
       # require 1.0.0 or higher if installed for compatibility
-      if ( utils::packageVersion( "AutoSpectralRcpp" ) < package_version( "1.0.0" ) ) {
+      if ( utils::packageVersion( "AutoSpectralRcpp" ) < package_version( "0.1.5" ) ) { # change to 1.0.0
         stop(
           "Package `AutoSpectralRcpp` >= 1.0.0 is required for this method.
           Please update the package.",
@@ -173,6 +204,30 @@ unmix.fcs <- function(
         call. = FALSE
       )
     }
+
+    # set number of variants to test (by `speed` if `k` is not provided)
+    if ( length( speed ) > 1 )
+      speed <- speed[ 1 ]
+
+    if ( is.null( k ) || !is.numeric( k ) || length( k ) != 1 ) {
+      k <- switch(
+        speed,
+        "slow"   = 10L,
+        "medium" = 3L,
+        "fast"   = 1L,
+        {
+          warning(
+            paste0(
+              "Unrecognized input '",
+              speed,
+              "' to `speed`. Defaulting to `slow` (k=10)."
+            ),
+            call. = FALSE
+          )
+          10L
+        }
+      )
+    }
   }
 
   # create output folder if it doesn't exist
@@ -183,19 +238,6 @@ unmix.fcs <- function(
 
   if ( is.null( threads ) )
     threads <- asp$worker.process.n
-
-  # logic for default unmixing with cytometer-based selection
-  if ( method == "Automatic" ) {
-    if ( !is.null( af.spectra ) ) {
-      method <- "AutoSpectral"
-      if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8", "ID7000" ) )
-        weighted <- TRUE
-    } else if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8", "ID7000" ) ) {
-      method <- "WLS"
-    } else {
-      method <- "OLS"
-    }
-  }
 
   # import FCS, without warnings for fcs 3.2
   fcs.data <- suppressWarnings(
@@ -302,12 +344,12 @@ unmix.fcs <- function(
               af.spectra = af.spectra,
               asp = asp,
               spectra.variants = spectra.variants,
-              weighted = weighted,
-              weights = weights,
               use.dist0 = use.dist0,
               verbose = verbose,
+              speed = speed,
               parallel = parallel,
-              threads = threads
+              threads = threads,
+              k = k
             )
           }
         )
@@ -319,12 +361,12 @@ unmix.fcs <- function(
           af.spectra = af.spectra,
           asp = asp,
           spectra.variants = spectra.variants,
-          weighted = weighted,
-          weights = weights,
           use.dist0 = use.dist0,
           verbose = verbose,
+          speed = speed,
           parallel = parallel,
-          threads = threads
+          threads = threads,
+          k = k
         )
       }
     },
