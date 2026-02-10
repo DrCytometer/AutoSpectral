@@ -10,12 +10,12 @@ unmix.autospectral(
   af.spectra,
   asp,
   spectra.variants = NULL,
-  weighted = FALSE,
-  weights = NULL,
   use.dist0 = TRUE,
   verbose = TRUE,
+  speed = c("slow", "medium", "fast"),
   parallel = TRUE,
   threads = NULL,
+  k = NULL,
   ...
 )
 }
@@ -37,13 +37,6 @@ using \code{get.af.spectra}.}
 of spectral signature variations for each fluorophore. Prepare using
 \code{get.spectral.variants}. Default is \code{NULL}.}
 
-\item{weighted}{Logical, whether to use ordinary or weighted least squares
-unmixing as the base algorithm. Default is \code{FALSE} and will use OLS.}
-
-\item{weights}{Optional numeric vector of weights (one per fluorescent
-detector). Default is \code{NULL}, in which case weighting will be done by
-channel means (Poisson variance). Only used if \code{weighted}.}
-
 \item{use.dist0}{Logical, controls whether the selection of the optimal AF
 signature for each cell is determined by which unmixing brings the fluorophore
 signals closest to 0 (\code{use.dist0} = \code{TRUE}) or by which unmixing minimizes the
@@ -52,6 +45,15 @@ per-cell residual (\code{use.dist0} = \code{FALSE}). Default is \code{TRUE}.}
 \item{verbose}{Logical, whether to send messages to the console.
 Default is \code{TRUE}.}
 
+\item{speed}{Selector for the precision-speed trade-off in AutoSpectral per-cell
+fluorophore optimization. Options are \code{slow}, \code{medium} and \code{fast}. From v1.0.0,
+this controls the number of variants tested per cell (and per fluorophore).
+More variants takes longer, but gives better resolution in the unmixed data.
+When \code{speed = fast}, as single variant will be tested; for \code{medium}, three
+will be tested and for \code{slow}, 10 variants will be tested. From AutoSpectral
+v1.0.0, \code{slow} is the default and is available in the pure R version.
+Installation of \code{AutoSpectralRcpp} is strongly encouraged for speed, though.}
+
 \item{parallel}{Logical, default is \code{FALSE}, in which case sequential processing
 will be used. The new parallel processing should always be faster.}
 
@@ -59,6 +61,12 @@ will be used. The new parallel processing should always be faster.}
 will be used. \code{asp$worker.process.n} is set by default to be one less than the
 available cores on the machine. Multi-threading is only used if \code{parallel} is
 \code{TRUE}.}
+
+\item{k}{Number of variants (and autofluorescence spectra) to test per cell.
+Allows explicit control over the number used, as opposed to \code{speed}, which
+selects from pre-defined choices. Providing a numeric value to \code{k} will
+override \code{speed}, allowing up to \code{k} (or the max available) variants to be
+tested. The default is \code{NULL}, in which case \code{k} will be ignored.}
 
 \item{...}{Ignored. Previously used for deprecated arguments such as
 \code{calculate.error}.}
