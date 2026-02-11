@@ -17,7 +17,7 @@ unmix.autospectral(
   speed = c("slow", "medium", "fast"),
   parallel = TRUE,
   threads = NULL,
-  k = NULL,
+  n.variants = NULL,
   ...
 )
 ```
@@ -61,7 +61,7 @@ unmix.autospectral(
 
 - verbose:
 
-  Logical, whether to send messages to the console. Default is `TRUE`.
+  Logical, default `TRUE`. Whether to send messages to the console.
 
 - speed:
 
@@ -87,13 +87,13 @@ unmix.autospectral(
   the available cores on the machine. Multi-threading is only used if
   `parallel` is `TRUE`.
 
-- k:
+- n.variants:
 
-  Number of variants (and autofluorescence spectra) to test per cell.
-  Allows explicit control over the number used, as opposed to `speed`,
-  which selects from pre-defined choices. Providing a numeric value to
-  `k` will override `speed`, allowing up to `k` (or the max available)
-  variants to be tested. The default is `NULL`, in which case `k` will
+  Number of variants to test per cell. Allows explicit control over the
+  number used, as opposed to `speed`, which selects from pre-defined
+  choices. Providing a numeric value to `n.variants` will override
+  `speed`, allowing up to `n.variants` (or the max available) variants
+  to be tested. The default is `NULL`, in which case `n.variants` will
   be ignored.
 
 - ...:

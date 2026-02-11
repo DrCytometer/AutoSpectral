@@ -128,6 +128,8 @@
   : Run Universal Negative
 - [`sample.fcs.file()`](https://drcytometer.github.io/AutoSpectral/reference/sample.fcs.file.md)
   : Sample FCS File
+- [`sanitize.optimization.inputs()`](https://drcytometer.github.io/AutoSpectral/reference/sanitize.optimization.inputs.md)
+  : Sanitize Optimization Inputs
 - [`save.unmixing.matrix()`](https://drcytometer.github.io/AutoSpectral/reference/save.unmixing.matrix.md)
   : Save Unmixing Matrix
 - [`scatter.match.plot()`](https://drcytometer.github.io/AutoSpectral/reference/scatter.match.plot.md)

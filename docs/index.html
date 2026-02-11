@@ -77,7 +77,8 @@
 <span></span>
 <span><span class="co"># You'll need devtools or remotes to install from GitHub.</span></span>
 <span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
@@ -91,7 +92,7 @@
 <li>Encode Roederer’s Rules for controls as much as possible.</li>
 <li>Deal with cellular autofluorescence interfering with identifying fluorophore signatures.</li>
 <li>Autofluorescence is variable on a cell-to-cell basis, both in magnitude and in type. We can figure out, more or less, what this should be for each cell.</li>
-<li>Fluorophore emissions are variable, and this variability manifests on the level of the cell. Again, we can sort of figure this out and deal with it.</li>
+<li>Fluorophore emissions are variable, and this variability manifests on the level of the cell. Again, we can more or less figure this out and deal with it.</li>
 </ul>
 <p>At the moment, the following cytometers are supported:</p>
 <ul>
@@ -124,7 +125,8 @@
 <span></span>
 <span><span class="co"># You'll need devtools or remotes to install from GitHub.</span></span>
 <span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
 <p>As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, imperfect. To try it, visit <a href="https://github.com/DrCytometer/AutoSpectralHelper" class="external-link">AutoSpectralHelper</a>. If you update AutoSpectral, I recommend downloading a new version of the app to ensure compatibility.</p>
 <p>To install a specific release, e.g., a previous one, use the version number:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -137,13 +139,14 @@
 <p>AutoSpectral is open source. If you are interested in contributing, please visit <a href="https://drcytometer.github.io/AutoSpectral/articles/10_Development.html">Development</a> for suggestions of where help is needed most.</p>
 <p>You can install the development version of AutoSpectral from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
 <h2 id="bug-fixes-and-known-issues">Bug fixes and known issues<a class="anchor" aria-label="anchor" href="#bug-fixes-and-known-issues"></a>
 </h2>
 <p>AutoSpectral is pretty complex and newly released, so there will be bugs. Sorry. Thanks to all of you providing feedback. Please submit any and all issues either using the Issues page or via email at colibri-cytometry at gmail.</p>
+<p>All of the functions available in AutoSpectral can be viewed <a href="https://drcytometer.github.io/AutoSpectral/reference/index.html">here</a>.</p>
 <p>To submit a bug report, go to <a href="https://github.com/DrCytometer/AutoSpectral/issues" class="external-link">Issues</a>.</p>
 <p>For more general problems, like not being clear on how to do things, something doesn’t work well, or maybe you have an idea for something new or better, visit the <a href="https://github.com/DrCytometer/AutoSpectral/discussions" class="external-link">Discussions page</a>.</p>
 <p>Since one of my recent updates broke things, I’ll be moving to using tagged releases that should be easier to install if the latest version has flaws. I’ve also set up a separate development branch, which will get the updates first. Things probably should have been that way from the start, but this is all new to me.</p>

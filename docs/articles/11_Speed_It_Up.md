@@ -55,7 +55,8 @@ install.packages( c( "Rcpp", "RcppArmadillo" ) )
 Now, install AutoSpectralRcpp. This is fully accessible from R and
 integrates with AutoSpectral. But, when it gets to the slow bits in the
 unmixing, it switches over to calculating in C++, so it can be 10-100x
-faster. Do this after upgrading the BLAS.
+faster. Do this after upgrading the BLAS because the C++ gets compiled
+with whatever BLAS you’ve got installed.
 
 [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp)
 
@@ -99,25 +100,20 @@ less than
 so it is designed to allow you to keep working on minor stuff while
 AutoSpectral chugs along in the background.
 
+Or just check how many you have available:
+
+``` r
+parallelly::availableCores()
+```
+
 For unmixing larger data sets, you will do well to use a machine with
-more CPUs. Suggestions for faster processing are welcome. Some modest
-improvements are in the works.
-
-``` r
-devtools::install_github("DrCytometer/AutoSpectral@dev")
-```
-
-To replace this with the (hopefully) stable version, run this:
-
-``` r
-remove.packages("AutoSpectral")
-devtools::install_github("DrCytometer/AutoSpectral")
-```
+more CPUs. Version 1.0.0 brings faster processing for the unmixing.
 
 ## Installation and Runtime
 
 Installation via GitHub should take only a minute or so. It takes less
-than that on a Dell i7 core laptop.
+than that on my Dell i7 core laptop, but that may also be because I have
+already installed the dependencies.
 
 Occasionally, the help gets corrupted. Just re-install if that happens.
 If you know why this happens, let me know.
@@ -151,6 +147,11 @@ get:
 - [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
   v.0.9.0: 65sec sequential, 32sec parallel
 
+These should run faster in v1.0.0 for datasets with lots of cells
+because I have changed the default plotting settings to limit the
+maximum number of events plotted (plotting lots of points is slow in R,
+even with the accelerated `scattermore` package).
+
 Unmixing time depends on the following variable:
 
 - file size (number of cells/events, including debris)
@@ -173,7 +174,7 @@ laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   WLS or OLS v0.9.0: 9sec
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
-  WLS or OLS v1.0.0: 9sec (most of this is handling the FCS file)
+  WLS or OLS v1.0.0: 9-10sec (most of this is handling the FCS file)
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell AF extraction v0.8.7: 2min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)

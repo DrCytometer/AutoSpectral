@@ -15,15 +15,22 @@ appreciated.
     problematic on Windows due to memory usage with `futures` and the
     tendency of Windows to usurp threads that R was using.
   - A new parallel backend using `parLapply` on Windows or `mclapply` on
-    Mac/Linux is being implemented in `dev` branch. This should
-    gracefully fall back to sequential `lapply` processing if it runs
-    into any problems when being set-up.
+    Mac/Linux has been implemented. This should gracefully fall back to
+    sequential `lapply` processing if it runs into any problems when
+    being set-up.
   - Parallelization of
     [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
     in base R can be ~30% faster for per-cell unmixing if we use
     `foreach` with `doParallel`, but this introduces at least three new
     dependencies and is a minor improvement compared with running via
     Rcpp.
+  - I am struggling to produce fast adaptations of AutoSpectral for
+    MacOS because I do not have access to MacOS. Suggestions would be
+    appreciated for better implementation of the `mclapply`
+    parallelization for Mac. Perhaps more importantly, AutoSpectralRcpp
+    relies on OpenMP, and OpenMP is difficult to set up and use on Mac,
+    in my understanding. If it would help, I could produce a version of
+    AutoSpectralRcpp that just relies on `RcppArmadillo` without OpenMP.
 
 - Code clean-up for `define.flow.control`.
 
@@ -55,73 +62,37 @@ appreciated.
     back to the current gating approach when no known markers are
     provided.
 
-- Cell-specific weighting for per-cell unmixing.
-
-  - This is problematic for the ID7000, probably due to the PMT noise.
-  - Benefits on other systems are surprisingly minimal, so this may not
-    be implemented.
-
 - Speed up per-cell AF extraction
 
-  - This currently operates via a `for` loop, unmixing each AF signature
-    sequentially. This is the best I have found. It is okay with fast
-    BLAS.
-  - Parallelization of this using `future` was not faster and fails with
-    large data sets due to memory overrun.
-  - I think it is unlikely that parallelization of this will help since
-    computation of the unmixing will be faster than communication of the
-    large expression matrix to different cores.
-  - Approaches using `lapply` and `vapply` were slower and required more
-    memory.
-  - Probably the best approach will be to figure out what each cell’s AF
-    signature is without unmixing each AF possibility on all cells. That
-    is rather harder.
+  - This is now implemented in v1.0.0, figuring out what each cell’s AF
+    signature is without unmixing each AF possibility on all cells.
+    Extraction is parallelized via C++ in AutoSpectralRcpp.
 
 - Speed up per-cell fluorophore optimization.
 
-  - Some progress on this has been implemented in `dev` branch. Should
-    be ~4x faster now.
-  - The primary improvement comes from generating fewer spectral
-    variants to search through. My testing shows that a lower number is,
-    if anything, better, presumably due to slightly higher quality of
-    the spectra being generated while still covering the range of
-    variation. This will help in R as well as Rcpp.
-  - Secondary improvement comes from changing the solving strategy in
-    C++ so that we aren’t recalculating the unmixing matrix (righthand
-    solve) every time.
-  - Tertiary improvment from changing the C++ compiler flags.
+  - This is now implemented in v1.0.0 through strategic screening of
+    variants for alignment with each cell’s profile/residual.
   - The pure R version will now benefit from parallelization,
     particularly on Mac/Linux.
-  - Update Jan-2026:
-  - Speed up is now possible through strategic screening of variants for
-    alignment with each cell’s profile/residual. This will be
-    implemented in v1.0.0.
+  - At this point, I do not expect more major gains in performance. It
+    has been suggested, however, that GPU acceleration may help. If you
+    have experience with that and can offer insights, please reach out.
 
 - Fix the issue causing discontinuities.
 
-  - Some progress on this in `dev` branch.
-  - One improvement is better decontamination of AF from the spectral
-    variants, which was causing cells to be pushed further away from the
-    threshold for optimization.
-  - A second is scaling the changes to cellular spectra based on the
-    abundance of the fluorophore in question. This means cells close to
-    the threshold will not change much, so the optimization will apply
-    to higher expression cells, which is what is needed for reducing
-    spillover spread and unmixing errors.
-  - A third is the reduction in low-level noise introduced into the
-    spectral variants due to fluctuations in electronic noise or
-    autofluorescence. Any signal in the variant spectrum in a channel
-    where the optimized single spectrum has less than 5% of the peak
-    detector signal is now regularized towards the optimized spectrum.
-    This focuses the variation on the “peaks”, which is what causes the
-    unmixing errors and spread.
-  - The primary remaining problem is, I think, with the crude
-    approximation employed in the “fast” approach. The best solution
-    would be to speed up the “slow” method to the point where the “fast”
-    approach can be deprecated. Alternatively, some degree of smoothing
-    based on kNN or regularization may be required.
-  - Update Jan-2026: The “slow” method should now be fast enough to fix
-    most of the issue in v1.0.0.
+  - Progress has been made on this in v1.0.0 via the new, sped-up
+    optimization strategy. The “slow” method should now be fast enough
+    to fix most of the issue.
+  - Additional improvements include better decontamination of AF from
+    the spectral variants, which was causing cells to be pushed further
+    away from the threshold for optimization, and a rduction in
+    low-level noise introduced into the spectral variants due to
+    fluctuations in electronic noise or autofluorescence. Any signal in
+    the variant spectrum in a channel where the optimized single
+    spectrum has less than 5% of the peak detector signal is now
+    regularized towards the optimized spectrum. This focuses the
+    variation on the “peaks”, which is what causes the unmixing errors
+    and spread.
 
 - Better correction of unmixing errors
 
@@ -139,6 +110,7 @@ appreciated.
     fluorophore signatures.
   - For this to be practical, per-cell fluorophore optimization needs to
     be faster.
+  - This does not appear to provide any additional benefit.
 
 To install the `dev` branch:
 

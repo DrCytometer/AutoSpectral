@@ -28,7 +28,7 @@ unmix.fcs(
   parallel = TRUE,
   threads = NULL,
   verbose = TRUE,
-  k = NULL,
+  n.variants = NULL,
   ...
 )
 ```
@@ -180,13 +180,13 @@ unmix.fcs(
   Logical, controls messaging. Default is `TRUE`. Set to `FALSE` to have
   it shut up.
 
-- k:
+- n.variants:
 
-  Number of variants (and autofluorescence spectra) to test per cell.
-  Allows explicit control over the number used, as opposed to `speed`,
-  which selects from pre-defined choices. Providing a numeric value to
-  `k` will override `speed`, allowing up to `k` (or the max available)
-  variants to be tested. The default is `NULL`, in which case `k` will
+  Number of variants to test per cell. Allows explicit control over the
+  number used, as opposed to `speed`, which selects from pre-defined
+  choices. Providing a numeric value to `n.variants` will override
+  `speed`, allowing up to `n.variants` (or the max available) variants
+  to be tested. The default is `NULL`, in which case `n.variants` will
   be ignored.
 
 - ...:

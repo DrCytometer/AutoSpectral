@@ -80,7 +80,7 @@ directory of the user's choice.</p>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  k <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -231,12 +231,12 @@ available cores on the machine. Multi-threading is only used if <code>parallel</
 to have it shut up.</p></dd>
 
 
-<dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
-<dd><p>Number of variants (and autofluorescence spectra) to test per cell.
-Allows explicit control over the number used, as opposed to <code>speed</code>, which
-selects from pre-defined choices. Providing a numeric value to <code>k</code> will
-override <code>speed</code>, allowing up to <code>k</code> (or the max available) variants to be
-tested. The default is <code>NULL</code>, in which case <code>k</code> will be ignored.</p></dd>
+<dt id="arg-n-variants">n.variants<a class="anchor" aria-label="anchor" href="#arg-n-variants"></a></dt>
+<dd><p>Number of variants to test per cell. Allows explicit control
+over the number used, as opposed to <code>speed</code>, which selects from pre-defined
+choices. Providing a numeric value to <code>n.variants</code> will override <code>speed</code>,
+allowing up to <code>n.variants</code> (or the max available) variants to be tested. The
+default is <code>NULL</code>, in which case <code>n.variants</code> will be ignored.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

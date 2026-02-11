@@ -119,7 +119,8 @@ with the BLAS.</p>
 <p>Now, install AutoSpectralRcpp. This is fully accessible from R and
 integrates with AutoSpectral. But, when it gets to the slow bits in the
 unmixing, it switches over to calculating in C++, so it can be 10-100x
-faster. Do this after upgrading the BLAS.</p>
+faster. Do this after upgrading the BLAS because the C++ gets compiled
+with whatever BLAS you’ve got installed.</p>
 <p><a href="https://github.com/DrCytometer/AutoSpectralRcpp" class="external-link">AutoSpectralRcpp</a></p>
 <p>You will need <a href="https://cran.r-project.org/bin/windows/Rtools/" class="external-link">Rtools</a> to
 compile this.</p>
@@ -153,21 +154,18 @@ explicitly set a number of threads and set <code>parallel=TRUE</code>.
 This is one less than <code><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">parallelly::availableCores()</a></code>, so it
 is designed to allow you to keep working on minor stuff while
 AutoSpectral chugs along in the background.</p>
-<p>For unmixing larger data sets, you will do well to use a machine with
-more CPUs. Suggestions for faster processing are welcome. Some modest
-improvements are in the works.</p>
+<p>Or just check how many you have available:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
-<p>To replace this with the (hopefully) stable version, run this:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/remove.packages.html" class="external-link">remove.packages</a></span><span class="op">(</span><span class="st">"AutoSpectral"</span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">parallelly</span><span class="fu">::</span><span class="fu"><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">availableCores</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>For unmixing larger data sets, you will do well to use a machine with
+more CPUs. Version 1.0.0 brings faster processing for the unmixing.</p>
 </div>
 <div class="section level2">
 <h2 id="installation-and-runtime">Installation and Runtime<a class="anchor" aria-label="anchor" href="#installation-and-runtime"></a>
 </h2>
 <p>Installation via GitHub should take only a minute or so. It takes
-less than that on a Dell i7 core laptop.</p>
+less than that on my Dell i7 core laptop, but that may also be because I
+have already installed the dependencies.</p>
 <p>Occasionally, the help gets corrupted. Just re-install if that
 happens. If you know why this happens, let me know.</p>
 <p>Installation of <code>AutoSpectralRcpp</code> will take a couple of
@@ -202,6 +200,10 @@ parallel</li>
 <code><a href="../reference/get.spectral.variants.html">get.spectral.variants()</a></code> v.0.9.0: 65sec sequential,
 32sec parallel</li>
 </ul>
+<p>These should run faster in v1.0.0 for datasets with lots of cells
+because I have changed the default plotting settings to limit the
+maximum number of events plotted (plotting lots of points is slow in R,
+even with the accelerated <code>scattermore</code> package).</p>
 <p>Unmixing time depends on the following variable:</p>
 <ul>
 <li>file size (number of cells/events, including debris)</li>
@@ -222,7 +224,7 @@ laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:</p>
 <li>
 <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v0.9.0: 9sec</li>
 <li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v1.0.0: 9sec (most of this is
+<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v1.0.0: 9-10sec (most of this is
 handling the FCS file)</li>
 <li>
 <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v0.8.7: 2min</li>

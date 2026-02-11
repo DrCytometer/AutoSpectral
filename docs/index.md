@@ -21,7 +21,8 @@ BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC", "FlowSOM"))
 
 # You'll need devtools or remotes to install from GitHub.
 # install.packages("devtools")
-devtools::install_github("DrCytometer/AutoSpectral@dev")
+# install.packages("remotes")
+remotes::install_github("DrCytometer/AutoSpectral@dev")
 ```
 
 ## Introduction
@@ -59,8 +60,8 @@ The central ideas are as follows:
   magnitude and in type. We can figure out, more or less, what this
   should be for each cell.
 - Fluorophore emissions are variable, and this variability manifests on
-  the level of the cell. Again, we can sort of figure this out and deal
-  with it.
+  the level of the cell. Again, we can more or less figure this out and
+  deal with it.
 
 At the moment, the following cytometers are supported:
 
@@ -103,7 +104,8 @@ BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC", "FlowSOM"))
 
 # You'll need devtools or remotes to install from GitHub.
 # install.packages("devtools")
-devtools::install_github("DrCytometer/AutoSpectral")
+# install.packages("remotes")
+remotes::install_github("DrCytometer/AutoSpectral")
 ```
 
 As of version 0.8.7, there is a Shiny helper tool to assist you in
@@ -136,7 +138,7 @@ You can install the development version of AutoSpectral from
 [GitHub](https://github.com/) with:
 
 ``` r
-devtools::install_github("DrCytometer/AutoSpectral@dev")
+remotes::install_github("DrCytometer/AutoSpectral@dev")
 ```
 
 ## Bug fixes and known issues
@@ -145,6 +147,9 @@ AutoSpectral is pretty complex and newly released, so there will be
 bugs. Sorry. Thanks to all of you providing feedback. Please submit any
 and all issues either using the Issues page or via email at
 colibri-cytometry at gmail.
+
+All of the functions available in AutoSpectral can be viewed
+[here](https://drcytometer.github.io/AutoSpectral/reference/index.html).
 
 To submit a bug report, go to
 [Issues](https://github.com/DrCytometer/AutoSpectral/issues).
