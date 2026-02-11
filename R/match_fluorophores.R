@@ -58,7 +58,7 @@ match.fluorophores <- function( control.filenames, fluorophore.database ) {
 
     if ( length( fluorophore ) == 0) {
       fluorophore <- "No match"
-      message( paste0( "\033[31m", "No Match for: ", filename, "\033[0m" ) )
+      message( paste0( "\033[31m", "No matching fluorophore for: ", filename, "\033[0m" ) )
     }
 
     fluorophore.matches[ filename ] <- fluorophore
