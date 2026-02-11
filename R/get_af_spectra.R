@@ -134,6 +134,7 @@ get.af.spectra <- function(
   rownames( af.spectra ) <- paste0( "AF", 1:nrow( af.spectra ) )
 
   if ( figures ) {
+    if ( verbose ) message( "Plotting autofluorescence spectra" )
     # plot the base AF spectra as traces (too many for full refined set)
     spectral.trace(
       spectral.matrix = af.spectra,
@@ -142,6 +143,8 @@ get.af.spectra <- function(
       plot.dir = plot.dir,
       split.lasers = FALSE
     )
+    # as a heatmap
+    spectral.heatmap( af.spectra, title, plot.dir )
   }
 
 
@@ -416,10 +419,7 @@ get.af.spectra <- function(
   # plotting as heatmaps and signatures
   if ( figures ) {
     ### plotting of spectra ###
-    if ( verbose ) message( "Plotting spectra" )
-
-    # as a heatmap
-    spectral.heatmap( af.spectra, title, plot.dir )
+    if ( verbose ) message( "Plotting autofluorescence variation" )
 
     # plot the full set as a spectral variation plot
     spectral.variant.plot(
