@@ -29,7 +29,7 @@
 #' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
 #' and `turbo`.
 #' @param max.points Number of points to plot (speeds up plotting). Default is
-#' `1e5`.
+#' `5e4`.
 #'
 #' @return Saves the plot as a JPEG file in the specified directory.
 
@@ -43,7 +43,7 @@ gate.define.plot <- function(
     scatter.and.channel.label,
     asp,
     color.palette = "rainbow",
-    max.points = 1e5
+    max.points = 5e4
   ) {
 
   # downsample (faster plotting)

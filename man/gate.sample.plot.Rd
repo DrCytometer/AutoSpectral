@@ -13,7 +13,7 @@ gate.sample.plot(
   control.type,
   asp,
   color.palette = "rainbow",
-  max.points = 1e+05
+  max.points = 50000
 )
 }
 \arguments{
@@ -40,7 +40,7 @@ options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{civi
 and \code{turbo}.}
 
 \item{max.points}{Number of points to plot (speeds up plotting). Default is
-\code{1e5}.}
+\code{5e4}.}
 }
 \value{
 Saves the plot as a JPEG file in the specified directory.

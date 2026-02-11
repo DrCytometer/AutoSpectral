@@ -17,7 +17,7 @@
 #' @param asp The AutoSpectral parameter list.
 #' Prepare using `get.autospectral.param`
 #' @param max.points Number of points to plot (speeds up plotting). Default is
-#' `1e5`.
+#' `5e4`.
 #' @param color.palette Optional character string defining the viridis color
 #' palette to be used for the fluorophore traces. Default is `viridis`. Options
 #' are the viridis color options: `magma`, `inferno`, `plasma`, `viridis`,
@@ -30,7 +30,7 @@ gate.af.sample.plot <- function(
     samp,
     af.boundary.upper,
     asp,
-    max.points = 1e5,
+    max.points = 5e4,
     color.palette = "viridis"
   ) {
 
