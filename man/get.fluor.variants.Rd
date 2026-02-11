@@ -22,6 +22,7 @@ get.fluor.variants(
   raw.thresholds,
   unmixed.thresholds,
   flow.channel,
+  detector.n,
   refine = TRUE,
   problem.quantile = 0.95
 )
@@ -77,6 +78,8 @@ unmixing.}
 
 \item{flow.channel}{A named vector of peak raw channels, one per fluorophore.}
 
+\item{detector.n}{Numeric, number of detectors (\code{spectral.channel})}
+
 \item{refine}{Logical, default is \code{TRUE}. Controls whether to perform a second
 round of variation measurement on "problem cells", which are those with the
 highest spillover, as defined by \code{problem.quantile}.}
@@ -86,7 +89,7 @@ which cells will be considered "problematic" after unmixing with per-cell AF
 extraction. Cells in the \code{problem.quantile} or above with respect to total
 signal in the fluorophore (non-AF) channels after per-cell AF extraction will
 be used to determine additional autofluorescence spectra, using a second round
-of clustering and modulation of the previously selected autofluroescence
+of clustering and modulation of the previously selected autofluorescence
 spectra. A value of \code{0.95} means the top 5\% of cells, those farthest from zero,
 will be selected for further investigation.}
 }

@@ -43,6 +43,7 @@
 #' 99.5th percentile on the unstained sample, typically after single-cell AF
 #' unmixing.
 #' @param flow.channel A named vector of peak raw channels, one per fluorophore.
+#' @param detector.n Numeric, number of detectors (`spectral.channel`)
 #' @param refine Logical, default is `TRUE`. Controls whether to perform a second
 #' round of variation measurement on "problem cells", which are those with the
 #' highest spillover, as defined by `problem.quantile`.
@@ -51,7 +52,7 @@
 #' extraction. Cells in the `problem.quantile` or above with respect to total
 #' signal in the fluorophore (non-AF) channels after per-cell AF extraction will
 #' be used to determine additional autofluorescence spectra, using a second round
-#' of clustering and modulation of the previously selected autofluroescence
+#' of clustering and modulation of the previously selected autofluorescence
 #' spectra. A value of `0.95` means the top 5% of cells, those farthest from zero,
 #' will be selected for further investigation.
 #'
@@ -75,6 +76,7 @@ get.fluor.variants <- function(
     raw.thresholds,
     unmixed.thresholds,
     flow.channel,
+    detector.n,
     refine = TRUE,
     problem.quantile = 0.95
 ) {
@@ -111,12 +113,24 @@ get.fluor.variants <- function(
     raw.idx <- raw.idx[ sorted.idx ]
   }
 
+  if ( length( raw.idx ) < 20 ) {
+    warning(
+      paste0(
+        "Insufficient positive events found for ",
+        fluor,
+        ". Skipping spectral variation."
+      )
+    )
+    return( original.spectrum )
+  }
+
   # remove the AF channel in spectra if present
   if ( "AF" %in% rownames( spectra ) )
     no.af.spectra <- spectra[ rownames( spectra ) != "AF", , drop = FALSE ]
   else
     no.af.spectra <- spectra
 
+  fluorophores <- rownames( no.af.spectra )
   fluorophore.n <- nrow( no.af.spectra )
 
   ### Processing method depends on whether we use cells or beads ###
@@ -138,10 +152,7 @@ get.fluor.variants <- function(
 
     # set up for per-cell AF extraction
     af.n <- nrow( af.spectra )
-    fluorophores <- rownames( no.af.spectra )
-    fluorophore.n <- nrow( no.af.spectra )
     af.idx <- fluorophore.n + 1
-    detector.n <- ncol( no.af.spectra )
     combined.spectra <- matrix(
       0,
       nrow = af.idx,
@@ -222,7 +233,11 @@ get.fluor.variants <- function(
     ### Beads: we just need to subtract the background, no AF ###
 
     # check for universal negative, if none, use internal negative
-    if ( universal.negative[ fluor ] != FALSE ) {
+    is.valid.file <- !is.na( universal.negative[ fluor ] ) &&
+      universal.negative[ fluor ] != "FALSE" &&
+      grepl( "\\.fcs$", universal.negative[ fluor ], ignore.case = TRUE )
+
+    if ( is.valid.file ) {
       neg.data <- suppressWarnings(
         flowCore::read.FCS(
           file.path( control.dir, universal.negative[ fluor ] ),
@@ -237,9 +252,9 @@ get.fluor.variants <- function(
       if ( nrow( neg.data ) > asp$gate.downsample.n.beads ) {
         set.seed( 42 )
         neg.idx <- sample( nrow( neg.data ), asp$gate.downsample.n.beads )
-        background <- apply( neg.data[ neg.idx, spectral.channel ], 2, stats::median )
+        background <- apply( neg.data[ neg.idx, ], 2, stats::median )
       } else {
-        background <- apply( neg.data[ , spectral.channel ], 2, stats::median )
+        background <- apply( neg.data, 2, stats::median )
       }
 
     } else {
@@ -555,8 +570,8 @@ get.fluor.variants <- function(
     # for each cluster, we find which base variants were assigned and update them
     cluster.ids <- unique( map.error$mapping[ , 1 ] )
 
-    modulated.list <- lapply( cluster.ids, function( cl) {
-      cl.sub.idx <- which( map.error$mapping[ , 1] == cl )
+    modulated.list <- lapply( cluster.ids, function( cl ) {
+      cl.sub.idx <- which( map.error$mapping[ , 1 ] == cl )
       global.idx <- problem.idx[ cl.sub.idx ]
 
       # get the median correction pattern for this cluster
