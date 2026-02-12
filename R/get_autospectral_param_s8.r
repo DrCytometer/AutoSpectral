@@ -32,11 +32,13 @@ get.autospectral.param.s8 <- function( autosp.param )
 
   autosp.param$default.scatter.parameter <- c( "FSC-A", "SSC (Violet)-A" )
 
-  autosp.param$time.and.scatter <- c( "FSC-A", "FSC-H", "FSC-W",
-                                      "SSC (Violet)-A", "SSC (Violet)-H", "SSC (Violet)-W",
-                                      "SSC (Imaging)-A", "SSC (Imaging)-H", "SSC (Imaging)-W",
-                   "LightLoss (Imaging)-A", "LightLoss (Imaging)-H","LightLoss (Imaging)-W",
-                   "LightLoss (Violet)-A", "LightLoss (Violet)-H", "LightLoss (Violet)-W"  )
+  autosp.param$time.and.scatter <- c(
+    "FSC-A", "FSC-H", "FSC-W",
+    "SSC (Violet)-A", "SSC (Violet)-H", "SSC (Violet)-W",
+    "SSC (Imaging)-A", "SSC (Imaging)-H", "SSC (Imaging)-W",
+    "LightLoss (Imaging)-A", "LightLoss (Imaging)-H","LightLoss (Imaging)-W",
+    "LightLoss (Violet)-A", "LightLoss (Violet)-H", "LightLoss (Violet)-W"
+  )
 
   autosp.param$default.transformation.param <- list(
           length = 256,
@@ -46,16 +48,18 @@ get.autospectral.param.s8 <- function( autosp.param )
           width = -500
         )
 
-  autosp.param$non.spectral.channel <- c( "Time", "SSC", "FSC", "-H", "-W", "-T",
-                                          "Delta", "Plate",
-                                          "Radial", "Correlation", "Intensity",
-                                          "Eccentricity", "Diffusivity", "Center",
-                                          "Moment", "Size", "LightLoss",
-                                          "Saturated", "Sorted", "Row", "Column",
-                                          "Img", "Protocol", "EventLabel",
-                                          "Region", "Gate", "Index", "Phase",
-                                          "Event", "Drop", "Spectral", "Waveform",
-                                          "Merged", "Flow", "Packet", "Reserved"  )
+  autosp.param$non.spectral.channel <- c(
+    "Time", "SSC", "FSC", "-H", "-W", "-T",
+    "Delta", "Plate",
+    "Radial", "Correlation", "Intensity",
+    "Eccentricity", "Diffusivity", "Center",
+    "Moment", "Size", "LightLoss",
+    "Saturated", "Sorted", "Row", "Column",
+    "Img", "Protocol", "EventLabel",
+    "Region", "Gate", "Index", "Phase",
+    "Event", "Drop", "Spectral", "Waveform",
+    "Merged", "Flow", "Packet", "Reserved"
+  )
 
   autosp.param$spectral.channel <- "[0-9]\\)-A"
 
@@ -68,7 +72,7 @@ get.autospectral.param.s8 <- function( autosp.param )
 
   autosp.param$ribbon.breaks <- c( -1e3, 0, 1e3, 1e4, 1e5, 1e6, 1e7 )
 
-  autosp.param
+  return( autosp.param )
 
 }
 
