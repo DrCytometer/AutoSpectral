@@ -43,7 +43,6 @@
 #' 99.5th percentile on the unstained sample, typically after single-cell AF
 #' unmixing.
 #' @param flow.channel A named vector of peak raw channels, one per fluorophore.
-#' @param detector.n Numeric, number of detectors (`spectral.channel`)
 #' @param refine Logical, default is `TRUE`. Controls whether to perform a second
 #' round of variation measurement on "problem cells", which are those with the
 #' highest spillover, as defined by `problem.quantile`.
@@ -76,7 +75,6 @@ get.fluor.variants <- function(
     raw.thresholds,
     unmixed.thresholds,
     flow.channel,
-    detector.n,
     refine = TRUE,
     problem.quantile = 0.95
 ) {
@@ -96,6 +94,9 @@ get.fluor.variants <- function(
       emptyValue = FALSE
       )
     )
+
+  # how many detectors do we have?
+  detector.n <- ncol( spectra )
 
   # read exprs for spectral channels only
   pos.data <- flowCore::exprs( pos.data )[ , spectral.channel ]
@@ -244,8 +245,8 @@ get.fluor.variants <- function(
           transformation = NULL,
           truncate_max_range = FALSE,
           emptyValue = FALSE
-          )
         )
+      )
       neg.data <- flowCore::exprs( neg.data )[ , spectral.channel ]
 
       # get background on up to 10k events
@@ -334,7 +335,7 @@ get.fluor.variants <- function(
   similar <- sapply( seq_len( nrow( variant.spectra ) ), function( sp ) {
     sim <- cosine.similarity( rbind( original.spectrum, variant.spectra[ sp, ] ) )
     sim <- sim[ lower.tri( sim ) ]
-    sim > 0.985
+    sim > asp$sim.threshold
   } )
 
   # revert to the original spectrum only if all the variants look odd

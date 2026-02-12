@@ -17,7 +17,7 @@ get.spectral.variants(
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
-  refine = TRUE,
+  refine = FALSE,
   problem.quantile = 0.95,
   ...
 )
@@ -66,9 +66,13 @@ will be used. \code{asp$worker.process.n} is set by default to be one less than 
 available cores on the machine. Multi-threading is only used if \code{parallel} is
 \code{TRUE}.}
 
-\item{refine}{Logical, default is \code{TRUE}. Controls whether to perform a second
+\item{refine}{Logical, default is \code{FALSE}. Controls whether to perform a second
 round of variation measurement on "problem cells", which are those with the
-highest spillover, as defined by \code{problem.quantile}.}
+highest spillover, as defined by \code{problem.quantile}. When \code{FALSE},
+behavior is identical to versions of AutoSpectral prior to 1.0.0. Setting to
+\code{TRUE} may help reduce spillover spread and unmixing errors. Using \code{refine=TRUE}
+does not impact subsequent unmixing calculation time in any significant way,
+unlike the same setting in \code{get.af.spectra()}.}
 
 \item{problem.quantile}{Numeric, default \code{0.95}. The quantile for determining
 which cells will be considered "problematic" after unmixing with per-cell AF

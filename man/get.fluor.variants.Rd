@@ -22,7 +22,6 @@ get.fluor.variants(
   raw.thresholds,
   unmixed.thresholds,
   flow.channel,
-  detector.n,
   refine = TRUE,
   problem.quantile = 0.95
 )
@@ -77,8 +76,6 @@ the threshold for positivity in each unmixed channel. Determined by the
 unmixing.}
 
 \item{flow.channel}{A named vector of peak raw channels, one per fluorophore.}
-
-\item{detector.n}{Numeric, number of detectors (\code{spectral.channel})}
 
 \item{refine}{Logical, default is \code{TRUE}. Controls whether to perform a second
 round of variation measurement on "problem cells", which are those with the

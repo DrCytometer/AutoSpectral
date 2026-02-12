@@ -45,9 +45,13 @@
 #' will be used. `asp$worker.process.n` is set by default to be one less than the
 #' available cores on the machine. Multi-threading is only used if `parallel` is
 #' `TRUE`.
-#' @param refine Logical, default is `TRUE`. Controls whether to perform a second
+#' @param refine Logical, default is `FALSE`. Controls whether to perform a second
 #' round of variation measurement on "problem cells", which are those with the
-#' highest spillover, as defined by `problem.quantile`.
+#' highest spillover, as defined by `problem.quantile`. When `FALSE`,
+#' behavior is identical to versions of AutoSpectral prior to 1.0.0. Setting to
+#' `TRUE` may help reduce spillover spread and unmixing errors. Using `refine=TRUE`
+#' does not impact subsequent unmixing calculation time in any significant way,
+#' unlike the same setting in `get.af.spectra()`.
 #' @param problem.quantile Numeric, default `0.95`. The quantile for determining
 #' which cells will be considered "problematic" after unmixing with per-cell AF
 #' extraction. Cells in the `problem.quantile` or above with respect to total
@@ -77,7 +81,7 @@ get.spectral.variants <- function(
     parallel = FALSE,
     verbose = TRUE,
     threads = NULL,
-    refine = TRUE,
+    refine = FALSE,
     problem.quantile = 0.95,
     ...
 ) {
@@ -198,7 +202,6 @@ get.spectral.variants <- function(
 
   # check for data/spectra column matching
   spectra.cols <- colnames( spectra )
-  detector.n <- ncol( spectra )
 
   if ( !identical( spectral.channel, spectra.cols ) ) {
 
@@ -233,7 +236,9 @@ get.spectral.variants <- function(
   }
 
   # get thresholds for positivity
-  if ( verbose ) message( paste0( "\033[32m", "Calculating positivity thresholds", "\033[0m" ) )
+  if ( verbose )
+    message( paste0( "\033[32m", "Calculating positivity thresholds", "\033[0m" ) )
+
   unstained <- suppressWarnings(
     flowCore::read.FCS(
       file.path( control.dir, flow.file.name[ "AF" ] ),
@@ -288,7 +293,6 @@ get.spectral.variants <- function(
     raw.thresholds = raw.thresholds,
     unmixed.thresholds = unmixed.thresholds,
     flow.channel = flow.channel,
-    detector.n = detector.n,
     refine = refine,
     problem.quantile = problem.quantile
   )
@@ -318,7 +322,8 @@ get.spectral.variants <- function(
     result <- list( cleanup = NULL )
   }
 
-  if ( verbose ) message( paste0( "\033[34m", "Identifying spectral variation", "\033[0m" ) )
+  if ( verbose )
+    message( paste0( "\033[34m", "Identifying spectral variation", "\033[0m" ) )
 
   # initialize with base spectra for safety
   spectral.variants <- lapply( table.fluors, function( fl ) {
@@ -333,8 +338,8 @@ get.spectral.variants <- function(
         tryCatch(
           expr = {
             # check that channels are mapped
-            if (is.na(args.list$flow.channel[f])) {
-              stop(paste("No flow channel mapped for", f))
+            if ( is.na( args.list$flow.channel[ f ] ) ) {
+              stop( paste( "No flow channel mapped for", f ) )
             }
 
             # get the variants
