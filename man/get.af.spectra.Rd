@@ -14,7 +14,7 @@ get.af.spectra(
   table.dir = NULL,
   title = "Autofluorescence spectra",
   verbose = TRUE,
-  refine = TRUE,
+  refine = FALSE,
   problem.quantile = 0.99
 )
 }
@@ -44,9 +44,16 @@ Default is \code{NULL}, which inherits from \code{asp$table.af.dir}.}
 
 \item{verbose}{Logical, controls messaging. Default is \code{TRUE}.}
 
-\item{refine}{Logical, default is \code{TRUE}. Controls whether to perform a second
+\item{refine}{Logical, default is \code{FALSE}. Controls whether to perform a second
 round of autofluorescence measurement on "problem cells", which are those
-with the highest spillover, as defined by \code{problem.quantile}.}
+with the highest spillover, as defined by \code{problem.quantile}. When \code{FALSE},
+behavior is identical to versions of AutoSpectral prior to 1.0.0. If you are
+working with samples containing complex autofluorescence, e.g., tissues or
+tumors, using \code{refine=TRUE} will improve autofluorescence extraction in the
+unmixing at the cost of an increase in unmixing time. The increase in time
+will depend on the method used to assign autofluorescence spectra per cell
+(residual based assignment is very fast) and whether you have installed
+\code{AutoSpectralRcpp}, which will speed up assignment and unmixing.}
 
 \item{problem.quantile}{Numeric, default \code{0.99}. The quantile for determining
 which cells will be considered "problematic" after unmixing with per-cell AF

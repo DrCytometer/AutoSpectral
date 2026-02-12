@@ -26,9 +26,16 @@
 #' @param title Title for the output spectral plots and csv file. Default is
 #' `Autofluorescence spectra`.
 #' @param verbose Logical, controls messaging. Default is `TRUE`.
-#' @param refine Logical, default is `TRUE`. Controls whether to perform a second
+#' @param refine Logical, default is `FALSE`. Controls whether to perform a second
 #' round of autofluorescence measurement on "problem cells", which are those
-#' with the highest spillover, as defined by `problem.quantile`.
+#' with the highest spillover, as defined by `problem.quantile`. When `FALSE`,
+#' behavior is identical to versions of AutoSpectral prior to 1.0.0. If you are
+#' working with samples containing complex autofluorescence, e.g., tissues or
+#' tumors, using `refine=TRUE` will improve autofluorescence extraction in the
+#' unmixing at the cost of an increase in unmixing time. The increase in time
+#' will depend on the method used to assign autofluorescence spectra per cell
+#' (residual based assignment is very fast) and whether you have installed
+#' `AutoSpectralRcpp`, which will speed up assignment and unmixing.
 #' @param problem.quantile Numeric, default `0.99`. The quantile for determining
 #' which cells will be considered "problematic" after unmixing with per-cell AF
 #' extraction. Cells in the `problem.quantile` or above with respect to total
@@ -52,7 +59,7 @@ get.af.spectra <- function(
     table.dir = NULL,
     title = "Autofluorescence spectra",
     verbose = TRUE,
-    refine = TRUE,
+    refine = FALSE,
     problem.quantile = 0.99
 ) {
 
@@ -135,16 +142,26 @@ get.af.spectra <- function(
 
   if ( figures ) {
     if ( verbose ) message( "Plotting autofluorescence spectra" )
-    # plot the base AF spectra as traces (too many for full refined set)
-    spectral.trace(
-      spectral.matrix = af.spectra,
-      asp = asp,
-      title = paste( title, "Autofluorescence spectra" ),
-      plot.dir = plot.dir,
-      split.lasers = FALSE
+
+    # error handling so plotting never causes the function to abort
+    tryCatch(
+      expr = {
+        # plot the base AF spectra as traces (too many for full refined set)
+        spectral.trace(
+          spectral.matrix = af.spectra,
+          asp = asp,
+          title = paste( title, "Autofluorescence spectra" ),
+          plot.dir = plot.dir,
+          split.lasers = FALSE
+        )
+        # as a heatmap
+        spectral.heatmap( af.spectra, title, plot.dir )
+      },
+      error = function( e ) {
+        message( "Error in plotting AF spectra: ", e$message )
+        return( NULL )
+      }
     )
-    # as a heatmap
-    spectral.heatmap( af.spectra, title, plot.dir )
   }
 
 
@@ -361,45 +378,40 @@ get.af.spectra <- function(
         worst.channels <- order( channel.sd, decreasing = TRUE )[ 1:2 ]
         worst.channels <- colnames( unmixed.no.af )[ worst.channels ]
 
-        # plot unmixed data before and after AF extraction
-        create.biplot(
-          unmixed.no.af,
-          x.dim = worst.channels[ 1 ],
-          y.dim = worst.channels[ 2 ],
-          asp = asp,
-          title = paste(
-            file.name,
-            "_",
-            title,
-            "_No_AF_Extraction"
-          ),
-          output.dir = plot.dir
-        )
-        create.biplot(
-          unmixed,
-          x.dim = worst.channels[ 1 ],
-          y.dim = worst.channels[ 2 ],
-          asp = asp,
-          title = paste0(
-            file.name,
-            "_",
-            title,
-            "_PerCell_AF_Extraction_First_Pass"
-          ),
-          output.dir = plot.dir
-        )
-        create.biplot(
-          unmixed.second,
-          x.dim = worst.channels[ 1 ],
-          y.dim = worst.channels[ 2 ],
-          asp = asp,
-          title = paste0(
-            file.name,
-            "_",
-            title,
-            "_PerCell_AF_Extraction_Second_Pass"
-          ),
-          output.dir = plot.dir
+
+        # error handling so plotting never causes the function to abort
+        tryCatch(
+          expr = {
+            # plot unmixed data before and after AF extraction
+            create.biplot(
+              unmixed.no.af,
+              x.dim = worst.channels[ 1 ],
+              y.dim = worst.channels[ 2 ],
+              asp = asp,
+              title = paste( file.name, "_", title, "_No_AF_Extraction" ),
+              output.dir = plot.dir
+            )
+            create.biplot(
+              unmixed,
+              x.dim = worst.channels[ 1 ],
+              y.dim = worst.channels[ 2 ],
+              asp = asp,
+              title = paste0( file.name, "_", title, "_PerCell_AF_Extraction_First_Pass" ),
+              output.dir = plot.dir
+            )
+            create.biplot(
+              unmixed.second,
+              x.dim = worst.channels[ 1 ],
+              y.dim = worst.channels[ 2 ],
+              asp = asp,
+              title = paste0( file.name, "_", title, "_PerCell_AF_Extraction_Second_Pass" ),
+              output.dir = plot.dir
+            )
+          },
+          error = function( e ) {
+            message( "Error in plotting AF extraction: ", e$message )
+            return( NULL )
+          }
         )
       }
 
@@ -421,13 +433,19 @@ get.af.spectra <- function(
     ### plotting of spectra ###
     if ( verbose ) message( "Plotting autofluorescence variation" )
 
-    # plot the full set as a spectral variation plot
-    spectral.variant.plot(
-      af.spectra,
-      mean.af,
-      title = paste( title, "Autofluorescence variation" ),
-      save = TRUE,
-      plot.dir = plot.dir
+    # error handling so plotting never causes the function to abort
+    tryCatch(
+      expr = {
+        # plot the full set as a spectral variation plot
+        spectral.variant.plot(
+          af.spectra,
+          mean.af,
+          title = paste( title, "Autofluorescence variation" ),
+          save = TRUE,
+          plot.dir = plot.dir
+        )
+      },
+      error = function( e ) e
     )
   }
 
