@@ -26,13 +26,13 @@
 #' signals closest to 0 (`use.dist0` = `TRUE`) or by which unmixing minimizes the
 #' per-cell residual (`use.dist0` = `FALSE`). Default is `TRUE`.
 #' @param verbose Logical, default `TRUE`. Whether to send messages to the console.
-#' @param speed Selector for the precision-speed trade-off in AutoSpectral per-cell
-#' fluorophore optimization. Options are `slow`, `medium` and `fast`. From v1.0.0,
-#' this controls the number of variants tested per cell (and per fluorophore).
-#' More variants takes longer, but gives better resolution in the unmixed data.
-#' When `speed = fast`, as single variant will be tested; for `medium`, three
-#' will be tested and for `slow`, 10 variants will be tested. From AutoSpectral
-#' v1.0.0, `slow` is the default and is available in the pure R version.
+#' @param speed Default is `fast`. Selector for the precision-speed trade-off in
+#' AutoSpectral per-cell fluorophore optimization. Options are `slow`, `medium`
+#' and `fast`. From v1.0.0, this controls the number of variants tested per cell
+#' (and per fluorophore). More variants takes longer, but gives better resolution
+#' in some unmixed data. When `speed = fast`, as single variant will be tested;
+#' for `medium`, three will be tested and for `slow`, 10 variants will be tested.
+#' From AutoSpectral v1.0.0, all options are available in the pure R version.
 #' Installation of `AutoSpectralRcpp` is strongly encouraged for speed, though.
 #' @param parallel Logical, default is `TRUE`. The new parallel processing
 #' should always be faster.
@@ -60,7 +60,7 @@ unmix.autospectral <- function(
     spectra.variants = NULL,
     use.dist0 = TRUE,
     verbose = TRUE,
-    speed = c("slow", "medium", "fast"),
+    speed = c("fast", "medium", "slow"),
     parallel = TRUE,
     threads = NULL,
     n.variants = NULL,
