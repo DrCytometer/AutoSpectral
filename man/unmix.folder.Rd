@@ -9,7 +9,7 @@ unmix.folder(
   spectra,
   asp,
   flow.control,
-  method = "Automatic",
+  method = "AutoSpectral",
   weighted = FALSE,
   weights = NULL,
   af.spectra = NULL,
@@ -22,31 +22,38 @@ unmix.folder(
   divergence.threshold = 10000,
   divergence.handling = "Balance",
   balance.weight = 0.5,
-  speed = "fast",
+  speed = c("slow", "medium", "fast"),
   parallel = FALSE,
   threads = NULL,
   verbose = TRUE,
+  n.variants = NULL,
   ...
 )
 }
 \arguments{
-\item{fcs.dir}{Directory containing FCS files to be unmixed.}
+\item{fcs.dir}{Directory (file path) containing FCS files to be unmixed.}
 
-\item{spectra}{Matrix containing spectra information.}
+\item{spectra}{A matrix containing the spectral data. Fluorophores in rows,
+detectors in columns.}
 
 \item{asp}{The AutoSpectral parameter list.
 Prepare using \code{get.autospectral.param}}
 
 \item{flow.control}{A list containing flow cytometry control parameters.}
 
-\item{method}{A character string specifying the unmixing method to use.
-The default is \code{Automatic}, which uses \code{AutoSpectral} for AF extraction if
-af.spectra are provided and automatically selects \code{OLS} or \code{WLS} depending
-on which is normal for the given cytometer in \code{asp$cytometer}. This means
-that files from the ID7000, A8 and S8 will be unmixed using \code{WLS} while
-others will be unmixed with \code{OLS}. Any option can be set manually.
-Manual options are \code{OLS}, \code{WLS}, \code{AutoSpectral}, \code{Poisson} and \code{FastPoisson}.
-Default is \code{OLS}. \code{FastPoisson} requires installation of \code{AutoSpectralRcpp}.}
+\item{method}{A character string specifying the unmixing method to use. The
+default as of version 1.0.0 is now \code{AutoSpectral} to avoid confusion. To use
+AutoSpectral unmixing, you must provide at least \code{af.spectra} to perform
+autofluorescence extraction (on a per-cell basis). To also optimize
+fluorophore spectra, provide \code{spectra.variants}. To perform other types of
+unmixing, select from the options: \code{OLS}, \code{WLS}, \code{Poisson} or \code{FastPoisson}.
+\code{FastPoisson} requires installation of \code{AutoSpectralRcpp}.There is also
+\code{Automatic}, which switches depending on the inputs provided: it uses
+\code{AutoSpectral} for AF extraction if \code{af.spectra} are provided, and
+automatically selects \code{OLS} or \code{WLS} depending on which is normal for the
+given cytometer in \code{asp$cytometer}. This means that files from the ID7000,
+A8 and S8 will be unmixed using \code{WLS} while others will be unmixed with \code{OLS},
+if AutoSpectral unmixing is not activated.}
 
 \item{weighted}{Logical, whether to use ordinary or weighted least squares
 unmixing as the base algorithm in AutoSpectral unmixing.
@@ -68,45 +75,50 @@ of spectral signature variations for each fluorophore. Prepare using
 AutoSpectral unmixing. Required for per-cell fluorophore optimization.}
 
 \item{output.dir}{Directory to save the unmixed FCS files
-(default is asp$unmixed.fcs.dir).}
+(default is \code{asp$unmixed.fcs.dir}, which is \code{./AutoSpectral_unmixed}).}
 
 \item{file.suffix}{A character string to append to the output file name.
 Default is \code{NULL}}
 
-\item{include.raw}{Logical indicating whether to include raw data in the
-written FCS file. Default is \code{FALSE}}
+\item{include.raw}{A logical value indicating whether to include raw
+expression data in the written FCS file. Default is \code{FALSE} to provide smaller
+output files.}
 
-\item{include.imaging}{Logical indicating whether to include imaging data in
-the written FCS file: relevant for S8 and A8. Default is \code{FALSE}}
+\item{include.imaging}{A logical value indicating whether to include imaging
+parameters in the written FCS file. Default is \code{FALSE} to provide smaller
+output files.}
 
 \item{use.dist0}{Logical, controls whether the selection of the optimal AF
 signature for each cell is determined by which unmixing brings the fluorophore
 signals closest to 0 (\code{use.dist0} = \code{TRUE}) or by which unmixing minimizes the
 per-cell residual (\code{use.dist0} = \code{FALSE}). Default is \code{TRUE}. Used for
-AutoSpectral unmixing.}
+AutoSpectral unmixing. The minimization of fluorophore signals can be thought
+of as a "worst-case" scenario, but it provides more accurate assignments,
+particularly with large panels.}
 
-\item{divergence.threshold}{Numeric. Used for \code{FastPoisson} only. Threshold
-to trigger reversion towards WLS unmixing when Poisson result diverges.
-Default is \code{1e4}}
+\item{divergence.threshold}{Numeric. Used for \code{FastPoisson} only.
+Threshold to trigger reversion towards WLS unmixing when Poisson result
+diverges for a given point. To be deprecated.}
 
 \item{divergence.handling}{String. How to handle divergent cells from Poisson
-IRLS. Options are \code{NonNeg}, in which case non-negativity will be enforced,
-\code{WLS}, where values will revert to the WLS initial unmix or \code{Balance},
-where \code{WLS} and \code{NonNeg} results will be averaged. Default is \code{Balance}}
+IRLS. Options are \code{NonNeg} (non-negativity will be enforced), \code{WLS} (revert
+to WLS initial unmix) or \code{Balance} (WLS and NonNeg will be averaged).
+Default is \code{Balance}. To be deprecated.}
 
 \item{balance.weight}{Numeric. Weighting to average non-convergent cells.
-Used for \code{Balance} option under \code{divergence.handling}. Default is \code{0.5}}
+Used for \code{Balance} option under \code{divergence.handling}. Default is \code{0.5}.
+To be deprecated.}
 
 \item{speed}{Selector for the precision-speed trade-off in AutoSpectral per-cell
-fluorophore optimization. Options are the default \code{fast}, which selects the
-best spectral fit per cell by updating the predicted values for each
-fluorophore independently without repeating the unnmixing, \code{medium} which uses
-a Woodbury-Sherman-Morrison rank-one updating of the unnmixing matrix for
-better results and a moderate slow-down, or \code{slow}, which explicitly
-recomputes the unmixing matrix for each variant for maximum precision. The
-\code{fast} method is only one available in the \code{AutoSpectral} package and will be
-slow in the pure R implementation. Installation of \code{AutoSpectralRcpp} is
-strongly encouraged.}
+fluorophore optimization. Options are \code{fast}, \code{medium} and \code{slow}, with the
+default being \code{slow}. As of version 1.0.0, the backend for how this works
+has changed. Spectral variants and AF signatures are now pre-screened per cell
+to identify likely candidates, so brute force testing of all variants is no
+longer required. So, \code{speed} controls the number of variants to be tested per
+cell, with \code{fast} testing a single variant, \code{medium} testing 3 variants, and
+\code{slow} testing 10 variants. While this is now implemented in pure R in
+\code{AutoSpectral}, installation of \code{AutoSpectralRcpp} is strongly encouraged for
+faster processing.}
 
 \item{parallel}{Logical, default is \code{FALSE}. Set to \code{TRUE} to activate parallel
 processing for multiple FCS files.}
@@ -114,9 +126,16 @@ processing for multiple FCS files.}
 \item{threads}{Numeric, default is \code{NULL}, in which case \code{asp$worker.process.n}
 will be used. \code{asp$worker.process.n} is set by default to be one less than the
 available cores on the machine. Multi-threading is only used if \code{parallel} is
-\code{TRUE}.}
+\code{TRUE}. If working on a computing cluster, try \code{parallelly::availableCores()}.}
 
-\item{verbose}{Logical, controls messaging. Default is \code{TRUE}.}
+\item{verbose}{Logical, controls messaging. Default is \code{TRUE}. Set to \code{FALSE}
+to have it shut up.}
+
+\item{n.variants}{Number of variants to test per cell. Allows explicit control
+over the number used, as opposed to \code{speed}, which selects from pre-defined
+choices. Providing a numeric value to \code{n.variants} will override \code{speed},
+allowing up to \code{n.variants} (or the max available) variants to be tested. The
+default is \code{NULL}, in which case \code{n.variants} will be ignored.}
 
 \item{...}{Ignored. Previously used for deprecated arguments such as
 \code{calculate.error}.}

@@ -11,7 +11,7 @@ gate.af.sample.plot(
   samp,
   af.boundary.upper,
   asp,
-  max.points = 1e+05,
+  max.points = 50000,
   color.palette = "viridis"
 )
 ```
@@ -37,7 +37,7 @@ gate.af.sample.plot(
 
 - max.points:
 
-  Number of points to plot (speeds up plotting). Default is `1e5`.
+  Number of points to plot (speeds up plotting). Default is `5e4`.
 
 - color.palette:
 

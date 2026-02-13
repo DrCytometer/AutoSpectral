@@ -17,14 +17,23 @@
 #' @param title Optional prefix for plot titles, default is `NULL`, which gives
 #' "Initial" when `use.clean.expr` is `FALSE` and "Clean" when `use.clean.expr`
 #' is `TRUE`.
+#' @param figures Logical, default is `TRUE`. Whether to produce plots of the
+#' fluorophore spectra and cosine similarity.
 #'
 #' @return A matrix with the fluorophore spectra.
 #'
 #' @export
 
-get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
-                                     af.spectra = NULL, title = NULL )
-{
+get.fluorophore.spectra <- function(
+    flow.control,
+    asp,
+    use.clean.expr = TRUE,
+    af.spectra = NULL,
+    title = NULL,
+    figures = TRUE
+  ) {
+
+  # empty collection vector
   spectra.zero <- rep( 0, flow.control$spectral.channel.n )
   names( spectra.zero ) <- flow.control$spectral.channel
 
@@ -35,10 +44,10 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
 
   # iterate only over non-negative samples
   fluorophore.samples <- flow.control$fluorophore[
-    ! grepl( "negative", flow.control$fluorophore, ignore.case = TRUE ) ]
+    !grepl( "negative", flow.control$fluorophore, ignore.case = TRUE ) ]
 
   fluorophore.channels <- flow.control$channel[
-    ! grepl( "negative", flow.control$fluorophore, ignore.case = TRUE ) ]
+    !grepl( "negative", flow.control$fluorophore, ignore.case = TRUE ) ]
 
   # check for data
   if ( use.clean.expr ) {
@@ -53,7 +62,6 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
 
   # extract fluophore spectra using original "dirty" data
   if ( !use.clean.expr ) {
-
     message(
       paste0( "\033[34m",
               "Using original `dirty` expression data to get spectra",
@@ -98,7 +106,7 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
         }
       }
 
-      # normalize fluor.spectra.coef
+      # normalize fluor.spectra.coef (L-infinity)
       fluor.spectra.coef <- fluor.spectra.coef / max( fluor.spectra.coef )
 
       fluor.spectra.coef
@@ -106,10 +114,10 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
     } )
 
     marker.spectra <- do.call( rbind, marker.spectra )
-    rownames( marker.spectra ) <- fluorophore.samples
+    rownames( marker.spectra ) <- make.unique( fluorophore.samples )
 
   } else {
-    # extract fluophore spectra using "cleaned" data
+    # extract fluorophore spectra using "cleaned" data
     message(
       paste0( "\033[34m",
               "Using cleaned expression data to get spectra",
@@ -122,8 +130,8 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
       flow.control$clean.event.sample %in% fluorophore.samples ]
     fluorophore.event.samples <- droplevels( fluorophore.event.samples )
 
-    expr.data <- flow.control$clean.expr[ flow.control$clean.event.sample %in%
-                                            fluorophore.event.samples, ]
+    expr.data <- flow.control$clean.expr[
+      flow.control$clean.event.sample %in% fluorophore.event.samples, ]
 
     # loop over all of these
     marker.spectra <- lapply( fluorophore.samples, function( samp ) {
@@ -155,7 +163,7 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
         }
       }
 
-      # normalize fluor.spectra.coef
+      # normalize fluor.spectra.coef (L-infinity)
       fluor.spectra.coef <- fluor.spectra.coef / max( fluor.spectra.coef )
 
       fluor.spectra.coef
@@ -163,11 +171,11 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
     } )
 
     marker.spectra <- do.call( rbind, marker.spectra )
-    rownames( marker.spectra ) <- fluorophore.samples
+    rownames( marker.spectra ) <- make.unique( fluorophore.samples )
   }
 
   # plot spectra
-  if ( asp$figures ) {
+  if ( figures ) {
     message( paste0( "\033[32m", "Plotting figures", "\033[0m" ) )
 
     fluorophore.spectra.plot <- marker.spectra
@@ -175,79 +183,90 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
     if ( !is.null( af.spectra ) )
       fluorophore.spectra.plot <- rbind( fluorophore.spectra.plot, af.spectra )
 
-    spectral.trace(
-      spectral.matrix = fluorophore.spectra.plot,
-      asp = asp,
-      title = paste( title, asp$spectra.file.name, sep = "_" ),
-      plot.dir = asp$figure.spectra.dir,
-      split.lasers = TRUE,
-      figure.spectra.line.size = asp$figure.spectra.line.size,
-      figure.spectra.point.size = asp$figure.spectra.point.size
-      )
+    # error handling so plotting never causes the function to abort
+    tryCatch(
+      expr = {
+        spectral.trace(
+          spectral.matrix = fluorophore.spectra.plot,
+          asp = asp,
+          title = paste( title, asp$spectra.file.name, sep = "_" ),
+          plot.dir = asp$figure.spectra.dir,
+          split.lasers = TRUE,
+          figure.spectra.line.size = asp$figure.spectra.line.size,
+          figure.spectra.point.size = asp$figure.spectra.point.size
+        )
 
-    spectral.heatmap(
-      fluorophore.spectra.plot,
-      title = paste( title, asp$spectra.file.name, sep = "_" ),
-      plot.dir = asp$figure.spectra.dir
-      )
+        spectral.heatmap(
+          fluorophore.spectra.plot,
+          title = paste( title, asp$spectra.file.name, sep = "_" ),
+          plot.dir = asp$figure.spectra.dir
+        )
 
-    cosine.similarity.plot(
-      fluorophore.spectra.plot,
-      filename = asp$similarity.heatmap.file.name,
-      title,
-      output.dir = asp$figure.similarity.heatmap.dir,
-      figure.width = asp$figure.similarity.width,
-      figure.height = asp$figure.similarity.height
-      )
+        cosine.similarity.plot(
+          fluorophore.spectra.plot,
+          filename = asp$similarity.heatmap.file.name,
+          title,
+          output.dir = asp$figure.similarity.heatmap.dir,
+          figure.width = asp$figure.similarity.width,
+          figure.height = asp$figure.similarity.height
+        )
 
-    hotspot.matrix <- calculate.hotspot.matrix( marker.spectra )
+        hotspot.matrix <- calculate.hotspot.matrix( marker.spectra )
 
-    create.heatmap(
-      hotspot.matrix,
-      title = paste( title, "Hotspot_Matrix", sep = "_" ),
-      legend.label = expression( "Hotspot Matrix"^"TM" ),
-      triangular = TRUE,
-      plot.dir = asp$figure.similarity.heatmap.dir,
-      color.palette = "inferno",
-      figure.width = asp$figure.similarity.width,
-      figure.height = asp$figure.similarity.height
-      )
+        create.heatmap(
+          hotspot.matrix,
+          title = paste( title, "Hotspot_Matrix", sep = "_" ),
+          legend.label = expression( "Hotspot Matrix"^"TM" ),
+          triangular = TRUE,
+          plot.dir = asp$figure.similarity.heatmap.dir,
+          color.palette = "inferno",
+          figure.width = asp$figure.similarity.width,
+          figure.height = asp$figure.similarity.height
+        )
 
-    # calculate unmixing matrix using singular value decomposition
-    sv <- svd( t( marker.spectra ) )
-    unmixing.matrix <- sv$v %*% ( t( sv$u ) / sv$d )
-    colnames( unmixing.matrix ) <- colnames( marker.spectra )
-    rownames( unmixing.matrix ) <- rownames( marker.spectra )
+        # calculate OLS unmixing matrix using singular value decomposition
+        sv <- svd( t( marker.spectra ) )
+        unmixing.matrix <- sv$v %*% ( t( sv$u ) / sv$d )
+        colnames( unmixing.matrix ) <- colnames( marker.spectra )
+        rownames( unmixing.matrix ) <- rownames( marker.spectra )
 
-    # plot the unmixing matrix as a heatmap
-    spectral.heatmap(
-      spectra = unmixing.matrix,
-      title = paste( title, "unmixing_matrix", sep = "_" ),
-      plot.dir = asp$figure.spectra.dir,
-      legend.label = "Coefficients",
-      color.palette = "mako"
+        # plot the unmixing matrix as a heatmap
+        spectral.heatmap(
+          spectra = unmixing.matrix,
+          title = paste( title, "unmixing_matrix", sep = "_" ),
+          plot.dir = asp$figure.spectra.dir,
+          legend.label = "Coefficients",
+          color.palette = "mako"
+        )
+      },
+      error = function( e ) {
+        message( "Error in plotting fluorophore spectra: ", e$message )
+        return( NULL )
+      }
     )
+
   }
 
   # save the spectra as a CSV file
   if ( !is.null( asp$table.spectra.dir ) ) {
     utils::write.csv(
-      fluorophore.spectra.plot,
+      marker.spectra,
       file = file.path(
         asp$table.spectra.dir,
-        paste0( title, "_", asp$spectra.file.name, ".csv"
-        )
+        paste0( title, "_", asp$spectra.file.name, ".csv" )
       )
     )
   }
 
   # cosine similarity QC for controls
-  similarity.matrix <- cosine.similarity( fluorophore.spectra.plot )
+  similarity.matrix <- cosine.similarity( marker.spectra )
 
   unique.similarity <- similarity.matrix * lower.tri( similarity.matrix )
 
-  similarity.idx <- which( unique.similarity > asp$similarity.warning.n,
-                           arr.ind = TRUE )
+  similarity.idx <- which(
+    unique.similarity > asp$similarity.warning.n,
+    arr.ind = TRUE
+  )
 
   similarity.error <- nrow( similarity.idx ) > 0
 
@@ -256,8 +275,11 @@ get.fluorophore.spectra <- function( flow.control, asp, use.clean.expr = TRUE,
     fluor2 <- colnames( similarity.matrix )[ similarity.idx[ , 2 ] ]
     similarity.values <- similarity.matrix[ similarity.idx ]
 
-    similarity.qc <- data.frame( Fluor1 = fluor1, Fluor2 = fluor2,
-                                Similarity = similarity.values )
+    similarity.qc <- data.frame(
+      Fluor1 = fluor1,
+      Fluor2 = fluor2,
+      Similarity = similarity.values
+    )
 
     print( similarity.qc )
 

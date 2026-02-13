@@ -5,17 +5,18 @@ articles:
   articles/01_Full_AutoSpectral_Workflow: 01_Full_AutoSpectral_Workflow.html
   articles/02_Control_File_example: 02_Control_File_example.html
   articles/03_Aurora_example: 03_Aurora_example.html
-  articles/04_Gating: 04_Gating.html
-  articles/05_Cleaning: 05_Cleaning.html
-  articles/06_Single_Cell_AutoFluorescence: 06_Single_Cell_AutoFluorescence.html
-  articles/07_Per_Cell_Optimization: 07_Per_Cell_Optimization.html
-  articles/08_Reload_AutoSpectral: 08_Reload_AutoSpectral.html
-  articles/09_Plotting: 09_Plotting.html
-  articles/10_Development: 10_Development.html
-  articles/11_Speed_It_Up: 11_Speed_It_Up.html
-  articles/12_Updates_And_Issues: 12_Updates_And_Issues.html
-  articles/13_ID7000_WLS_example: 13_ID7000_WLS_example.html
-last_built: 2026-01-19T09:06Z
+  articles/04_ID7000_WLS_example: 04_ID7000_WLS_example.html
+  articles/05_Preparing_Controls: 05_Preparing_Controls.html
+  articles/06_Gating: 06_Gating.html
+  articles/07_Cleaning: 07_Cleaning.html
+  articles/08_Single_Cell_AutoFluorescence: 08_Single_Cell_AutoFluorescence.html
+  articles/09_Per_Cell_Optimization: 09_Per_Cell_Optimization.html
+  articles/10_Reload_AutoSpectral: 10_Reload_AutoSpectral.html
+  articles/11_Plotting: 11_Plotting.html
+  articles/12_Speed_It_Up: 12_Speed_It_Up.html
+  articles/13_Updates_And_Issues: 13_Updates_And_Issues.html
+  articles/14_Development: 14_Development.html
+last_built: 2026-02-13T14:16Z
 urls:
   reference: https://drcytometer.github.io/AutoSpectral/reference
   article: https://drcytometer.github.io/AutoSpectral/articles

@@ -55,7 +55,8 @@ install.packages( c( "Rcpp", "RcppArmadillo" ) )
 Now, install AutoSpectralRcpp. This is fully accessible from R and
 integrates with AutoSpectral. But, when it gets to the slow bits in the
 unmixing, it switches over to calculating in C++, so it can be 10-100x
-faster. Do this after upgrading the BLAS.
+faster. Do this after upgrading the BLAS because the C++ gets compiled
+with whatever BLAS you’ve got installed.
 
 [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp)
 
@@ -99,25 +100,20 @@ less than
 so it is designed to allow you to keep working on minor stuff while
 AutoSpectral chugs along in the background.
 
+Or just check how many you have available:
+
+``` r
+parallelly::availableCores()
+```
+
 For unmixing larger data sets, you will do well to use a machine with
-more CPUs. Suggestions for faster processing are welcome. Some modest
-improvements are in the works.
-
-``` r
-devtools::install_github("DrCytometer/AutoSpectral@dev")
-```
-
-To replace this with the (hopefully) stable version, run this:
-
-``` r
-remove.packages("AutoSpectral")
-devtools::install_github("DrCytometer/AutoSpectral")
-```
+more CPUs. Version 1.0.0 brings faster processing for the unmixing.
 
 ## Installation and Runtime
 
 Installation via GitHub should take only a minute or so. It takes less
-than that on a Dell i7 core laptop.
+than that on my Dell i7 core laptop, but that may also be because I have
+already installed the dependencies.
 
 Occasionally, the help gets corrupted. Just re-install if that happens.
 If you know why this happens, let me know.
@@ -128,40 +124,47 @@ have a compiler, and that will take longer, probably 10 minutes or so.
 Upgrading the BLAS and LAPACK (see below) also takes several minutes if
 you’re taking the time to read the instructions carefully.
 
-Runtime will vary considerably depending on the size and quantity of
-files you’re processing. For the benchmark 42-colour Aurora data set
-using single-stained cell controls with plenty of data, the slow steps
-in the pre-processing pipeline are
+Run-time will vary considerably depending on the size and quantity of
+files you’re processing. For the benchmark 42-color Aurora dataset using
+single-stained cell controls with plenty of data, the slow steps in the
+pre-processing pipeline are
 [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
 and
 [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md).
 For the same Aurora dataset on the aforementioned i7 Windows laptop, I
-get: \*
-[`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
-v0.8.7: 12min sequential, 9min parallel \*
-[`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
-v0.9.0: 4min sequential, 2min parallel \*
-[`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
-v0.8.7: 11min sequential, not possible parallel \*
-[`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
-v0.9.0: 11min sequential, 6.5min parallel, not fully optimized \*
-[`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
-v.0.8.7: 2min sequential, 1min parallel \*
-[`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
-v.0.9.0: 65sec sequential, 32sec parallel
+get:
+
+- [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
+  v0.8.7: 12min sequential, 9min parallel
+- [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
+  v0.9.0: 4min sequential, 2min parallel
+- [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+  v0.8.7: 11min sequential, not possible parallel
+- [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+  v0.9.0: 11min sequential, 6.5min parallel, not fully optimized
+- [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
+  v.0.8.7: 2min sequential, 1min parallel
+- [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
+  v.0.9.0: 65sec sequential, 32sec parallel
+
+These should run faster in v1.0.0 for datasets with lots of cells
+because I have changed the default plotting settings to limit the
+maximum number of events plotted (plotting lots of points is slow in R,
+even with the accelerated `scattermore` package).
 
 Unmixing time depends on the following variable:
 
 - file size (number of cells/events, including debris)
-- number of detectors
+- number of detectors (ID7000 data takes a bit longer)
 - number of fluorophores
-- unmixing algorithm. OLS and WLS are fast, per-cell AF extraction will
-  be ~50x slower, per-cell fluorophore optimization will be 2-4x slower
-  than per-cell AF when running the “fast” approximation using
-  AutoSpectralRcpp, or about 20-50x slower when using the “slow” exact
-  calculation, again using AutoSpectralRcpp. Using the “fast”
-  approximation in pure R will likely be comparable to or slower than
-  the “slow” method in C++.
+- unmixing algorithm
+
+OLS and WLS are fast, per-cell AF extraction will be slower, per-cell
+fluorophore optimization will be slower still. As of version 1.0.0, the
+time required is down quite a bit (see below).
+
+If you are not using `AutoSpectralRcpp`, then the per-cell methods will
+likely run about 10x slower.
 
 Benchmarks for “C3 Lung_GFP_003_Samples.fcs”, again on the 8-core
 laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:
@@ -171,28 +174,30 @@ laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   WLS or OLS v0.9.0: 9sec
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
-  WLS or OLS v1.0.0:
+  WLS or OLS v1.0.0: 9-10sec (most of this is handling the FCS file)
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell AF extraction v0.8.7: 2min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell AF extraction v0.9.0: 1min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
-  perCell AF extraction v1.0.0:
+  perCell AF extraction v1.0.0: 14sec (45s in R without C++)
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell fluorophore optimization “fast” v0.8.7: 9min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell fluorophore optimization “fast” v0.9.0: \<2min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
-  perCell fluorophore optimization “fast” v1.0.0:
+  perCell fluorophore optimization “fast” v1.0.0: \<2min (note:
+  performance here should now be comparable to the previous “slow”)
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell fluorophore optimization “slow” v0.8.7: 62min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell fluorophore optimization “slow” v0.9.0: 19min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
-  perCell fluorophore optimization “slow” v1.0.0:
+  perCell fluorophore optimization “slow” v1.0.0: 11min
 - [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
   WLS or OLS, 6 files, v0.8.7: 67sec sequential, interrupted parallel
 - [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
   WLS or OLS, 6 files, v0.9.0: 62sec sequential, 31sec parallel
 
-Still some work to be done.
+I do not expect more major gains, although I will look into GPU
+acceleration.

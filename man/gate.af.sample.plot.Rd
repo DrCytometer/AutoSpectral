@@ -9,7 +9,7 @@ gate.af.sample.plot(
   samp,
   af.boundary.upper,
   asp,
-  max.points = 1e+05,
+  max.points = 50000,
   color.palette = "viridis"
 )
 }
@@ -24,7 +24,7 @@ gate.af.sample.plot(
 Prepare using \code{get.autospectral.param}}
 
 \item{max.points}{Number of points to plot (speeds up plotting). Default is
-\code{1e5}.}
+\code{5e4}.}
 
 \item{color.palette}{Optional character string defining the viridis color
 palette to be used for the fluorophore traces. Default is \code{viridis}. Options

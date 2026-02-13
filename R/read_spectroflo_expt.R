@@ -4,7 +4,13 @@
 #'
 #' @description
 #' Reads an Experiment (.Expt) file from SpectroFlo and extracts the spillover
-#' matrix that was used for the unmixing.
+#' matrix that was used for the unmixing. Note that the information stored in the
+#' SpectroFlo .Expt files for spillover is sometimes perfect for unmixing and is
+#' at other times very odd. I do not currently know why this is, but it may
+#' relate to the way the software updates the spectral profiles using the QC
+#' information. If so, spectra extracted using `read.spectroflo.expt()` are only
+#' likely to be accurate when the .Expt file has been last opened on the
+#' instrument used to acquire the sames, not an offline copy.
 #'
 #' @importFrom xml2 read_xml xml_find_all xml_text
 #' @importFrom flowCore read.FCSheader
@@ -18,7 +24,7 @@
 #' added to the returned spillover matrix.
 #'
 #' @return Spillover matrix (fluorophores x detectors). Fluorophore names will
-#' be automatically extracted from the control .fcs files linked to the .Expt
+#' be automatically extracted from the control .FCS files linked to the .Expt
 #' file, with an attempt to clean them up. Detector names (columns) are not
 #' extracted.
 #'

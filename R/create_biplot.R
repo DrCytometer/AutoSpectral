@@ -2,11 +2,13 @@
 
 #' @title Create Biplot
 #'
-#' @importFrom ggplot2 ggplot aes stat_density_2d after_stat scale_fill_viridis_c
+#' @importFrom ggplot2 ggplot aes ggsave after_stat
 #' @importFrom ggplot2 scale_x_continuous scale_y_continuous theme_bw theme
 #' @importFrom ggplot2 margin element_line element_text element_rect element_blank
+#' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn stat_density_2d
 #' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom scattermore geom_scattermore
+#' @importFrom ragg agg_jpeg
 #'
 #' @param plot.data A matrix or dataframe containing the flow cytometry data to
 #' be plotted. Column names should match the dimensions specified by `x.dim` and
@@ -31,7 +33,7 @@
 #' @param y.width.basis Width basis for the biexponential transform for the
 #' x-axis. Default is `-1000`.
 #' @param max.points Number of points to plot (speeds up plotting). Default is
-#' `1e5`.
+#' `5e6`.
 #' @param color.palette Optional character string defining the viridis color
 #' palette to be used for the fluorophore traces. Default is `rainbow`, which will
 #' be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
@@ -63,7 +65,7 @@ create.biplot <- function(
     y.max = asp$expr.data.max,
     x.width.basis = -1000,
     y.width.basis = -1000,
-    max.points = 1e5,
+    max.points = 5e6,
     color.palette = "rainbow",
     save = TRUE,
     title = NULL,
@@ -73,20 +75,10 @@ create.biplot <- function(
   ) {
 
   # check for x.dim, y.dim in colnames
-  stopifnot( x.dim %in% colnames( plot.data ) & y.dim %in% colnames( plot.data ) )
-
-  if ( is.null( x.lab ) )
-    x.lab <- colnames( plot.data[ , x.dim, drop = FALSE ] )
-  if ( is.null( y.lab ) )
-    y.lab <- colnames( plot.data[ , y.dim, drop = FALSE ] )
-
-  if ( nrow( plot.data ) < max.points )
-    max.points <- nrow( plot.data )
-
-  plot.data <- data.frame(
-    x = plot.data[ 1:max.points, x.dim ],
-    y = plot.data[ 1:max.points, y.dim ]
-  )
+  if ( !( x.dim %in% colnames( plot.data ) & y.dim %in% colnames( plot.data ) ) ) {
+    print( colnames( plot.data ) )
+    stop( "Either `xdim` or `y.dim` is not present in the data. See printed channels." )
+  }
 
   # check inputs
   args <- list(
@@ -105,6 +97,18 @@ create.biplot <- function(
     if ( !is.numeric( args[[ i ]] ) ) {
       stop( paste( "Argument", arg.names[ i ], "must be numeric." ) )
     }
+  }
+
+  if ( is.null( x.lab ) )
+    x.lab <- colnames( plot.data[ , x.dim, drop = FALSE ] )
+  if ( is.null( y.lab ) )
+    y.lab <- colnames( plot.data[ , y.dim, drop = FALSE ] )
+
+  # downsample (faster plotting)
+  if ( nrow( plot.data ) > max.points ) {
+    # random sampling
+    set.seed( 42 )
+    plot.data <- plot.data[ sample( seq_len( nrow( plot.data ) ), max.points ), ]
   }
 
   ### The FlowJo Biexponential transformation caps out at -1000 for the width
@@ -129,7 +133,7 @@ create.biplot <- function(
     y.pos.log <- log10( y.max ) - 1 - y.pos.log.delta
     y.pos.log <- pmax( y.pos.log, 2 )
   } else {
-    y.pos.log <- log10( x.max ) - 1
+    y.pos.log <- log10( y.max ) - 1
   }
 
   # set defaults
@@ -168,24 +172,28 @@ create.biplot <- function(
     widthBasis = y.width.basis,
     inverse = FALSE )
 
-  # create main plot
-  biplot <- ggplot(
-    plot.data,
-    aes(
-      x = biexp.transform.x( x ),
-      y = biexp.transform.y( y )
-    )
-  ) +
+  # convert to data frame for plotting
+  plot.data <- data.frame(
+    x = plot.data[ , x.dim ],
+    y = plot.data[ , y.dim ] )
+
+  # apply transformation
+  plot.data$x.trans <- biexp.transform.x( plot.data$x )
+  plot.data$y.trans <- biexp.transform.y( plot.data$y )
+
+  # set up the plot
+  biplot <- ggplot( plot.data, aes( x.trans, y.trans ) ) +
     geom_scattermore(
       pointsize = asp$figure.gate.point.size,
+      color = "black",
       alpha = 1,
       na.rm = TRUE
     ) +
     stat_density_2d(
       aes( fill = after_stat( level ) ),
       geom = "polygon",
-      contour = TRUE,
-      na.rm = TRUE ) +
+      na.rm = TRUE
+    ) +
     scale_x_continuous(
       name = x.lab,
       breaks = biexp.transform.x( x.breaks ),
@@ -201,43 +209,41 @@ create.biplot <- function(
     theme_bw() +
     theme(
       plot.margin = margin(
-        asp$figure.margin,
-        asp$figure.margin,
-        asp$figure.margin,
-        asp$figure.margin
+        asp$figure.margin, asp$figure.margin, asp$figure.margin, asp$figure.margin
       ),
       legend.position = "none",
       axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
       axis.text = element_text( size = asp$figure.axis.text.size ),
       axis.title = element_text( size = asp$figure.axis.title.size ),
-      panel.border = element_rect( linewidth = asp$figure.panel.line.size ),
+      panel.border = element_rect( fill = NA, linewidth = asp$figure.panel.line.size ),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()
     )
 
   # color options
-  virids.colors <- c(
+  viridis.colors <- c(
     "magma", "inferno", "plasma", "viridis",
     "cividis", "rocket", "mako", "turbo"
   )
 
-  # set color palette on plot
-  if ( color.palette %in% virids.colors ) {
-    biplot <- biplot +
-      scale_fill_viridis_c( option = color.palette )
+  # add fill layer for color palette
+  if ( color.palette %in% viridis.colors ) {
+    biplot <- biplot + scale_fill_viridis_c( option = color.palette )
   } else {
     biplot <- biplot +
-      scale_fill_gradientn(
-        colours = asp$density.palette.base.color,
-        values = asp$ribbon.scale.values
-      )
+      scale_fill_gradientn( colors = asp$density.palette.base.color )
   }
 
   # save or return the plot
   if ( save )
-    ggsave( file.path( output.dir, sprintf( "%s.jpg", title ) ),
-            plot = biplot,
-            width = width, height = height )
+    ggsave(
+      file.path( output.dir, sprintf( "%s.jpg", title ) ),
+      plot = biplot,
+      device = ragg::agg_jpeg,
+      width = width,
+      height = height,
+      limitsize = FALSE
+    )
   else
     return( biplot )
 

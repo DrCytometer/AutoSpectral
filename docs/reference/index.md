@@ -2,6 +2,10 @@
 
 ## All functions
 
+- [`assign.af.fluorophores()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.fluorophores.md)
+  : Assign AF Spectrum By Fluorophore Projection
+- [`assign.af.residuals()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.residuals.md)
+  : Assign AF Spectrum By Residual Alignment
 - [`calculate.condition.number()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.condition.number.md)
   : Calculate Condition Number
 - [`calculate.hotspot.matrix()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.hotspot.matrix.md)
@@ -94,6 +98,8 @@
   : Match Fluorophores
 - [`match.markers()`](https://drcytometer.github.io/AutoSpectral/reference/match.markers.md)
   : Match Markers
+- [`optimize.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/optimize.unmix.md)
+  : Optimize Spectral Unmixing
 - [`parallel.backend()`](https://drcytometer.github.io/AutoSpectral/reference/parallel.backend.md)
   : Parallel Backend
 - [`read.bd.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/read.bd.spectra.md)
@@ -122,6 +128,8 @@
   : Run Universal Negative
 - [`sample.fcs.file()`](https://drcytometer.github.io/AutoSpectral/reference/sample.fcs.file.md)
   : Sample FCS File
+- [`sanitize.optimization.inputs()`](https://drcytometer.github.io/AutoSpectral/reference/sanitize.optimization.inputs.md)
+  : Sanitize Optimization Inputs
 - [`save.unmixing.matrix()`](https://drcytometer.github.io/AutoSpectral/reference/save.unmixing.matrix.md)
   : Save Unmixing Matrix
 - [`scatter.match.plot()`](https://drcytometer.github.io/AutoSpectral/reference/scatter.match.plot.md)
@@ -150,6 +158,8 @@
   : Unmix Using Poisson Regression
 - [`unmix.wls.fast()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.fast.md)
   : Unmix WLS Fast
+- [`unmix.wls.per.cell()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.per.cell.md)
+  : Unmix WLS Per Cell
 - [`unmix.wls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.md)
   : Unmix Using Weighted Least Squares
 - [`validate.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.md)

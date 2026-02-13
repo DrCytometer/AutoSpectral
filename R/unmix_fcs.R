@@ -6,22 +6,28 @@
 #' This function performs spectral unmixing on FCS data using various methods.
 #'
 #' @importFrom flowCore read.FCS keyword exprs flowFrame parameters
-#' @importFrom flowCore write.FCS parameters<-
+#' @importFrom flowCore write.FCS parameters<- keyword<-
 #' @importFrom lifecycle deprecate_warn
 #'
 #' @param fcs.file A character string specifying the path to the FCS file.
-#' @param spectra A matrix containing the spectral data.
-#' @param asp The AutoSpectral parameter list.
-#' Prepare using `get.autospectral.param`
+#' @param spectra A matrix containing the spectral data. Fluorophores in rows,
+#' detectors in columns.
+#' @param asp The AutoSpectral parameter list. Prepare using
+#' `get.autospectral.param`.
 #' @param flow.control A list containing flow cytometry control parameters.
-#' @param method A character string specifying the unmixing method to use.
-#' The default is `Automatic`, which uses `AutoSpectral` for AF extraction if
-#' af.spectra are provided and automatically selects `OLS` or `WLS` depending
-#' on which is normal for the given cytometer in `asp$cytometer`. This means
-#' that files from the ID7000, A8 and S8 will be unmixed using `WLS` while
-#' others will be unmixed with `OLS`. Any option can be set manually.
-#' Manual options are `OLS`, `WLS`, `AutoSpectral`, `Poisson` and `FastPoisson`.
-#' Default is `OLS`. `FastPoisson` requires installation of `AutoSpectralRcpp`.
+#' @param method A character string specifying the unmixing method to use. The
+#' default as of version 1.0.0 is now `AutoSpectral` to avoid confusion. To use
+#' AutoSpectral unmixing, you must provide at least `af.spectra` to perform
+#' autofluorescence extraction (on a per-cell basis). To also optimize
+#' fluorophore spectra, provide `spectra.variants`. To perform other types of
+#' unmixing, select from the options: `OLS`, `WLS`, `Poisson` or `FastPoisson`.
+#' `FastPoisson` requires installation of `AutoSpectralRcpp`.There is also
+#' `Automatic`, which switches depending on the inputs provided: it uses
+#' `AutoSpectral` for AF extraction if `af.spectra` are provided, and
+#' automatically selects `OLS` or `WLS` depending on which is normal for the
+#' given cytometer in `asp$cytometer`. This means that files from the ID7000,
+#' A8 and S8 will be unmixed using `WLS` while others will be unmixed with `OLS`,
+#' if AutoSpectral unmixing is not activated.
 #' @param weighted Logical, whether to use ordinary or weighted least squares
 #' unmixing as the base algorithm in AutoSpectral unmixing.
 #' Default is `FALSE` and will use OLS.
@@ -38,44 +44,55 @@
 #' `get.spectral.variants`. Default is `NULL`. Used for
 #' AutoSpectral unmixing. Required for per-cell fluorophore optimization.
 #' @param output.dir A character string specifying the directory to save the
-#' unmixed FCS file. Default is `NULL`.
+#' unmixed FCS file. Default is `NULL`, which will use `./AutoSpectral_unmixed`.
 #' @param file.suffix A character string to append to the output file name.
 #' Default is `NULL`.
 #' @param include.raw A logical value indicating whether to include raw
-#' expression data in the written FCS file. Default is `FALSE`.
+#' expression data in the written FCS file. Default is `FALSE` to provide smaller
+#' output files.
 #' @param include.imaging A logical value indicating whether to include imaging
-#' parameters in the written FCS file. Default is `FALSE`.
+#' parameters in the written FCS file. Default is `FALSE` to provide smaller
+#' output files.
 #' @param use.dist0 Logical, controls whether the selection of the optimal AF
 #' signature for each cell is determined by which unmixing brings the fluorophore
 #' signals closest to 0 (`use.dist0` = `TRUE`) or by which unmixing minimizes the
 #' per-cell residual (`use.dist0` = `FALSE`). Default is `TRUE`. Used for
-#' AutoSpectral unmixing.
+#' AutoSpectral unmixing. The minimization of fluorophore signals can be thought
+#' of as a "worst-case" scenario, but it provides more accurate assignments,
+#' particularly with large panels.
 #' @param divergence.threshold Numeric. Used for `FastPoisson` only.
 #' Threshold to trigger reversion towards WLS unmixing when Poisson result
-#' diverges for a given point.
+#' diverges for a given point. To be deprecated.
 #' @param divergence.handling String. How to handle divergent cells from Poisson
 #' IRLS. Options are `NonNeg` (non-negativity will be enforced), `WLS` (revert
-#' to WLS intial unmix) or `Balance` (WLS and NonNeg will be averaged).
-#' Default is `Balance`
+#' to WLS initial unmix) or `Balance` (WLS and NonNeg will be averaged).
+#' Default is `Balance`. To be deprecated.
 #' @param balance.weight Numeric. Weighting to average non-convergent cells.
 #' Used for `Balance` option under `divergence.handling`. Default is `0.5`.
+#' To be deprecated.
 #' @param speed Selector for the precision-speed trade-off in AutoSpectral per-cell
-#' fluorophore optimization. Options are the default `fast`, which selects the
-#' best spectral fit per cell by updating the predicted values for each
-#' fluorophore independently without repeating the unnmixing, `medium` which uses
-#' a Woodbury-Sherman-Morrison rank-one updating of the unnmixing matrix for
-#' better results and a moderate slow-down, or `slow`, which explicitly
-#' recomputes the unmixing matrix for each variant for maximum precision. The
-#' `fast` method is only one available in the `AutoSpectral` package and will be
-#' slow in the pure R implementation. Installation of `AutoSpectralRcpp` is
-#' strongly encouraged.
+#' fluorophore optimization. Options are `fast`, `medium` and `slow`, with the
+#' default being `slow`. As of version 1.0.0, the backend for how this works
+#' has changed. Spectral variants and AF signatures are now pre-screened per cell
+#' to identify likely candidates, so brute force testing of all variants is no
+#' longer required. So, `speed` controls the number of variants to be tested per
+#' cell, with `fast` testing a single variant, `medium` testing 3 variants, and
+#' `slow` testing 10 variants. While this is now implemented in pure R in
+#' `AutoSpectral`, installation of `AutoSpectralRcpp` is strongly encouraged for
+#' faster processing.
 #' @param parallel Logical, default is `TRUE`, which enables parallel processing
 #' for per-cell unmixing methods.
 #' @param threads Numeric, default is `NULL`, in which case `asp$worker.process.n`
 #' will be used. `asp$worker.process.n` is set by default to be one less than the
 #' available cores on the machine. Multi-threading is only used if `parallel` is
-#' `TRUE`.
-#' @param verbose Logical, controls messaging. Default is `TRUE`.
+#' `TRUE`. If working on a computing cluster, try `parallelly::availableCores()`.
+#' @param verbose Logical, controls messaging. Default is `TRUE`. Set to `FALSE`
+#' to have it shut up.
+#' @param n.variants Number of variants to test per cell. Allows explicit control
+#' over the number used, as opposed to `speed`, which selects from pre-defined
+#' choices. Providing a numeric value to `n.variants` will override `speed`,
+#' allowing up to `n.variants` (or the max available) variants to be tested. The
+#' default is `NULL`, in which case `n.variants` will be ignored.
 #' @param ... Ignored. Previously used for deprecated arguments such as
 #' `calculate.error`.
 #'
@@ -88,7 +105,7 @@ unmix.fcs <- function(
     spectra,
     asp,
     flow.control,
-    method = "Automatic",
+    method = "AutoSpectral",
     weighted = FALSE,
     weights = NULL,
     af.spectra = NULL,
@@ -101,10 +118,11 @@ unmix.fcs <- function(
     divergence.threshold = 1e4,
     divergence.handling = "Balance",
     balance.weight = 0.5,
-    speed = "fast",
+    speed = c("slow", "medium", "fast"),
     parallel = TRUE,
     threads = NULL,
     verbose = TRUE,
+    n.variants = NULL,
     ...
 ) {
 
@@ -115,18 +133,20 @@ unmix.fcs <- function(
     lifecycle::deprecate_warn(
       "0.9.1",
       "unmix.fcs(calculate.error)",
-      "no longer used"
+      details = "The 'calculate.error' argument is no longer used."
     )
+    dots$calculate.error <- NULL
   }
 
-  # create output folder if it doesn't exist
-  if ( is.null( output.dir ) )
-    output.dir <- asp$unmixed.fcs.dir
-  if ( !dir.exists( output.dir ) )
-    dir.create( output.dir )
-
-  if ( is.null( threads ) )
-    threads <- asp$worker.process.n
+  # check for other odd stuff being passed
+  if ( length( dots ) > 0 ) {
+    stop(
+      paste(
+        "Unknown arguments detected:",
+        paste( names( dots ), collapse = ", " )
+      )
+    )
+  }
 
   # logic for default unmixing with cytometer-based selection
   if ( method == "Automatic" ) {
@@ -141,7 +161,86 @@ unmix.fcs <- function(
     }
   }
 
-  # import fcs, without warnings for fcs 3.2
+  # include checks on inputs if AutoSpectral unmixing has been selected
+  if ( method == "AutoSpectral" ) {
+    # check for af.spectra, stop if not
+    if ( is.null( af.spectra ) ) {
+      stop(
+        "For AutoSpectral unmixing, `af.spectra` must be provided.
+        See `?get.af.spectra()`.",
+        call. = FALSE
+      )
+    }
+    # check that af.spectra is a matrix and has rows
+    if ( !is.matrix( af.spectra ) || nrow( af.spectra ) < 2 ) {
+      stop(
+        "For AutoSpectral unmixing, multiple AF in `af.spectra` must be provided
+        in a matrix. See `?get.af.spectra`.",
+        call. = FALSE
+      )
+    }
+    # check for variants, warn if not provided
+    if ( is.null( spectra.variants ) ) {
+      message(
+        paste(
+          "For AutoSpectral unmixing, providing fluorophore variation with",
+          "`spectra.variants` may give better results. See `?get.spectral.variants`."
+        )
+      )
+    }
+    # check for AutoSpectralRcpp
+    if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) ) {
+      # require 1.0.0 or higher if installed for compatibility
+      if ( utils::packageVersion( "AutoSpectralRcpp" ) < package_version( "1.0.0" ) ) {
+        stop(
+          "Package `AutoSpectralRcpp` >= 1.0.0 is required for this method.
+          Please update the package.",
+          call. = FALSE
+        )
+      }
+    } else {
+      # warn if not available (default to R processing)
+      warning(
+        "Package `AutoSpectralRcpp` not found. Please install it for faster processing.",
+        call. = FALSE
+      )
+    }
+
+    # set number of variants to test (by `speed` if `n.variants` is not provided)
+    if ( length( speed ) > 1 )
+      speed <- speed[ 1 ]
+
+    if ( is.null( n.variants ) || !is.numeric( n.variants ) || length( n.variants ) != 1 ) {
+      n.variants <- switch(
+        speed,
+        "slow"   = 10L,
+        "medium" = 3L,
+        "fast"   = 1L,
+        {
+          warning(
+            paste0(
+              "Unrecognized input '",
+              speed,
+              "' to `speed`. Defaulting to `slow` (n.variants=10)."
+            ),
+            call. = FALSE
+          )
+          10L
+        }
+      )
+    }
+  }
+
+  # create output folder if it doesn't exist
+  if ( is.null( output.dir ) )
+    output.dir <- asp$unmixed.fcs.dir
+  if ( !dir.exists( output.dir ) )
+    dir.create( output.dir )
+
+  if ( is.null( threads ) )
+    threads <- asp$worker.process.n
+
+  # import FCS, without warnings for fcs 3.2
   fcs.data <- suppressWarnings(
     flowCore::read.FCS(
       fcs.file,
@@ -226,28 +325,32 @@ unmix.fcs <- function(
             spectra = spectra,
             af.spectra = af.spectra,
             spectra.variants = spectra.variants,
-            weighted = weighted,
-            weights = weights,
             use.dist0 = use.dist0,
             verbose = verbose,
+            speed = speed,
             parallel = parallel,
             threads = threads,
-            speed = speed
+            n.variants = n.variants
+
           ),
           error = function( e ) {
-            warning( "AutoSpectralRcpp unmixing failed, falling back to standard AutoSpectral: ", e$message )
+            warning(
+              "AutoSpectralRcpp unmixing failed, falling back to standard AutoSpectral: ",
+              e$message,
+              call. = FALSE
+            )
             unmix.autospectral(
               raw.data = spectral.exprs,
               spectra = spectra,
               af.spectra = af.spectra,
               asp = asp,
               spectra.variants = spectra.variants,
-              weighted = weighted,
-              weights = weights,
               use.dist0 = use.dist0,
               verbose = verbose,
+              speed = speed,
               parallel = parallel,
-              threads = threads
+              threads = threads,
+              n.variants = n.variants
             )
           }
         )
@@ -259,12 +362,12 @@ unmix.fcs <- function(
           af.spectra = af.spectra,
           asp = asp,
           spectra.variants = spectra.variants,
-          weighted = weighted,
-          weights = weights,
           use.dist0 = use.dist0,
           verbose = verbose,
+          speed = speed,
           parallel = parallel,
-          threads = threads
+          threads = threads,
+          n.variants = n.variants
         )
       }
     },
@@ -285,7 +388,11 @@ unmix.fcs <- function(
             balance.weight = balance.weight
           ),
           error = function( e ) {
-            warning( "FastPoisson failed, falling back to standard Poisson: ", e$message )
+            warning(
+              "FastPoisson failed, falling back to standard Poisson: ",
+              e$message,
+              call. = FALSE
+            )
             unmix.poisson(
               raw.data = spectral.exprs,
               spectra = spectra,
@@ -297,7 +404,8 @@ unmix.fcs <- function(
           }
         )
       } else {
-        warning( "AutoSpectralRcpp not available, falling back to standard Poisson." )
+        warning( "AutoSpectralRcpp not available, falling back to standard Poisson.",
+                 call. = FALSE )
         unmix.poisson(
           raw.data = spectral.exprs,
           spectra = spectra,
@@ -394,7 +502,13 @@ unmix.fcs <- function(
       "$FIL" = file.name,
       "$PAR" = as.character( n.param ),
       "$UNMIXINGMETHOD" = method,
-      "$AUTOSPECTRAL" = as.character( utils::packageVersion( "AutoSpectral" ) )
+      "$AUTOSPECTRAL" = as.character( utils::packageVersion( "AutoSpectral" ) ),
+      # add AutoSpectralRcpp's version if available
+      "$AUTOSPECTRALRCPP" = if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) ) {
+        as.character( utils::packageVersion( "AutoSpectralRcpp" ) )
+      } else {
+        "0"
+      }
     )
   )
 

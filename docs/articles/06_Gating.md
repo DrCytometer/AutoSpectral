@@ -1,0 +1,295 @@
+# 06 Gating
+
+In this article, we’ll try to cover some of the features and tuning for
+the automated gating in AutoSpectral. This was developed by Carlos Roca
+in AutoSpill, and has been lightly modified for use in AutoSpectral. To
+be fair, this is one of the weaker points, largely because of the
+immense variability in sample types that people may have and the even
+bigger variability in opinions on how to set up the appearance of your
+scatter plots. So, a one-size-fits-all approach is never going to work.
+I’m working on an alternative, but this will require quite a bit of
+testing before it can implemented.
+
+Gating to identify the correct cells for the single-stained controls is
+really important, though. We’ll look at common failure points, how to
+get the gates to look the way you want and also cover how to skip the
+gating entirely. For the latter, you can just import pre-gated files
+exported from your favorite FCS analysis program.
+
+``` r
+library(AutoSpectral)
+```
+
+As always, we’ll start by loading in the parameters and telling
+AutoSpectral where the control files are. Today we’re going to use a
+couple samples from the ID7000, largely because this particular machine
+didn’t allow us to set a threshold on scatter without messing up the
+data, and the FSC gain was maxed out. According to the engineer, nothing
+was wrong with it (yay! anyway…). You can get the data from Mendeley
+(see AutoSpectral: 40-colour ID7000 dataset).
+
+Today I’m including a simple set with a bead control and a cell control
+for Spark Blue 574 (anti-CD14), with corresponding unstained samples.
+
+``` r
+asp <- get.autospectral.param(cytometer = "id7000", figures = TRUE)
+control.dir <- "~/AutoSpectral_data/Gating_example/SSC"
+create.control.file(control.dir, asp)
+```
+
+We get a warning because there are two fluorophores with the same name
+(two copies of SB574). That’s intended to happen, but can probably be
+changed later. For now, we can disambiguate the two by calling one of
+the SB574 dyes `SB574 beads` and the other `SB574 cells`. We’ll set
+universal negatives, fill in `CD14` for the marker for both, and change
+the unstained bead control `Fluorophore` to be `Negative` instead of
+`AF`.
+
+Once done, we can load in the control file.
+
+``` r
+control.file <- "~/AutoSpectral_data/Gating_example/fcs_control_file.csv"
+```
+
+Now we are ready to read in the fcs files, gate the cells and organize
+the experiment.
+
+``` r
+flow.control <- define.flow.control(control.dir, control.file, asp)
+```
+
+Check the gating plots. The ones with lots of numbered points on them
+are the ones that define the automated gating. These are the most
+important for troubleshooting. These are done on composite files,
+aggregated between all samples that have been determined to share the
+same gate (the gating variables are beads/cells, large/small, viability
+gate/live cell, so any combination of those).
+
+Gating on the beads: ![Bead gating
+plot](figures/Gating_example_beads_nonViability_smallGate.jpg) This is
+what it is supposed to look like when it is working well. The square
+`region` gate defines the area around the highest density of events, and
+the gate border is the smoothed line inside that. In this case, it’s
+pretty clearly picked the bead population (1). Population 2 is bead
+doublets. Population 3 is debris.
+
+What about the cells? What do we want? We want a gate that includes the
+monocyte region because we’re staining for CD14. Did we get that?
+
+CD14 gating failure 1: ![CD14 monocyte gating
+plot](figures/Gating_example_failure1.jpg) Nope. Not even close.
+
+What’s going on? AutoSpectral looks for the cells within a boundary
+(expecting the cells to be up a bit off the axis) and expects there to
+be a debris/dead cell population in the lower left corner. Neither of
+these is really true in this case.
+
+The parameters for controlling the search and gate definition are in the
+functions that create the AutoSpectral parameter list, usually defined,
+as here, as `asp`.
+
+If we open up the main function, e.g.,
+`View(get_autospectral_param_minimal)`, you can see a lot of these
+starting at the comment `### gating parameters`.
+
+Let’s start with the easiest fix: the target to pick. In this case,
+AutoSpectral has found our cells (population 1), but it’s picking
+population 2 as the one to use for defining the gate. This is controlled
+by this parameter:
+
+``` r
+asp$gate.bound.density.max.target.cells
+```
+
+The target population is one more than this number for cells.
+(Confusingly, but that’s the original syntax from AutoSpill.) So, it
+picks population 2. If we want it to pick population 1, we can do this:
+
+``` r
+asp$gate.bound.density.max.target.cells <- 0
+flow.control <- define.flow.control(control.dir, control.file, asp)
+```
+
+CD14 gating after setting target to 0: ![CD14 monocyte gating
+plot](figures/Gating_example_target0.jpg) Cool. Progress.
+
+Now we’ve got the cells in the boundary, but it’s mostly lymphocytes,
+right? And we’ve got a monocyte (CD14) control. That’s not going to work
+well. We’re going to need a bigger gate.
+
+For that, we return to the control file. Here, we have the option to
+specify `large.gate` as `TRUE` for each control as we see fit.
+
+Changing the control file: ![Setting large
+gate](figures/Gating_example_setting_largeGate.jpg)
+
+Okay, trying again: (We’ve already set the target to 0 and it stays
+there until we change it or call `get.autospectral.param` again and
+overwrite `asp`).
+
+``` r
+flow.control <- define.flow.control(control.dir, control.file, asp)
+```
+
+With a larger gate set: ![Larger
+gate](figures/Gating_example_target0_largeGate.jpg)
+
+The large.gate option does something pretty simple–it extends the basic
+roundish gate upwards and outwards (to the top and to the right). The
+amount by which it scales upwards and outwards is determined by the
+parameters below, which are defined on a cytometer-specific basis, so in
+this case, in `get.autospectral.param.id7000`.
+
+``` r
+asp$large.gate.scaling.x
+asp$large.gate.scaling.y
+```
+
+As we see above, the gate’s bigger than we need it to be. We could, if
+we want, make it a bit smaller, like so:
+
+``` r
+asp$large.gate.scaling.x <- 2
+asp$large.gate.scaling.y <- 3
+flow.control <- define.flow.control(control.dir, control.file, asp)
+```
+
+With a medium-sized gate set: ![Medium
+gate](figures/Gating_example_Target0_mediumGate.jpg)
+
+As you’ve probably noticed, the gating is pretty slow. This is mostly
+down to the calculations to determine the density. There are some other
+ways of doing this that are faster, but less reliable. Happy for any
+suggestions here. Happy for any suggestions here. From what I’ve seen,
+this would be much faster in Python.
+
+The parameters that can speed up the gate are below:
+
+``` r
+asp$gate.downsample.n.cells
+asp$gate.bound.density.grid.n.cells
+asp$gate.region.density.grid.n.cells
+asp$gate.region.max.density.grid.n.cells
+```
+
+The first determines the number of cells to be used for calculating the
+gates. This number, 100000, is about as low as is reliable, and you may
+well need more cells if you do not have well-defined density blobs.
+
+The other three determine the grid size for searching for dense
+populations. Larger grids, bigger search area, so slower. But, also,
+better definition of the density, which determines both the boundaries
+and the pseudocolor on the plots. Trying changing them around if you
+want. Setting the grid.n to 50 often works quite well and is quite a bit
+faster.
+
+The other factor we’ll touch on controls the tightness of the boundary.
+Basically, we can tune it based on the robust standard deviation of the
+points in the region (as determined by tiling with Voronoi
+tessellation). Bigger number, bigger gate.
+
+With all of the parameters, we have a set for beads and a set for cells.
+This allows us to tune the gates for each separately. For this part,
+let’s tweak the bead gate.
+
+``` r
+asp$gate.bound.density.max.mad.factor.beads
+asp$gate.bound.density.max.mad.factor.cells
+```
+
+By default, the bead gate is set to be a bit looser than the cells
+(relative to the peak of density in the bead population). Beads are
+cleaner, so we can be less stringent. Let’s be even less strict–what
+happens?
+
+``` r
+asp$gate.bound.density.max.mad.factor.beads <- 10
+flow.control <- define.flow.control(control.dir, control.file, asp)
+```
+
+Bead gate with MAD = 3: ![Default bead
+gate](figures/Gating_example_beads_nonViability_smallGate.jpg)
+
+Bead gate with MAD set to 10: ![Altered bead
+gate](figures/Gating_example_beads_MAD10.jpg) With this, we expand the
+final search region (rectangle), but the final gate for the beads is
+pretty similar due to the sharp cut-off in density around the bead peak.
+
+The other thing we can do to modify the gating is to change the limits
+on FSC and SSC. This is pretty important for newer cytometers like the
+BD FACSDiscover and Novocyte Opteon since they have very large dynamic
+ranges. This makes it hard to get everything on screen and scaled well
+without some manual intervention. AutoSpectral has default settings on
+scatter that are specific to each cytometer, but, really, a lot of this
+is down to personal preferences and the types of samples you’re working
+with. So, let’s look at how to change the scales.
+
+First, which scatter parameters are we using?
+
+``` r
+asp$default.scatter.parameter
+```
+
+For the ID7000, it’s FSC-A and SSC-A.
+
+What if I have multiple scatter parameters and want to use something
+else?
+
+If this were another cytometer’s data, we could use a different scatter
+detector. I’ve commented this out below, but that’s how you’d do it.
+
+``` r
+# asp$default.scatter.parameter <- c( "FSC-A", "SSC-B-A" )
+```
+
+There are lower and upper limits for each scatter parameter.
+
+``` r
+asp$scatter.data.min.x
+asp$scatter.data.max.x
+asp$scatter.data.min.y
+asp$scatter.data.max.y
+```
+
+The defaults are likely to be the entire dynamic range. For this data,
+we’ve got the cells down in the lower left. We can try restricting the
+range rather than changing the target population:
+
+``` r
+asp$gate.bound.density.max.target.cells <- 1
+
+asp$scatter.data.max.x <- 3e5
+
+asp$scatter.data.max.y <- 4e5
+
+flow.control <- define.flow.control(control.dir, control.file, asp)
+```
+
+That works pretty well. This is often the best way to fix the gating. It
+incorporates your human knowledge about what’s going on.
+
+Lymphocyte gate with scatter limits changed: ![lymphocyte
+gate](figures/Gating_example_scatterLimits_smallGate.jpg)
+
+Monocyte-inclusive gate with scatter limits changed: ![Monocyte
+gate](figures/Gating_example_scatterLimits_largeGate.jpg)
+
+Bead gate with scatter limits changed: ![bead
+gate](figures/Gating_example_scatterLimits_beads.jpg)
+
+And, finally, we can just skip gating all together. For this, you’ll
+probably want to gate first in FlowJo, FCS Express, SpectroFlo, etc.
+Note that with FlowJo, this can occasionally mess up your files and will
+almost certainly re-order your fluorescence detectors in alphabetical
+order. The re-ordering can be a nuisance for plotting the spectra
+(curves are all out of order) and for unmixing if your detectors from
+the pre-gated controls are inconsistent with the names in the files to
+be unmixed. Anyway, these are problems with FlowJo, so maybe try a
+different program. I will be implementing a fix for that at some point.
+
+``` r
+flow.control <- define.flow.control(control.dir, control.file, asp, gate = FALSE)
+```
+
+So much faster! We don’t get plots because we aren’t changing anything
+and you should have already looked at the data before you did this.

@@ -17,7 +17,7 @@ create.biplot(
   y.max = asp$expr.data.max,
   x.width.basis = -1000,
   y.width.basis = -1000,
-  max.points = 1e+05,
+  max.points = 5e+06,
   color.palette = "rainbow",
   save = TRUE,
   title = NULL,
@@ -62,7 +62,7 @@ x-axis. Default is \code{-1000}.}
 x-axis. Default is \code{-1000}.}
 
 \item{max.points}{Number of points to plot (speeds up plotting). Default is
-\code{1e5}.}
+\code{5e6}.}
 
 \item{color.palette}{Optional character string defining the viridis color
 palette to be used for the fluorophore traces. Default is \code{rainbow}, which will

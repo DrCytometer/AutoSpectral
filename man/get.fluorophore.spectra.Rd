@@ -9,7 +9,8 @@ get.fluorophore.spectra(
   asp,
   use.clean.expr = TRUE,
   af.spectra = NULL,
-  title = NULL
+  title = NULL,
+  figures = TRUE
 )
 }
 \arguments{
@@ -26,6 +27,9 @@ data, default is \code{TRUE}}
 \item{title}{Optional prefix for plot titles, default is \code{NULL}, which gives
 "Initial" when \code{use.clean.expr} is \code{FALSE} and "Clean" when \code{use.clean.expr}
 is \code{TRUE}.}
+
+\item{figures}{Logical, default is \code{TRUE}. Whether to produce plots of the
+fluorophore spectra and cosine similarity.}
 }
 \value{
 A matrix with the fluorophore spectra.

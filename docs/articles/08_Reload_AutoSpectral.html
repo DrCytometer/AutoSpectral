@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@
 
       <h1>08 Re-running AutoSpectral</h1>
             
-            <h4 data-toc-skip class="date">2025-07-10</h4>
+            <h4 data-toc-skip class="date">2026-02-11</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/vignettes/articles/08_Reload_AutoSpectral.Rmd" class="external-link"><code>vignettes/articles/08_Reload_AutoSpectral.Rmd</code></a></small>
       <div class="d-none name"><code>08_Reload_AutoSpectral.Rmd</code></div>
@@ -216,6 +216,10 @@ up as <code>output.dir</code>.</p>
 this happens if you re-import the experiment into an
 non-cytometer-connected version of SpectroFlo, but I need to look into
 it a bit more.</p>
+<p>Note 2: By default, the autofluorescence spectra stored in SpectroFlo
+are not in a normalized format. I do not know why this is. When you read
+them in using <code><a href="../reference/read.spectroflo.expt.html">read.spectroflo.expt()</a></code>, they will be
+L-infinity (peak) normalized.</p>
 </div>
 <div class="section level3">
 <h3 id="bd-chorus-spectra">BD (Chorus) Spectra<a class="anchor" aria-label="anchor" href="#bd-chorus-spectra"></a>

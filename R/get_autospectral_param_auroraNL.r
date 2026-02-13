@@ -53,7 +53,10 @@ get.autospectral.param.auroraNL <- function( autosp.param )
 
   autosp.param$ribbon.breaks <- c( -1e3, 0, 1e3, 1e4, 1e5, 1e6 )
 
-  autosp.param
+  # lower the similarity threshold since we have fewer detectors
+  autosp.param$sim.threshold <- 0.975
+
+  return( autosp.param )
 
 }
 

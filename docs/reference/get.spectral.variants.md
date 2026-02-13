@@ -19,12 +19,14 @@ get.spectral.variants(
   spectra,
   af.spectra,
   n.cells = 2000,
-  som.dim = 7,
+  som.dim = 10,
   figures = TRUE,
   output.dir = NULL,
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
+  refine = FALSE,
+  problem.quantile = 0.95,
   ...
 )
 ```
@@ -65,12 +67,12 @@ get.spectral.variants(
 
 - som.dim:
 
-  Numeric, default `7`. Number of x and y dimensions to use in the SOM
+  Numeric, default `10`. Number of x and y dimensions to use in the SOM
   for clustering the spectral variation. The number of spectra returned
   for each fluorophore will increase with the quadratic of `som.dim`, so
-  for 7, you will get up to 49 variants. Increasing the SOM dimensions
-  further does not help. Somewhere between 4 and 7 appears to be
-  sufficient, but with the pruning of variants implemented in
+  for 10, you will get up to 100 variants. Somewhere between 4 and 7
+  appears to be sufficient, but with the pruning of variants implemented
+  in
   [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
   in v1.0.0, this is less important.
 
@@ -99,6 +101,29 @@ get.spectral.variants(
   be used. `asp$worker.process.n` is set by default to be one less than
   the available cores on the machine. Multi-threading is only used if
   `parallel` is `TRUE`.
+
+- refine:
+
+  Logical, default is `FALSE`. Controls whether to perform a second
+  round of variation measurement on "problem cells", which are those
+  with the highest spillover, as defined by `problem.quantile`. When
+  `FALSE`, behavior is identical to versions of AutoSpectral prior to
+  1.0.0. Setting to `TRUE` may help reduce spillover spread and unmixing
+  errors. Using `refine=TRUE` does not impact subsequent unmixing
+  calculation time in any significant way, unlike the same setting in
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md).
+
+- problem.quantile:
+
+  Numeric, default `0.95`. The quantile for determining which cells will
+  be considered "problematic" after unmixing with per-cell AF
+  extraction. Cells in the `problem.quantile` or above with respect to
+  total signal in the fluorophore (non-AF) channels after per-cell AF
+  extraction will be used to determine additional autofluorescence
+  spectra, using a second round of clustering and modulation of the
+  previously selected autofluroescence spectra. A value of `0.95` means
+  the top 5% of cells, those farthest from zero, will be selected for
+  further investigation.
 
 - ...:
 

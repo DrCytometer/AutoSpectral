@@ -15,7 +15,8 @@ gate.define.plot(
   gate.population,
   scatter.and.channel.label,
   asp,
-  color.palette = "rainbow"
+  color.palette = "plasma",
+  max.points = 1e+05
 )
 ```
 
@@ -51,8 +52,7 @@ gate.define.plot(
 
 - asp:
 
-  The AutoSpectral parameter list. Prepare using
-  `get.autospectral.param`
+  The AutoSpectral parameter list.
 
 - color.palette:
 
@@ -61,6 +61,10 @@ gate.define.plot(
   similar to FlowJo or SpectroFlo. Other pptions are the viridis color
   options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`,
   `mako` and `turbo`.
+
+- max.points:
+
+  Number of points to plot. Default is `1e5`.
 
 ## Value
 

@@ -13,7 +13,8 @@ gate.define.plot(
   gate.population,
   scatter.and.channel.label,
   asp,
-  color.palette = "rainbow"
+  color.palette = "plasma",
+  max.points = 1e+05
 )
 }
 \arguments{
@@ -29,17 +30,17 @@ gate.define.plot(
 
 \item{gate.population}{List containing gate population information.}
 
-\item{scatter.and.channel.label}{Named vector mapping scatter and
-channel labels.}
+\item{scatter.and.channel.label}{Named vector mapping scatter and channel labels.}
 
-\item{asp}{The AutoSpectral parameter list.
-Prepare using \code{get.autospectral.param}}
+\item{asp}{The AutoSpectral parameter list.}
 
 \item{color.palette}{Optional character string defining the viridis color
 palette to be used for the fluorophore traces. Default is \code{rainbow}, which will
 be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
 options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
 and \code{turbo}.}
+
+\item{max.points}{Number of points to plot. Default is \code{1e5}.}
 }
 \value{
 Saves the plot as a JPEG file in the specified directory.

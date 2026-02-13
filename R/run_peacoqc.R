@@ -23,14 +23,16 @@
 #'
 #' @return A list containing the cleaned expression data for each sample.
 
-run.peacoQC <- function( expr.data,
-                         spectral.channel,
-                         all.channels,
-                         asp,
-                         figures = TRUE,
-                         parallel = FALSE,
-                         threads = 1,
-                         verbose = TRUE ) {
+run.peacoQC <- function(
+    expr.data,
+    spectral.channel,
+    all.channels,
+    asp,
+    figures = TRUE,
+    parallel = FALSE,
+    threads = 1,
+    verbose = TRUE
+  ) {
 
   # define parameters for peacoQC
   biexp.transform <- flowWorkspace::flowjo_biexp(

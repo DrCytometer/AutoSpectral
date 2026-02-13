@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,16 +36,17 @@
 <li><a class="dropdown-item" href="../articles/01_Full_AutoSpectral_Workflow.html">01 Full Workflow Example</a></li>
     <li><a class="dropdown-item" href="../articles/02_Control_File_example.html">02 Creating the control file</a></li>
     <li><a class="dropdown-item" href="../articles/03_Aurora_example.html">03 Aurora AutoSpectral Example</a></li>
-    <li><a class="dropdown-item" href="../articles/04_Gating.html">04 Gating</a></li>
-    <li><a class="dropdown-item" href="../articles/05_Cleaning.html">05 Control clean-up</a></li>
-    <li><a class="dropdown-item" href="../articles/06_Single_Cell_AutoFluorescence.html">06 Single Cell Autofluorescence</a></li>
-    <li><a class="dropdown-item" href="../articles/07_Per_Cell_Optimization.html">07 Per Cell Optimization</a></li>
-    <li><a class="dropdown-item" href="../articles/08_Reload_AutoSpectral.html">08 Re-running AutoSpectral</a></li>
-    <li><a class="dropdown-item" href="../articles/09_Plotting.html">09 Plotting</a></li>
-    <li><a class="dropdown-item" href="../articles/10_Development.html">10 Development</a></li>
-    <li><a class="dropdown-item" href="../articles/11_Speed_It_Up.html">11 Speed It Up (Why So Slow?)</a></li>
-    <li><a class="dropdown-item" href="../articles/12_Updates_And_Issues.html">12 Updates and Issues</a></li>
-    <li><a class="dropdown-item" href="../articles/13_ID7000_WLS_example.html">13 ID7000 WLS Example</a></li>
+    <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
+    <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
+    <li><a class="dropdown-item" href="../articles/06_Gating.html">06 Gating</a></li>
+    <li><a class="dropdown-item" href="../articles/07_Cleaning.html">07 Control clean-up</a></li>
+    <li><a class="dropdown-item" href="../articles/08_Single_Cell_AutoFluorescence.html">08 Single Cell Autofluorescence</a></li>
+    <li><a class="dropdown-item" href="../articles/09_Per_Cell_Optimization.html">09 Per Cell Optimization</a></li>
+    <li><a class="dropdown-item" href="../articles/10_Reload_AutoSpectral.html">10 Re-running AutoSpectral</a></li>
+    <li><a class="dropdown-item" href="../articles/11_Plotting.html">11 Plotting</a></li>
+    <li><a class="dropdown-item" href="../articles/12_Speed_It_Up.html">12 Speed It Up (Why So Slow?)</a></li>
+    <li><a class="dropdown-item" href="../articles/13_Updates_And_Issues.html">13 Updates and Issues</a></li>
+    <li><a class="dropdown-item" href="../articles/14_Development.html">14 Development</a></li>
   </ul>
 </li>
       </ul>
@@ -81,11 +82,11 @@
 <code class="sourceCode R"><span><span class="co"># Install Bioconductor packages</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
-<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"flowWorkspace"</span>, <span class="st">"flowCore"</span>, <span class="st">"PeacoQC"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"flowWorkspace"</span>, <span class="st">"flowCore"</span>, <span class="st">"PeacoQC"</span>, <span class="st">"FlowSOM"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># You'll need devtools or remotes to install from GitHub.</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="get-the-data">Get the data<a class="anchor" aria-label="anchor" href="#get-the-data"></a>
@@ -221,10 +222,24 @@ the CSV file in <code>table_spectra</code>, removing the AF channel</p>
 unmix:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spleen.fcs.file</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Stained/D4 Spleen_Set1.fcs"</span></span>
-<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span><span class="va">spleen.fcs.file</span>, <span class="va">spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>,</span>
-<span>          method <span class="op">=</span> <span class="st">"OLS"</span>, file.suffix <span class="op">=</span> <span class="st">"with AF extraction"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span><span class="va">spleen.fcs.file</span>, <span class="va">no.af.spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>,</span>
-<span>          method <span class="op">=</span> <span class="st">"OLS"</span>, file.suffix <span class="op">=</span> <span class="st">"without AF extraction"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
+<span>  <span class="va">spleen.fcs.file</span>,</span>
+<span>  <span class="va">spectra</span>, <span class="va">asp</span>,</span>
+<span>  <span class="va">flow.control</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"OLS"</span>,</span>
+<span>  file.suffix <span class="op">=</span> <span class="st">"with AF extraction"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
+<span>  <span class="va">spleen.fcs.file</span>,</span>
+<span>  <span class="va">no.af.spectra</span>,</span>
+<span>  <span class="va">asp</span>,</span>
+<span>  <span class="va">flow.control</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"OLS"</span>,</span>
+<span>  file.suffix <span class="op">=</span> <span class="st">"without AF extraction"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Note that this is just using OLS–this is not the “AutoSpectral”
+unmixing method, we are just using the AutoSpectral R package to perform
+bog standard unmixing.</p>
 <p>If we have a folder full of FCS files, we can do all the files in the
 folder. Note that this is essentially just an <code>lapply</code> loop
 over the files. It can, however, be parallelized, which will work as
@@ -255,27 +270,29 @@ autofluorescence signatures from the three tissues involved here, and
 look at how to use those in the unmixing. We’ll also get information
 about the fluorophore emission variability and use that to try to
 improve the unmixing.</p>
-<p>When we go to use this information in the unmixing, we can select
-either <code>method = AutoSpectral</code> or the default
-<code>method = Automatic</code>. <code>Automatic</code> selects based on
-what you give the function. If you give it files from an ID7000 without
-any autofluorescence spectra variations, it will do WLS. If you do the
-same, but the files are from an Aurora, it will do OLS. If you give it
-autofluorescence spectra, it will switch to using per-cell
-autofluorescence extraction. If you want more direct control over what’s
-happening, which will trigger errors if you fail to provide the right
-information, use “<code>AutoSpectral</code>. That’s what we’ll do
-here.</p>
-<p>If this is confusing, let me know and provide some suggestions for
-simplification.</p>
+<p>When we go to use this information in the unmixing, we select
+<code>method = AutoSpectral</code>.</p>
+<p>As of version 1.0.0, per-cell autofluorescence extraction will be
+faster using <code>AutoSpectralRcpp</code>. On Windows, you will first
+need to install Rtools.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectralRcpp"</span><span class="op">)</span></span></code></pre></div>
+<p>Once <code>AutoSpectralRcpp</code> is installed, it takes over when
+the unmixing starts. You don’t need to do anything else.</p>
 <p>To use per-cell autofluorescence extraction only, no fluorophore
 optimization, do this:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spleen.unstained</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Unstained/D1 Spleen_Set1.fcs"</span></span>
 <span><span class="va">spleen.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span><span class="va">spleen.unstained</span>, <span class="va">asp</span>, <span class="va">spectra</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span><span class="va">spleen.fcs.file</span>, <span class="va">spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>, </span>
-<span>          method <span class="op">=</span> <span class="st">"AutoSpectral"</span>, af.spectra <span class="op">=</span> <span class="va">spleen.af</span>,</span>
-<span>          file.suffix <span class="op">=</span> <span class="st">"per-cell AF extraction"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
+<span>  <span class="va">spleen.fcs.file</span>,</span>
+<span>  <span class="va">spectra</span>,</span>
+<span>  <span class="va">asp</span>,</span>
+<span>  <span class="va">flow.control</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
+<span>  af.spectra <span class="op">=</span> <span class="va">spleen.af</span>,</span>
+<span>  file.suffix <span class="op">=</span> <span class="st">"per-cell AF extraction"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>We get the distribution of autofluorescence spectra as a spectral
 trace and as a heatmap in <code>figure_autofluorescence</code>. The AF
 spectra are saved as a CSV file in <code>table_spectra</code>.</p>
@@ -291,7 +308,7 @@ folder. So, if you have a whole set of stained lung samples, you’d pull
 your AF spectra from the unstained lung sample, and then call
 <code>unmix.folder</code> on the folder containing your lung (and only
 lung) samples. Repeat for each type of autofluorescence sample. Read
-more about how the per-cell autofluorescence extraction works in the <a href="https://drcytometer.github.io/AutoSpectral/articles/06_Single_Cell_AutoFluorescence.html">GitHub</a>
+more about how the per-cell autofluorescence extraction works in the <a href="https://drcytometer.github.io/AutoSpectral/articles/08_Single_Cell_AutoFluorescence.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-single-cell-autofluorescence" class="external-link">Colibri</a>
 article.</p>
 <p>In this case, we have three types of samples: spleen, liver and lung
@@ -300,39 +317,54 @@ tissues. If you are working with human PBMCs, usually a single
 samples from very sick donors, you might consider collecting unstained
 sample from each donor and matching the autofluorescence more
 closely.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lung.unstained</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Unstained/D2 Lung_Set1.fcs"</span></span>
 <span><span class="va">lung.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span><span class="va">lung.unstained</span>, <span class="va">asp</span>, <span class="va">spectra</span><span class="op">)</span></span>
 <span><span class="va">lung.fcs.file</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Stained/D5 Lung_Set1.fcs"</span></span>
-<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span><span class="va">lung.fcs.file</span>, <span class="va">spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>,</span>
-<span>          method <span class="op">=</span> <span class="st">"AutoSpectral"</span>, af.spectra <span class="op">=</span> <span class="va">lung.af</span>,</span>
-<span>          file.suffix <span class="op">=</span> <span class="st">"per-cell AF extraction"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
+<span>  <span class="va">lung.fcs.file</span>,</span>
+<span>  <span class="va">spectra</span>,</span>
+<span>  <span class="va">asp</span>,</span>
+<span>  <span class="va">flow.control</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
+<span>  af.spectra <span class="op">=</span> <span class="va">lung.af</span>,</span>
+<span>  file.suffix <span class="op">=</span> <span class="st">"per-cell AF extraction"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">liver.unstained</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Unstained/D3 Liver_Set1.fcs"</span></span>
 <span><span class="va">liver.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span><span class="va">liver.unstained</span>, <span class="va">asp</span>, <span class="va">spectra</span><span class="op">)</span></span>
 <span><span class="va">liver.fcs.file</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Stained/D6 Liver_Set1.fcs"</span></span>
-<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span><span class="va">liver.fcs.file</span>, <span class="va">spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>,</span>
-<span>          method <span class="op">=</span> <span class="st">"AutoSpectral"</span>, af.spectra <span class="op">=</span> <span class="va">liver.af</span>,</span>
-<span>          file.suffix <span class="op">=</span> <span class="st">"per-cell AF extraction"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
+<span>  <span class="va">liver.fcs.file</span>,</span>
+<span>  <span class="va">spectra</span>,</span>
+<span>  <span class="va">asp</span>,</span>
+<span>  <span class="va">flow.control</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
+<span>  af.spectra <span class="op">=</span> <span class="va">liver.af</span>,</span>
+<span>  file.suffix <span class="op">=</span> <span class="st">"per-cell AF extraction"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>To do per-cell fluorophore optimization, we will first measure the
 variation in the spectrum for each fluorophore. For the unmixing, we’ll
 supply the <code>af.spectra</code> and the
 <code>spectra.variants</code>, calling <code>AutoSpectral</code>
-unmixing. For best results, you should install
-<code>AutoSpectralRcpp</code>, for which you will need Rtools. Read more
-about how the per-cell fluorophore optimization works in the <a href="https://drcytometer.github.io/AutoSpectral/articles/07_Per_Cell_Optimization.html">GitHub</a>
+unmixing. Read more about how the per-cell fluorophore optimization
+works in the <a href="https://drcytometer.github.io/AutoSpectral/articles/09_Per_Cell_Optimization.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization" class="external-link">Colibri</a>
 article.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectralRcpp"</span><span class="op">)</span></span></code></pre></div>
 <p>We provide <code>spleen.af</code> as the <code>af.spectra</code> here
 because the control samples are from spleen. Provide whatever is the
 best fit for your single-stained controls. The point here is to match
 the AF of the controls so that we isolate the variation in the
-fluorophore signatures idependnet of any AF variation.</p>
+fluorophore signatures independent of any AF variation.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">variants</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.spectral.variants.html">get.spectral.variants</a></span><span class="op">(</span><span class="va">control.dir</span>, <span class="va">control.file</span>, <span class="va">asp</span>, <span class="va">spectra</span>,</span>
-<span>                                  af.spectra <span class="op">=</span> <span class="va">spleen.af</span>, parallel <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">variants</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.spectral.variants.html">get.spectral.variants</a></span><span class="op">(</span></span>
+<span>  <span class="va">control.dir</span>,</span>
+<span>  <span class="va">control.file</span>,</span>
+<span>  <span class="va">asp</span>,</span>
+<span>  <span class="va">spectra</span>,</span>
+<span>  af.spectra <span class="op">=</span> <span class="va">spleen.af</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>The output of this is saved as an RDS file in folder
 <code>figure_spectral_variants</code>. You can load it back in using the
 <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code> function in base R.</p>
@@ -344,18 +376,24 @@ expressing CD11b. <img src="figures/Workflow/BUV805_variants.jpg" alt="BUV805"><
 blue and yellow-green lasers, which would cause spread if we had a
 fluorophore in that range on the blue laser, such as RB780. We don’t in
 this case. <img src="figures/Workflow/PECy7_variants.jpg" alt="PE-Cy7"></p>
-<p>We can now pass this to the unmixing call. For best results, we’ll
-set the <code>speed</code> to <code>slow</code>, which recalculates the
-unmixing matrix for each variant. This can be a bit slow.
-Parallelization is automatic here if you have installed
-<code>AutoSpectralRcpp</code>. If you are using base R only, try turning
-on the <code>parallel=TRUE</code>.</p>
+<p>We can now pass this to the unmixing call. For quicker results, we’ll
+set the <code>speed</code> to <code>fast</code>, which checks fewer
+pre-screened variants per cell. This can be a bit slow. Parallelization
+is automatic here if you have installed <code>AutoSpectralRcpp</code>.
+If you are using base R only, try turning on the
+<code>parallel=TRUE</code>.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span><span class="va">lung.fcs.file</span>, <span class="va">spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>,</span>
-<span>          method <span class="op">=</span> <span class="st">"AutoSpectral"</span>, af.spectra <span class="op">=</span> <span class="va">lung.af</span>,</span>
-<span>          spectra.variants <span class="op">=</span> <span class="va">variants</span>,</span>
-<span>          file.suffix <span class="op">=</span> <span class="st">"per-cell AF and fluorophore optimization"</span>,</span>
-<span>          speed <span class="op">=</span> <span class="st">"slow"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
+<span>  <span class="va">lung.fcs.file</span>,</span>
+<span>  <span class="va">spectra</span>,</span>
+<span>  <span class="va">asp</span>,</span>
+<span>  <span class="va">flow.control</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
+<span>  af.spectra <span class="op">=</span> <span class="va">lung.af</span>,</span>
+<span>  spectra.variants <span class="op">=</span> <span class="va">variants</span>,</span>
+<span>  file.suffix <span class="op">=</span> <span class="st">"per-cell AF and fluorophore optimization"</span>,</span>
+<span>  speed <span class="op">=</span> <span class="st">"fast"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>Please note that if you are comparing the output FCS files from
 AutoSpectral to others you may have from the cytometer and you are doing
 this in FlowJo, FlowJo V10 is still terrible at handling scales. You

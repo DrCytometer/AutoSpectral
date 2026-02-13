@@ -25,7 +25,12 @@
 #'
 #' @export
 
-do.gate.af <- function( gate.data, samp, asp, intermediate.figures = FALSE ) {
+do.gate.af <- function(
+    gate.data,
+    samp,
+    asp,
+    intermediate.figures = FALSE
+  ) {
 
   # change to restrict to lower 50%
   gate.data.trim.factor.x.min <- asp$gate.data.trim.factor.x.min.cells

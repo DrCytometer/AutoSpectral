@@ -14,7 +14,11 @@
 #'
 #' @return A matrix with the extreme events trimmed.
 
-trim.extreme.events <- function( expr.data, peak.channel, trim.factor ){
+trim.extreme.events <- function(
+    expr.data,
+    peak.channel,
+    trim.factor
+  ) {
 
   # get expr.data for peak channel
   peak.channel.expr <- expr.data[ , peak.channel ]

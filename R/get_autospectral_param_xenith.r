@@ -41,8 +41,9 @@ get.autospectral.param.xenith <- function( autosp.param )
           width = -20
         )
 
-  autosp.param$non.spectral.channel <- c( "Time", "SSC", "FSC", "-H", "-W",
-                                          "Comp", "Event", "Gate", "Sort" )
+  autosp.param$non.spectral.channel <- c(
+    "Time", "SSC", "FSC", "-H", "-W", "Comp", "Event", "Gate", "Sort"
+  )
 
   autosp.param$af.channel <- "FL13-A"
 
@@ -53,7 +54,10 @@ get.autospectral.param.xenith <- function( autosp.param )
 
   autosp.param$ribbon.breaks <- c( -1e3, 0, 1e3, 3e3, 1e4, 3e4 )
 
-  autosp.param
+  # lower the similarity threshold since we have fewer detectors
+  autosp.param$sim.threshold <- 0.975
+
+  return( autosp.param )
 
 }
 

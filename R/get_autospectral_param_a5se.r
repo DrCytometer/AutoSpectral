@@ -27,12 +27,16 @@ get.autospectral.param.a5se <- function( autosp.param )
 
   autosp.param$expr.data.min <- -111
 
-  autosp.param$expr.data.max <- 262144
+  # This should be 262144, but the A5SE appears to record data well above this
+  # so we will extend the window to better capture positives in the controls
+  autosp.param$expr.data.max <- 2621440
 
   autosp.param$default.scatter.parameter <- c( "FSC-A", "SSC-A" )
 
   autosp.param$default.time.parameter <- "Time"
 
+  # for now, keep the default transformation settings
+  # with the expected upper limit
   autosp.param$default.transformation.param <- list(
           length = 256,
           max.range = 262144,
@@ -51,6 +55,9 @@ get.autospectral.param.a5se <- function( autosp.param )
   autosp.param$large.gate.scaling.y <- 6
 
   autosp.param$ribbon.breaks <- c( -1e2, 0, 1e2, 1e3, 1e4, 1e5 )
+
+  # lower the similarity threshold since we have fewer detectors
+  autosp.param$sim.threshold <- 0.975
 
   return( autosp.param )
 

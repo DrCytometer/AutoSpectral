@@ -6,13 +6,12 @@
 #' This function generates scatter plots for matching positive and negative
 #' expression data, selected based on scatter parameters gates.
 #'
-#' @importFrom MASS kde2d bandwidth.nrd
-#' @importFrom fields interp.surface
-#' @importFrom ggplot2 ggplot aes scale_color_gradientn facet_wrap
+#' @importFrom ggplot2 ggplot aes facet_wrap after_stat
 #' @importFrom ggplot2 scale_fill_gradientn scale_fill_viridis_c stat_density_2d
-#' @importFrom ggplot2 xlab ylab scale_x_continuous scale_y_continuous theme_bw
+#' @importFrom ggplot2 scale_x_continuous scale_y_continuous theme_bw
 #' @importFrom ggplot2 theme element_rect element_text margin ggsave
 #' @importFrom scattermore geom_scattermore
+#' @importFrom ragg agg_jpeg
 #'
 #' @param pos.expr.data A matrix containing the positive expression data.
 #' @param neg.expr.data A matrix containing the negative expression data.
@@ -39,36 +38,47 @@ scatter.match.plot <- function(
     color.palette = "rainbow"
   ) {
 
+  # convert to data frames for plotting
   pos.scatter.plot <- data.frame(
     pos.expr.data[ , scatter.param ],
     check.names = FALSE
   )
-
-  neg.scatter.plot  <- data.frame(
+  neg.scatter.plot <- data.frame(
     neg.expr.data[ , scatter.param ],
     check.names = FALSE
   )
 
+  # set group names
   pos.scatter.plot$group <- fluor.name
   neg.scatter.plot$group <- "Negative"
 
+  # aggregate and set groups as factors
   scatter.plot.data <- rbind( pos.scatter.plot, neg.scatter.plot )
   scatter.plot.data$group <- factor(
     scatter.plot.data$group,
     levels = c( "Negative", fluor.name )
   )
-
   data.ggp <- data.frame(
     x = scatter.plot.data[ , 1 ],
     y = scatter.plot.data[ , 2 ],
     group = scatter.plot.data$group
   )
 
+  # create axes labels
+  x.limits <- c( asp$scatter.data.min.x, asp$scatter.data.max.x )
+  x.breaks <- seq( asp$scatter.data.min.x, asp$scatter.data.max.x, asp$data.step )
+  x.labels <- paste0( round( x.breaks / 1e6, 1), "e6" )
+  y.limits <- c( asp$scatter.data.min.y, asp$scatter.data.max.y )
+  y.breaks <- seq( asp$scatter.data.min.y, asp$scatter.data.max.y, asp$data.step )
+  y.labels <- paste0( round( y.breaks / 1e6, 1), "e6" )
+
+  # plot the data
   scatter.plot <- suppressWarnings(
     ggplot( data.ggp, aes( x, y, group ) ) +
       geom_scattermore(
         pointsize = asp$figure.gate.point.size * 3,
-        alpha = 1, na.rm = TRUE
+        alpha = 1,
+        na.rm = TRUE
       ) +
       stat_density_2d(
         aes( fill = after_stat( level ) ),
@@ -77,40 +87,24 @@ scatter.match.plot <- function(
         na.rm = TRUE
       ) +
       facet_wrap( ~ group, ncol = 2 ) +
-      xlab( scatter.param[ 1 ] ) +
-      ylab( scatter.param[ 2 ] ) +
       scale_x_continuous(
-        breaks = seq(
-          asp$scatter.data.min.x, asp$scatter.data.max.x, asp$data.step
-        ),
-        labels = paste0(
-          round(
-            seq(
-              asp$scatter.data.min.x, asp$scatter.data.max.x, asp$data.step
-            ) / 1e6, 1
-          ),
-          "e6"
-        ),
-        limits = c( asp$scatter.data.min.x, asp$scatter.data.max.x )
+        name = scatter.param[ 1 ],
+        breaks = x.breaks,
+        labels = x.labels,
+        limits = x.limits,
+        expand = expansion( asp$figure.gate.scale.expand )
       ) +
       scale_y_continuous(
-        breaks = seq(
-          asp$scatter.data.min.y, asp$scatter.data.max.y, asp$data.step
-        ),
-        labels = paste0(
-          round(
-            seq(
-              asp$scatter.data.min.y, asp$scatter.data.max.y, asp$data.step
-            ) / 1e6, 1
-          ),
-          "e6"
-        ),
-        limits = c( asp$scatter.data.min.y, asp$scatter.data.max.y ) ) +
+        name = scatter.param[ 2 ],
+        breaks = y.breaks,
+        labels = y.labels,
+        limits = y.limits,
+        expand = expansion( asp$figure.gate.scale.expand )
+      ) +
       theme_bw() +
       theme(
         plot.margin = margin(
-          asp$figure.margin, asp$figure.margin,
-          asp$figure.margin, asp$figure.margin
+          asp$figure.margin, asp$figure.margin, asp$figure.margin, asp$figure.margin
         ),
         legend.position = "none",
         strip.background = element_rect( fill = "white" ),
@@ -121,20 +115,21 @@ scatter.match.plot <- function(
         axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
         axis.text = element_text( size = asp$figure.axis.text.size ),
         axis.title = element_text( size = asp$figure.axis.title.size ),
-        panel.border = element_rect( linewidth = asp$figure.panel.line.size ),
+        panel.border = element_rect( fill = NA, linewidth = asp$figure.panel.line.size ),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()
       )
   )
 
   # color options
-  virids.colors <- c(
+  viridis.colors <- c(
     "magma", "inferno", "plasma", "viridis",
     "cividis", "rocket", "mako", "turbo"
   )
 
+
   # set the color palette on the plot
-  if ( color.palette %in% virids.colors ) {
+  if ( color.palette %in% viridis.colors ) {
     scatter.plot <- scatter.plot +
       scale_fill_viridis_c( option = color.palette )
   } else {
@@ -156,8 +151,10 @@ scatter.match.plot <- function(
       scatter.plot.filename,
       path = asp$figure.scatter.dir.base,
       plot = scatter.plot,
+      device = ragg::agg_jpeg,
       width = asp$scatter.match.plot.width,
-      height = asp$scatter.match.plot.height
+      height = asp$scatter.match.plot.height,
+      limitsize = FALSE
     )
   )
 

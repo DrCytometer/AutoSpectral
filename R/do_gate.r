@@ -35,9 +35,16 @@
 #' @export
 
 
-do.gate <- function( gate.data, viability.gate, large.gate,
-                     samp, scatter.and.channel.label, control.type, asp )
-{
+do.gate <- function(
+    gate.data,
+    viability.gate,
+    large.gate,
+    samp,
+    scatter.and.channel.label,
+    control.type,
+    asp
+  ) {
+
   # set parameters for beads or cells
   if ( control.type == "beads" ) {
     default.gate.param <- asp$default.gate.param.beads
@@ -94,7 +101,7 @@ do.gate <- function( gate.data, viability.gate, large.gate,
   gate.region <- NULL
   gate.boundary <- NULL
 
-  # trim data
+  # trim data to cytometer's limits
   gate.data.x.min <- max( asp$scatter.data.min.x, min( gate.data[ , 1 ] ) )
   gate.data.x.max <- min( asp$scatter.data.max.x, max( gate.data[ , 1 ] ) )
 

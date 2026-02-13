@@ -34,17 +34,23 @@
 #' @return A list containing the processed expression data for each universal
 #' negative sample.
 
-run.universal.negative <- function( clean.expr, univ.sample,
-                                    universal.negatives,
-                                    scatter.param,
-                                    peak.channels, downsample,
-                                    negative.n, positive.n,
-                                    spectral.channel, asp,
-                                    control.type,
-                                    scatter.match,
-                                    intermediate.figures = FALSE,
-                                    main.figures = TRUE,
-                                    verbose = TRUE ) {
+run.universal.negative <- function(
+    clean.expr,
+    univ.sample,
+    universal.negatives,
+    scatter.param,
+    peak.channels,
+    downsample,
+    negative.n,
+    positive.n,
+    spectral.channel,
+    asp,
+    control.type,
+    scatter.match,
+    intermediate.figures = FALSE,
+    main.figures = TRUE,
+    verbose = TRUE
+  ) {
 
   univ.expr <- lapply( univ.sample, function( sample.name ) {
 

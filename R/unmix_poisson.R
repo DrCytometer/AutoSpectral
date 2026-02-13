@@ -39,7 +39,6 @@ unmix.poisson <- function(
 
   # handle zeros and negative values
   spectra.t <- t( abs( spectra ) )
-  #spectra.t[ spectra.t <= 0 ] <- 1e-6
   raw.data[ raw.data <= 0 ] <- 1e-6
   unmixed.data[ unmixed.data <= 0 ] <- 1e-6
 

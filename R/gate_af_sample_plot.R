@@ -6,10 +6,11 @@
 #' This function plots the autofluorescence exclusion gate on the sample(s).
 #'
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
-#' @importFrom ggplot2 stat_density_2d theme_bw theme element_line
+#' @importFrom ggplot2 theme_bw theme element_line geom_path after_stat
 #' @importFrom ggplot2 element_text element_rect margin ggsave
-#' @importFrom ggplot2 scale_fill_viridis_c geom_path
+#' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn stat_density_2d
 #' @importFrom scattermore geom_scattermore
+#' @importFrom ragg agg_jpeg
 #'
 #' @param plot.data Matrix containing autofluorescence data points.
 #' @param samp Sample identifier.
@@ -17,7 +18,7 @@
 #' @param asp The AutoSpectral parameter list.
 #' Prepare using `get.autospectral.param`
 #' @param max.points Number of points to plot (speeds up plotting). Default is
-#' `1e5`.
+#' `5e4`.
 #' @param color.palette Optional character string defining the viridis color
 #' palette to be used for the fluorophore traces. Default is `viridis`. Options
 #' are the viridis color options: `magma`, `inferno`, `plasma`, `viridis`,
@@ -30,22 +31,32 @@ gate.af.sample.plot <- function(
     samp,
     af.boundary.upper,
     asp,
-    max.points = 1e5,
+    max.points = 5e4,
     color.palette = "viridis"
   ) {
 
-  # set plot limits
-  breaks <- asp$ribbon.breaks
+  valid.idx <- which( !is.na( plot.data[ , 1 ] ) & !is.na( plot.data[ , 2 ] ) )
+  if ( length( valid.idx ) == 0 ) {
+    warning( "AF plot.data has no valid x/y values; skipping density plot." )
+    return( invisible( NULL ) )
+  }
+  plot.data <- plot.data[ valid.idx, ]
 
-  axis.labels <- sapply( breaks, function( x ) {
-    if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
-  } )
-
-  limits <- c( asp$ribbon.plot.min, asp$expr.data.max )
+  # downsample (faster plotting)
+  if ( nrow( plot.data ) > max.points ) {
+    # random sampling
+    set.seed( 42 )
+    plot.data <- plot.data[ sample( seq_len( nrow( plot.data ) ), max.points ), ]
+  }
 
   # get axis labels
   x.lab <- colnames( plot.data )[ 1 ]
   y.lab <- colnames( plot.data )[ 2 ]
+
+  # convert to data frame for plotting
+  plot.data <- data.frame(
+    x = plot.data[ , 1 ],
+    y = plot.data[ , 2 ] )
 
   # set transform
   biexp.transform <- flowWorkspace::flowjo_biexp(
@@ -56,67 +67,74 @@ gate.af.sample.plot <- function(
     widthBasis = asp$default.transformation.param$width,
     inverse = FALSE )
 
-  # downsample data
-  if ( nrow( plot.data ) < max.points )
-    max.points <- nrow( plot.data )
-
-  plot.data <- data.frame(
-    x = plot.data[ 1:max.points, 1 ],
-    y = plot.data[ 1:max.points, 2 ]
+  plot.data.ggp <- data.frame(
+    x.trans = biexp.transform( plot.data[ , 1] ),
+    y.trans = biexp.transform( plot.data[ , 2] )
   )
 
-  # create main plot
-  gate.plot <- suppressWarnings(
-    ggplot(
-      plot.data,
-      aes(
-        x = biexp.transform( x ),
-        y = biexp.transform( y )
-      )
+  # set plot limits
+  breaks <- asp$ribbon.breaks
+  limits <- c( asp$ribbon.plot.min, asp$expr.data.max )
+  axis.labels <- sapply( breaks, function( x ) {
+    if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
+  } )
+
+  # set up the base plot
+  gate.plot <- ggplot( plot.data.ggp, aes( x.trans, y.trans ) ) +
+    geom_scattermore(
+      pointsize = asp$figure.gate.point.size,
+      color = "black",
+      alpha = 1,
+      na.rm = TRUE
     ) +
-      geom_scattermore(
-        pointsize = asp$figure.gate.point.size,
-        alpha = 1,
-        na.rm = TRUE
-      ) +
-      stat_density_2d(
-        aes( fill = after_stat( level ) ),
-        geom = "polygon",
-        contour = TRUE,
-        na.rm = TRUE ) +
-      scale_x_continuous(
-        name = x.lab,
-        breaks = biexp.transform( breaks ),
-        limits = biexp.transform( limits ),
-        labels = axis.labels
-      ) +
-      scale_y_continuous(
-        name = y.lab,
-        breaks = biexp.transform( breaks ),
-        limits = biexp.transform( limits ),
-        labels = axis.labels
-      ) +
-      theme_bw() +
-      theme(
-        plot.margin = margin(
-          asp$figure.margin,
-          asp$figure.margin,
-          asp$figure.margin,
-          asp$figure.margin
-        ),
-        legend.position = "none",
-        axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
-        axis.text = element_text( size = asp$figure.axis.text.size ),
-        axis.text.x = element_text( angle = 45, hjust = 1 ),
-        axis.title = element_text( size = asp$figure.axis.title.size ),
-        panel.border = element_rect( linewidth = asp$figure.panel.line.size ),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()
-      )
+    stat_density_2d(
+      aes( fill = after_stat( level ) ),
+      geom = "polygon",
+      na.rm = TRUE
+    ) +
+    scale_x_continuous(
+      name = x.lab,
+      breaks = biexp.transform( breaks ),
+      limits = biexp.transform( limits ),
+      labels = axis.labels
+    ) +
+    scale_y_continuous(
+      name = y.lab,
+      breaks = biexp.transform( breaks ),
+      limits = biexp.transform( limits ),
+      labels = axis.labels
+    ) +
+    theme_bw() +
+    theme(
+      plot.margin = margin(
+        asp$figure.margin, asp$figure.margin, asp$figure.margin, asp$figure.margin
+      ),
+      legend.position = "none",
+      axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
+      axis.text = element_text( size = asp$figure.axis.text.size ),
+      axis.text.x = element_text( angle = 45, hjust = 1 ),
+      axis.title = element_text( size = asp$figure.axis.title.size ),
+      panel.border = element_rect( fill = NA, linewidth = asp$figure.panel.line.size ),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+    )
+
+  # color options
+  viridis.colors <- c(
+    "magma", "inferno", "plasma", "viridis",
+    "cividis", "rocket", "mako", "turbo"
   )
+
+  # add fill layer for color palette
+  if ( color.palette %in% viridis.colors ) {
+    gate.plot <- gate.plot + scale_fill_viridis_c( option = color.palette )
+  } else {
+    gate.plot <- gate.plot +
+      scale_fill_gradientn( colors = asp$density.palette.base.color )
+  }
 
   # add AF gate boundary
-  if ( !is.null( af.boundary.upper ) ){
+  if ( !is.null( af.boundary.upper ) ) {
     af.boundary.upper.ggp <- data.frame(
       x = c( af.boundary.upper$x,
              af.boundary.upper$x[ 1 ] ),
@@ -129,39 +147,23 @@ gate.af.sample.plot <- function(
 
     gate.plot <- gate.plot +
       geom_path(
-        aes( x, y, color = NULL ),
         data = af.boundary.upper.ggp,
+        aes( x, y ),
+        color = "black",
         linewidth = asp$figure.gate.line.size
       )
   }
 
-  # color options
-  virids.colors <- c(
-    "magma", "inferno", "plasma", "viridis",
-    "cividis", "rocket", "mako", "turbo"
-  )
-
-  # set color palette on plot
-  if ( color.palette %in% virids.colors ) {
-    gate.plot <- gate.plot +
-      scale_fill_viridis_c( option = color.palette )
-  } else {
-    gate.plot <- gate.plot +
-      scale_fill_gradientn(
-        colours = asp$density.palette.base.color,
-        values = asp$ribbon.scale.values
-      )
-  }
-
   # save the final plot
-  suppressWarnings(
-    ggsave(
-      file.path(
-        asp$figure.clean.control.dir,
-        paste( asp$af.plot.filename, samp, ".jpg", sep = "_" ) ),
-      plot = gate.plot, width = asp$figure.width,
-      height = asp$figure.height
-    )
+  ggsave(
+    file.path(
+      asp$figure.clean.control.dir,
+      paste( asp$af.plot.filename, samp, ".jpg", sep = "_" ) ),
+    plot = gate.plot,
+    device = ragg::agg_jpeg,
+    width = asp$figure.width,
+    height = asp$figure.height,
+    limitsize = FALSE
   )
 
 }

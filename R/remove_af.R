@@ -86,6 +86,12 @@ remove.af <- function(
     scale = expr.data.scale
   )
 
+  # check for NaNs before PCA
+  if ( any( is.na( scaled.data ) ) ) {
+    warning( paste( "NaNs detected in scaled data for", samp, "- skipping PCA cleaning." ) )
+    return( clean.expr[[ samp ]] ) # fallback
+  }
+
   af.pca <- stats::prcomp( scaled.data, center = FALSE, scale. = FALSE )
 
   # use the first 2 components to identify main AF signatures to be removed
@@ -240,18 +246,27 @@ remove.af <- function(
       removed.data <- expr.data.pos[ -gate.population.idx, , drop = FALSE ]
     }
 
-    spectral.ribbon.plot(
-      pos.expr.data = expr.data.pos,
-      neg.expr.data = expr.data.pos[ gate.population.idx, , drop = FALSE ],
-      spectral.channel = spectral.channel,
-      asp = asp, fluor.name = samp,
-      title = asp$af.plot.filename,
-      af = TRUE,
-      removed.data = removed.data
-      )
+    # plot with error handling
+    tryCatch(
+      expr = {
+        spectral.ribbon.plot(
+          pos.expr.data = expr.data.pos,
+          neg.expr.data = expr.data.pos[ gate.population.idx, , drop = FALSE ],
+          spectral.channel = spectral.channel,
+          asp = asp, fluor.name = samp,
+          title = asp$af.plot.filename,
+          af = TRUE,
+          removed.data = removed.data
+        )
 
-    # plot AF removal gating on stained control
-    gate.af.sample.plot( gate.data.pos, samp, af.boundary.ggp, asp )
+        # plot AF removal gating on stained control
+        gate.af.sample.plot( gate.data.pos, samp, af.boundary.ggp, asp )
+      },
+      error = function( e ) {
+        message( "Error in plotting AF removal: ", e$message )
+        return( NULL )
+      }
+    )
 
     if ( intermediate.figures ) {
 
@@ -269,23 +284,32 @@ remove.af <- function(
         removed.data <- expr.data.neg[ -gate.neg.idx, , drop = FALSE ]
       }
 
-      spectral.ribbon.plot(
-        pos.expr.data = expr.data.neg,
-        neg.expr.data = expr.data.neg[ gate.neg.idx, , drop = FALSE ],
-        spectral.channel = spectral.channel,
-        asp = asp,
-        fluor.name = negative.label,
-        title = asp$af.plot.filename,
-        af = TRUE,
-        removed.data = removed.data
-        )
+      # plot with error handling
+      tryCatch(
+        expr = {
+          spectral.ribbon.plot(
+            pos.expr.data = expr.data.neg,
+            neg.expr.data = expr.data.neg[ gate.neg.idx, , drop = FALSE ],
+            spectral.channel = spectral.channel,
+            asp = asp,
+            fluor.name = negative.label,
+            title = asp$af.plot.filename,
+            af = TRUE,
+            removed.data = removed.data
+          )
 
-      # plot AF removal gating on negative control
-      gate.af.sample.plot(
-        gate.data.neg,
-        negative.label,
-        af.boundary.ggp,
-        asp
+          # plot AF removal gating on negative control
+          gate.af.sample.plot(
+            gate.data.neg,
+            negative.label,
+            af.boundary.ggp,
+            asp
+          )
+        },
+        error = function( e ) {
+          message( "Error in plotting AF removal: ", e$message )
+          return( NULL )
+        }
       )
     }
   }
@@ -346,7 +370,7 @@ remove.af <- function(
           "\n"
           )
         )
-      return( clean.expr[[ samp ]][ gate.population.idx, ] )
+      return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
     }
 
     # select only brightest positive.n events
@@ -360,12 +384,28 @@ remove.af <- function(
     pos.selected.expr <- expr.data.pos[ names( pos.selected ), ]
     pos.scatter.coord <- unique( pos.selected.expr[ , scatter.param ] )
 
-    pos.scatter.gate <- suppressWarnings(
-      tripack::convex.hull(
-        tripack::tri.mesh(
-        pos.scatter.coord[ , 1 ],
-        pos.scatter.coord[ , 2 ]
-      ) ) )
+    if ( nrow( pos.scatter.coord ) < asp$min.cell.stop.n ) {
+      warning(
+        paste( "Too few unique scatter points for", samp, "- skipping scatter match." )
+      )
+      return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
+    }
+
+    pos.scatter.gate <- tryCatch( {
+      suppressWarnings(
+        tripack::convex.hull(
+          tripack::tri.mesh(
+            pos.scatter.coord[ , 1 ],
+            pos.scatter.coord[ , 2 ]
+          ) ) )
+    }, error = function( e ) return( NULL ) )
+
+    if ( is.null( pos.scatter.gate ) ) {
+      warning(
+        paste( "Convex hull failed for", samp, "- returning non-matched data." )
+      )
+      return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
+    }
 
     neg.scatter.matched.pip <- sp::point.in.polygon(
       expr.data.neg[ , scatter.param[ 1 ] ],
@@ -411,24 +451,29 @@ remove.af <- function(
 
     neg.scatter.matched <- expr.data.neg[ neg.population.idx, ]
 
+    # plotting with error/exception handling
     if ( main.figures ) {
-      scatter.match.plot(
-        pos.expr.data = pos.selected.expr,
-        neg.expr.data = neg.scatter.matched,
-        fluor.name = samp,
-        scatter.param = scatter.param,
-        asp = asp
-        )
-
-      if ( intermediate.figures )
-        spectral.ribbon.plot(
+      tryCatch( {
+        scatter.match.plot(
           pos.expr.data = pos.selected.expr,
           neg.expr.data = neg.scatter.matched,
-          spectral.channel = spectral.channel,
-          asp = asp,
-          fluor.name = samp
-          )
+          fluor.name = samp,
+          scatter.param = scatter.param,
+          asp = asp
+        )
+      }, error = function( e ) return( NULL ) )
 
+      if ( intermediate.figures ) {
+        tryCatch( {
+          spectral.ribbon.plot(
+            pos.expr.data = pos.selected.expr,
+            neg.expr.data = neg.scatter.matched,
+            spectral.channel = spectral.channel,
+            asp = asp,
+            fluor.name = samp
+          )
+        }, error = function( e ) return( NULL ) )
+      }
     }
 
     return( rbind( pos.selected.expr, neg.scatter.matched ) )

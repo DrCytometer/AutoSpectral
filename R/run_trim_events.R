@@ -18,8 +18,13 @@
 #'
 #' @return A list containing the trimmed expression data for each sample.
 
-run.trim.events <- function( trim.sample.data, trim.sample,
-                            trim.peak.channels, trim.factor, asp ){
+run.trim.events <- function(
+    trim.sample.data,
+    trim.sample,
+    trim.peak.channels,
+    trim.factor,
+    asp
+  ) {
 
   trimmed.expr <- lapply( names( trim.sample.data ), function( sample.name ){
       trim.extreme.events( trim.sample.data[[ sample.name ]],

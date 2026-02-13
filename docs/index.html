@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,16 +38,17 @@
 <li><a class="dropdown-item" href="articles/01_Full_AutoSpectral_Workflow.html">01 Full Workflow Example</a></li>
     <li><a class="dropdown-item" href="articles/02_Control_File_example.html">02 Creating the control file</a></li>
     <li><a class="dropdown-item" href="articles/03_Aurora_example.html">03 Aurora AutoSpectral Example</a></li>
-    <li><a class="dropdown-item" href="articles/04_Gating.html">04 Gating</a></li>
-    <li><a class="dropdown-item" href="articles/05_Cleaning.html">05 Control clean-up</a></li>
-    <li><a class="dropdown-item" href="articles/06_Single_Cell_AutoFluorescence.html">06 Single Cell Autofluorescence</a></li>
-    <li><a class="dropdown-item" href="articles/07_Per_Cell_Optimization.html">07 Per Cell Optimization</a></li>
-    <li><a class="dropdown-item" href="articles/08_Reload_AutoSpectral.html">08 Re-running AutoSpectral</a></li>
-    <li><a class="dropdown-item" href="articles/09_Plotting.html">09 Plotting</a></li>
-    <li><a class="dropdown-item" href="articles/10_Development.html">10 Development</a></li>
-    <li><a class="dropdown-item" href="articles/11_Speed_It_Up.html">11 Speed It Up (Why So Slow?)</a></li>
-    <li><a class="dropdown-item" href="articles/12_Updates_And_Issues.html">12 Updates and Issues</a></li>
-    <li><a class="dropdown-item" href="articles/13_ID7000_WLS_example.html">13 ID7000 WLS Example</a></li>
+    <li><a class="dropdown-item" href="articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
+    <li><a class="dropdown-item" href="articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
+    <li><a class="dropdown-item" href="articles/06_Gating.html">06 Gating</a></li>
+    <li><a class="dropdown-item" href="articles/07_Cleaning.html">07 Control clean-up</a></li>
+    <li><a class="dropdown-item" href="articles/08_Single_Cell_AutoFluorescence.html">08 Single Cell Autofluorescence</a></li>
+    <li><a class="dropdown-item" href="articles/09_Per_Cell_Optimization.html">09 Per Cell Optimization</a></li>
+    <li><a class="dropdown-item" href="articles/10_Reload_AutoSpectral.html">10 Re-running AutoSpectral</a></li>
+    <li><a class="dropdown-item" href="articles/11_Plotting.html">11 Plotting</a></li>
+    <li><a class="dropdown-item" href="articles/12_Speed_It_Up.html">12 Speed It Up (Why So Slow?)</a></li>
+    <li><a class="dropdown-item" href="articles/13_Updates_And_Issues.html">13 Updates and Issues</a></li>
+    <li><a class="dropdown-item" href="articles/14_Development.html">14 Development</a></li>
   </ul>
 </li>
       </ul>
@@ -65,14 +66,35 @@
 </h1></div>
 <!-- badges: start -->
 <!-- badges: end -->
+<p><strong>Version 1.0.0</strong></p>
+<p>Welcome to the Development branch of AutoSpectral.</p>
+<p>This will always be a work-in-progress, and will not necessarily be stable at any given point. At the moment, most of the changes taking place relate to speeding things up or fixing any reported bugs.</p>
+<p>To install the development version, run the code below in your R/RStudio. This will overwrite any prior installation of AutoSpectral. To restore the stable version of AutoSpectral, simply re-run the <code>install_github()</code> command without the @dev bit.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Install Bioconductor packages</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"flowWorkspace"</span>, <span class="st">"flowCore"</span>, <span class="st">"PeacoQC"</span>, <span class="st">"FlowSOM"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># You'll need devtools or remotes to install from GitHub.</span></span>
+<span><span class="co"># install.packages("devtools")</span></span>
+<span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>AutoSpectral is AutoSpill updated for the spectral flow era.</p>
 <p>The goal of AutoSpectral is to provide you with the best possible spectral signatures of the fluorophores in your single-stained controls. Whether or not these accurately model your fully stained samples will depend on what you’ve chosen to use for the controls, how they were prepared and other factors such as machine condition and any divergence in handling between samples and controls.</p>
-<p>More to the point, AutoSpectral is intended to make working with messy cell-based controls as easy as compensation beads. This should give you better accuracy and precision in your spectral definition and thus in your unmixing.</p>
+<p>More to the point, AutoSpectral is intended to make working with messy cell-based controls as easy as compensation beads. This should give you better accuracy and precision in your spectral definition and thus in your unmixing. AutoSpectral does not negate the requirement for good controls or good panel design. It will work better with better controls.</p>
 <p>AutoSpectral aims to provide reproducible unmixing, meaning that anyone should be able to obtain reliably good (probably better) unmixing from the same set of controls. The aim is to remove the human “fiddling” part, which is slow and not always so scientific.</p>
-<p>Plus, you can extract each cell’s individual autofluorescent background in a manner specific to that cell, producing better unmixing with less spread. Per-cell fluorescence spectral optimization can reduce unmixing errors.</p>
+<p>Plus, you can extract each cell’s individual autofluorescent background in a manner specific to that cell, producing better unmixing with less spread. Per-cell fluorescence spectral optimization can reduce unmixing errors in some cases.</p>
+<p>The central ideas are as follows:</p>
+<ul>
+<li>Encode Roederer’s Rules for controls as much as possible.</li>
+<li>Deal with cellular autofluorescence interfering with identifying fluorophore signatures.</li>
+<li>Autofluorescence is variable on a cell-to-cell basis, both in magnitude and in type. We can figure out, more or less, what this should be for each cell.</li>
+<li>Fluorophore emissions are variable, and this variability manifests on the level of the cell. Again, we can more or less figure this out and deal with it.</li>
+</ul>
 <p>At the moment, the following cytometers are supported:</p>
 <ul>
 <li>Cytek Aurora (“aurora”)</li>
@@ -80,10 +102,25 @@
 <li>Sony ID7000 (“id7000”)</li>
 <li>BD FACSDiscoverS8 (“s8”)</li>
 <li>BD FACSDiscoverA8 (“a8”)</li>
-<li>BD FACSymphony A5 SE (“a5se”)</li>
+<li>BD FACSymphony A5 SE (“a5se”) (probably still some work to be done for this one)</li>
 <li>Agilent NovoCyte Opteon (“opteon”)</li>
 <li>Beckman Coulter CytoFLEX mosaic (“mosaic”)</li>
 <li>ThermoFisher Attune Xenith (“xenith”)</li>
+</ul>
+<p>AutoSpectral will probably not solve all your unmixing issues; hopefully it will help. Here are some other unmixing tools that may also help:</p>
+<ul>
+<li><a href="https://github.com/hally166/flowUnmix" class="external-link">flowUnmix</a></li>
+<li><a href="https://github.com/exaexa/panelbuilder" class="external-link">PanelBuilder</a></li>
+<li><a href="https://www.ozette.com/" class="external-link">Ozette Resolve</a></li>
+</ul>
+<p>What AutoSpectral cannot do:</p>
+<ul>
+<li>Magic. Blind spectral unmixing of 50-color panels is not currently implemented.</li>
+<li>Fix bad controls. If you have two colors in your “single-color” sample, it probably won’t work (see control cleaning, though). If you have no signal, it won’t work. If your controls were run on a different machine, with different instrument settings or using a different antibody/fluorophore, it won’t work well. Note that this is likely to affect ID7000 samples, where Sony suggests running the controls on one set of voltages and the samples on another. I haven’t put any time into figuring out how that works yet.</li>
+<li>Fix poor panel design. If you have unmixing spread from using BV785 and BV786 in combination, AutoSpectral won’t fix that. If you’re using BB515 and FITC, it’ll probably help quite a bit, though.</li>
+<li>Fix non-specific staining. If you’re struggling with this, check out the blocking articles on the Colibri blog.</li>
+<li>Fix instrument errors. If your laser wasn’t working, this won’t help.</li>
+<li>Fix all unmixing errors. AutoSpectral currently has some ability to fix unmixing errors, provided the controls are a representation of the sample. You can see some examples of errors being fixed in the pre-print, but you can also see some examples of errors not being fixed in the deliberately poorly designed 42-color Aurora data example. This is something I’m still working on.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -93,9 +130,10 @@
 <div class="section level3">
 <h3 id="latest-stable-release">Latest Stable Release<a class="anchor" aria-label="anchor" href="#latest-stable-release"></a>
 </h3>
-<p><strong>Version 0.9.1</strong></p>
+<p><strong>Version 1.0.0</strong></p>
+<p>Version 1.0.0 is intended to greatly speed up the process of unmixing. This is done by pre-screening the variation in autofluorescence and fluorophore variation for each cell, identifying likely “best” candidates rather than using a brute force approach. If you are using AutoSpectralRcpp, you will need to update that for compatibility.</p>
 <p>To install the latest, hopefully stable version, install using <code>devtools</code> or <code>remotes</code>. You will need to install the Bioconductor packages separately. As of version 0.9.1, AutoSpectral relies on <code>FlowSOM</code> rather than <code>EmbedSOM</code>, so you will need to install <code>FlowSOM</code> via Bioconductor.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install Bioconductor packages</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
@@ -103,39 +141,43 @@
 <span></span>
 <span><span class="co"># You'll need devtools or remotes to install from GitHub.</span></span>
 <span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
 <p>As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, imperfect. To try it, visit <a href="https://github.com/DrCytometer/AutoSpectralHelper" class="external-link">AutoSpectralHelper</a>. If you update AutoSpectral, I recommend downloading a new version of the app to ensure compatibility.</p>
 <p>To install a specific release, e.g., a previous one, use the version number:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@v0.8.7"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="dev-branch">Dev branch<a class="anchor" aria-label="anchor" href="#dev-branch"></a>
 </h3>
 <p>If you’re feeling adventurous or simply want early access to the latest features, you can try the <code>dev</code> branch. At any given point, this may not be working well.</p>
-<p>AutoSpectral is open source. If you are interested in contributing, please visit <a href="https://drcytometer.github.io/AutoSpectral/articles/10_Development.html">Development</a> for suggestions of where help is needed most.</p>
+<p>AutoSpectral is open source. If you are interested in contributing, please visit <a href="https://drcytometer.github.io/AutoSpectral/articles/14_Development.html">Development</a> for suggestions of where help is needed most.</p>
 <p>You can install the development version of AutoSpectral from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
 <h2 id="bug-fixes-and-known-issues">Bug fixes and known issues<a class="anchor" aria-label="anchor" href="#bug-fixes-and-known-issues"></a>
 </h2>
 <p>AutoSpectral is pretty complex and newly released, so there will be bugs. Sorry. Thanks to all of you providing feedback. Please submit any and all issues either using the Issues page or via email at colibri-cytometry at gmail.</p>
+<p>At this point, many of the issues arising are specific to either the data set or how it is being defined in the “control file”. Troubleshooting these often requires a copy of the raw data, at least a partial set of the unstained and single-stained controls.</p>
+<p>All of the functions available in AutoSpectral can be viewed <a href="https://drcytometer.github.io/AutoSpectral/reference/index.html">here</a>.</p>
 <p>To submit a bug report, go to <a href="https://github.com/DrCytometer/AutoSpectral/issues" class="external-link">Issues</a>.</p>
 <p>For more general problems, like not being clear on how to do things, something doesn’t work well, or maybe you have an idea for something new or better, visit the <a href="https://github.com/DrCytometer/AutoSpectral/discussions" class="external-link">Discussions page</a>.</p>
 <p>Since one of my recent updates broke things, I’ll be moving to using tagged releases that should be easier to install if the latest version has flaws. I’ve also set up a separate development branch, which will get the updates first. Things probably should have been that way from the start, but this is all new to me.</p>
 <p>Please check the <a href="https://drcytometer.github.io/AutoSpectral/">help pages and articles</a> if you’re struggling to understand how to do something. There’s a lot of info there.</p>
 <p>In particular, see the <a href="https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html">Full Workflow</a>.</p>
-<p>Resolved issues, bug patches and improvements will be announced via the NEWS and also tracked in the <a href="https://drcytometer.github.io/AutoSpectral/articles/12_Updates_And_Issues.html">Updates and Issues</a> article.</p>
+<p>All functions available in AutoSpectral can be viewed <a href="https://drcytometer.github.io/AutoSpectral/reference/index.html">here</a>.</p>
+<p>Resolved issues, bug patches and improvements will be announced via the NEWS and also tracked in the <a href="https://drcytometer.github.io/AutoSpectral/articles/13_Updates_And_Issues.html">Updates and Issues</a> article.</p>
 <div class="section level3">
 <h3 id="known-shortcomings">Known shortcomings<a class="anchor" aria-label="anchor" href="#known-shortcomings"></a>
 </h3>
 <ul>
-<li>Gating. The automated gating is not great. See the <a href="https://drcytometer.github.io/AutoSpectral/articles/04_Gating.html">help page</a> for tips. I’m working on an alternative.</li>
+<li>Gating. The automated gating is not great. See the <a href="https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html">help page</a> for tips. I’m working on an alternative.</li>
 <li>Please note that FCS 3.2 files from the S8 and A8 cytometers are not fully supported in flowCore. You may receive warnings, but things should still work.</li>
-<li>More stuff in progress will appear in the <a href="https://drcytometer.github.io/AutoSpectral/articles/10_Development.html">Development article</a>.</li>
+<li>More stuff in progress will appear in the <a href="https://drcytometer.github.io/AutoSpectral/articles/14_Development.html">Development article</a>.</li>
 <li>This is my first R package.</li>
 </ul>
 <p>If you want to use data from another cytometer and are wiling to provide files for establishing the workflow, contact the author/maintainer. See existing information, which may also assist you in setting up your control file, in the <a href="https://docs.google.com/spreadsheets/d/1wj7QPkgpsuPNeVKyt-WWdBu5R48aZTgEbH8-_bpKeBY/edit?usp=sharing" class="external-link">cytometer database</a>.</p>
@@ -151,17 +193,17 @@
 <p>Installation via GitHub should take only a minute or so. It takes less than that on a Dell i7 core laptop, but that might be because the dependencies are already installed.</p>
 <p>Occasionally, the help gets corrupted. Just re-install if that happens. If you know why this happens, let me know.</p>
 <p>Installation of <code>AutoSpectralRcpp</code> will take a couple of minutes because the code needs to compile. You will also first have to install Rtools to have a compiler, and that will take longer, probably 10 minutes or so.</p>
-<p>For more details and benchmarking of specific functions with an example 40-color cell control data set, see the article on <a href="https://drcytometer.github.io/AutoSpectral/articles/11_Speed_It_Up.html">Speed</a>.</p>
+<p>For more details and benchmarking of specific functions with an example 40-color cell control data set, see the article on <a href="https://drcytometer.github.io/AutoSpectral/articles/12_Speed_It_Up.html">Speed</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="go-faster">Go Faster<a class="anchor" aria-label="anchor" href="#go-faster"></a>
 </h2>
-<p>See the article on “<a href="https://drcytometer.github.io/AutoSpectral/articles/11_Speed_It_Up.html">Speed</a> for details on how to improve AutoSpectral’s performance on your system.</p>
+<p>See the article on “<a href="https://drcytometer.github.io/AutoSpectral/articles/12_Speed_It_Up.html">Speed</a> for details on how to improve AutoSpectral’s performance on your system.</p>
 </div>
 <div class="section level2">
 <h2 id="updates-and-news">Updates and news<a class="anchor" aria-label="anchor" href="#updates-and-news"></a>
 </h2>
-<p>See the article <a href="https://drcytometer.github.io/AutoSpectral/articles/12_Updates_And_Issues.html">Updates and Issues</a> for more on this, or read the NEWS with the latest release.</p>
+<p>See the article <a href="https://drcytometer.github.io/AutoSpectral/articles/13_Updates_And_Issues.html">Updates and Issues</a> for more on this, or read the NEWS with the latest release.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

@@ -15,9 +15,14 @@
 #'
 #' @return A list containing the downsampled expression data for each sample.
 
-run.downsample <- function( clean.expr.data, downsample.sample, peak.channels,
-                            negative.n = 500, positive.n = 1000,
-                            verbose = TRUE ) {
+run.downsample <- function(
+    clean.expr.data,
+    downsample.sample,
+    peak.channels,
+    negative.n = 500,
+    positive.n = 1000,
+    verbose = TRUE
+  ) {
 
   downsample.expr <- lapply( downsample.sample, function( sample.name ){
 

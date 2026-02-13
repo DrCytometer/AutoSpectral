@@ -93,30 +93,29 @@ matrix:
 fluorophore.only.spectra <- spectra[rownames(spectra) != "AF", ]
 ```
 
-We can unmix a single FCS file:
+We can unmix a single FCS file using standard OLS unmixing:
 
 ``` r
-unmix.fcs("~/AutoSpectral_data/Aurora_example/Aurora_fully_stained/E1 Fresh_100ul_TS_BS_005.fcs",
-          spectra, asp, flow.control, method = "OLS")
+unmix.fcs(
+  "~/AutoSpectral_data/Aurora_example/Aurora_fully_stained/E1 Fresh_100ul_TS_BS_005.fcs",
+  spectra,
+  asp,
+  flow.control,
+  method = "OLS"
+  )
 ```
 
 Or, if we have a bunch of files in the folder, we can unmix them all:
 
 ``` r
-unmix.folder("~/AutoSpectral_data/Aurora_example/AutoSpectral/Aurora_fully_stained/",
-             spectra, asp, flow.control, method = "OLS")
+unmix.folder(
+  "~/AutoSpectral_data/Aurora_example/AutoSpectral/Aurora_fully_stained/",
+  spectra,
+  asp,
+  flow.control,
+  method = "OLS"
+  )
 ```
 
-By default, parallel processing is off. To activate it for faster
-unmixing, set:
-
-``` r
-asp$parallel <- TRUE
-```
-
-Do this before calling the function, e.g., `define.flow.control` or
-`clean.controls.` Turn it off again at any point:
-
-``` r
-asp$parallel <- FALSE
-```
+For faster processing, check for a `parallel` argument in the function
+calls and use `parallel = TRUE` to activation parallel processing.

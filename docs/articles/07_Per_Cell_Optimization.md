@@ -186,16 +186,29 @@ variant for each cell, but to test each *combination* of variants,
 probably in an iterative refinement. Since that would increase at the
 rate of n.variants^n.fluorophores, it is currently prohibitive to do so.
 Note that this does not even begin to deal with variation outside the
-range of what is seen in the single-stained controls. All of this to
-say, there is probably a better way to do this than a BitCoin-like brute
-force method. What AutoSpectral currently does is a close approximation
-by screening all variants simultaneously per cell based on the
-difference between each variant and the single optimized spectrum. There
-are other, faster ways of determining the variation in each cell’s
-spectral signatures, but the other options I have tried result in an
-increase in unmixing-dependent spread due to the carryover of noise.
+range of what is seen in the single-stained controls. Up to version
+1.0.0, AutoSpectral has used a “brute force” approach of testing every
+variant for every cell, at least for the “slow” method. This is indeed
+slow.
 
-Anyway, running this in pure R is exceedingly slow. The faster
+As of version 1.0.0, we speed up the process by pre-screening variants
+per cell. We can do this by looking for variants where the change in the
+spectrum between the variant and the base/median spectrum for that
+fluorophore matches the shape of the residuals for the cell. Basically,
+we are looking for alignment or similarity between what the change in
+spectrum will do and what the cell has “left over”. This means we’re
+only looking for variation that pushes in the “correct” direction. By
+doing this, we can cut down to a handful of potential candidates (or
+even a single one) rather than testing a hundred or so per fluorophore.
+That allows us to speed things up a lot, without affecting the results
+much at all. In some cases, this gives a slightly better result since we
+don’t get trapped in local minima. Since we are no longer testing every
+variant for every cell, we can pass a larger set of variants without
+affecting the computation time much at all, and AutoSpectral offers that
+in version 1.0.0. This can help slightly, but tends to be less important
+than screening more autofluorescence spectra.
+
+Anyway, running this in pure R is now possible, albeit slow. The faster
 implementation is in C++ and requires installation of
 `AutoSpectralRcpp`. I strongly encourage you to install that prior to
 running unmixing as below. Also, be sure that you have the fast BLAS and
@@ -212,74 +225,46 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
            asp = asp,
            flow.control = flow.control,
            method = "AutoSpectral",
-           weighted = FALSE,
-           af.spectra = lung.af,
-           spectra.variants = variants )
-```
-
-This will use OLS to find the optimal AF per cell. To use WLS, set
-`weighted = TRUE`.
-
-Alteratively, we can call `method = "Automatic"`, which is the default.
-This takes care of the decision making for AF extraction and weighting
-automatically. So, if you provide `af.spectra`, per-cell AF extraction
-will be done. Weighting will be used if the data come from the ID7000,
-the FACSDiscoverS8 or the FACSDiscoverA8, attempting to replicate the
-methodology used on those systems. For explicit control, call
-`method = "AutoSpectral"` as above, and set the arguments.
-
-``` r
-unmix.fcs( file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
-           spectra,
-           asp,
-           flow.control,
            af.spectra = lung.af,
            spectra.variants = variants,
-           file.suffix = "perCellOptimized" )
+           speed = "fast" )
 ```
+
+Setting the “speed” determines how many pre-screened candidate variants
+will be tested per cell. The options are “fast” = 1, “medium” = 3, and
+“slow” = 10. This is based on quite a bit of testing with high parameter
+data from the Aurora, ID7000 and S8. For data with messier fluorophores
+(like that BUV661 above), using “slow” is likely to show some
+improvement. If you are using more modern fluorophores, you may find
+minimal difference now when using “fast”.
+
+If you want to set the number of variants yourself, you can do this by
+providing the “k” argument. This will override “speed”. In the call
+below, for instance, we’ve requested to test up to 100 variants per cell
+(depending on what’s actually available). This would be comparable to
+the previous “slow” brute force approach.
+
+``` r
+unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
+           spectra = spectra,
+           asp = asp,
+           flow.control = flow.control,
+           method = "AutoSpectral",
+           af.spectra = lung.af,
+           spectra.variants = variants,
+           k = 100 )
+```
+
+Note that the “fast” approach in version 1.0.0 is very different from
+the “fast” approximation in earlier version of AutoSpectral. It is not
+expected to produce any substantial discontinuities in the data–if you
+see this, please reach out (data will be helpful in identifying any
+issues).
 
 Unmixed FCS files will appear in folder `./autospectral_unmixed`.
 
 Add a `file.suffix` argument if you want a tag on the FCS file’s name to
 differentiate it from other versions.
-
-There are three versions of the per-cell fluorophore optimization
-available in `AutoSpectralRcpp`. These are called using the `speed`
-argument and are named `fast`, `medium` and `slow`.
-
-The fast method is the one deployed in R, which is an approximation
-based on adjusting the predicted values for a fluorophore by its
-OLS-unmixed abundance and the change in spectra for each variant. This
-can be calculated in one go for all variants in a matrix. This can be
-expected to take in the range of 1 - 7 minutes per FCS file, depending
-on size, number of detectors and extent of co-positivity for
-fluorophores (simpler stuff will go faster).
-
-The slow method requires solving the matrix inverse for each variation
-of the spectral mixing matrix, creating all unmixing matrices and
-unmixing each cell with each one, as appropriate based on the cell’s
-expression of markers. This can take about 10x as long as the fast
-method.
-
-The medium method uses Woodbury-Sherman-Morrison rank-one updating to
-adjust the unmixing matrix for each variant. This is intermediate in
-speed.
-
-All three versions can produce a reduction in spillover spread, correct
-for skewing in the data (somewhat) and reduce the dispersion of the
-negative population. The slower the method, the better it is at dealing
-with spread above zero.
-
-``` r
-unmix.fcs( file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
-           spectra,
-           asp,
-           flow.control,
-           af.spectra = lung.af,
-           spectra.variants = variants,
-           file.suffix = "perCellOptimized_slow",
-           speed = "slow" )
-```
 
 To demonstrate the effectiveness and accuracy of this approach, we
 created a set of synthetic data. In this 42-colour data set from the

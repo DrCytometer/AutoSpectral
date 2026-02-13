@@ -194,22 +194,33 @@ get.universal.negative <- function(
 
 
   if ( main.figures ) {
-    scatter.match.plot(
-      pos.expr.data = pos.selected.expr,
-      neg.expr.data = neg.scatter.matched,
-      fluor.name = samp,
-      scatter.param = scatter.param,
-      asp = asp
-      )
-
-    if ( intermediate.figures )
-      spectral.ribbon.plot(
-        pos.expr.data = pos.selected.expr,
-        neg.expr.data = neg.scatter.matched,
-        spectral.channel = spectral.channel,
-        asp = asp,
-        fluor.name = samp
+    tryCatch(
+      expr = {
+        scatter.match.plot(
+          pos.expr.data = pos.selected.expr,
+          neg.expr.data = neg.scatter.matched,
+          fluor.name = samp,
+          scatter.param = scatter.param,
+          asp = asp
         )
+
+        if ( intermediate.figures ) {
+          spectral.ribbon.plot(
+            pos.expr.data = pos.selected.expr,
+            neg.expr.data = neg.scatter.matched,
+            spectral.channel = spectral.channel,
+            asp = asp,
+            fluor.name = samp
+          )
+        }
+
+      },
+      error = function( e ) {
+        message( "Error in plotting universal negative: ", e$message )
+        return( NULL )
+      }
+    )
+
   }
 
   return( rbind( pos.selected.expr, neg.scatter.matched ) )

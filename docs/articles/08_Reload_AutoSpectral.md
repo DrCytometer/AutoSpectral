@@ -170,6 +170,12 @@ Note: this sometimes gives odd spectra. Check by plotting
 re-import the experiment into an non-cytometer-connected version of
 SpectroFlo, but I need to look into it a bit more.
 
+Note 2: By default, the autofluorescence spectra stored in SpectroFlo
+are not in a normalized format. I do not know why this is. When you read
+them in using
+[`read.spectroflo.expt()`](https://drcytometer.github.io/AutoSpectral/reference/read.spectroflo.expt.md),
+they will be L-infinity (peak) normalized.
+
 ### BD (Chorus) Spectra
 
 For BD instruments, the spectra are stored correctly in the `SPILL`

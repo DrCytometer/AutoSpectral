@@ -22,6 +22,24 @@
 
 unmix.wls <- function( raw.data, spectra, weights = NULL ) {
 
+  # check for data/spectra column matching
+  raw.data.cols <- colnames( raw.data )
+  spectra.cols <- colnames( spectra )
+
+  if ( !identical( raw.data.cols, spectra.cols ) ) {
+
+    # ensure both actually have the same columns before reordering
+    if ( all( spectra.cols %in% raw.data.cols ) &&
+         length( spectra.cols ) == length( raw.data.cols ) ) {
+      # reorder raw.data to match the order of spectra
+      raw.data <- raw.data[, spectra.cols]
+      message( "Columns reordered to match spectra." )
+    } else {
+      stop( "Column names in spectra and raw.data do not match perfectly;
+           cannot reorder by name alone." )
+    }
+  }
+
   # set up weights correctly
   if ( is.null( weights ) ) {
     # weights are inverse of channel variances (mean if Poisson)

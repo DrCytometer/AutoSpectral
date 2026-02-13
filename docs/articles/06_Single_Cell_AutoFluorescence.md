@@ -127,6 +127,23 @@ means you can use pooled samples as long as you have enough events
 acquired, although you may need to increase `som.dim` if there are a lot
 of AF signatures present in each part of the pool.
 
+## Update for Version 1.0.0
+
+Version 1.0.0 changes the way autofluorescence spectra are identified
+slightly, allowing for a second round of identification of cells that
+are likely to be problematic given only the first set of AF spectra.
+This is done by using AutoSpectral’ per-cell autofluorescence extraction
+on the unstained sample. Any signal in the fluorophore channels in the
+unmixed unstained data can be considered to be error. In the update, we
+select the cells that are the furthest from zero in the unmixed space
+and run a second round of cluster on these, updating the AF spectra that
+were used to unmix them. This expands the set of possibilities, focusing
+on the worst offenders. This is most useful for complex tissue samples,
+and allows extraction of the problematic last 1-3% of cells that are in
+the wrong place.
+
+## Extracting AF for each cell
+
 While you can call
 [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
 directly, this requires reading in the FCS file into R, extracting the
@@ -141,8 +158,7 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
            asp = asp,
            flow.control = flow.control,
            method = "AutoSpectral",
-           af.spectra = lung.af,
-           weighted = FALSE )
+           af.spectra = lung.af )
 ```
 
 This will use OLS to find the optimal AF per cell. To use WLS, set
@@ -166,7 +182,7 @@ unmix.fcs( file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
 
 Unmixed FCS files will appear in folder `./autospectral_unmixed`.
 
-## Go Faster
+### Go Faster
 
 Per-cell AF extraction involves unmixing the data once per AF signature
 provided. Since this is a lot of linear algebra, using an optimized
@@ -179,3 +195,7 @@ Expect speed ups of ~5x.
 Don’t set multiple threads for the BLAS. That will interfere with the
 parallel processing used in other parts of AutoSpectral and probably
 other R packages.
+
+Additionally, as of version 1.0.0, the process of assigning AF
+signatures to individual cells (and then unmixing them) has been sped up
+in C++. For this, you will need to install `AutoSpectralRcpp`.

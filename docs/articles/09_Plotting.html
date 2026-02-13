@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,10 +95,19 @@ outputs.</p>
 <span><span class="co">#&gt; CD141 BUV615-A  0.02715625  0.06347369   0.1510007   0.1212349  0.06775691</span></span>
 <span><span class="co">#&gt; CD303 BUV661-A  0.01522760  0.04873425   0.1771819   0.1613903  0.09411419</span></span>
 <span><span class="co">#&gt; CD86 BUV737-A   0.03180002  0.10011904   0.3424454   0.3125159  0.18939716</span></span></code></pre></div>
-<p>The basic tools are <code>spectral.trace</code>, which gives line
+<p>The basic tools are <code><a href="../reference/spectral.trace.html">spectral.trace()</a></code>, which gives line
 graphs of the spectra for each fluorophore in the matrix, and
-<code>spectral.heatmap</code>, which gives the same information as a
-heatmap.</p>
+<code><a href="../reference/spectral.heatmap.html">spectral.heatmap()</a></code>, which gives the same information as a
+heatmap. The function <code><a href="../reference/create.heatmap.html">create.heatmap()</a></code> is a more general
+purpose heatmap that offers more options, including triangular output.
+There is also a function to plot raw data for cells across all
+detectors, like you get during the unmixing process on most spectral
+cytometers. This can be accessed from
+<code><a href="../reference/spectral.ribbon.plot.html">spectral.ribbon.plot()</a></code>.</p>
+<p>See the details for these functions here: <a href="https://drcytometer.github.io/AutoSpectral/reference/spectral.trace.html">spectral.trace</a>
+<a href="https://drcytometer.github.io/AutoSpectral/reference/spectral.heatmap.html">spectral.heatmap</a>
+<a href="https://drcytometer.github.io/AutoSpectral/reference/create.heatmap.html">create.heatmap</a>
+<a href="https://drcytometer.github.io/AutoSpectral/reference/spectral.ribbon.plot.html">spectral.ribbon</a></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/spectral.heatmap.html">spectral.heatmap</a></span><span class="op">(</span> <span class="va">chorus.spectra</span>, title <span class="op">=</span> <span class="st">"OMIP102"</span>, color.palette <span class="op">=</span> <span class="st">"mako"</span>,</span>
 <span>                  show.legend <span class="op">=</span> <span class="cn">FALSE</span> <span class="op">)</span></span></code></pre></div>
@@ -124,11 +133,11 @@ present.</p>
 fluorophores:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/spectral.trace.html">spectral.trace</a></span><span class="op">(</span> <span class="va">chorus.spectra</span>, title <span class="op">=</span> <span class="st">"OMIP102"</span>, split.lasers <span class="op">=</span> <span class="cn">TRUE</span> <span class="op">)</span></span></code></pre></div>
-<p><img src="figures/OMIP102_by_laser.jpg" alt="Spectral Trace"><em>Edit: this is now fixed</em>: In this case, the laser data are out
-of order because OMIP-102 was produced on an early version of the BD
-FACSDiscoverS8. I’ll fix this eventually, but it hasn’t been an issue on
-any other data I’ve tried unless the files have been exported by FlowJo
-first.</p>
+<p><img src="figures/OMIP102_by_laser.jpg" alt="Spectral Trace"> In
+this example, the laser/channel data are out of order because OMIP-102
+was produced on an early version of the BD FACSDiscoverS8. This is now
+fixed, and the channels should always be re-arranged from narrowest to
+longest emission wavelength within a given laser.</p>
 <p>We can create a cosine similarity matrix plot in one of two ways.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cosine.similarity.plot.html">cosine.similarity.plot</a></span><span class="op">(</span> <span class="va">chorus.spectra</span>, title <span class="op">=</span> <span class="st">"Cosine_OMIP102"</span>, </span>

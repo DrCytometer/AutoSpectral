@@ -111,8 +111,8 @@ get.autospectral.param.minimal <- function()
       ### spectral ribbon plot parameters
       ribbon.plot.min = -1e3,
       ribbon.breaks = NULL,
-      ribbon.scale.colors = c( NA, "#440154FF", "#238A8DFF", "#55C667FF",
-                               "#B8DE29FF", "#FDE725FF" ),
+      ribbon.scale.colors = c(
+        NA, "#440154FF", "#238A8DFF", "#55C667FF", "#B8DE29FF", "#FDE725FF" ),
       ribbon.scale.values = c( 0, 0.1, 0.2, 0.3, 0.4, 1 ),
       ribbon.bins = 300,
       ribbon.plot.width = 15,
@@ -123,6 +123,7 @@ get.autospectral.param.minimal <- function()
       ribbon.plot.strip.text.face = "bold",
 
       ### gating parameters
+
       # gate parameters for cells
       default.gate.param.cells = list(
         density.threshold = 0.05,
@@ -190,6 +191,8 @@ get.autospectral.param.minimal <- function()
       ### spectral variants parameters
       variant.dir = "./figure_spectral_variants",
       variant.filename = "Spectral_variants.rds",
+      # threshold to exclude dissimilar spectral variants
+      sim.threshold = 0.985,
 
       rlm.downsample.n = 25000,
       ### directory parameters

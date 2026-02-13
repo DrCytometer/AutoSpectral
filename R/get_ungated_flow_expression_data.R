@@ -17,10 +17,16 @@
 #'
 #' @return A matrix with the flow expression data.
 
-get.ungated.flow.expression.data <- function( samp, file.name, control.dir,
-                                              scatter.and.spectral.channel,
-                                              spectral.channel, set.resolution ) {
+get.ungated.flow.expression.data <- function(
+    samp,
+    file.name,
+    control.dir,
+    scatter.and.spectral.channel,
+    spectral.channel,
+    set.resolution
+  ) {
 
+  # read in the FCS file
   flow.file <- file.name[ samp ]
 
   fcs.data <- suppressWarnings(

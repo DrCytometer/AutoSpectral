@@ -1,0 +1,129 @@
+# 14 Development
+
+Here’s some stuff that’s in progress. These changes will show up first
+in the development `dev` branch, which you are welcome to install and
+test.
+
+If you would like to contribute to AutoSpectral, these are key areas I
+have identified where it has shortcomings or needs improvement.
+Suggestions for strategies, or better, code suggestions, would be
+appreciated.
+
+- Parallelization improvements.
+
+  - The parallelization of functions like `define.flow.control` was
+    problematic on Windows due to memory usage with `futures` and the
+    tendency of Windows to usurp threads that R was using.
+  - A new parallel backend using `parLapply` on Windows or `mclapply` on
+    Mac/Linux has been implemented. This should gracefully fall back to
+    sequential `lapply` processing if it runs into any problems when
+    being set-up.
+  - Parallelization of
+    [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
+    in base R can be ~30% faster for per-cell unmixing if we use
+    `foreach` with `doParallel`, but this introduces at least three new
+    dependencies and is a minor improvement compared with running via
+    Rcpp.
+  - I am struggling to produce fast adaptations of AutoSpectral for
+    MacOS because I do not have access to MacOS. Suggestions would be
+    appreciated for better implementation of the `mclapply`
+    parallelization for Mac. Perhaps more importantly, AutoSpectralRcpp
+    relies on OpenMP, and OpenMP is difficult to set up and use on Mac,
+    in my understanding. If it would help, I could produce a version of
+    AutoSpectralRcpp that just relies on `RcppArmadillo` without OpenMP.
+  - Memory management. This is a problem for unmixing large files, I
+    believe.
+
+- Code clean-up for `define.flow.control`.
+
+  - This was the first part of the code I wrote, since it is required
+    for everything downstream. It is, consequently, probably the worst.
+  - I’ve made a little progress on this, but any changes here have
+    ramifications throughout, so it is slow going.
+  - Currently, we read in all of the FCS data into active memory in R,
+    gating as we go to reduce data size. It might be better to
+    restructure this to simply generate gates and retain indices of
+    gated events in each file. FCS files would need to be read in on the
+    fly for `clean.controls` and `get.fluorophore.spectra`. This would
+    require a faster FCS reader, such as the `data.table`-based approach
+    in Nathan Laniewski’s
+    [flowState](https://github.com/nlaniewski/flowstate).
+
+- More flexibility in negative/unstained samples.
+
+- Allow multiple controls per fluorophore.
+
+- An alternative to the automated gating.
+
+  - This is now in progress.
+  - This will be based on the “Cellular Landmarks” approach from Nathan
+    Laniewski’s [flowState](https://github.com/nlaniewski/flowstate)
+  - Initial definition of the gate will be based on the location of the
+    brightest positive events in controls where the marker corresponds
+    to known lymphocyte or monocyte populations. The code should fall
+    back to the current gating approach when no known markers are
+    provided.
+
+- Speed up per-cell AF extraction
+
+  - This is now implemented in v1.0.0, figuring out what each cell’s AF
+    signature is without unmixing each AF possibility on all cells.
+    Extraction is parallelized via C++ in AutoSpectralRcpp.
+
+- Speed up per-cell fluorophore optimization.
+
+  - This is now implemented in v1.0.0 through strategic screening of
+    variants for alignment with each cell’s profile/residual.
+  - The pure R version will now benefit from parallelization,
+    particularly on Mac/Linux.
+  - At this point, I do not expect more major gains in performance. It
+    has been suggested, however, that GPU acceleration may help. If you
+    have experience with that and can offer insights, please reach out.
+
+- Fix the issue causing discontinuities.
+
+  - Progress has been made on this in v1.0.0 via the new, sped-up
+    optimization strategy. The “slow” method should now be fast enough
+    to fix most of the issue.
+  - Additional improvements include better decontamination of AF from
+    the spectral variants, which was causing cells to be pushed further
+    away from the threshold for optimization, and a rduction in
+    low-level noise introduced into the spectral variants due to
+    fluctuations in electronic noise or autofluorescence. Any signal in
+    the variant spectrum in a channel where the optimized single
+    spectrum has less than 5% of the peak detector signal is now
+    regularized towards the optimized spectrum. This focuses the
+    variation on the “peaks”, which is what causes the unmixing errors
+    and spread.
+
+- Better correction of unmixing errors
+
+  - There are several strategies I’m investigating to handling the cases
+    where the multi-color samples contain obvious errors outside the
+    range of variation seen in the single-color controls. This is not
+    stuff I’m going to put online, so get in touch if you’d like to work
+    on this.
+
+- Integration of Poisson IRLS
+
+  - The Poisson IRLS in `AutoSpectralRcpp` is now working considerably
+    better and faster. This may allow for integration of the Poisson
+    optimization after identification of cellular autofluorescence and
+    fluorophore signatures.
+  - For this to be practical, per-cell fluorophore optimization needs to
+    be faster (it is now).
+  - This does not appear to provide any additional benefit, so it is no
+    longer being actively pursued.
+
+To install the `dev` branch:
+
+``` r
+devtools::install_github("DrCytometer/AutoSpectral@dev")
+```
+
+To replace this with the (hopefully) stable version, run this:
+
+``` r
+remove.packages("AutoSpectral")
+devtools::install_github("DrCytometer/AutoSpectral")
+```

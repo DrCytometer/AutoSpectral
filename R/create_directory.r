@@ -11,8 +11,7 @@
 #' @return No returns. Creates directories in the current working directory.
 #' @export
 
-create.directory <- function( asp )
-{
+create.directory <- function( asp ) {
 
     figure.dir <- c(
       asp$figure.gate.dir,
@@ -23,6 +22,5 @@ create.directory <- function( asp )
     for ( ftd in c( figure.dir, asp$table.spectra.dir, asp$unmixed.fcs.dir ) )
         if ( ! is.null( ftd ) && ! file.exists( ftd ) )
             dir.create( ftd, recursive = TRUE )
-
 }
 

@@ -27,9 +27,24 @@ chorus.spectra[ 1:6, 1:5 ]
 #> CD86 BUV737-A   0.03180002  0.10011904   0.3424454   0.3125159  0.18939716
 ```
 
-The basic tools are `spectral.trace`, which gives line graphs of the
-spectra for each fluorophore in the matrix, and `spectral.heatmap`,
-which gives the same information as a heatmap.
+The basic tools are
+[`spectral.trace()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.trace.md),
+which gives line graphs of the spectra for each fluorophore in the
+matrix, and
+[`spectral.heatmap()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.heatmap.md),
+which gives the same information as a heatmap. The function
+[`create.heatmap()`](https://drcytometer.github.io/AutoSpectral/reference/create.heatmap.md)
+is a more general purpose heatmap that offers more options, including
+triangular output. There is also a function to plot raw data for cells
+across all detectors, like you get during the unmixing process on most
+spectral cytometers. This can be accessed from
+[`spectral.ribbon.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.ribbon.plot.md).
+
+See the details for these functions here:
+[spectral.trace](https://drcytometer.github.io/AutoSpectral/reference/spectral.trace.html)
+[spectral.heatmap](https://drcytometer.github.io/AutoSpectral/reference/spectral.heatmap.html)
+[create.heatmap](https://drcytometer.github.io/AutoSpectral/reference/create.heatmap.html)
+[spectral.ribbon](https://drcytometer.github.io/AutoSpectral/reference/spectral.ribbon.plot.html)
 
 ``` r
 spectral.heatmap( chorus.spectra, title = "OMIP102", color.palette = "mako",
@@ -71,11 +86,11 @@ fluorophores:
 spectral.trace( chorus.spectra, title = "OMIP102", split.lasers = TRUE )
 ```
 
-![Spectral Trace](figures/OMIP102_by_laser.jpg)*Edit: this is now
-fixed*: In this case, the laser data are out of order because OMIP-102
-was produced on an early version of the BD FACSDiscoverS8. I’ll fix this
-eventually, but it hasn’t been an issue on any other data I’ve tried
-unless the files have been exported by FlowJo first.
+![Spectral Trace](figures/OMIP102_by_laser.jpg) In this example, the
+laser/channel data are out of order because OMIP-102 was produced on an
+early version of the BD FACSDiscoverS8. This is now fixed, and the
+channels should always be re-arranged from narrowest to longest emission
+wavelength within a given laser.
 
 We can create a cosine similarity matrix plot in one of two ways.
 

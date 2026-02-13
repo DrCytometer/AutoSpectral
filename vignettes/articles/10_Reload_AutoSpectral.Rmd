@@ -1,7 +1,7 @@
 ---
-title: "08 Re-running AutoSpectral"
+title: "10 Re-running AutoSpectral"
 output: html_document
-date: "2025-07-10"
+date: "2026-02-11"
 ---
 
 ```{r setup, include=FALSE}
@@ -105,6 +105,8 @@ spectral.matrix
 ```
 
 Note: this sometimes gives odd spectra. Check by plotting `spectral.trace` or `spectral.heatmap`. I suspect this happens if you re-import the experiment into an non-cytometer-connected version of SpectroFlo, but I need to look into it a bit more.
+
+Note 2: By default, the autofluorescence spectra stored in SpectroFlo are not in a normalized format. I do not know why this is. When you read them in using `read.spectroflo.expt()`, they will be L-infinity (peak) normalized.
 
 
 ## BD (Chorus) Spectra

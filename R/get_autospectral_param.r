@@ -14,8 +14,12 @@
 #'
 #' @export
 
-get.autospectral.param <- function( cytometer = "aurora", figures = TRUE )
-{
+get.autospectral.param <- function(
+    cytometer = "aurora",
+    figures = TRUE
+  ) {
+
+  # start with base parameter set
   autosp.param <- get.autospectral.param.minimal()
 
   if ( figures ) {

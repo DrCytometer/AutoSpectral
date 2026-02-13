@@ -17,6 +17,7 @@
 #' @export
 
 check.channels <- function( spectral.channels, asp ) {
+
   # check for `FJ-Comp`
   fj.comp <- grepl( "FJ-Comp", spectral.channels )
 

@@ -1,5 +1,55 @@
 # Changelog
 
+## AutoSpectral 1.0.0 (2026-02-10)
+
+### Improvements
+
+- Version 1.0.0 brings a revamp to how AutoSpectral identifies the best
+  spectra on a per-cell basis. The theory behind it remains the same–we
+  are still trying to identify the variation in the autofluorescence and
+  fluorophores that best reduces the residual on a per-cell basis. Now,
+  however, we do not need to do that using brute force. Instead, we can
+  search only through variants (or autofluorescences) that align with a
+  given cell’s residual. Thus we can pre-screen the variants to a select
+  few and then test just those. This means we can figure out the
+  solution in way less time. It also means that a native R
+  implementation of the algorithm is possible in R in a somewhat
+  reasonable time frame. So, that may help for anyone struggling to use
+  the fast C++ version in `AutoSpectralRcpp`. Specifics on this will be
+  detailed in an article on GitHub and Colibri Cytometry.
+- Since we can now quickly identify which variants are useful for a
+  given cell, we can test more variants, allowing a finer-grained view
+  of the variation, which may improve unmixing quality.
+- Autofluorescence extraction and fluorophore variation extraction are
+  now modified to search for more variation, focusing on “problematic”
+  cells that remain far from where they should be when the first batch
+  of variation is applied. This is most helpful for extracting
+  autofluorescence in complex tissue samples, where AutoSpectral
+  previously struggled to deal with the last few messy cells.
+- Speed in unmixing should be the biggest change, particularly if you
+  run using `AutoSpectralRcpp`.
+- When extracting autofluorescence using
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md),
+  you will now get a set of plots showing you the unmixed data for the
+  channels most affected by the autofluorescence (“worst channels”). The
+  same channels will be plotted after a single round of autofluorescence
+  extraction per cell (as in AutoSpectral v0.9.2 and earlier) as well as
+  after the second round, using data from more difficult cells. To see
+  this, run with `refine = TRUE`, which is the default setting now.
+- Autofluorescence is now assigned to each cell using a shortcut to
+  “project” where the AF will impact on fluorophore or residual space.
+  This is especially fast for residual-based assignment.
+- Perhaps most importantly, discontinuities that sometimes appeared in
+  the data after unmixing using per-cell-fluorophore optimization,
+  particularly with the “fast” approximation, should now be gone or at
+  least greatly diminished.
+
+### Bug fixes
+
+- Deprecation warnings in 0.9.1 were not done properly, causing errors
+  when the deprecated arguments were specified. That should now be
+  fixed.
+
 ## AutoSpectral 0.9.1 (2026-01-15)
 
 ### Improvements

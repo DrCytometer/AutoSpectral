@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -182,6 +182,25 @@ that this means you can use pooled samples as long as you have enough
 events acquired, although you may need to increase <code>som.dim</code>
 if there are a lot of AF signatures present in each part of the
 pool.</p>
+<div class="section level2">
+<h2 id="update-for-version-1-0-0">Update for Version 1.0.0<a class="anchor" aria-label="anchor" href="#update-for-version-1-0-0"></a>
+</h2>
+<p>Version 1.0.0 changes the way autofluorescence spectra are identified
+slightly, allowing for a second round of identification of cells that
+are likely to be problematic given only the first set of AF spectra.
+This is done by using AutoSpectral’ per-cell autofluorescence extraction
+on the unstained sample. Any signal in the fluorophore channels in the
+unmixed unstained data can be considered to be error. In the update, we
+select the cells that are the furthest from zero in the unmixed space
+and run a second round of cluster on these, updating the AF spectra that
+were used to unmix them. This expands the set of possibilities, focusing
+on the worst offenders. This is most useful for complex tissue samples,
+and allows extraction of the problematic last 1-3% of cells that are in
+the wrong place.</p>
+</div>
+<div class="section level2">
+<h2 id="extracting-af-for-each-cell">Extracting AF for each cell<a class="anchor" aria-label="anchor" href="#extracting-af-for-each-cell"></a>
+</h2>
 <p>While you can call <code><a href="../reference/unmix.autospectral.html">unmix.autospectral()</a></code> directly, this
 requires reading in the FCS file into R, extracting the expression data
 and so on. The better option is to just call unmix.fcs directly, which
@@ -194,8 +213,7 @@ will create an unmixed FCS file from your raw FCS file.</p>
 <span>           asp <span class="op">=</span> <span class="va">asp</span>,</span>
 <span>           flow.control <span class="op">=</span> <span class="va">flow.control</span>,</span>
 <span>           method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
-<span>           af.spectra <span class="op">=</span> <span class="va">lung.af</span>,</span>
-<span>           weighted <span class="op">=</span> <span class="cn">FALSE</span> <span class="op">)</span></span></code></pre></div>
+<span>           af.spectra <span class="op">=</span> <span class="va">lung.af</span> <span class="op">)</span></span></code></pre></div>
 <p>This will use OLS to find the optimal AF per cell. To use WLS, set
 <code>weighted = TRUE</code>.</p>
 <p>Alternatively, we can call <code>method = "Automatic"</code>, which
@@ -214,9 +232,9 @@ and set the arguments.</p>
 <span>           af.spectra <span class="op">=</span> <span class="va">lung.af</span> <span class="op">)</span></span></code></pre></div>
 <p>Unmixed FCS files will appear in folder
 <code>./autospectral_unmixed</code>.</p>
-<div class="section level2">
-<h2 id="go-faster">Go Faster<a class="anchor" aria-label="anchor" href="#go-faster"></a>
-</h2>
+<div class="section level3">
+<h3 id="go-faster">Go Faster<a class="anchor" aria-label="anchor" href="#go-faster"></a>
+</h3>
 <p>Per-cell AF extraction involves unmixing the data once per AF
 signature provided. Since this is a lot of linear algebra, using an
 optimized library for linear algebra speeds this process up a lot. We
@@ -227,8 +245,14 @@ Expect speed ups of ~5x.</p>
 <p>Don’t set multiple threads for the BLAS. That will interfere with the
 parallel processing used in other parts of AutoSpectral and probably
 other R packages.</p>
+<p>Additionally, as of version 1.0.0, the process of assigning AF
+signatures to individual cells (and then unmixing them) has been sped up
+in C++. For this, you will need to install
+<code>AutoSpectralRcpp</code>.</p>
 </div>
-  </main>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

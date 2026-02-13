@@ -28,12 +28,19 @@
 #'
 #' @return A matrix with the cleaned expression data.
 
-do.peacoQC <- function( dirty.expr, sample.name, spectral.channel,
-                        biexp.transform, transform.inv,
-                        output.dir, time.param, all.channels,
-                        method = "MAD",
-                        figures = TRUE,
-                        verbose = TRUE ) {
+do.peacoQC <- function(
+    dirty.expr,
+    sample.name,
+    spectral.channel,
+    biexp.transform,
+    transform.inv,
+    output.dir,
+    time.param,
+    all.channels,
+    method = "MAD",
+    figures = TRUE,
+    verbose = TRUE
+  ) {
 
   if ( !dir.exists( output.dir ) & figures )
     dir.create( output.dir )

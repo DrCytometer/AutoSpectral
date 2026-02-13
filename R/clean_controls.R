@@ -63,23 +63,25 @@
 #'
 #' @export
 
-clean.controls <- function( flow.control,
-                            asp,
-                            time.clean = FALSE,
-                            trim = FALSE,
-                            trim.factor = NULL,
-                            af.remove = TRUE,
-                            universal.negative = TRUE,
-                            downsample = TRUE,
-                            negative.n = asp$negative.n,
-                            positive.n = asp$positive.n,
-                            scatter.match = TRUE,
-                            scrub = FALSE,
-                            intermediate.figures = FALSE,
-                            main.figures = TRUE,
-                            parallel = FALSE,
-                            verbose = TRUE,
-                            threads = NULL ) {
+clean.controls <- function(
+    flow.control,
+    asp,
+    time.clean = FALSE,
+    trim = FALSE,
+    trim.factor = NULL,
+    af.remove = TRUE,
+    universal.negative = TRUE,
+    downsample = TRUE,
+    negative.n = asp$negative.n,
+    positive.n = asp$positive.n,
+    scatter.match = TRUE,
+    scrub = FALSE,
+    intermediate.figures = FALSE,
+    main.figures = TRUE,
+    parallel = FALSE,
+    verbose = TRUE,
+    threads = NULL
+  ) {
 
   if ( intermediate.figures & !main.figures ) main.figures <- TRUE
 
@@ -98,28 +100,28 @@ clean.controls <- function( flow.control,
     lifecycle::deprecate_warn(
       "0.9.1",
       "clean.controls(time.clean)",
-      "will be deprecated going forward"
+      details = "will be deprecated going forward"
     )
   }
   if ( trim ) {
     lifecycle::deprecate_warn(
       "0.9.1",
       "clean.controls(trim)",
-      "will be deprecated going forward"
+      details = "will be deprecated going forward"
     )
   }
   if ( !is.null( trim.factor ) ) {
     lifecycle::deprecate_warn(
       "0.9.1",
       "clean.controls(trim.factor)",
-      "will be deprecated going forward"
+      details = "will be deprecated going forward"
     )
   }
   if ( scrub ) {
     lifecycle::deprecate_warn(
       "0.9.1",
       "clean.controls(scrub)",
-      "will be deprecated going forward"
+      details = "will be deprecated going forward"
     )
   }
 
