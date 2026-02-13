@@ -8,6 +8,7 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_path geom_point labs theme_minimal
 #' @importFrom ggplot2 element_text facet_wrap ggsave theme scale_color_viridis_d
+#' @importFrom ragg agg_jpeg
 #'
 #' @param spectral.matrix Matrix or dataframe containing spectral data. This
 #' should be in format fluorophores x detectors. Row names will be used as the
@@ -184,6 +185,7 @@ spectral.trace <- function(
     ggsave(
       file.path( plot.dir, sprintf( "%s.jpg", title ) ),
       spectra.plot,
+      device = ragg::agg_jpeg,
       width = plot.width,
       height = plot.height,
       limitsize = FALSE
@@ -201,12 +203,7 @@ spectral.trace <- function(
 
     spectra.plot.split <- ggplot(
       fluor.spectra.long,
-      aes(
-        x = Detector,
-        y = Intensity,
-        group = Fluorophore,
-        color = Fluorophore
-        )
+      aes( x = Detector, y = Intensity, group = Fluorophore, color = Fluorophore )
       ) +
       geom_path( linewidth = figure.spectra.line.size ) +
       geom_point( size = figure.spectra.point.size ) +
@@ -232,6 +229,7 @@ spectral.trace <- function(
       ggsave(
         file.path( plot.dir, sprintf( "%s by laser.jpg", title ) ),
         spectra.plot.split,
+        device = ragg::agg_jpeg,
         width = plot.width,
         height = plot.height,
         limitsize = FALSE

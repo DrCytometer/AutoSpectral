@@ -9,6 +9,7 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_viridis_c theme_minimal
 #' @importFrom ggplot2 coord_fixed element_text labs ggsave
+#' @importFrom ragg agg_jpeg
 #'
 #' @param spectra Data frame or matrix containing spectral data.
 #' @param filename Character string for the output file. Default is
@@ -61,8 +62,8 @@ cosine.similarity.plot <- function(
   # pivot longer manually
   similarity.df.long <- data.frame(
     Fluor1 = rep(
-      rownames(similarity.df),
-      each = ncol(similarity.df)
+      rownames( similarity.df ),
+      each = ncol( similarity.df )
     ),
     Fluor2 = rep(
       colnames( similarity.df ),
@@ -104,10 +105,11 @@ cosine.similarity.plot <- function(
     ggsave(
       filename = file.path( output.dir, similarity.heatmap.filename ),
       plot = similarity.heatmap,
+      device = ragg::agg_jpeg,
       width = figure.width,
       height = figure.height,
       limitsize = FALSE
-      )
+    )
   else
     return( similarity.heatmap )
 
