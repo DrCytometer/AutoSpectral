@@ -8,6 +8,7 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_viridis_c theme_minimal
 #' @importFrom ggplot2 coord_fixed element_text labs ggsave
+#' @importFrom ragg agg_jpeg
 #'
 #' @param matrix Matrix or dataframe containing spectral data.
 #' @param number.labels Logical indicating whether to add number labels to
@@ -148,6 +149,7 @@ create.heatmap <- function(
     ggsave(
       filename = file.path( plot.dir, heatmap.filename ),
       plot = heatmap.plot,
+      device = ragg::agg_jpeg,
       width = figure.width,
       height = figure.height,
       limitsize = FALSE

@@ -8,6 +8,7 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_viridis_c theme_classic
 #' @importFrom ggplot2 coord_fixed element_text labs ggsave theme
+#' @importFrom ragg agg_jpeg
 #'
 #' @param spectra Matrix or dataframe containing spectral data
 #' format: fluorophores x detectors.
@@ -113,6 +114,7 @@ spectral.heatmap <- function(
     ggsave(
       filename = file.path( plot.dir, heatmap.filename ),
       plot = heatmap.plot,
+      device = ragg::agg_jpeg,
       width = plot.width,
       height = plot.height,
       limitsize = FALSE

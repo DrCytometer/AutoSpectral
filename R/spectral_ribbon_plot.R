@@ -12,6 +12,7 @@
 #' @importFrom ggplot2 ylab scale_fill_gradientn theme_minimal theme element_text
 #' @importFrom ggplot2 element_blank ggsave scale_fill_viridis_c
 #' @importFrom flowWorkspace flowjo_biexp
+#' @importFrom ragg agg_jpeg
 #'
 #' @param pos.expr.data Internal argument for `clean.controls`. A matrix
 #' containing the positive expression data. Default is `NULL`.
@@ -265,6 +266,7 @@ spectral.ribbon.plot <- function(
       ggsave(
         ribbon.plot.filename,
         plot = ribbon.plot,
+        device = ragg::agg_jpeg,
         path = figure.dir,
         width = plot.width,
         height = plot.height,

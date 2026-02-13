@@ -8,6 +8,7 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_ribbon geom_line scale_x_continuous labs
 #' @importFrom ggplot2 theme_minimal theme ggsave
+#' @importFrom ragg agg_jpeg
 #'
 #' @param spectra.variants A matrix of variations in the normalized spectra
 #' signature for a fluorophore, rows being the variants, columns being the
@@ -63,7 +64,7 @@ spectral.variant.plot <- function(
     max = apply( spectra.variants, 2, max, na.rm = TRUE )
   )
 
-  ggplot( variant.data, aes( x = detector.n ) ) +
+  variant.plot <- ggplot( variant.data, aes( x = detector.n ) ) +
     geom_ribbon(
       aes( ymin = min, ymax = max ),
       fill = variant.fill.color,
@@ -92,6 +93,8 @@ spectral.variant.plot <- function(
 
     ggsave(
       file.path( plot.dir, paste0( title, ".jpg" ) ),
+      plot = variant.plot,
+      device = ragg::agg_jpeg,
       width = plot.width,
       height = plot.height,
       limitsize = FALSE

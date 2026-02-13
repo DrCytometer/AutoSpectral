@@ -19,6 +19,7 @@ utils::globalVariables(
      "y",
      "label",
      "num.label",
-     "median.spec"
+     "median.spec",
+     "dens"
   )
 )
