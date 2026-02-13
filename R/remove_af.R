@@ -246,18 +246,27 @@ remove.af <- function(
       removed.data <- expr.data.pos[ -gate.population.idx, , drop = FALSE ]
     }
 
-    spectral.ribbon.plot(
-      pos.expr.data = expr.data.pos,
-      neg.expr.data = expr.data.pos[ gate.population.idx, , drop = FALSE ],
-      spectral.channel = spectral.channel,
-      asp = asp, fluor.name = samp,
-      title = asp$af.plot.filename,
-      af = TRUE,
-      removed.data = removed.data
-      )
+    # plot with error handling
+    tryCatch(
+      expr = {
+        spectral.ribbon.plot(
+          pos.expr.data = expr.data.pos,
+          neg.expr.data = expr.data.pos[ gate.population.idx, , drop = FALSE ],
+          spectral.channel = spectral.channel,
+          asp = asp, fluor.name = samp,
+          title = asp$af.plot.filename,
+          af = TRUE,
+          removed.data = removed.data
+        )
 
-    # plot AF removal gating on stained control
-    gate.af.sample.plot( gate.data.pos, samp, af.boundary.ggp, asp )
+        # plot AF removal gating on stained control
+        gate.af.sample.plot( gate.data.pos, samp, af.boundary.ggp, asp )
+      },
+      error = function( e ) {
+        message( "Error in plotting AF removal: ", e$message )
+        return( NULL )
+      }
+    )
 
     if ( intermediate.figures ) {
 
@@ -275,23 +284,32 @@ remove.af <- function(
         removed.data <- expr.data.neg[ -gate.neg.idx, , drop = FALSE ]
       }
 
-      spectral.ribbon.plot(
-        pos.expr.data = expr.data.neg,
-        neg.expr.data = expr.data.neg[ gate.neg.idx, , drop = FALSE ],
-        spectral.channel = spectral.channel,
-        asp = asp,
-        fluor.name = negative.label,
-        title = asp$af.plot.filename,
-        af = TRUE,
-        removed.data = removed.data
-        )
+      # plot with error handling
+      tryCatch(
+        expr = {
+          spectral.ribbon.plot(
+            pos.expr.data = expr.data.neg,
+            neg.expr.data = expr.data.neg[ gate.neg.idx, , drop = FALSE ],
+            spectral.channel = spectral.channel,
+            asp = asp,
+            fluor.name = negative.label,
+            title = asp$af.plot.filename,
+            af = TRUE,
+            removed.data = removed.data
+          )
 
-      # plot AF removal gating on negative control
-      gate.af.sample.plot(
-        gate.data.neg,
-        negative.label,
-        af.boundary.ggp,
-        asp
+          # plot AF removal gating on negative control
+          gate.af.sample.plot(
+            gate.data.neg,
+            negative.label,
+            af.boundary.ggp,
+            asp
+          )
+        },
+        error = function( e ) {
+          message( "Error in plotting AF removal: ", e$message )
+          return( NULL )
+        }
       )
     }
   }
