@@ -8,6 +8,7 @@
 #' @importFrom flowCore read.FCS keyword exprs flowFrame parameters
 #' @importFrom flowCore write.FCS parameters<- keyword<-
 #' @importFrom lifecycle deprecate_warn
+#' @importFrom parallelly availableCores
 #'
 #' @param fcs.file A character string specifying the path to the FCS file.
 #' @param spectra A matrix containing the spectral data. Fluorophores in rows,
@@ -72,7 +73,7 @@
 #' To be deprecated.
 #' @param speed Selector for the precision-speed trade-off in AutoSpectral per-cell
 #' fluorophore optimization. Options are `fast`, `medium` and `slow`, with the
-#' default being `slow`. As of version 1.0.0, the backend for how this works
+#' default being `fast`. As of version 1.0.0, the backend for how this works
 #' has changed. Spectral variants and AF signatures are now pre-screened per cell
 #' to identify likely candidates, so brute force testing of all variants is no
 #' longer required. So, `speed` controls the number of variants to be tested per
@@ -82,10 +83,8 @@
 #' faster processing.
 #' @param parallel Logical, default is `TRUE`, which enables parallel processing
 #' for per-cell unmixing methods.
-#' @param threads Numeric, default is `NULL`, in which case `asp$worker.process.n`
-#' will be used. `asp$worker.process.n` is set by default to be one less than the
-#' available cores on the machine. Multi-threading is only used if `parallel` is
-#' `TRUE`. If working on a computing cluster, try `parallelly::availableCores()`.
+#' @param threads Numeric, defaults to a single thread for sequential processing
+#' (`parallel=FALSE`) or all available cores if `parallel=TRUE`.
 #' @param verbose Logical, controls messaging. Default is `TRUE`. Set to `FALSE`
 #' to have it shut up.
 #' @param n.variants Number of variants to test per cell. Allows explicit control
@@ -118,9 +117,9 @@ unmix.fcs <- function(
     divergence.threshold = 1e4,
     divergence.handling = "Balance",
     balance.weight = 0.5,
-    speed = c("slow", "medium", "fast"),
+    speed = c("fast", "medium", "slow"),
     parallel = TRUE,
-    threads = NULL,
+    threads = if ( parallel ) 0 else 1,
     verbose = TRUE,
     n.variants = NULL,
     ...
@@ -207,27 +206,8 @@ unmix.fcs <- function(
     }
 
     # set number of variants to test (by `speed` if `n.variants` is not provided)
-    if ( length( speed ) > 1 )
-      speed <- speed[ 1 ]
-
-    if ( is.null( n.variants ) || !is.numeric( n.variants ) || length( n.variants ) != 1 ) {
-      n.variants <- switch(
-        speed,
-        "slow"   = 10L,
-        "medium" = 3L,
-        "fast"   = 1L,
-        {
-          warning(
-            paste0(
-              "Unrecognized input '",
-              speed,
-              "' to `speed`. Defaulting to `slow` (n.variants=10)."
-            ),
-            call. = FALSE
-          )
-          10L
-        }
-      )
+    if ( is.null( n.variants ) ) {
+      n.variants <- switch( match.arg( speed ), "fast" = 1L, "medium" = 3L, "slow" = 10L )
     }
   }
 
@@ -237,8 +217,11 @@ unmix.fcs <- function(
   if ( !dir.exists( output.dir ) )
     dir.create( output.dir )
 
-  if ( is.null( threads ) )
+  # set multithreading
+  if ( parallel & is.null( threads ) )
     threads <- asp$worker.process.n
+  else if ( parallel & threads == 0 )
+    threads <- parallelly::availableCores()
 
   # import FCS, without warnings for fcs 3.2
   fcs.data <- suppressWarnings(
@@ -281,23 +264,20 @@ unmix.fcs <- function(
   # extract spectral data
   spectral.channel <- colnames( spectra )
   spectral.exprs <- fcs.exprs[ , spectral.channel, drop = FALSE ]
-
   other.channels <- setdiff( colnames( fcs.exprs ), spectral.channel )
 
   # remove height and width if present
-  suffixes <- c( "-H", "-W" )
   for ( ch in spectral.channel[ grepl( "-A$", spectral.channel ) ] ) {
     base <- sub( "-A$", "", ch )
-    other.channels <- setdiff( other.channels, paste0( base, suffixes ) )
+    other.channels <- setdiff( other.channels, paste0( base, c( "-H", "-W" ) ) )
+  }
+  if ( grepl("Discover", asp$cytometer ) && !include.imaging ) {
+    other.channels <- intersect( other.channels, asp$time.and.scatter )
   }
   other.exprs <- fcs.exprs[ , other.channels, drop = FALSE ]
 
   if ( !include.raw )
-    rm( fcs.exprs ) # free up memory
-
-  # remove imaging parameters if desired
-  if ( grepl( "Discover", asp$cytometer ) & !include.imaging )
-    other.exprs <- other.exprs[ , asp$time.and.scatter ]
+    rm( fcs.exprs ); gc() # free up memory
 
   # define weights if needed
   if ( weighted | method == "WLS"| method == "Poisson"| method == "FastPoisson" ) {
@@ -331,7 +311,6 @@ unmix.fcs <- function(
             parallel = parallel,
             threads = threads,
             n.variants = n.variants
-
           ),
           error = function( e ) {
             warning(
@@ -418,173 +397,56 @@ unmix.fcs <- function(
     },
     stop( "Unknown method" )
   )
+  rm( spectral.exprs )
 
-  # add back raw exprs and others columns as desired
-  if ( include.raw ) {
-    unmixed.data <- cbind( fcs.exprs, unmixed.data )
-  } else {
-    unmixed.data <- cbind( other.exprs, unmixed.data )
-  }
-
-  rm( spectral.exprs, other.exprs ) # free up memory
+  # combine with non-fluorescence data (scatter, time, etc.)
+  base.exprs <- if ( include.raw ) fcs.exprs else other.exprs
+  final.colnames <- c( colnames( base.exprs ), colnames( unmixed.data ) )
+  final.matrix <- matrix( 0,
+                          nrow = nrow( unmixed.data ),
+                          ncol = length( final.colnames ) )
+  colnames( final.matrix ) <- final.colnames
+  final.matrix[, 1:ncol( base.exprs ) ] <- base.exprs
+  final.matrix[ , ( ncol( base.exprs ) + 1 ):ncol( final.matrix ) ] <- unmixed.data
+  rm( unmixed.data, base.exprs, other.exprs )
 
   # fix any NA values (e.g., plate location with S8)
-  if ( anyNA( unmixed.data ) )
-    unmixed.data[ is.na( unmixed.data ) ] <- 0
+  if ( anyNA( final.matrix ) )
+    final.matrix[ is.na( final.matrix ) ] <- 0
 
-  # update keywords----------
-  # identify non-parameter keywords
-  non.param.keys <- fcs.keywords[ !grepl( "^\\$?P\\d+", names( fcs.keywords ) ) ]
-  if ( asp$cytometer == "Mosaic" )
-    non.param.keys <- non.param.keys[ !grepl( "^\\$?CH\\d+", names( non.param.keys ) ) ]
-
-  # build lookup
-  pN.keys <- grep( "^\\$?P\\d+N$", names( fcs.keywords ), value = TRUE )
-  param.lookup <- lapply( pN.keys, function( k ) {
-    p.idx <- sub( "\\$?P(\\d+)N", "\\1", k )
-    matches <- grep( paste0( "^\\$?P", p.idx, "(?:[A-Z]+)$" ), names( fcs.keywords ),
-                     value = TRUE )
-    stats::setNames( fcs.keywords[ matches], matches )
-  } )
-  # name the list by parameter name
-  names( param.lookup ) <- sapply( pN.keys, function( k ) fcs.keywords[[ k ]])
-
-  # keywords for new parameters
-  param.keywords <- list()
-  n.param <- ncol( unmixed.data )
-
-  # check all parameters and update as needed
-  for ( i in seq_len( n.param ) ) {
-    p.name <- colnames( unmixed.data )[ i ]
-
-    if ( p.name %in% original.param ) {
-      # retain keywords from original file if present
-      old.entry <- param.lookup[[ p.name ]]
-      if ( !is.null( old.entry ) ) {
-        # update index to current parameter number
-        names( old.entry ) <- sub( "^\\$P\\d+", paste0( "$P", i ), names( old.entry ) )
-        param.keywords <- c( param.keywords, old.entry )
-
-      } else {
-        # fallback if missing
-        param.keywords[[ paste0( "$P", i, "N" )]] <- p.name
-        param.keywords[[ paste0( "$P", i, "S" )]] <- p.name
-      }
-
-    } else {
-      # keywords for new unmixed parameters
-      bit.depth <- if ( !is.null( asp$bit.depth ) ) asp$bit.depth else "32"
-
-      param.keywords[[ paste0( "$P", i, "N" ) ]] <- p.name
-      param.keywords[[ paste0( "$P", i, "B" ) ]] <- as.character( bit.depth )
-      param.keywords[[ paste0( "$P", i, "E" ) ]] <- "0,0"
-      param.keywords[[ paste0( "$P", i, "R" ) ]] <- as.character( asp$expr.data.max )
-      param.keywords[[ paste0( "$P", i, "DISPLAY" ) ]] <- "LOG"
-      param.keywords[[ paste0( "$P", i, "TYPE" ) ]] <- "Fluorescence"
-
-      # exception for AF.Index
-      if ( p.name == "AF.Index" ) {
-        param.keywords[[ paste0( "$P", i, "DISPLAY" ) ]] <- "LIN"
-        param.keywords[[ paste0( "$P", i, "TYPE" ) ]] <- "AF_Index"
-      }
-
-      # assign $PnS (stain) based on flow.control
-      f.idx <- match( p.name, flow.control$fluorophore )
-      marker <- if ( !is.na( f.idx ) ) flow.control$antigen[ f.idx ] else ""
-      param.keywords[[ paste0( "$P", i, "S" ) ]] <- as.character( marker )
-    }
-  }
-
-  # combine new keywords with original keywords
-  new.keywords <- utils::modifyList(
-    utils::modifyList( non.param.keys, param.keywords ),
-    list(
-      "$FIL" = file.name,
-      "$PAR" = as.character( n.param ),
-      "$UNMIXINGMETHOD" = method,
-      "$AUTOSPECTRAL" = as.character( utils::packageVersion( "AutoSpectral" ) ),
-      # add AutoSpectralRcpp's version if available
-      "$AUTOSPECTRALRCPP" = if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) ) {
-        as.character( utils::packageVersion( "AutoSpectralRcpp" ) )
-      } else {
-        "0"
-      }
-    )
-  )
-
-  # weighting
-  if ( !is.null( weights ) ) {
-    # add weights to a new keyword in correct format
-    weights.str <- paste(
-      c(
-        length( spectral.channel ),
-        spectral.channel,
-        formatC(
-          weights,
-          digits = 8,
-          format = "fg"
-        )
-      ),
-      collapse = ","
-    )
-    new.keywords[[ "$WEIGHTS" ]] <- weights.str
-  }
-
-  # spectra
-  # TBD switch to using SPILL slot
-  fluor.n <- nrow( spectra )
-  detector.n <- ncol( spectra )
-  fluorophores <- paste0( rownames( spectra ), "-A" )
-  vals <- as.vector( t( spectra ) )
-
-  # add spillover/spectra to a new keyword in correct format
-  formatted.vals <- formatC( vals, digits = 8, format = "fg", flag = "#" )
-  spill.string <- paste(
-    c( fluor.n, detector.n, fluorophores, colnames( spectra ), formatted.vals ),
-    collapse = ","
-  )
-  new.keywords[[ "$SPECTRA" ]] <- spill.string
-  new.keywords[[ "$FLUOROCHROMES" ]] <- paste( fluorophores, collapse = "," )
-
-  # add AF spectra if used
-  if ( !is.null( af.spectra ) ) {
-    af.n <- nrow( af.spectra )
-    vals <- as.vector( t( af.n ) )
-    formatted.vals <- formatC( vals, digits = 8, format = "fg", flag = "#" )
-    af.string <- paste(
-      c( af.n, detector.n, rownames( af.n ), colnames( af.spectra ), formatted.vals ),
-      collapse = ","
-    )
-    new.keywords[[ "$AUTOFLUORESCENCE" ]] <- af.string
-  }
-
-  ### define new FCS file
   # append "-A" to fluorophore and AF channel names
-  fluor.orig <- colnames( unmixed.data )
-  colnames( unmixed.data ) <-
-    ifelse( fluor.orig %in% c( rownames( spectra ), "AF" ),
-            paste0( fluor.orig, "-A" ),
-            fluor.orig )
+  colnames( final.matrix ) <-
+    ifelse( colnames( final.matrix ) %in% c( rownames( spectra ), "AF" ),
+            paste0( colnames( final.matrix ), "-A" ),
+            colnames( final.matrix ) )
+
+  # update keywords
+  new.keywords <- define.keywords(
+    fcs.keywords,
+    final.matrix,
+    original.param,
+    spectra,
+    af.spectra,
+    flow.control,
+    asp,
+    method,
+    file.name,
+    weights,
+    spectral.channel
+  )
 
   # create the flowFrame for writing the FCS file
-  flow.frame <- suppressWarnings( flowCore::flowFrame( unmixed.data ) )
-  param.desc <- flowCore::parameters( flow.frame )@data$desc
-
-  # add marker names to description
-  for ( i in seq_len( n.param ) ) {
-    orig.name <- fluor.orig[ i ]
-    # get the marker from flow.control
-    f.idx <- match( orig.name, flow.control$fluorophore )
-    if ( !is.na( f.idx ) )
-      param.desc[ i ] <- as.character( flow.control$antigen[ f.idx ] )
-  }
+  flow.frame <- suppressWarnings( flowCore::flowFrame( final.matrix ) )
 
   # write the parameter to the flowFrame
-  flowCore::parameters( flow.frame )@data$desc <- param.desc
-  keyword( flow.frame ) <- new.keywords
+  flowCore::parameters( flow.frame )$desc <- sapply(
+    paste0( "$P", seq_len( ncol( final.matrix ) ), "S" ),
+    function( k ) new.keywords[[ k ]]
+  )
+  flowCore::keyword( flow.frame ) <- new.keywords
 
-  # save file ---------
-  write.FCS(
+  # save file
+  flowCore::write.FCS(
     flow.frame,
     filename = file.path( output.dir, file.name )
   )

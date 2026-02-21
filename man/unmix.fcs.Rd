@@ -22,9 +22,9 @@ unmix.fcs(
   divergence.threshold = 10000,
   divergence.handling = "Balance",
   balance.weight = 0.5,
-  speed = c("slow", "medium", "fast"),
+  speed = c("fast", "medium", "slow"),
   parallel = TRUE,
-  threads = NULL,
+  threads = if (parallel) 0 else 1,
   verbose = TRUE,
   n.variants = NULL,
   ...
@@ -111,7 +111,7 @@ To be deprecated.}
 
 \item{speed}{Selector for the precision-speed trade-off in AutoSpectral per-cell
 fluorophore optimization. Options are \code{fast}, \code{medium} and \code{slow}, with the
-default being \code{slow}. As of version 1.0.0, the backend for how this works
+default being \code{fast}. As of version 1.0.0, the backend for how this works
 has changed. Spectral variants and AF signatures are now pre-screened per cell
 to identify likely candidates, so brute force testing of all variants is no
 longer required. So, \code{speed} controls the number of variants to be tested per
@@ -123,10 +123,8 @@ faster processing.}
 \item{parallel}{Logical, default is \code{TRUE}, which enables parallel processing
 for per-cell unmixing methods.}
 
-\item{threads}{Numeric, default is \code{NULL}, in which case \code{asp$worker.process.n}
-will be used. \code{asp$worker.process.n} is set by default to be one less than the
-available cores on the machine. Multi-threading is only used if \code{parallel} is
-\code{TRUE}. If working on a computing cluster, try \code{parallelly::availableCores()}.}
+\item{threads}{Numeric, defaults to a single thread for sequential processing
+(\code{parallel=FALSE}) or all available cores if \code{parallel=TRUE}.}
 
 \item{verbose}{Logical, controls messaging. Default is \code{TRUE}. Set to \code{FALSE}
 to have it shut up.}
