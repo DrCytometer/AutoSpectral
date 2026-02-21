@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,9 +71,9 @@
 <span>  divergence.threshold <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  divergence.handling <span class="op">=</span> <span class="st">"Balance"</span>,</span>
 <span>  balance.weight <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  speed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"slow"</span>, <span class="st">"medium"</span>, <span class="st">"fast"</span><span class="op">)</span>,</span>
+<span>  speed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fast"</span>, <span class="st">"medium"</span>, <span class="st">"slow"</span><span class="op">)</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  threads <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">parallel</span><span class="op">)</span> <span class="fl">0</span> <span class="kw">else</span> <span class="fl">1</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -199,7 +199,7 @@ To be deprecated.</p></dd>
 <dt id="arg-speed">speed<a class="anchor" aria-label="anchor" href="#arg-speed"></a></dt>
 <dd><p>Selector for the precision-speed trade-off in AutoSpectral per-cell
 fluorophore optimization. Options are <code>fast</code>, <code>medium</code> and <code>slow</code>, with the
-default being <code>slow</code>. As of version 1.0.0, the backend for how this works
+default being <code>fast</code>. As of version 1.0.0, the backend for how this works
 has changed. Spectral variants and AF signatures are now pre-screened per cell
 to identify likely candidates, so brute force testing of all variants is no
 longer required. So, <code>speed</code> controls the number of variants to be tested per
@@ -215,10 +215,8 @@ for per-cell unmixing methods.</p></dd>
 
 
 <dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
-<dd><p>Numeric, default is <code>NULL</code>, in which case <code>asp$worker.process.n</code>
-will be used. <code>asp$worker.process.n</code> is set by default to be one less than the
-available cores on the machine. Multi-threading is only used if <code>parallel</code> is
-<code>TRUE</code>. If working on a computing cluster, try <code><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">parallelly::availableCores()</a></code>.</p></dd>
+<dd><p>Numeric, defaults to a single thread for sequential processing
+(<code>parallel=FALSE</code>) or all available cores if <code>parallel=TRUE</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>

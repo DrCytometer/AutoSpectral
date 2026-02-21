@@ -1,7 +1,5 @@
 # AutoSpectral
 
-**Version 1.0.0**
-
 ## Introduction
 
 AutoSpectral is AutoSpill updated for the spectral flow era.
@@ -93,9 +91,9 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.0.0**
+**Version 1.0.2**
 
-Version 1.0.0 is intended to greatly speed up the process of unmixing.
+Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and
 fluorophores for each cell, identifying likely “best” candidates rather
 than using a brute force approach. If you are using

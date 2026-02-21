@@ -14,8 +14,9 @@ computationally intensive steps. The other reason it’s slow is that I am
 not a computational person.
 
 There are some things that can be done to improve this. Release v1.0.0
-will implement an approach to reduce the search space, somewhere between
-10 and 100x, which will help.
+implements an approach to reduce the search space, somewhere between 10
+and 100x, which will help. `AutoSpectralRcp` now integrates the full
+unmixing pipeline in C++, which also helps.
 
 ## Go Faster
 
@@ -180,7 +181,9 @@ laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell AF extraction v0.9.0: 1min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
-  perCell AF extraction v1.0.0: 14sec (45s in R without C++)
+  perCell AF extraction v1.0.0: 11sec (45s in R without C++)
+- [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+  perCell AF extraction v1.0.3: 10sec
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell fluorophore optimization “fast” v0.8.7: 9min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
@@ -189,11 +192,15 @@ laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:
   perCell fluorophore optimization “fast” v1.0.0: \<2min (note:
   performance here should now be comparable to the previous “slow”)
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+  perCell fluorophore optimization “fast” v1.0.2: 1.3min
+- [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell fluorophore optimization “slow” v0.8.7: 62min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell fluorophore optimization “slow” v0.9.0: 19min
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell fluorophore optimization “slow” v1.0.0: 11min
+- [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+  perCell fluorophore optimization “slow” v1.0.2: 9min
 - [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
   WLS or OLS, 6 files, v0.8.7: 67sec sequential, interrupted parallel
 - [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)

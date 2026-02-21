@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 AutoSpectral takes a lot longer to unmix files than standard OLS or WLS unmixing approaches. Most of that is because it's doing way more calculations. If we consider a 40-color panel with a million cells, there is essentially only a single computationally expensive inversion to produce the unmixing matrix and then a second slow step applying that to the data. In the per-cell optimization part of `unmix.autospectral()`, AutoSpectral performs up to 100 such calculations per cell per fluorophore. In other words, for that same set of a million cells in 40 color space, as much as 100 x 40 x 1000000 = 4x10^9 times as many computationally intensive steps. The other reason it's slow is that I am not a computational person. 
 
-There are some things that can be done to improve this. Release v1.0.0 will implement an approach to reduce the search space, somewhere between 10 and 100x, which will help.
+There are some things that can be done to improve this. Release v1.0.0 implements an approach to reduce the search space, somewhere between 10 and 100x, which will help. `AutoSpectralRcp` now integrates the full unmixing pipeline in C++, which also helps.
 
 
 ## Go Faster
@@ -110,12 +110,15 @@ Benchmarks for "C3 Lung_GFP_003_Samples.fcs", again on the 8-core laptop, using 
 * `unmix.fcs()` perCell AF extraction v0.8.7: 2min
 * `unmix.fcs()` perCell AF extraction v0.9.0: 1min
 * `unmix.fcs()` perCell AF extraction v1.0.0: 11sec (45s in R without C++)
+* `unmix.fcs()` perCell AF extraction v1.0.3: 10sec
 * `unmix.fcs()` perCell fluorophore optimization "fast" v0.8.7: 9min
 * `unmix.fcs()` perCell fluorophore optimization "fast" v0.9.0: <2min
 * `unmix.fcs()` perCell fluorophore optimization "fast" v1.0.0: <2min (note: performance here should now be comparable to the previous "slow")
+* `unmix.fcs()` perCell fluorophore optimization "fast" v1.0.2: 1.3min
 * `unmix.fcs()` perCell fluorophore optimization "slow" v0.8.7: 62min
 * `unmix.fcs()` perCell fluorophore optimization "slow" v0.9.0: 19min
 * `unmix.fcs()` perCell fluorophore optimization "slow" v1.0.0: 11min
+* `unmix.fcs()` perCell fluorophore optimization "slow" v1.0.2: 9min
 * `unmix.folder()` WLS or OLS, 6 files, v0.8.7: 67sec sequential, interrupted parallel
 * `unmix.folder()` WLS or OLS, 6 files, v0.9.0: 62sec sequential, 31sec parallel
 

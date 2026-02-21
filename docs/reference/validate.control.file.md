@@ -7,7 +7,13 @@ rules required for successful running of AutoSpectral.
 ## Usage
 
 ``` r
-validate.control.file(control.dir, control.def.file, asp)
+validate.control.file(
+  control.dir,
+  control.def.file,
+  asp,
+  min.event.warning,
+  min.event.error
+)
 ```
 
 ## Arguments
@@ -24,6 +30,16 @@ validate.control.file(control.dir, control.def.file, asp)
 - asp:
 
   The AutoSpectral parameter list.
+
+- min.event.warning:
+
+  The number of events in the entire FCS file that will trigger a
+  warning if not met.
+
+- min.event.error:
+
+  The number of events in the entire FCS file that will trigger an error
+  if not met.
 
 ## Value
 

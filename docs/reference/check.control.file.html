@@ -11,7 +11,7 @@ AutoSpectral."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,14 @@ AutoSpectral.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check.control.file</span><span class="op">(</span><span class="va">control.dir</span>, <span class="va">control.def.file</span>, <span class="va">asp</span>, strict <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check.control.file</span><span class="op">(</span></span>
+<span>  <span class="va">control.dir</span>,</span>
+<span>  <span class="va">control.def.file</span>,</span>
+<span>  <span class="va">asp</span>,</span>
+<span>  strict <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  min.event.warning <span class="op">=</span> <span class="fl">5000</span>,</span>
+<span>  min.event.error <span class="op">=</span> <span class="fl">1000</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -83,6 +90,16 @@ using <code>get.autospectral.param</code>.</p></dd>
 <dt id="arg-strict">strict<a class="anchor" aria-label="anchor" href="#arg-strict"></a></dt>
 <dd><p>Logical. Controls whether the function triggers a break or
 continues and outputs a list of errors. Default is <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-min-event-warning">min.event.warning<a class="anchor" aria-label="anchor" href="#arg-min-event-warning"></a></dt>
+<dd><p>The number of events in the entire FCS file that will
+trigger a warning if not met. Default is <code>5000</code>.</p></dd>
+
+
+<dt id="arg-min-event-error">min.event.error<a class="anchor" aria-label="anchor" href="#arg-min-event-error"></a></dt>
+<dd><p>The number of events in the entire FCS file that will
+trigger an error if not met. Default is <code>1000</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

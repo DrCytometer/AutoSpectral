@@ -7,7 +7,14 @@ control setup for AutoSpectral.
 ## Usage
 
 ``` r
-check.control.file(control.dir, control.def.file, asp, strict = FALSE)
+check.control.file(
+  control.dir,
+  control.def.file,
+  asp,
+  strict = FALSE,
+  min.event.warning = 5000,
+  min.event.error = 1000
+)
 ```
 
 ## Arguments
@@ -30,6 +37,16 @@ check.control.file(control.dir, control.def.file, asp, strict = FALSE)
 
   Logical. Controls whether the function triggers a break or continues
   and outputs a list of errors. Default is `FALSE`.
+
+- min.event.warning:
+
+  The number of events in the entire FCS file that will trigger a
+  warning if not met. Default is `5000`.
+
+- min.event.error:
+
+  The number of events in the entire FCS file that will trigger an error
+  if not met. Default is `1000`.
 
 ## Value
 

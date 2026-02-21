@@ -24,9 +24,9 @@ unmix.fcs(
   divergence.threshold = 10000,
   divergence.handling = "Balance",
   balance.weight = 0.5,
-  speed = c("slow", "medium", "fast"),
+  speed = c("fast", "medium", "slow"),
   parallel = TRUE,
-  threads = NULL,
+  threads = if (parallel) 0 else 1,
   verbose = TRUE,
   n.variants = NULL,
   ...
@@ -152,7 +152,7 @@ unmix.fcs(
 
   Selector for the precision-speed trade-off in AutoSpectral per-cell
   fluorophore optimization. Options are `fast`, `medium` and `slow`,
-  with the default being `slow`. As of version 1.0.0, the backend for
+  with the default being `fast`. As of version 1.0.0, the backend for
   how this works has changed. Spectral variants and AF signatures are
   now pre-screened per cell to identify likely candidates, so brute
   force testing of all variants is no longer required. So, `speed`
@@ -169,11 +169,8 @@ unmix.fcs(
 
 - threads:
 
-  Numeric, default is `NULL`, in which case `asp$worker.process.n` will
-  be used. `asp$worker.process.n` is set by default to be one less than
-  the available cores on the machine. Multi-threading is only used if
-  `parallel` is `TRUE`. If working on a computing cluster, try
-  [`parallelly::availableCores()`](https://parallelly.futureverse.org/reference/availableCores.html).
+  Numeric, defaults to a single thread for sequential processing
+  (`parallel=FALSE`) or all available cores if `parallel=TRUE`.
 
 - verbose:
 

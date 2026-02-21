@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,8 +87,9 @@ of a million cells in 40 color space, as much as 100 x 40 x 1000000 =
 4x10^9 times as many computationally intensive steps. The other reason
 it’s slow is that I am not a computational person.</p>
 <p>There are some things that can be done to improve this. Release
-v1.0.0 will implement an approach to reduce the search space, somewhere
-between 10 and 100x, which will help.</p>
+v1.0.0 implements an approach to reduce the search space, somewhere
+between 10 and 100x, which will help. <code>AutoSpectralRcp</code> now
+integrates the full unmixing pipeline in C++, which also helps.</p>
 <div class="section level2">
 <h2 id="go-faster">Go Faster<a class="anchor" aria-label="anchor" href="#go-faster"></a>
 </h2>
@@ -232,8 +233,10 @@ handling the FCS file)</li>
 <li>
 <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v0.9.0: 1min</li>
 <li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.0.0: 14sec (45s in
+<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.0.0: 11sec (45s in
 R without C++)</li>
+<li>
+<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.0.3: 10sec</li>
 <li>
 <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
 v0.8.7: 9min</li>
@@ -245,6 +248,9 @@ v0.9.0: &lt;2min</li>
 v1.0.0: &lt;2min (note: performance here should now be comparable to the
 previous “slow”)</li>
 <li>
+<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
+v1.0.2: 1.3min</li>
+<li>
 <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
 v0.8.7: 62min</li>
 <li>
@@ -253,6 +259,9 @@ v0.9.0: 19min</li>
 <li>
 <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
 v1.0.0: 11min</li>
+<li>
+<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
+v1.0.2: 9min</li>
 <li>
 <code><a href="../reference/unmix.folder.html">unmix.folder()</a></code> WLS or OLS, 6 files, v0.8.7: 67sec
 sequential, interrupted parallel</li>

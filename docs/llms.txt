@@ -1,7 +1,5 @@
 # AutoSpectral
 
-**Version 1.0.0**
-
 ## Introduction
 
 AutoSpectral is AutoSpill updated for the spectral flow era.
@@ -93,9 +91,9 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.0.0**
+**Version 1.0.2**
 
-Version 1.0.0 is intended to greatly speed up the process of unmixing.
+Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and
 fluorophores for each cell, identifying likely “best” candidates rather
 than using a brute force approach. If you are using
@@ -294,6 +292,8 @@ for more on this, or read the NEWS with the latest release.
   : Create Parallel Lapply
 - [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
   : Define Flow Control
+- [`define.keywords()`](https://drcytometer.github.io/AutoSpectral/reference/define.keywords.md)
+  : Define Keywords
 - [`do.gate.af()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.af.md)
   : Perform Gating on Autofluorescence Parameters
 - [`do.gate()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.md)

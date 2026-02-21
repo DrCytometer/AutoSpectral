@@ -34,6 +34,8 @@
   : Create Parallel Lapply
 - [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
   : Define Flow Control
+- [`define.keywords()`](https://drcytometer.github.io/AutoSpectral/reference/define.keywords.md)
+  : Define Keywords
 - [`do.gate.af()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.af.md)
   : Perform Gating on Autofluorescence Parameters
 - [`do.gate()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.md)
