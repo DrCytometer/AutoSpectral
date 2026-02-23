@@ -97,6 +97,8 @@ do.gate.af <- function(
 
   gate.bound.density.max <- gate.bound.density.max[
     order( gate.bound.density.max$z, decreasing = TRUE ), ]
+  gate.bound.density.max$x <- jitter( gate.bound.density.max$x, factor = 0.001 )
+  gate.bound.density.max$y <- jitter( gate.bound.density.max$y, factor = 0.001 )
 
   row.names( gate.bound.density.max ) <- NULL
   gate.bound.density.max$num.label <- paste0(
