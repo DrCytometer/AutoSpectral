@@ -1,7 +1,7 @@
 Package: AutoSpectral
 Type: Package
 Title: Tools for Unmxing Spectral Flow Cytometry Data
-Version: 1.0.2
+Version: 1.1.0
 Authors@R: c(
     person(
       "Oliver", "Burton",
@@ -27,10 +27,8 @@ LazyData: true
 Imports:
     FlowSOM,
     MASS,
-    PeacoQC,
     deldir,
     fields,
-    flowCore,
     flowWorkspace,
     ggplot2,
     scattermore,
