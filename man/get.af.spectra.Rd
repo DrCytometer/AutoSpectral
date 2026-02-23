@@ -72,3 +72,8 @@ Extracts autofluorescence spectra from an unstained samples. Intended for use
 with \code{unmix.autospectral}. Uses FlowSOM (EmbedSOM) clustering for rapid
 identification of cells with similar AF profiles.
 }
+\references{
+Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
+visualization and interpretation of cytometry data." \emph{Cytometry Part A},
+87(7), 636-645. \doi{10.1002/cyto.a.22625}
+}

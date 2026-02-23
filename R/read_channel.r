@@ -6,8 +6,6 @@
 #' This function reads channel information from control files and corrects
 #' channel names based on specified forbidden characters.
 #'
-#' @importFrom flowCore read.FCS exprs
-#'
 #' @param control.dir Directory containing control files.
 #' @param control.def.file File containing control definitions.
 #' @param asp The AutoSpectral parameter list.
@@ -52,22 +50,12 @@ read.channel <- function(
     stop( "duplicated filenames in fcs data", call. = FALSE )
 
   flow.set.channel <- colnames(
-    suppressWarnings(
-      flowCore::exprs(
-        flowCore::read.FCS(
-          file.path( control.dir, control.table$filename[ 1 ] ),
-          truncate_max_range = FALSE,
-          emptyValue = FALSE
-        )
-      )
-    )
-  )
+    readFCS( file.path( control.dir, control.table$filename[ 1 ] ) ) )
 
   # correct channel names
   flow.set.channel.corrected <- flow.set.channel
 
-  for ( fmfc.idx in 1 : nchar( asp$marker.forbidden.char ) )
-  {
+  for ( fmfc.idx in 1 : nchar( asp$marker.forbidden.char ) ) {
     fmfc <- substr( asp$marker.forbidden.char, fmfc.idx, fmfc.idx )
 
     flow.set.channel.corrected <- gsub(

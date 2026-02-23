@@ -13,7 +13,6 @@
 #' instrument used to acquire the sames, not an offline copy.
 #'
 #' @importFrom xml2 read_xml xml_find_all xml_text
-#' @importFrom flowCore read.FCSheader
 #'
 #' @param expt.file File name and path to the .Expt file to be read.
 #' @param output.dir Directory where the spillover .csv file will be written.
@@ -73,11 +72,7 @@ read.spectroflo.expt <- function(
 
   # if an FCS file is provided, extract detector names and add those
   if ( !is.null( fcs.file ) ) {
-    spill.vector <- flowCore::read.FCSheader(
-      fcs.file,
-      keyword = "$SPILLOVER"
-    )[[ 1 ]]
-
+    spill.vector <- readFCSheader( fcs.file, keyword = "$SPILLOVER" )[[ 1 ]]
     spill.vector <- strsplit( spill.vector, "," )[[ 1 ]]
     n.detectors <- as.numeric( spill.vector[ 1 ] )
     detector.names <- spill.vector[ 2:( n.detectors + 1 ) ]

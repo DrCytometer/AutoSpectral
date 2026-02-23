@@ -9,7 +9,8 @@ calculate.weights(
   spectral.channels,
   save = FALSE,
   output.dir = "./table_spectra",
-  filename = "weights.csv"
+  filename = "weights.csv",
+  verbose = TRUE
 )
 }
 \arguments{
@@ -25,7 +26,9 @@ or \code{colnames(spectra)}.}
 file, if generated.}
 
 \item{filename}{Character string specifying the filename for the CSV file.
-Default is \code{weights.csv}.}
+Default is \code{weights.csv}.#'}
+
+\item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
 }
 \value{
 A named numeric vector with weighting for each detector.

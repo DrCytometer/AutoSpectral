@@ -6,9 +6,7 @@
 #' This function reloads essential information from control files to permit
 #' rapid unmixing at a later date, without recalculating spectra or gates.
 #'
-#' @importFrom flowCore read.FCS
-#'
-#' @param control.dir file path to the single stained control fcs files
+#' @param control.dir file path to the single stained control FCS files
 #' @param control.def.file csv file defining the single color control file
 #' names, fluorophores they represent, marker names, peak channels and
 #' gating requirements.
@@ -45,16 +43,7 @@ reload.flow.control <- function(
     stop( "duplicated filenames in fcs data", call. = FALSE )
 
   flow.set.channel <- colnames(
-    suppressWarnings(
-      flowCore::exprs(
-        flowCore::read.FCS(
-          file.path( control.dir, control.table$filename[ 1 ] ),
-          transformation = NULL,
-          truncate_max_range = FALSE,
-          emptyValue = FALSE
-        )
-      )
-    )
+    readFCS( file.path( control.dir, control.table$filename[ 1 ] ) )
   )
 
   # remove unnecessary channels

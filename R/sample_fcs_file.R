@@ -6,8 +6,6 @@
 #' This function samples events from an FCS file based on specified parameters
 #' and downsampling criteria.
 #'
-#' @importFrom flowCore read.FCS exprs
-#'
 #' @param file.name A character string specifying the name of the FCS file.
 #' @param control.dir A character string specifying the directory containing
 #' the control FCS file.
@@ -20,16 +18,7 @@
 
 sample.fcs.file <- function( file.name, control.dir, downsample.n, asp ) {
 
-  ff <- suppressWarnings(
-    flowCore::read.FCS(
-      file.path( control.dir, file.name ),
-      transformation = FALSE,
-      truncate_max_range = FALSE,
-      emptyValue = FALSE
-    )
-  )
-
-  ff <- flowCore::exprs( ff )[ , asp$default.scatter.parameter ]
+  ff <- readFCS( file.path( control.dir, file.name ) )[ , asp$default.scatter.parameter ]
 
   event.n <- nrow( ff )
 
