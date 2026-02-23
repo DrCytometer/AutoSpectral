@@ -17,12 +17,6 @@
 #' the data and essential information about the cytometer and data structure.
 #' @param asp The AutoSpectral parameter list, prepared using
 #' `get.autospectral.param`.
-#' @param time.clean Logical, default is `FALSE`. Whether to run PeacoQC to
-#' remove time-based inconsistencies in the controls.
-#' @param trim Logical, default is `FALSE`. Whether to remove extreme events
-#' (positive and negative) from controls. Deprecated.
-#' @param trim.factor Numeric. Default is `asp$rlm.trim.factor`. Required if
-#' `trim = TRUE`. Deprecated.
 #' @param af.remove Logical, default is `TRUE`. Whether to remove intrusive
 #' autofluorescence contamination from cell controls using PCA-based
 #' identification and gating. Requires universal negatives to be defined in the
@@ -39,8 +33,6 @@
 #' @param scatter.match Logical, default is `TRUE`. Whether to select negative
 #' events based on scatter profiles matching the positive events. Defines a
 #' region of FSC and SSC based on the distribution of selected positive events.
-#' @param scrub Logical, if `TRUE` allows for re-cleaning of already cleaned
-#' data, provided there are clean data in `flow.control`. Deprecated.
 #' @param intermediate.figures Logical, if `TRUE` returns additional figures to
 #' show the inner workings of the cleaning, including definition of low-AF cell
 #' gates on the PCA-unmixed unstained and spectral ribbon plots of the AF
@@ -56,6 +48,7 @@
 #' @param threads Numeric, number of threads to use for parallel processing.
 #' Default is `NULL` which will revert to `asp$worker.process.n` if
 #' `parallel=TRUE`.
+#' @param ... Ignored. Used to catch deprecated arguments.
 #'
 #' @return
 #' Returns a modified `flow.control` with the original data intact. New, cleaned
@@ -66,62 +59,38 @@
 clean.controls <- function(
     flow.control,
     asp,
-    time.clean = FALSE,
-    trim = FALSE,
-    trim.factor = NULL,
     af.remove = TRUE,
     universal.negative = TRUE,
     downsample = TRUE,
     negative.n = asp$negative.n,
     positive.n = asp$positive.n,
     scatter.match = TRUE,
-    scrub = FALSE,
     intermediate.figures = FALSE,
     main.figures = TRUE,
     parallel = FALSE,
     verbose = TRUE,
-    threads = NULL
+    threads = NULL,
+    ...
   ) {
 
   if ( intermediate.figures & !main.figures ) main.figures <- TRUE
 
-  if ( parallel & is.null( threads ) )
-    threads <- asp$worker.process.n
-
-  if ( parallel )
+  if ( parallel ) {
+    # set default thread value
+    threads <- if (is.null(threads)) asp$worker.process.n else threads
+    # cut whatever is suggested in half to deal with memory usage
     threads <- max( floor( threads / 2 ), 1 )
-
-  if ( parallel )
     warning( "Parallelization has not been fully optimized for `clean.controls`." )
+  }
 
   # warn user if deprecated arguments are called
-  # these will be phased out later
-  if ( time.clean ) {
-    lifecycle::deprecate_warn(
-      "0.9.1",
-      "clean.controls(time.clean)",
-      details = "will be deprecated going forward"
-    )
-  }
-  if ( trim ) {
-    lifecycle::deprecate_warn(
-      "0.9.1",
-      "clean.controls(trim)",
-      details = "will be deprecated going forward"
-    )
-  }
-  if ( !is.null( trim.factor ) ) {
-    lifecycle::deprecate_warn(
-      "0.9.1",
-      "clean.controls(trim.factor)",
-      details = "will be deprecated going forward"
-    )
-  }
-  if ( scrub ) {
-    lifecycle::deprecate_warn(
-      "0.9.1",
-      "clean.controls(scrub)",
-      details = "will be deprecated going forward"
+  dots <- list( ... )
+  if ( length( dots ) > 0 ) {
+    stop(
+      paste(
+        "Unknown or deprecated arguments detected:",
+        paste( names( dots ), collapse = ", " )
+      )
     )
   }
 
@@ -130,8 +99,7 @@ clean.controls <- function(
   flow.control.type <- flow.control$control.type
   clean.event.type <- flow.control$event.type
 
-  if ( scrub & !is.null( flow.control$clean.expr ) ) {
-
+  if ( !is.null( flow.control$clean.expr ) ) {
     clean.expr <- flow.control$clean.expr
     clean.event.sample <- flow.control$clean.event.sample
     if ( ! is.null( flow.control$clean.universal.negative ) ) {
@@ -141,11 +109,9 @@ clean.controls <- function(
       flow.negative <- flow.control$universal.negative
       clean.universal.negative <- NULL
     }
-
     asp$min.cell.warning.n <- asp$min.cell.warning.n / 2
 
   } else {
-
     clean.expr <- flow.control$expr.data
     clean.event.sample <- flow.control$event.sample
     flow.negative <- flow.control$universal.negative
@@ -162,59 +128,7 @@ clean.controls <- function(
 
   all.channels <- flow.control$scatter.and.channel.original
 
-  ### Stage 1: Use PeacoQC to clean up flow  -----------------
-  # clean based on irregularities in flow by TIME parameter
-  # this can be slow and may not show much effect
-
-  if ( time.clean ) {
-    if ( !dir.exists( asp$figure.peacoqc.dir ) & main.figures )
-      dir.create( asp$figure.peacoqc.dir )
-
-    clean.expr <- run.peacoQC(
-      expr.data = clean.expr,
-      spectral.channel = spectral.channel,
-      all.channels = all.channels,
-      asp = asp,
-      figures = main.figures,
-      parallel = parallel,
-      threads = threads,
-      verbose = verbose
-    )
-  }
-
-  ### Stage 2: Trimming -----------------
-  # clean by trimming extreme events
-  # to be used in case of aggregates
-  # not recommended for regular use due to loss of brightest events
-
-  if ( trim ) {
-
-    if ( is.null( trim.factor ) ) {
-      trim.factor <- asp$rlm.trim.factor
-    }
-
-    # trim fluorophore controls only
-    trim.sample <- flow.control$fluorophore[
-      !grepl( "AF|negative", flow.control$fluorophore, ignore.case = TRUE ) ]
-
-    trim.peak.channels <- flow.control$channel[
-      flow.control$fluorophore %in% trim.sample ]
-
-    trim.sample.data <- clean.expr[ trim.sample ]
-
-    trimmed.expr <- run.trim.events(
-      trim.sample.data, trim.sample,
-      trim.peak.channels, trim.factor, asp
-    )
-
-    rm( trim.sample.data )
-
-    # merge in trimmed data
-    clean.expr[ names( trimmed.expr ) ] <- trimmed.expr
-
-  }
-
-  ### Stage 3: Remove Autofluorescence intrusions -----------------
+  ### Remove Autofluorescence intrusions -----------------
   # clean by removing autofluorescence contamination
   # recommended for controls from tissues (e.g., mouse splenocytes)
   # not needed for PBMCs
@@ -315,7 +229,7 @@ clean.controls <- function(
     }
   }
 
-  ### Stage 4: Universal Negatives and Downsampling -----------------
+  ### Universal Negatives and Downsampling -----------------
   # clean by selecting universal negative (AF-removed if af.remove performed)
   # also selects brightest positive events
   # and downsamples to speed up subsequent calculations

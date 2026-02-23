@@ -7,21 +7,18 @@
 clean.controls(
   flow.control,
   asp,
-  time.clean = FALSE,
-  trim = FALSE,
-  trim.factor = NULL,
   af.remove = TRUE,
   universal.negative = TRUE,
   downsample = TRUE,
   negative.n = asp$negative.n,
   positive.n = asp$positive.n,
   scatter.match = TRUE,
-  scrub = FALSE,
   intermediate.figures = FALSE,
   main.figures = TRUE,
   parallel = FALSE,
   verbose = TRUE,
-  threads = NULL
+  threads = NULL,
+  ...
 )
 }
 \arguments{
@@ -30,15 +27,6 @@ the data and essential information about the cytometer and data structure.}
 
 \item{asp}{The AutoSpectral parameter list, prepared using
 \code{get.autospectral.param}.}
-
-\item{time.clean}{Logical, default is \code{FALSE}. Whether to run PeacoQC to
-remove time-based inconsistencies in the controls.}
-
-\item{trim}{Logical, default is \code{FALSE}. Whether to remove extreme events
-(positive and negative) from controls. Deprecated.}
-
-\item{trim.factor}{Numeric. Default is \code{asp$rlm.trim.factor}. Required if
-\code{trim = TRUE}. Deprecated.}
 
 \item{af.remove}{Logical, default is \code{TRUE}. Whether to remove intrusive
 autofluorescence contamination from cell controls using PCA-based
@@ -62,9 +50,6 @@ positive population. Default is \code{asp$positive.n}.}
 events based on scatter profiles matching the positive events. Defines a
 region of FSC and SSC based on the distribution of selected positive events.}
 
-\item{scrub}{Logical, if \code{TRUE} allows for re-cleaning of already cleaned
-data, provided there are clean data in \code{flow.control}. Deprecated.}
-
 \item{intermediate.figures}{Logical, if \code{TRUE} returns additional figures to
 show the inner workings of the cleaning, including definition of low-AF cell
 gates on the PCA-unmixed unstained and spectral ribbon plots of the AF
@@ -84,6 +69,8 @@ accelerate the process much.}
 \item{threads}{Numeric, number of threads to use for parallel processing.
 Default is \code{NULL} which will revert to \code{asp$worker.process.n} if
 \code{parallel=TRUE}.}
+
+\item{...}{Ignored. Used to catch deprecated arguments.}
 }
 \value{
 Returns a modified \code{flow.control} with the original data intact. New, cleaned
