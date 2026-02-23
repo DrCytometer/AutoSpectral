@@ -12,7 +12,6 @@
 #' the `readRDS` function) rather than re-running this process.
 #'
 #' @importFrom lifecycle deprecate_warn
-#' @importFrom flowCore read.FCS exprs
 #'
 #' @param control.dir File path to the single-stained control FCS files.
 #' @param control.def.file CSV file defining the single-color control file names,
@@ -239,22 +238,15 @@ get.spectral.variants <- function(
   if ( verbose )
     message( paste0( "\033[32m", "Calculating positivity thresholds", "\033[0m" ) )
 
-  unstained <- suppressWarnings(
-    flowCore::read.FCS(
-      file.path( control.dir, flow.file.name[ "AF" ] ),
-      transformation = NULL,
-      truncate_max_range = FALSE,
-      emptyValue = FALSE
-    )
-  )
+  unstained <- readFCS( file.path( control.dir, flow.file.name[ "AF" ] ) )
 
   # read exprs for spectral channels only
   if ( nrow( unstained ) > asp$gate.downsample.n.cells ) {
     set.seed( asp$gate.downsample.seed )
     unstained.idx <- sample( nrow( unstained ), asp$gate.downsample.n.beads )
-    unstained <- flowCore::exprs( unstained )[ unstained.idx, spectral.channel ]
+    unstained <- unstained[ unstained.idx, spectral.channel ]
   } else {
-    unstained <- flowCore::exprs( unstained )[ , spectral.channel ]
+    unstained <- unstained[ , spectral.channel ]
   }
 
   raw.thresholds <- apply( unstained, 2, function( col ) stats::quantile( col, 0.995 ) )

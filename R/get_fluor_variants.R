@@ -7,7 +7,6 @@
 #' cytometry control sample. Uses SOM-based clustering on the brightest positive
 #' events in the file.
 #'
-#' @importFrom flowCore read.FCS exprs
 #' @importFrom FlowSOM SOM
 #'
 #' @param fluor The name of the fluorophore.
@@ -85,21 +84,11 @@ get.fluor.variants <- function(
   # get the original "best" spectrum for this fluorophore
   original.spectrum <- spectra[ fluor, , drop = FALSE ]
 
-  # read in the FCS data, without warnings for FCS 3.2
-  pos.data <- suppressWarnings(
-    flowCore::read.FCS(
-      file.path( control.dir, file.name[ fluor ] ),
-      transformation = NULL,
-      truncate_max_range = FALSE,
-      emptyValue = FALSE
-      )
-    )
+  # read in the FCS data, spectral channels only
+  pos.data <- readFCS( file.path( control.dir, file.name[ fluor ] ) )[ , spectral.channel ]
 
   # how many detectors do we have?
   detector.n <- ncol( spectra )
-
-  # read exprs for spectral channels only
-  pos.data <- flowCore::exprs( pos.data )[ , spectral.channel ]
 
   # get data above threshold in peak channel
   peak.channel <- flow.channel[ fluor ]
@@ -239,15 +228,9 @@ get.fluor.variants <- function(
       grepl( "\\.fcs$", universal.negative[ fluor ], ignore.case = TRUE )
 
     if ( is.valid.file ) {
-      neg.data <- suppressWarnings(
-        flowCore::read.FCS(
-          file.path( control.dir, universal.negative[ fluor ] ),
-          transformation = NULL,
-          truncate_max_range = FALSE,
-          emptyValue = FALSE
-        )
-      )
-      neg.data <- flowCore::exprs( neg.data )[ , spectral.channel ]
+      neg.data <- readFCS(
+        file.path( control.dir, universal.negative[ fluor ] )
+      )[ , spectral.channel ]
 
       # get background on up to 10k events
       if ( nrow( neg.data ) > asp$gate.downsample.n.beads ) {
