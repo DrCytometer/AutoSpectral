@@ -15,7 +15,8 @@ get.gated.flow.expression.data(
   gate.list,
   scatter.param,
   scatter.and.channel.label,
-  asp
+  asp,
+  apply.gate
 )
 }
 \arguments{
@@ -39,8 +40,9 @@ get.gated.flow.expression.data(
 
 \item{scatter.and.channel.label}{A label for scatter and channel.}
 
-\item{asp}{The AutoSpectral parameter list.
-Prepare using \code{get.autospectral.param}}
+\item{asp}{The AutoSpectral parameter list.}
+
+\item{apply.gate}{Logical, whether to apply a scatter gate (supplied to \code{gate.list}).}
 }
 \value{
 A matrix with the gated expression data.
