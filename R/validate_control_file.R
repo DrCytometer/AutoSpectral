@@ -6,8 +6,6 @@
 #' setup for AutoSpectral conforms to expectations and follows rules required for
 #' successful running of AutoSpectral.
 #'
-#' @importFrom flowCore read.FCSheader
-#'
 #' @param control.dir File path to the single-stained control FCS files.
 #' @param control.def.file CSV file defining the single-color control file names,
 #' fluorophores they represent, marker names, peak channels, and gating requirements.
@@ -299,10 +297,7 @@ validate.control.file <- function(
   ## ---------- FCS headers ----------
   headers <- lapply( ct$filename, function( f ) {
     tryCatch( {
-      h <- suppressWarnings(
-        flowCore::read.FCSheader( f, path = control.dir,
-                                  emptyValue = FALSE )[[ 1 ]]
-      )
+      h <- readFCSheader( file.path( control.dir, f ) )[[ 1 ]]
       n.par <- as.integer( h[ "$PAR" ] )
       list(
         ok = TRUE,
