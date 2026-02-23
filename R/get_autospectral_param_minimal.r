@@ -75,7 +75,7 @@ get.autospectral.param.minimal <- function()
       af.gate.downsample.n.cells = 1e4,
       af.gate.target.max = 1,
       af.gate.density.bw.factor = 1,
-      af.gate.bound.density.neigh.size = 3,
+      af.gate.bound.density.neigh.size = 5,
       af.gate.bound.density.grid.n = 100,
       af.gate.bound.strict = TRUE,
 
