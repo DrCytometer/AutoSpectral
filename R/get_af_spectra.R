@@ -8,7 +8,6 @@
 #' identification of cells with similar AF profiles.
 #'
 #' @importFrom FlowSOM SOM
-#' @importFrom flowCore read.FCS exprs keyword
 #'
 #' @param unstained.sample Path and file name for a unstained sample FCS file.
 #' The sample type and processing (protocol) method should match the fully
@@ -48,6 +47,11 @@
 #' @return A matrix of autofluorescence spectra.
 #'
 #' @export
+#'
+#' @references
+#' Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
+#' visualization and interpretation of cytometry data." \emph{Cytometry Part A},
+#' 87(7), 636-645. \doi{10.1002/cyto.a.22625}
 
 get.af.spectra <- function(
     unstained.sample,
@@ -82,19 +86,13 @@ get.af.spectra <- function(
   spectral.channels <- colnames( spectra )
 
   # import unstained sample
-  unstained.ff <- suppressWarnings(
-    flowCore::read.FCS(
-      unstained.sample,
-      transformation = FALSE,
-      truncate_max_range = FALSE,
-      emptyValue = FALSE )
-  )
+  unstained.ff <- readFCS( unstained.sample, return.keywords = TRUE )
 
   # get filename for plotting
-  file.name <- flowCore::keyword( unstained.ff, "$FIL" )
+  file.name <- unstained.ff$keywords[[ "$FIL" ]]
 
   # extract raw spectral data
-  unstained.exprs <- flowCore::exprs( unstained.ff )[ , spectral.channels ]
+  unstained.exprs <- unstained.ff$data[ , spectral.channels ]
 
   # unmix to get information about how AF propagates into the fluorophore space
   unmixed.no.af <- unmix.ols.fast( unstained.exprs, spectra )
