@@ -5,8 +5,6 @@
 #' @description
 #' This function performs spectral unmixing on FCS data using various methods.
 #'
-#' @importFrom flowCore read.FCS keyword exprs flowFrame parameters
-#' @importFrom flowCore write.FCS parameters<- keyword<-
 #' @importFrom lifecycle deprecate_warn
 #' @importFrom parallelly availableCores
 #'
@@ -92,8 +90,7 @@
 #' choices. Providing a numeric value to `n.variants` will override `speed`,
 #' allowing up to `n.variants` (or the max available) variants to be tested. The
 #' default is `NULL`, in which case `n.variants` will be ignored.
-#' @param ... Ignored. Previously used for deprecated arguments such as
-#' `calculate.error`.
+#' @param ... Ignored. Used to catch deprecated arguments.
 #'
 #' @return None. The function writes the unmixed FCS data to a file.
 #'
@@ -224,18 +221,17 @@ unmix.fcs <- function(
     threads <- parallelly::availableCores()
 
   # import FCS, without warnings for fcs 3.2
-  fcs.data <- suppressWarnings(
-    flowCore::read.FCS(
-      fcs.file,
-      transformation = FALSE,
-      truncate_max_range = FALSE,
-      emptyValue = FALSE
-    )
-  )
+  if ( verbose ) message( "Reading FCS: ", fcs.file )
+  import <- readFCS( fcs.file, return.keywords = TRUE )
+  fcs.exprs <- import$data
+  fcs.keywords <- import$keywords
+  original.param <- colnames( fcs.exprs )
 
-  # get keyword information
-  fcs.keywords <- flowCore::keyword( fcs.data )
-  file.name <- flowCore::keyword( fcs.data, "$FIL" )
+  # determine original file name
+  file.name <- if ( !is.null( fcs.keywords$`$FIL` ) ) fcs.keywords$`$FIL` else basename( fcs.file )
+  if (!grepl("\\.fcs$", file.name, ignore.case = TRUE)) {
+    file.name <- paste0(file.name, ".fcs")
+  }
 
   # deal with manufacturer peculiarities in writing fcs files
   if ( asp$cytometer %in% c( "ID7000", "Mosaic" ) ) {
@@ -246,8 +242,8 @@ unmix.fcs <- function(
       ignore.case = TRUE
     )
   } else if ( grepl( "Discover", asp$cytometer ) ) {
-    file.name <- fcs.keywords$FILENAME
-    file.name <- sub( ".*\\/", "", file.name )
+    #file.name <- fcs.keywords$FILENAME
+    #file.name <- sub( ".*\\/", "", file.name )
     file.name <- sub( ".fcs", paste0( " ", method, ".fcs" ), file.name )
   } else {
     file.name <- sub( ".fcs", paste0( " ", method, ".fcs" ), file.name )
@@ -255,11 +251,6 @@ unmix.fcs <- function(
 
   if ( !is.null( file.suffix ) )
     file.name <- sub( ".fcs", paste0( " ", file.suffix, ".fcs" ), file.name )
-
-  # extract exprs
-  fcs.exprs <- flowCore::exprs( fcs.data )
-  rm( fcs.data ) # free up memory
-  original.param <- colnames( fcs.exprs )
 
   # extract spectral data
   spectral.channel <- colnames( spectra )
@@ -435,20 +426,7 @@ unmix.fcs <- function(
     spectral.channel
   )
 
-  # create the flowFrame for writing the FCS file
-  flow.frame <- suppressWarnings( flowCore::flowFrame( final.matrix ) )
-
-  # write the parameter to the flowFrame
-  flowCore::parameters( flow.frame )$desc <- sapply(
-    paste0( "$P", seq_len( ncol( final.matrix ) ), "S" ),
-    function( k ) new.keywords[[ k ]]
-  )
-  flowCore::keyword( flow.frame ) <- new.keywords
-
   # save file
-  flowCore::write.FCS(
-    flow.frame,
-    filename = file.path( output.dir, file.name )
-  )
-
+  if ( verbose ) message( paste( "Writing:", file.name ) )
+  writeFCS( final.matrix, new.keywords, file.name, output.dir )
 }

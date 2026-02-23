@@ -135,8 +135,7 @@ choices. Providing a numeric value to \code{n.variants} will override \code{spee
 allowing up to \code{n.variants} (or the max available) variants to be tested. The
 default is \code{NULL}, in which case \code{n.variants} will be ignored.}
 
-\item{...}{Ignored. Previously used for deprecated arguments such as
-\code{calculate.error}.}
+\item{...}{Ignored. Used to catch deprecated arguments.}
 }
 \value{
 None. The function writes the unmixed FCS data to a file.
