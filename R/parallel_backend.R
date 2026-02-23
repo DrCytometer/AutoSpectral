@@ -74,7 +74,7 @@ parallel.backend <- function(
     if ( dev.mode && !is.null( package.path )) {
       # Load dependencies
       parallel::clusterEvalQ( cl, {
-        library( flowCore )
+
       } )
 
       # Get all R files
@@ -113,6 +113,7 @@ parallel.backend <- function(
       parallel::clusterEvalQ( cl, {
         library( AutoSpectral )
       } )
+
       # run thread setup
       parallel::clusterEvalQ(cl, {
         try( {
