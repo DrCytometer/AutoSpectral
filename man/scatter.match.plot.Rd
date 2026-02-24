@@ -27,7 +27,7 @@ Prepare using \code{get.autospectral.param}}
 
 \item{color.palette}{Optional character string defining the viridis color
 palette to be used for the fluorophore traces. Default is \code{rainbow}, which will
-be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+be similar to FlowJo or SpectroFlo. Other options are the viridis color
 options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
 and \code{turbo}.}
 }

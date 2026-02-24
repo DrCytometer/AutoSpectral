@@ -107,20 +107,26 @@ Benchmarks for "C3 Lung_GFP_003_Samples.fcs", again on the 8-core laptop, using 
 * `unmix.fcs()` WLS or OLS v0.8.7: 9sec
 * `unmix.fcs()` WLS or OLS v0.9.0: 9sec
 * `unmix.fcs()` WLS or OLS v1.0.0: 9-10sec (most of this is handling the FCS file)
+* `unmix.fcs()` WLS or OLS v1.1.0: 4sec
+
 * `unmix.fcs()` perCell AF extraction v0.8.7: 2min
 * `unmix.fcs()` perCell AF extraction v0.9.0: 1min
 * `unmix.fcs()` perCell AF extraction v1.0.0: 11sec (45s in R without C++)
 * `unmix.fcs()` perCell AF extraction v1.0.3: 10sec
+* `unmix.fcs()` perCell AF extraction v1.1.0: 4.5sec
+
 * `unmix.fcs()` perCell fluorophore optimization "fast" v0.8.7: 9min
 * `unmix.fcs()` perCell fluorophore optimization "fast" v0.9.0: <2min
 * `unmix.fcs()` perCell fluorophore optimization "fast" v1.0.0: <2min (note: performance here should now be comparable to the previous "slow")
 * `unmix.fcs()` perCell fluorophore optimization "fast" v1.0.2: 1.3min
+
 * `unmix.fcs()` perCell fluorophore optimization "slow" v0.8.7: 62min
 * `unmix.fcs()` perCell fluorophore optimization "slow" v0.9.0: 19min
 * `unmix.fcs()` perCell fluorophore optimization "slow" v1.0.0: 11min
 * `unmix.fcs()` perCell fluorophore optimization "slow" v1.0.2: 9min
+
 * `unmix.folder()` WLS or OLS, 6 files, v0.8.7: 67sec sequential, interrupted parallel
 * `unmix.folder()` WLS or OLS, 6 files, v0.9.0: 62sec sequential, 31sec parallel
 
-I do not expect more major gains, although I will look into GPU acceleration.
+I do not expect more major gains, but I will look into GPU acceleration.
 
