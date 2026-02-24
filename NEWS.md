@@ -1,3 +1,15 @@
+# AutoSpectral 1.1.0 (2026-02-24)
+
+## Improvements
+- Native FCS read/write functionality adapted from `flowstate`.
+- Faster gating by reducing `MASS::kde2d` calls and allowing C++ kernel density
+estimation if `AutoSpectralRcpp` is installed.
+- Faster plotting along the same lines.
+- Hopefully graceful error handling during `clean.controls()`.
+- Success/failure reporting from `clean.controls()`.
+- Reduced memory usage when unmixing.
+
+
 # AutoSpectral 1.0.0 (2026-02-10)
 
 ## Improvements
