@@ -6,7 +6,7 @@
 #' This function identifies and processes the universal negative
 #' control for a given sample, including scatter matching and plotting.
 #'
-#' @importFrom sp point.in.polygon Polygon Polygons SpatialPolygons
+#' @importFrom sp point.in.polygon
 #' @importFrom tripack tri.mesh convex.hull
 #'
 #' @param clean.expr.data List containing cleaned expression data.
