@@ -94,6 +94,15 @@ clean.controls <- function(
     )
   }
 
+  # Initialize status tracking
+  report <- list(
+    af = list( status = "Skipped", msg = "" ),
+    univ = list( status = "Skipped", msg = "" ),
+    ds = list( status = "Skipped", msg = "" ),
+    final.count = 0
+  )
+
+  # track events and factors
   flow.sample <- flow.control$sample
   flow.sample.n <- length( flow.sample )
   flow.control.type <- flow.control$control.type
@@ -134,6 +143,8 @@ clean.controls <- function(
   # not needed for PBMCs
 
   if ( af.remove ) {
+
+    # create output folders
     if ( main.figures ) {
       if ( !dir.exists( asp$figure.clean.control.dir ) )
         dir.create( asp$figure.clean.control.dir )
@@ -171,30 +182,44 @@ clean.controls <- function(
         af.remove.peak.channels <- flow.control$channel[
           flow.control$fluorophore %in% af.removal.sample ]
 
-        # remove identified AF from single-color controls
-        af.removed.expr <- run.af.removal(
-          clean.expr = clean.expr,
-          af.removal.sample = af.removal.sample,
-          spectral.channel = spectral.channel,
-          peak.channel = af.remove.peak.channels,
-          universal.negative = flow.negative,
-          asp = asp,
-          scatter.param = flow.control$scatter.parameter,
-          negative.n = negative.n,
-          positive.n = positive.n,
-          scatter.match = scatter.match,
-          intermediate.figures = intermediate.figures,
-          main.figures = main.figures,
-          parallel = parallel,
-          threads = threads,
-          verbose = verbose
-        )
+        execution <- try({
+          # remove identified AF from single-color controls
+          af.removed.expr <- run.af.removal(
+            clean.expr = clean.expr,
+            af.removal.sample = af.removal.sample,
+            spectral.channel = spectral.channel,
+            peak.channel = af.remove.peak.channels,
+            universal.negative = flow.negative,
+            asp = asp,
+            scatter.param = flow.control$scatter.parameter,
+            negative.n = negative.n,
+            positive.n = positive.n,
+            scatter.match = scatter.match,
+            intermediate.figures = intermediate.figures,
+            main.figures = main.figures,
+            parallel = parallel,
+            threads = threads,
+            verbose = verbose
+          )
 
-        # store cleaned data
-        cleaned.samples <- names( af.removed.expr )
-        clean.expr[ cleaned.samples ] <- af.removed.expr[ cleaned.samples ]
+          # store cleaned data
+          cleaned.samples <- names( af.removed.expr )
+          clean.expr[ cleaned.samples ] <- af.removed.expr[ cleaned.samples ]
+        }, silent = TRUE )
+
+        if ( inherits( execution, "try-error" ) ) {
+          report$af$status <- "Error"
+          report$af$msg <- attr(execution, "condition")$message
+        } else {
+          report$af$status <- "Success"
+          report$univ$status <- "Success" # since this is done simultaneously
+          report$af$msg <- paste( length( cleaned.samples ), "samples processed" )
+        }
 
       } else {
+        report$af$status <- "Warning"
+        report$af$msg <- "No suitable cell samples found"
+
         warning(
           "No cell-based universal negative samples could be identified for `af.remove`."
           )
@@ -273,26 +298,35 @@ clean.controls <- function(
       univ.peak.channels <- flow.control$channel[
         flow.control$fluorophore %in% univ.sample ]
 
-      univ.neg.expr <- run.universal.negative(
-        clean.expr = clean.expr,
-        univ.sample = univ.sample,
-        universal.negatives = flow.negative,
-        scatter.param = flow.control$scatter.parameter,
-        peak.channels = univ.peak.channels,
-        downsample = downsample,
-        negative.n = negative.n,
-        positive.n = positive.n,
-        spectral.channel = spectral.channel,
-        asp = asp,
-        control.type = flow.control.type,
-        scatter.match = scatter.match,
-        intermediate.figures = intermediate.figures,
-        main.figures = main.figures,
-        verbose = verbose
-      )
+      execution <- try({
+        univ.neg.expr <- run.universal.negative(
+          clean.expr = clean.expr,
+          univ.sample = univ.sample,
+          universal.negatives = flow.negative,
+          scatter.param = flow.control$scatter.parameter,
+          peak.channels = univ.peak.channels,
+          downsample = downsample,
+          negative.n = negative.n,
+          positive.n = positive.n,
+          spectral.channel = spectral.channel,
+          asp = asp,
+          control.type = flow.control.type,
+          scatter.match = scatter.match,
+          intermediate.figures = intermediate.figures,
+          main.figures = main.figures,
+          verbose = verbose )
 
-      # merge in cleaned data
-      clean.expr[ names( univ.neg.expr ) ] <- univ.neg.expr
+        # merge in cleaned data
+        clean.expr[ names( univ.neg.expr ) ] <- univ.neg.expr
+
+      }, silent = TRUE )
+
+      if ( inherits( execution, "try-error" ) ) {
+        report$univ$status <- "Error"
+        report$univ$msg <- attr( execution, "condition" )$message
+      } else {
+        report$univ$status <- "Success"
+      }
     }
 
     # simply downsample AF to speed up calculations
@@ -321,17 +355,26 @@ clean.controls <- function(
     downsample.peak.channels <- flow.control$channel[
       flow.control$fluorophore %in% downsample.sample ]
 
-    downsample.expr <- run.downsample(
-      clean.expr.data = clean.expr,
-      downsample.sample = downsample.sample,
-      peak.channels = downsample.peak.channels,
-      negative.n = negative.n,
-      positive.n = positive.n,
-      verbose = verbose
-    )
+    execution <- try({
+      downsample.expr <- run.downsample(
+        clean.expr.data = clean.expr,
+        downsample.sample = downsample.sample,
+        peak.channels = downsample.peak.channels,
+        negative.n = negative.n,
+        positive.n = positive.n,
+        verbose = verbose
+      )
 
-    # merge in cleaned data
-    clean.expr[ names( downsample.expr ) ] <- downsample.expr
+      # merge in cleaned data
+      clean.expr[ names( downsample.expr ) ] <- downsample.expr
+    }, silent = TRUE )
+
+    if ( inherits( execution, "try-error" ) ) {
+      report$ds$status <- "Error"
+      report$ds$msg <- attr( execution, "condition" )$message
+    } else {
+      report$ds$status <- "Success"
+    }
   }
 
   # merge data and re-establish corresponding factors
@@ -340,8 +383,7 @@ clean.controls <- function(
   # get maximum number of events per sample to adjust event numbering
   flow.sample.event.number.max <- 0
 
-  for ( fs.idx in 1 : flow.sample.n )
-  {
+  for ( fs.idx in 1 : flow.sample.n ) {
     flow.sample.event.number <- nrow( clean.expr[[ fs.idx ]]  )
 
     rownames( clean.expr[[ fs.idx ]] ) <- paste(
@@ -373,8 +415,7 @@ clean.controls <- function(
   flow.event.regexp <- sprintf( "\\.[0-9]{%d}$", flow.event.number.width )
 
   # set rownames
-  for ( fs.idx in 1 : flow.sample.n )
-  {
+  for ( fs.idx in 1 : flow.sample.n ) {
     flow.sample.event.number <- nrow( clean.expr[[ fs.idx ]]  )
     flow.the.sample <- flow.sample[ fs.idx ]
 
@@ -386,6 +427,7 @@ clean.controls <- function(
   }
 
   clean.expr <- do.call( rbind, clean.expr )
+  report$final.count <- nrow( clean.expr )
 
   # set events
   flow.event <- rownames( clean.expr )
@@ -400,12 +442,36 @@ clean.controls <- function(
     flow.event.sample,
     levels = event.type.factor,
     labels = names( event.type.factor )
-    )
+  )
 
   # store in flow.control
   flow.control$clean.expr <- clean.expr
   flow.control$clean.event.sample <- flow.event.sample
   flow.control$clean.event.type <- flow.event.type
+
+  # report for user
+  if ( verbose ) {
+    cat( "\n", rep( "=", 30 ), "\n" )
+    message( "Cleaning summary:" )
+
+    # Helper to print status lines
+    print.status <- function( label, res ) {
+      color <- switch( res$status, "Success" = "\033[32m", "Error" = "\033[31m", "Warning" = "\033[33m", "\033[37m" )
+      message( sprintf( "%-25s [%s%s\033[0m] %s", label, color, res$status, res$msg ) )
+    }
+
+    print.status( "Autofluorescence Removal", report$af )
+    print.status( "Universal Negative", report$univ)
+    message( paste( "Total Events Retained:   ", report$final.count ) )
+
+    # Final verdict
+    if ( report$af$status == "Error" || report$univ$status == "Error" ) {
+      message( "\033[31mProcess completed with errors. Check specific stages above.\033[0m" )
+    } else {
+      message( "\033[32mAll stages completed successfully.\033[0m" )
+    }
+    cat( rep( "=", 30 ), "\n\n" )
+  }
 
   return( flow.control )
 }
