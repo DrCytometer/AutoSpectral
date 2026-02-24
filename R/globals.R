@@ -17,6 +17,7 @@ utils::globalVariables(
      "detector.n",
      "x",
      "y",
+     "z",
      "label",
      "num.label",
      "median.spec",
