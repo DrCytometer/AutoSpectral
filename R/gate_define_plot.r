@@ -9,7 +9,7 @@
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
 #' @importFrom ggplot2 theme_bw theme element_line after_stat
 #' @importFrom ggplot2 element_text element_rect margin expansion ggsave
-#' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn stat_density_2d
+#' @importFrom ggplot2 scale_fill_viridis_d scale_fill_manual geom_contour_filled
 #' @importFrom ggplot2 geom_text geom_point geom_path
 #' @importFrom scattermore geom_scattermore
 #' @importFrom ragg agg_jpeg
@@ -23,8 +23,8 @@
 #' @param scatter.and.channel.label Named vector mapping scatter and channel labels.
 #' @param asp The AutoSpectral parameter list.
 #' @param color.palette Optional character string defining the viridis color
-#' palette to be used for the fluorophore traces. Default is `rainbow`, which will
-#' be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+#' palette to be used for the fluorophore traces. Default is `plasma`. Use `rainbow`
+#' to be similar to FlowJo or SpectroFlo. Other options are the viridis color
 #' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
 #' and `turbo`.
 #' @param max.points Number of points to plot. Default is `1e5`.
@@ -56,7 +56,7 @@ gate.define.plot <- function(
     x = gate.data[ , 1 ],
     y = gate.data[ , 2 ] )
 
-  # define search regions and gate boundary asdata frames
+  # define search regions and gate boundary as data frames
   gate.bound.ggp <- data.frame(
     x = c(
       gate.bound$x.low,
@@ -98,6 +98,17 @@ gate.define.plot <- function(
     y = c( gate.population$boundary$y, gate.population$boundary$y[ 1 ] )
   )
 
+  # structure pre-computed density input
+  density.df <- expand.grid(
+    x = gate.bound$density$x,
+    y = gate.bound$density$y
+  )
+  density.df$z <- as.vector( gate.bound$density$z )
+  density.df <- density.df[ !is.na( density.df$z ), ]
+  density.df <- density.df[ !duplicated( density.df[ , c( "x", "y" ) ] ), ]
+  max.z <- max( density.df$z, na.rm = TRUE)
+  density.breaks <- seq( 0.05 * max.z, max.z, length.out = 11 )
+
   # get axis labels
   x.lab <- names( which( scatter.and.channel.label == gate.marker[ 1 ] ) )
   y.lab <- names( which( scatter.and.channel.label == gate.marker[ 2 ] ) )
@@ -118,10 +129,12 @@ gate.define.plot <- function(
       alpha = 1,
       na.rm = TRUE
     ) +
-    stat_density_2d(
-      aes( fill = after_stat( level ) ),
-      geom = "polygon",
-      na.rm = TRUE
+    geom_contour_filled(
+      data = density.df,
+      aes( x = x, y = y, z = z ),
+      breaks = density.breaks,
+      alpha = 1,
+      inherit.aes = FALSE
     ) +
     scale_x_continuous(
       name = x.lab,
@@ -196,10 +209,13 @@ gate.define.plot <- function(
 
   # add fill layer for color palette
   if ( color.palette %in% viridis.colors ) {
-    gate.plot <- gate.plot + scale_fill_viridis_c( option = color.palette )
+    gate.plot <- gate.plot + scale_fill_viridis_d( option = color.palette )
   } else {
+    n.bins <- max( 1, length( density.breaks ) - 1 )
+    rainbow.palette <- grDevices::colorRampPalette( asp$density.palette.base.color )( n.bins )
+
     gate.plot <- gate.plot +
-      scale_fill_gradientn( colors = asp$density.palette.base.color )
+      scale_fill_manual( values = rainbow.palette )
   }
 
   ggsave(

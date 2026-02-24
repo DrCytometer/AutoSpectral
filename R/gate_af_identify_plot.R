@@ -11,7 +11,8 @@
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
 #' @importFrom ggplot2 theme_bw theme element_line geom_path after_stat
 #' @importFrom ggplot2 element_text element_rect margin expansion ggsave
-#' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn stat_density_2d
+#' @importFrom ggplot2 scale_fill_viridis_d scale_fill_manual coord_cartesian
+#' @importFrom ggplot2 geom_contour_filled
 #' @importFrom scattermore geom_scattermore
 #' @importFrom ragg agg_jpeg
 #'
@@ -23,7 +24,7 @@
 #' Prepare using `get.autospectral.param`
 #' @param color.palette Optional character string defining the viridis color
 #' palette to be used for the fluorophore traces. Default is `rainbow`, which will
-#' be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+#' be similar to FlowJo or SpectroFlo. Other options are the viridis color
 #' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
 #' and `turbo`.
 #' @param max.points Number of points to plot (speeds up plotting). Default is
@@ -52,7 +53,8 @@ gate.af.identify.plot <- function(
   if ( nrow( gate.data ) > max.points ) {
     # random sampling
     set.seed( 42 )
-    gate.data <- gate.data[ sample( seq_len( nrow( gate.data ) ), max.points ), ]
+    valid.idx <- sample( seq_len( nrow( gate.data ) ), max.points )
+    gate.data <- gate.data[ valid.idx, ]
   }
 
   # convert to data frame for plotting
@@ -70,6 +72,16 @@ gate.af.identify.plot <- function(
   x.breaks <- round( seq( x.range[ 1 ], x.range[ 2 ], length.out = 10 ) )
   y.breaks <- round( seq( y.range[ 1 ], y.range[ 2 ], length.out = 10 ) )
 
+  # structure pre-computed density input with downsampling
+  density.df <- expand.grid(
+    x = gate.bound.density$x,
+    y = gate.bound.density$y
+  )
+  density.df$z <- as.vector( gate.bound.density$z )
+  density.df$z[ is.na( density.df$z ) ] <- 0
+  max.z <- max( density.df$z, na.rm = TRUE )
+  density.breaks <- seq( 0.05 * max.z, max.z, length.out = 11 )
+
   # set up the base plot
   gate.plot <- ggplot( gate.data.ggp, aes( x, y ) ) +
     geom_scattermore(
@@ -78,9 +90,12 @@ gate.af.identify.plot <- function(
       alpha = 1,
       na.rm = TRUE
     ) +
-    stat_density_2d(
-      aes( fill = after_stat( level ) ),
-      geom = "polygon",
+    geom_contour_filled(
+      data = density.df,
+      aes( x = x, y = y, z = z ),
+      breaks = density.breaks,
+      alpha = 1,
+      inherit.aes = FALSE,
       na.rm = TRUE
     ) +
     scale_x_continuous(
@@ -123,10 +138,13 @@ gate.af.identify.plot <- function(
 
   # add fill layer for color palette
   if ( color.palette %in% viridis.colors ) {
-    gate.plot <- gate.plot + scale_fill_viridis_c( option = color.palette )
+    gate.plot <- gate.plot + scale_fill_viridis_d( option = color.palette )
   } else {
+    n.bins <- max( 1, length( density.breaks ) - 1 )
+    rainbow.palette <- grDevices::colorRampPalette( asp$density.palette.base.color )( n.bins )
+
     gate.plot <- gate.plot +
-      scale_fill_gradientn( colors = asp$density.palette.base.color )
+      scale_fill_manual( values = rainbow.palette )
   }
 
   ggsave(

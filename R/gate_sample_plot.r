@@ -9,9 +9,11 @@
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
 #' @importFrom ggplot2 theme_bw theme element_line geom_path after_stat
 #' @importFrom ggplot2 element_text element_rect margin expansion ggsave
-#' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn stat_density_2d
+#' @importFrom ggplot2 scale_fill_viridis_d scale_fill_gradientn geom_contour_filled
+#' @importFrom ggplot2 scale_fill_viridis_c stat_density_2d
 #' @importFrom scattermore geom_scattermore
 #' @importFrom ragg agg_jpeg
+#' @importFrom MASS kde2d
 #'
 #' @param samp Sample identifier.
 #' @param gate.data Matrix containing gate data points.
@@ -23,12 +25,14 @@
 #' @param asp The AutoSpectral parameter list.
 #' Prepare using `get.autospectral.param`
 #' @param color.palette Optional character string defining the viridis color
-#' palette to be used for the fluorophore traces. Default is `rainbow`, which will
-#' be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+#' palette to be used for the fluorophore traces. Default is `mako`. Use `rainbow`
+#' to be similar to FlowJo or SpectroFlo. Other options are the viridis color
 #' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
 #' and `turbo`.
 #' @param max.points Number of points to plot (speeds up plotting). Default is
 #' `5e4`.
+#' @param switch.n Number of points to trigger the switch to using slower but
+#' more robust density plotting. Default is `1e4`.
 #'
 #' @return Saves the plot as a JPEG file in the specified directory.
 
@@ -41,17 +45,61 @@ gate.sample.plot <- function(
     control.type,
     asp,
     color.palette = "mako",
-    max.points = 5e4
+    max.points = 5e4,
+    num.switch = 2e4
   ) {
 
   # downsample (faster plotting)
-  if ( nrow( gate.data ) > max.points ) {
+  n.points <- nrow( gate.data )
+  if ( n.points > max.points ) {
     # random sampling
     set.seed( 42 )
     gate.data <- gate.data[ sample( seq_len( nrow( gate.data ) ), max.points ), ]
+    n.points <- max.points
   }
 
-  # convert to data frame for plotting
+  # restrict to preset limits for plotting
+  gate.data[ , 1 ] <- pmin( gate.data[ , 1 ], asp$scatter.data.max.x )
+  gate.data[ , 2 ] <- pmin( gate.data[ , 2 ], asp$scatter.data.max.x )
+
+  # get density for plotting
+  bw <- apply( gate.data, 2, bandwidth.nrd )
+
+  if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+       "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
+       n.points > num.switch ) {
+    # use C++ function to get density
+    gate.bound.density <- AutoSpectralRcpp::fast_kde2d_cpp(
+      x = gate.data[ , 1 ],
+      y = gate.data[ , 2 ],
+      n = 100,
+      h = bw * 0.1,
+      x_limits = range( gate.data[ , 1 ] ),
+      y_limits = range( gate.data[ , 2 ] )
+    )
+  } else {
+    # use slower MASS call
+    gate.bound.density <- MASS::kde2d(
+      x = gate.data[ , 1 ],
+      y = gate.data[ , 2 ],
+      n = 60,
+      h = bw * 0.8
+    )
+  }
+
+  # format the density for plotting
+  density.df <- expand.grid(
+    x = gate.bound.density$x,
+    y = gate.bound.density$y
+  )
+  density.df <- expand.grid( x = gate.bound.density$x, y = gate.bound.density$y )
+  density.df$z <- as.vector( gate.bound.density$z )
+  density.df <- density.df[ !is.na( density.df$z ), ]
+  density.df <- density.df[ !duplicated( density.df[ , c( "x", "y" ) ] ), ]
+  max.z <- max( density.df$z, na.rm = TRUE )
+  density.breaks <- seq( 0.05 * max.z, max.z, length.out = 11 )
+
+  # convert points to data frame for plotting
   gate.data.ggp <- data.frame(
     x = gate.data[ , 1 ],
     y = gate.data[ , 2 ] )
@@ -83,16 +131,33 @@ gate.sample.plot <- function(
       color = "black",
       alpha = 1,
       na.rm = TRUE
-    ) +
-    stat_density_2d(
-      aes( fill = after_stat( level ) ),
-      geom = "polygon",
-      na.rm = TRUE
-    ) +
+    )
+
+  # use fast contours for many events, slow ggplot for few events, just dots for minimal events
+  if ( n.points > num.switch ) {
+    gate.plot <- gate.plot +
+      geom_contour_filled(
+        data = density.df,
+        aes( x = x, y = y, z = z ),
+        breaks = density.breaks,
+        alpha = 1,
+        inherit.aes = FALSE
+      )
+  } else if ( n.points > 1000 ) {
+    gate.plot <- gate.plot +
+      stat_density_2d(
+        aes( fill = after_stat( level ) ),
+        geom = "polygon",
+        n = 60,
+        na.rm = TRUE
+      )
+  }
+
+  gate.plot <- gate.plot +
     geom_path(
       data = gate.boundary.ggp,
       aes( x, y ),
-      color = "black",
+      color = "darkgoldenrod1 ",
       linewidth = asp$figure.gate.line.size
     ) +
     scale_x_continuous(
@@ -132,7 +197,12 @@ gate.sample.plot <- function(
 
   # add fill layer for color palette
   if ( color.palette %in% viridis.colors ) {
-    gate.plot <- gate.plot + scale_fill_viridis_c( option = color.palette )
+    if ( n.points > num.switch ) {
+      gate.plot <- gate.plot + scale_fill_viridis_d( option = color.palette )
+    } else {
+      gate.plot <- gate.plot + scale_fill_viridis_c( option = color.palette )
+    }
+
   } else {
     gate.plot <- gate.plot +
       scale_fill_gradientn( colors = asp$density.palette.base.color )

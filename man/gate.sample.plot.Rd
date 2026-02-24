@@ -13,7 +13,8 @@ gate.sample.plot(
   control.type,
   asp,
   color.palette = "mako",
-  max.points = 50000
+  max.points = 50000,
+  num.switch = 20000
 )
 }
 \arguments{
@@ -34,13 +35,16 @@ channel labels.}
 Prepare using \code{get.autospectral.param}}
 
 \item{color.palette}{Optional character string defining the viridis color
-palette to be used for the fluorophore traces. Default is \code{rainbow}, which will
-be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+palette to be used for the fluorophore traces. Default is \code{mako}. Use \code{rainbow}
+to be similar to FlowJo or SpectroFlo. Other options are the viridis color
 options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
 and \code{turbo}.}
 
 \item{max.points}{Number of points to plot (speeds up plotting). Default is
 \code{5e4}.}
+
+\item{switch.n}{Number of points to trigger the switch to using slower but
+more robust density plotting. Default is \code{1e4}.}
 }
 \value{
 Saves the plot as a JPEG file in the specified directory.

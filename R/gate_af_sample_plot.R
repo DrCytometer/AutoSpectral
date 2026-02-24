@@ -8,9 +8,10 @@
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
 #' @importFrom ggplot2 theme_bw theme element_line geom_path after_stat
 #' @importFrom ggplot2 element_text element_rect margin ggsave
-#' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn stat_density_2d
+#' @importFrom ggplot2 scale_fill_viridis_d scale_fill_manual coord_cartesian
 #' @importFrom scattermore geom_scattermore
 #' @importFrom ragg agg_jpeg
+#' @importFrom MASS kde2d
 #'
 #' @param plot.data Matrix containing autofluorescence data points.
 #' @param samp Sample identifier.
@@ -22,7 +23,8 @@
 #' @param color.palette Optional character string defining the viridis color
 #' palette to be used for the fluorophore traces. Default is `viridis`. Options
 #' are the viridis color options: `magma`, `inferno`, `plasma`, `viridis`,
-#' `cividis`, `rocket`, `mako` and `turbo`.
+#' `cividis`, `rocket`, `mako` and `turbo`. Use `rainbow`to be similar to FlowJo
+#' or SpectroFlo.
 #'
 #' @return Saves the plot as a JPEG file in the specified directory.
 
@@ -79,6 +81,44 @@ gate.af.sample.plot <- function(
     if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
   } )
 
+  # get density for plotting
+  bw <- apply( plot.data.ggp, 2, bandwidth.nrd )
+
+  if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+       "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
+       nrow( plot.data.ggp ) > 10000 ) {
+    # use C++ function to get density
+    gate.bound.density <- AutoSpectralRcpp::fast_kde2d_cpp(
+      x = plot.data.ggp[ , 1 ],
+      y = plot.data.ggp[ , 2 ],
+      n = 100,
+      h = bw * 0.1,
+      x_limits = range( plot.data.ggp[ , 1 ] ),
+      y_limits = range( plot.data.ggp[ , 2 ] )
+    )
+  } else {
+    # use slower MASS call
+    gate.bound.density <- MASS::kde2d(
+      x = plot.data.ggp[ , 1 ],
+      y = plot.data.ggp[ , 2 ],
+      n = 60,
+      h = bw * 0.8
+    )
+  }
+
+  # format the density for plotting
+  density.df <- expand.grid(
+    x = gate.bound.density$x,
+    y = gate.bound.density$y
+  )
+  density.df$z <- as.vector( gate.bound.density$z )
+  density.df$z[ is.na( density.df$z ) ] <- 0
+  max.z <- max( density.df$z, na.rm = TRUE )
+  density.breaks <- seq( 0.05 * max.z, max.z, length.out = 11 )
+  if( diff( range( density.breaks ) ) == 0) {
+    density.breaks <- seq( 0, max.z + 0.1, length.out = 11)
+  }
+
   # set up the base plot
   gate.plot <- ggplot( plot.data.ggp, aes( x.trans, y.trans ) ) +
     geom_scattermore(
@@ -87,22 +127,29 @@ gate.af.sample.plot <- function(
       alpha = 1,
       na.rm = TRUE
     ) +
-    stat_density_2d(
-      aes( fill = after_stat( level ) ),
-      geom = "polygon",
+    geom_contour_filled(
+      data = density.df,
+      aes( x = x, y = y, z = z ),
+      breaks = density.breaks,
+      alpha = 1,
+      inherit.aes = FALSE,
       na.rm = TRUE
     ) +
     scale_x_continuous(
       name = x.lab,
       breaks = biexp.transform( breaks ),
-      limits = biexp.transform( limits ),
+      #limits = biexp.transform( limits ),
       labels = axis.labels
     ) +
     scale_y_continuous(
       name = y.lab,
       breaks = biexp.transform( breaks ),
-      limits = biexp.transform( limits ),
+      #limits = biexp.transform( limits ),
       labels = axis.labels
+    ) +
+    coord_cartesian(
+      xlim = biexp.transform( limits ),
+      ylim = biexp.transform( limits )
     ) +
     theme_bw() +
     theme(
@@ -127,10 +174,13 @@ gate.af.sample.plot <- function(
 
   # add fill layer for color palette
   if ( color.palette %in% viridis.colors ) {
-    gate.plot <- gate.plot + scale_fill_viridis_c( option = color.palette )
+    gate.plot <- gate.plot + scale_fill_viridis_d( option = color.palette )
   } else {
+    n.bins <- max( 1, length( density.breaks ) - 1 )
+    rainbow.palette <- grDevices::colorRampPalette( asp$density.palette.base.color )( n.bins )
+
     gate.plot <- gate.plot +
-      scale_fill_gradientn( colors = asp$density.palette.base.color )
+      scale_fill_manual( values = rainbow.palette )
   }
 
   # add AF gate boundary
