@@ -41,7 +41,7 @@ fit.af.spline <- function(
 
   if ( is.null( af.cells) || is.null( non.af.cells ) ||
       nrow( af.cells ) < 10 || nrow( non.af.cells ) < 10 ) {
-    warning( "Insufficient cells for AF spline fitting. Returning default gate." )
+    message( "Insufficient AF cells detected. Returning default (NULL) gate." )
     return( af.boundaries )
   }
 
@@ -56,7 +56,7 @@ fit.af.spline <- function(
 
   # check that it worked, fallback if not
   if ( is.null( rlm.fit ) ) {
-    warning( "RLM fit failed for AF spline." )
+    warning( "RLM fit failed for AF spline. Returning default (NULL) gate." )
     return( af.boundaries )
   }
   if ( !rlm.fit$converged ) {
@@ -113,7 +113,7 @@ fit.af.spline <- function(
     af.boundaries$upper <- tryCatch( {
       tripack::convex.hull( tripack::tri.mesh( expanded.points$x, expanded.points$y ) )
     }, error = function( e ) {
-      warning( "AF hull geometry failed. Returning default gate." )
+      warning( "AF exclusion hull geometry failed. Returning default gate." )
       return( af.boundaries )
     } )
   }
