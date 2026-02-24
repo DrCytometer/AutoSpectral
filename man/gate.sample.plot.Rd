@@ -14,7 +14,7 @@ gate.sample.plot(
   asp,
   color.palette = "mako",
   max.points = 50000,
-  num.switch = 20000
+  switch.n = 20000
 )
 }
 \arguments{

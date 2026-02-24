@@ -46,7 +46,7 @@ gate.sample.plot <- function(
     asp,
     color.palette = "mako",
     max.points = 5e4,
-    num.switch = 2e4
+    switch.n = 2e4
   ) {
 
   # downsample (faster plotting)
@@ -67,7 +67,7 @@ gate.sample.plot <- function(
 
   if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
        "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
-       n.points > num.switch ) {
+       n.points > switch.n ) {
     # use C++ function to get density
     gate.bound.density <- AutoSpectralRcpp::fast_kde2d_cpp(
       x = gate.data[ , 1 ],
@@ -134,7 +134,7 @@ gate.sample.plot <- function(
     )
 
   # use fast contours for many events, slow ggplot for few events, just dots for minimal events
-  if ( n.points > num.switch ) {
+  if ( n.points > switch.n ) {
     gate.plot <- gate.plot +
       geom_contour_filled(
         data = density.df,
@@ -197,7 +197,7 @@ gate.sample.plot <- function(
 
   # add fill layer for color palette
   if ( color.palette %in% viridis.colors ) {
-    if ( n.points > num.switch ) {
+    if ( n.points > switch.n ) {
       gate.plot <- gate.plot + scale_fill_viridis_d( option = color.palette )
     } else {
       gate.plot <- gate.plot + scale_fill_viridis_c( option = color.palette )
