@@ -16,10 +16,8 @@
 #' Voronoi tessellations to improve density estimation around maxima.
 #'
 #' @importFrom MASS kde2d bandwidth.nrd
-#' @importFrom deldir deldir tile.list which.tile
-#' @importFrom sp point.in.polygon
 #' @importFrom tripack tri.mesh convex.hull
-#' @importFrom fields interp.surface
+#' @importFrom FNN knnx.index
 #'
 #' @param gate.data A data frame containing the gate data.
 #' @param viability.gate A logical vector indicating the viability gate.
@@ -115,21 +113,45 @@ do.gate <- function(
   gate.bound.data.idx <- which(gate.data[,1] > lims[1] & gate.data[,1] < lims[2] &
                                  gate.data[,2] > lims[3] & gate.data[,2] < lims[4])
 
-  bw <- apply(gate.data[gate.bound.data.idx, ], 2, bandwidth.nrd)
-  master.density <- MASS::kde2d(
-    gate.data[gate.bound.data.idx, 1],
-    gate.data[gate.bound.data.idx, 2],
-    h = gate.bound.density.bw.factor * bw,
-    n = gate.bound.density.grid.n )
+  if ( !is.null( gate.downsample.n ) &&
+      length( gate.bound.data.idx ) > gate.downsample.n ) {
+
+    set.seed( asp$gate.downsample.seed )
+    gate.bound.data.idx <- sample(
+      gate.bound.data.idx,
+      gate.downsample.n
+    )
+  }
+
+  bw <- apply( gate.data[ gate.bound.data.idx, ], 2, bandwidth.nrd )
 
   # locate target maxima
   if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
-       "find_local_maxima" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+       "find_local_maxima" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
+       "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
+       length( gate.bound.data.idx > 10000 ) ) {
+    # use C++ functions if available
+    master.density <- AutoSpectralRcpp::fast_kde2d_cpp(
+      gate.data[ gate.bound.data.idx, 1 ],
+      gate.data[ gate.bound.data.idx, 2 ],
+      n = gate.bound.density.grid.n,
+      h = gate.bound.density.bw.factor * bw * 0.1,
+      x_limits = range( gate.data[ gate.bound.data.idx, 1 ] ),
+      y_limits = range( gate.data[ gate.bound.data.idx, 2 ] )
+    )
+
     gate.bound.density.max.bool <- AutoSpectralRcpp::find_local_maxima(
       master.density$z,
       gate.bound.density.neigh.size
     )
   } else {
+    # calculate density
+    master.density <- MASS::kde2d(
+      gate.data[ gate.bound.data.idx, 1 ],
+      gate.data[ gate.bound.data.idx, 2 ],
+      h = gate.bound.density.bw.factor * bw,
+      n = gate.bound.density.grid.n )
+
     # get density maxima in bound
     gate.bound.neighbor.idx <- list(
       x = - gate.bound.density.neigh.size : gate.bound.density.neigh.size,
@@ -206,58 +228,105 @@ do.gate <- function(
   }
 
   # define the region, using voronoi if multiple density peaks exist
-  if ( gate.bound.density.max.n > 1) {
-    gate.bound.voronoi <- deldir(gate.bound.density.max, rw = lims, suppressMsge = TRUE)
-    gate.bound.tile <- tile.list(gate.bound.voronoi)
+  if ( gate.bound.density.max.n > 1 ) {
+    # subset to just x and y
+    generators <- gate.bound.density.max[ , c( "x", "y" ) ]
+
+    # get coordinates of the data points we are testing
+    query.points <- gate.data[ gate.bound.data.idx, 1:2 ]
+
+    # find the index of the single closest generator for every point using kNN
+    closest.gen.indices <- FNN::knnx.index(
+      data = as.matrix( generators ),
+      query = as.matrix( query.points ),
+      k = 1
+    )
+
+    # filter indices where the closest generator is our target peak
     gate.bound.density.max.data.idx <- gate.bound.data.idx[
-      sapply(gate.bound.data.idx, function(gbdi)
-        which.tile(gate.data[gbdi,1], gate.data[gbdi,2], gate.bound.tile) == gate.bound.density.max.target)
+      closest.gen.indices == gate.bound.density.max.target
     ]
+
+    # calculate the voronoi object for plotting (optional)
+    #gate.bound.voronoi <- deldir::deldir(
+    #  gate.bound.density.max,
+    #  rw = lims,
+    #  suppressMsge = TRUE
+    #)
+    gate.bound.voronoi <- NULL
   } else {
     gate.bound.voronoi <- NULL
     gate.bound.density.max.data.idx <- gate.bound.data.idx
   }
 
   # calculate region limits (used for plotting the gate box)
-  gate.region.x.median <- stats::median(gate.data[gate.bound.density.max.data.idx, 1])
-  gate.region.x.mad <- stats::mad(gate.data[gate.bound.density.max.data.idx, 1], center = gate.region.x.median)
-  gate.region.y.median <- stats::median(gate.data[gate.bound.density.max.data.idx, 2])
-  gate.region.y.mad <- stats::mad(gate.data[gate.bound.density.max.data.idx, 2], center = gate.region.y.median)
+  gate.region.x.median <- stats::median( gate.data[ gate.bound.density.max.data.idx, 1 ] )
+  gate.region.x.mad <- stats::mad(
+    gate.data[ gate.bound.density.max.data.idx, 1 ], center = gate.region.x.median )
+  gate.region.y.median <- stats::median(gate.data[ gate.bound.density.max.data.idx, 2 ] )
+  gate.region.y.mad <- stats::mad(
+    gate.data[ gate.bound.density.max.data.idx, 2 ], center = gate.region.y.median )
 
-  gate.region.x.low <- max(gate.data.x.min, gate.region.x.median - gate.bound.density.max.mad.factor * gate.region.x.mad)
-  gate.region.x.high <- min(gate.data.x.max, gate.region.x.median + gate.bound.density.max.mad.factor * gate.region.x.mad)
-  gate.region.y.low <- max(gate.data.y.min, gate.region.y.median - gate.bound.density.max.mad.factor * gate.region.y.mad)
-  gate.region.y.high <- min(gate.data.y.max, gate.region.y.median + gate.bound.density.max.mad.factor * gate.region.y.mad)
+  gate.region.x.low <- max(
+    gate.data.x.min, gate.region.x.median - gate.bound.density.max.mad.factor * gate.region.x.mad )
+  gate.region.x.high <- min(
+    gate.data.x.max, gate.region.x.median + gate.bound.density.max.mad.factor * gate.region.x.mad )
+  gate.region.y.low <- max(
+    gate.data.y.min, gate.region.y.median - gate.bound.density.max.mad.factor * gate.region.y.mad )
+  gate.region.y.high <- min(
+    gate.data.y.max, gate.region.y.median + gate.bound.density.max.mad.factor * gate.region.y.mad )
 
   if ( viability.gate ) {
     # extend gate to the left by scaling factor (to include dead cells)
     gate.region.x.low <- gate.region.x.low * asp$viability.gate.scaling
   }
 
-  spatial.mask <- gate.data[gate.bound.density.max.data.idx, 1] > gate.region.x.low &
-    gate.data[gate.bound.density.max.data.idx, 1] < gate.region.x.high &
-    gate.data[gate.bound.density.max.data.idx, 2] > gate.region.y.low &
-    gate.data[gate.bound.density.max.data.idx, 2] < gate.region.y.high
+  spatial.mask <- gate.data[ gate.bound.density.max.data.idx, 1 ] > gate.region.x.low &
+    gate.data[ gate.bound.density.max.data.idx, 1 ] < gate.region.x.high &
+    gate.data[ gate.bound.density.max.data.idx, 2 ] > gate.region.y.low &
+    gate.data[ gate.bound.density.max.data.idx, 2 ] < gate.region.y.high
 
   gate.region.data.idx <- gate.bound.density.max.data.idx[ spatial.mask ]
 
-  # re-define density in the target region
+  # re-define density in the region
   bw <- apply( gate.data[ gate.region.data.idx, ], 2, bandwidth.nrd )
-  region.density <- MASS::kde2d(
-    gate.data[gate.region.data.idx, 1],
-    gate.data[gate.region.data.idx, 2],
-    h = gate.region.density.bw.factor * bw,
-    n = gate.region.density.grid.n )
 
-  gate.region.max.density.interp <- fields::interp.surface(
-    region.density,
-    gate.data[gate.region.data.idx, ]
-  )
+  if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+       "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
+       length( gate.region.data.idx ) > 10000 ) {
+    # use C++ functions if available
+    region.density <- AutoSpectralRcpp::fast_kde2d_cpp(
+      gate.data[ gate.region.data.idx, 1 ],
+      gate.data[ gate.bound.data.idx, 2 ],
+      n = gate.region.density.grid.n,
+      h = gate.region.density.bw.factor * bw * 0.1,
+      x_limits = range( gate.data[ gate.region.data.idx, 1 ] ),
+      y_limits = range( gate.data[ gate.region.data.idx, 2 ] )
+    )
+  } else {
+    # fall back to slower MASS
+    region.density <- MASS::kde2d(
+        gate.data[ gate.region.data.idx, 1 ],
+        gate.data[ gate.region.data.idx, 2 ],
+        h = gate.region.density.bw.factor * bw,
+        n = gate.region.density.grid.n )
+
+  }
+
+  rx <- region.density$x
+  ry <- region.density$y
+  rz <- region.density$z
+
+  # Map points to nearest grid index
+  ix <- findInterval( gate.data[ gate.region.data.idx, 1 ], rx, all.inside = TRUE )
+  iy <- findInterval( gate.data[ gate.region.data.idx, 2 ], ry, all.inside = TRUE )
+
+  gate.region.max.density.interp <- rz[ cbind( ix, iy ) ]
 
   # Calculate threshold based on the interpolated values of the target cluster
   gate.region.max.density.threshold <-
-    (1 - default.gate.param$density.threshold) * min(gate.region.max.density.interp) +
-    (default.gate.param$density.threshold) * max(gate.region.max.density.interp)
+    ( 1 - default.gate.param$density.threshold ) * min( gate.region.max.density.interp ) +
+    ( default.gate.param$density.threshold ) * max( gate.region.max.density.interp )
 
   gate.population.strict.idx <- gate.region.data.idx[
     gate.region.max.density.interp > gate.region.max.density.threshold

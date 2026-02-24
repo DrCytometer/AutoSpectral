@@ -8,8 +8,6 @@
 #' define the gate boundaries and identify density maxima using numerical
 #' search and Voronoi tessellations.
 #'
-#' @importFrom deldir deldir tile.list
-#' @importFrom sp point.in.polygon
 #' @importFrom MASS kde2d bandwidth.nrd
 #'
 #' @param gate.data A data frame containing the gate data.
@@ -55,31 +53,52 @@ do.gate.af <- function(
     gate.data.trim.factor.y.max * gate.data.y.max
 
   grid.n <- asp$af.gate.bound.density.grid.n
-  bw <- apply( gate.data, 2, bandwidth.nrd )
-  gate.bound.density <- MASS::kde2d(
-    gate.data[ , 1 ], gate.data[ , 2 ],
-    h = asp$af.gate.density.bw.factor * bw,
-    n = grid.n )
-
-  # Identify density maxima
   neighbor.n <- asp$af.gate.bound.density.neigh.size
+  bw <- apply( gate.data, 2, bandwidth.nrd )
 
-  gate.bound.neighbor.idx <- list(
-    x = - neighbor.n :neighbor.n,
-    y = - neighbor.n :neighbor.n )
+  if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+       "find_local_maxima" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
+       "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
+       nrow( gate.data ) > 10000 ) {
+    # use C++ functions if available
+    gate.bound.density <- AutoSpectralRcpp::fast_kde2d_cpp(
+      x = gate.data[ , 1 ],
+      y = gate.data[ , 2 ],
+      n = 100,
+      h = bw * 0.1,
+      x_limits = range( gate.data[ , 1 ] ),
+      y_limits = range( gate.data[ , 2 ] )
+    )
 
-  gate.bound.density.max.bool <- matrix( FALSE, nrow = grid.n, ncol = grid.n )
+    gate.bound.density.max.bool <- AutoSpectralRcpp::find_local_maxima(
+      gate.bound.density$z,
+      neighbor.n
+    )
+  } else {
+    # fall back to R and MASS
+    gate.bound.density <- MASS::kde2d(
+      gate.data[ , 1 ], gate.data[ , 2 ],
+      h = asp$af.gate.density.bw.factor * bw,
+      n = grid.n )
 
-  for ( x.idx in 1 : grid.n )
-    for ( y.idx in 1 : grid.n )
-      gate.bound.density.max.bool[ x.idx, y.idx ] <-
-    gate.bound.density$z[ x.idx, y.idx ] >=
-    max( gate.bound.density$z[
-      pmax( 0, pmin( grid.n, x.idx + gate.bound.neighbor.idx$x ) ),
-      pmax( 0, pmin( grid.n, y.idx + gate.bound.neighbor.idx$y ) ) ] )
+    # Identify density maxima
+    gate.bound.neighbor.idx <- list(
+      x = - neighbor.n :neighbor.n,
+      y = - neighbor.n :neighbor.n )
 
-  gate.bound.density.max.idx <- which( gate.bound.density.max.bool,
-                                       arr.ind = TRUE )
+    gate.bound.density.max.bool <- matrix( FALSE, nrow = grid.n, ncol = grid.n )
+
+    for ( x.idx in 1 : grid.n )
+      for ( y.idx in 1 : grid.n )
+        gate.bound.density.max.bool[ x.idx, y.idx ] <-
+      gate.bound.density$z[ x.idx, y.idx ] >=
+      max( gate.bound.density$z[
+        pmax( 0, pmin( grid.n, x.idx + gate.bound.neighbor.idx$x ) ),
+        pmax( 0, pmin( grid.n, y.idx + gate.bound.neighbor.idx$y ) ) ] )
+  }
+
+  gate.bound.density.max.idx <- which(
+    gate.bound.density.max.bool, arr.ind = TRUE )
 
   gate.bound.density.max.n <- nrow( gate.bound.density.max.idx )
 
@@ -106,30 +125,22 @@ do.gate.af <- function(
 
   # Identify the target maximum
   target.max.idx <- asp$af.gate.target.max
-  target.max <- gate.bound.density.max[ target.max.idx, ]
+  generators <- gate.bound.density.max[ , c( "x", "y" ) ]
 
-  gate.bound.voronoi <- deldir::deldir(
-    gate.bound.density.max,
-    rw = c( gate.data.x.min, gate.data.x.max,
-            gate.data.y.min, gate.data.y.max ),
-    suppressMsge = TRUE
-    )
+  # Find the nearest generator for every data point
+  closest.gen.indices <- FNN::knnx.index(
+    data = as.matrix( generators ),
+    query = as.matrix( gate.data[, 1:2 ] ),
+    k = 1
+  )
 
-  tiles <- tile.list( gate.bound.voronoi )
-
-  # Identify points in the tile of the global maximum
-  target.tile <- tiles[[ target.max.idx ]]
-  tile.polygon <- cbind( target.tile$x, target.tile$y )
-
-  gate.region.data.idx <- which(
-    sp::point.in.polygon(
-    gate.data[, 1], gate.data[, 2],
-    tile.polygon[ , 1 ], tile.polygon[ , 2 ]
-    ) > 0 )
+  # Identify points assigned to our target peak index
+  gate.region.data.idx <- which( closest.gen.indices == target.max.idx )
+  gate.bound.voronoi <- NULL
 
   if ( length( gate.region.data.idx ) == 0 ) {
     stop(
-      paste( "Error: No points in target Voronoi tile for sample", samp ),
+      paste( "Error: No points found for target peak index", target.max.idx, "in sample", samp ),
       call. = FALSE
     )
   }
@@ -159,14 +170,26 @@ do.gate.af <- function(
       gate.region.y.low )
   )
 
-  if ( asp$figures & intermediate.figures )
-    gate.af.identify.plot(
-      gate.data,
-      samp,
-      gate.region,
-      gate.bound.density,
-      asp
-      )
+  if ( asp$figures & intermediate.figures ) {
+    tryCatch(
+      expr = {
+        suppressWarnings(
+          gate.af.identify.plot(
+            gate.data,
+            samp,
+            gate.region,
+            gate.bound.density,
+            asp
+          )
+        )
+      },
+      error = function( e ) {
+        message( "Error in plotting AF identification: ", e$message )
+        return( NULL )
+      }
+    )
+
+  }
 
   gate.population.idx <- which(
     gate.data[ , 1 ] > gate.region.x.low &
