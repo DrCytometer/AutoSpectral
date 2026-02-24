@@ -139,7 +139,7 @@ get.autospectral.param.minimal <- function()
       gate.data.trim.factor.y.min.cells = 0.01,
       gate.data.trim.factor.y.max.cells = 0.99,
 
-      gate.bound.density.bw.factor.cells = 6.0,
+      gate.bound.density.bw.factor.cells = 1.0,
       gate.bound.density.grid.n.cells = 100,
       gate.bound.density.neigh.size.cells = 3,
 
@@ -148,11 +148,11 @@ get.autospectral.param.minimal <- function()
       gate.bound.density.max.exclusion.y.cells = 0.05,
       gate.bound.density.max.mad.factor.cells = 2.0,
 
-      gate.region.density.bw.factor.cells = 6.0,
+      gate.region.density.bw.factor.cells = 1.0,
       gate.region.density.grid.n.cells = 100,
       gate.region.density.neigh.size.cells = 2,
 
-      gate.region.max.density.bw.factor.cells = 6.0,
+      gate.region.max.density.bw.factor.cells = 1.0,
       gate.region.max.density.grid.n.cells = 100,
       gate.downsample.n.cells = 100000,
 
@@ -178,13 +178,13 @@ get.autospectral.param.minimal <- function()
       gate.bound.density.max.target.beads = 1,
       gate.bound.density.max.exclusion.x.beads = 0.1,
       gate.bound.density.max.exclusion.y.beads = 0.05,
-      gate.bound.density.max.mad.factor.beads = 3.0,
+      gate.bound.density.max.mad.factor.beads = 6.0,
 
       gate.region.density.bw.factor.beads = 6.0,
       gate.region.density.grid.n.beads = 100,
-      gate.region.density.neigh.size.beads = 2,
+      gate.region.density.neigh.size.beads = 3,
 
-      gate.region.max.density.bw.factor.beads = 6.0,
+      gate.region.max.density.bw.factor.beads = 3.0,
       gate.region.max.density.grid.n.beads = 100,
       gate.downsample.n.beads = 10000,
 
