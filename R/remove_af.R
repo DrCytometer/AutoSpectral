@@ -119,12 +119,28 @@ remove.af <- function(
   af.order <- order( af.sd, decreasing = TRUE )
 
   # get gate defining low AF region
-  af.gate.idx <- do.gate.af(
-    unmixed.neg[ , af.order ],
-    matching.negative,
-    asp,
-    intermediate.figures
-  )
+  af.gate.idx <- tryCatch({
+    do.gate.af(
+      unmixed.neg[ , af.order ],
+      matching.negative,
+      asp,
+      intermediate.figures
+    )
+  }, error = function(e) {
+    warning(paste("do.gate.af failed for", samp, "- using 98th percentile fallback. Error:", e$message))
+
+    # Fallback: identify the "low AF" population as the bottom 98%
+    # of the first (most variable) AF component
+    main.af.comp <- unmixed.neg[ , af.order[ 1 ] ]
+    cutoff <- stats::quantile( main.af.comp, 0.98 )
+    which( main.af.comp <= cutoff )
+  })
+
+  # ensure we actually have cells to work with
+  if ( length( af.gate.idx ) < 5 ) {
+    warning( paste( "No cells found in AF gate for", samp, "- returning original data." ) )
+    return( clean.expr[[ samp ]] )
+  }
 
   # get corresponding raw data (non-PCA)
   af.cells <- expr.data.neg[ -af.gate.idx, , drop = FALSE ]
@@ -150,6 +166,7 @@ remove.af <- function(
 
   # find peak, subpeak
   af.peak <- which.max( af.spectrum )
+  af.peak.channel <- names( af.peak )
   af.subpeak <- which.max( af.spectrum[ af.spectrum < 0.5 ] )
 
   # get peak channel for fluorophore
@@ -164,15 +181,26 @@ remove.af <- function(
   }
 
   # use AF peak if not the same as the fluorophore peak
-  if ( names( af.peak ) == fluor.peak )
-    af.peak <- af.subpeak
+  if ( af.peak.channel == fluor.peak ) {
+    if ( verbose ) message( "\033[33mAF peak coincides with fluorophore signal. Finding best alternative channel...\033[0m" )
+    # af.peak <- af.subpeak
+
+    # define a separation index across all channels
+    neg.rsd <- apply( non.af.cells[ , spectral.channel ], 2, stats::mad )
+    sep.index <- ( af.median - non.af.median ) / ( neg.rsd + 1e-6 )
+    candidate.channels <- setdiff( spectral.channel, fluor.peak )
+
+    # find the channel with the best separation that isn't the original one
+    af.peak.channel <- names( which.max( sep.index[ candidate.channels ] ) )
+  }
+
 
   af.data <- data.frame(
-    x = af.cells[ , names( af.peak ) ],
+    x = af.cells[ , af.peak.channel ],
     y = af.cells[ , fluor.peak ]
   )
   non.af.data <- data.frame(
-    x = non.af.cells[ , names( af.peak ) ],
+    x = non.af.cells[ , af.peak.channel ],
     y = non.af.cells[ , fluor.peak ]
   )
 
@@ -191,7 +219,7 @@ remove.af <- function(
   }
 
   # find events in this bound in the stained sample
-  gate.data.pos <- expr.data.pos[ , c( names( af.peak ), fluor.peak ) ]
+  gate.data.pos <- expr.data.pos[ , c( af.peak.channel, fluor.peak ) ]
 
   gate.population.pip <- sp::point.in.polygon(
     gate.data.pos[ , 1 ], gate.data.pos[ , 2 ],
@@ -200,7 +228,7 @@ remove.af <- function(
   gate.population.idx <- which( gate.population.pip == 0 )
 
   # define negative clean-up for plotting and threshold
-  gate.data.neg <- expr.data.neg[ , c( names( af.peak ), fluor.peak ) ]
+  gate.data.neg <- expr.data.neg[ , c( af.peak.channel, fluor.peak ) ]
 
   gate.population.pip <- sp::point.in.polygon(
     gate.data.neg[ , 1 ], gate.data.neg[ , 2 ],
@@ -299,11 +327,13 @@ remove.af <- function(
           )
 
           # plot AF removal gating on negative control
-          gate.af.sample.plot(
-            gate.data.neg,
-            negative.label,
-            af.boundary.ggp,
-            asp
+          suppressWarnings(
+            gate.af.sample.plot(
+              gate.data.neg,
+              negative.label,
+              af.boundary.ggp,
+              asp
+            )
           )
         },
         error = function( e ) {
