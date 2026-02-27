@@ -98,3 +98,11 @@ Assesses variation in the spectral signature of a single-stained flow
 cytometry control sample. Uses SOM-based clustering on the brightest positive
 events in the file.
 }
+\references{
+Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
+visualization and interpretation of cytometry data." \emph{Cytometry Part A},
+87(7), 636-645. \doi{10.1002/cyto.a.22625}
+Wehrens R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
+3.0.” \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
+\doi{10.18637/jss.v087.i07}
+}

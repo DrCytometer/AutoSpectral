@@ -99,3 +99,11 @@ desired. Note that the .rds file contains all the needed information for
 downstream processing (per-cell unmixing), so you can just load that using
 the \code{readRDS} function) rather than re-running this process.
 }
+\references{
+Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
+visualization and interpretation of cytometry data." \emph{Cytometry Part A},
+87(7), 636-645. \doi{10.1002/cyto.a.22625}
+Wehrens R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
+3.0.” \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
+\doi{10.18637/jss.v087.i07}
+}

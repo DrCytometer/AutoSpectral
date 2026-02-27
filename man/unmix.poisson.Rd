@@ -39,3 +39,8 @@ This function performs unmixing of raw data using Poisson regression, with
 iterative reweighted least squares (IRLS) and fallback methods for cells
 that fail to converge.
 }
+\references{
+Novo D. et al. (2014). "Generalized Unmixing Model for Multispectral Flow
+Cytometry Utilizing Nonsquare Compensation Matrices" \emph{Cytometry Part A},
+83(5):508–520. \doi{10.1002/cyto.a.22272}
+}
