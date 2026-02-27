@@ -14,7 +14,8 @@ gate.define.plot(
   scatter.and.channel.label,
   asp,
   color.palette = "plasma",
-  max.points = 1e+05
+  max.points = 1e+05,
+  gate.color = "black"
 )
 }
 \arguments{
@@ -41,6 +42,8 @@ options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{civi
 and \code{turbo}.}
 
 \item{max.points}{Number of points to plot. Default is \code{1e5}.}
+
+\item{gate.color}{Color to plot the gate boundary line, default is \code{black}.}
 }
 \value{
 Saves the plot as a JPEG file in the specified directory.

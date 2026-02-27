@@ -14,6 +14,7 @@ gate.sample.plot(
   asp,
   color.palette = "mako",
   max.points = 50000,
+  gate.color = "darkgoldenrod1",
   switch.n = 20000
 )
 }
@@ -42,6 +43,8 @@ and \code{turbo}.}
 
 \item{max.points}{Number of points to plot (speeds up plotting). Default is
 \code{5e4}.}
+
+\item{gate.color}{Color to plot the gate boundary line, default is \code{darkgoldenrod1}.}
 
 \item{switch.n}{Number of points to trigger the switch to using slower but
 more robust density plotting. Default is \code{1e4}.}

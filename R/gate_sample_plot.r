@@ -6,11 +6,11 @@
 #' This function plots a pre-defined gate on a sample, using ggplot2 and other
 #' necessary packages.
 #'
-#' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
-#' @importFrom ggplot2 theme_bw theme element_line geom_path after_stat
+#' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous element_blank
+#' @importFrom ggplot2 theme_bw theme element_line geom_path after_stat coord_cartesian
 #' @importFrom ggplot2 element_text element_rect margin expansion ggsave
-#' @importFrom ggplot2 scale_fill_viridis_d scale_fill_gradientn geom_contour_filled
-#' @importFrom ggplot2 scale_fill_viridis_c stat_density_2d
+#' @importFrom ggplot2 scale_fill_viridis_d geom_contour_filled
+#' @importFrom ggplot2 scale_fill_viridis_c stat_density_2d scale_fill_manual
 #' @importFrom scattermore geom_scattermore
 #' @importFrom ragg agg_jpeg
 #' @importFrom MASS kde2d
@@ -31,10 +31,13 @@
 #' and `turbo`.
 #' @param max.points Number of points to plot (speeds up plotting). Default is
 #' `5e4`.
+#' @param gate.color Color to plot the gate boundary line, default is `darkgoldenrod1`.
 #' @param switch.n Number of points to trigger the switch to using slower but
 #' more robust density plotting. Default is `1e4`.
 #'
 #' @return Saves the plot as a JPEG file in the specified directory.
+#'
+#' @export
 
 gate.sample.plot <- function(
     samp,
@@ -46,6 +49,7 @@ gate.sample.plot <- function(
     asp,
     color.palette = "mako",
     max.points = 5e4,
+    gate.color = "darkgoldenrod1",
     switch.n = 2e4
   ) {
 
@@ -60,12 +64,12 @@ gate.sample.plot <- function(
 
   # restrict to preset limits for plotting
   gate.data[ , 1 ] <- pmin( gate.data[ , 1 ], asp$scatter.data.max.x )
-  gate.data[ , 2 ] <- pmin( gate.data[ , 2 ], asp$scatter.data.max.x )
+  gate.data[ , 2 ] <- pmin( gate.data[ , 2 ], asp$scatter.data.max.y )
 
   # get density for plotting
   bw <- apply( gate.data, 2, bandwidth.nrd )
 
-  if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+  if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
        "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
        n.points > switch.n ) {
     # use C++ function to get density
@@ -88,11 +92,10 @@ gate.sample.plot <- function(
   }
 
   # format the density for plotting
-  density.df <- expand.grid(
+  density.df <- data.frame( expand.grid(
     x = gate.bound.density$x,
     y = gate.bound.density$y
-  )
-  density.df <- expand.grid( x = gate.bound.density$x, y = gate.bound.density$y )
+  ) )
   density.df$z <- as.vector( gate.bound.density$z )
   density.df <- density.df[ !is.na( density.df$z ), ]
   density.df <- density.df[ !duplicated( density.df[ , c( "x", "y" ) ] ), ]
@@ -141,7 +144,8 @@ gate.sample.plot <- function(
         aes( x = x, y = y, z = z ),
         breaks = density.breaks,
         alpha = 1,
-        inherit.aes = FALSE
+        inherit.aes = FALSE,
+        na.rm = TRUE
       )
   } else if ( n.points > 1000 ) {
     gate.plot <- gate.plot +
@@ -157,23 +161,24 @@ gate.sample.plot <- function(
     geom_path(
       data = gate.boundary.ggp,
       aes( x, y ),
-      color = "darkgoldenrod1 ",
+      color = gate.color,
       linewidth = asp$figure.gate.line.size
     ) +
     scale_x_continuous(
       name = x.lab,
       breaks = x.breaks,
       labels = x.labels,
-      limits = x.limits,
+      #limits = x.limits,
       expand = expansion( asp$figure.gate.scale.expand )
     ) +
     scale_y_continuous(
       name = y.lab,
       breaks = y.breaks,
       labels = y.labels,
-      limits = y.limits,
+      #limits = y.limits,
       expand = expansion( asp$figure.gate.scale.expand )
     ) +
+    coord_cartesian( xlim = x.limits, ylim = y.limits ) +
     theme_bw() +
     theme(
       plot.margin = margin(
@@ -204,8 +209,11 @@ gate.sample.plot <- function(
     }
 
   } else {
+    n.bins <- max( 1, length( density.breaks ) - 1 )
+    rainbow.palette <- grDevices::colorRampPalette( asp$density.palette.base.color )( n.bins )
+
     gate.plot <- gate.plot +
-      scale_fill_gradientn( colors = asp$density.palette.base.color )
+      scale_fill_manual( values = rainbow.palette )
   }
 
   ggsave(

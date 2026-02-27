@@ -7,7 +7,7 @@
 #' including boundaries and regions.
 #'
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
-#' @importFrom ggplot2 theme_bw theme element_line after_stat
+#' @importFrom ggplot2 theme_bw theme element_line after_stat coord_cartesian
 #' @importFrom ggplot2 element_text element_rect margin expansion ggsave
 #' @importFrom ggplot2 scale_fill_viridis_d scale_fill_manual geom_contour_filled
 #' @importFrom ggplot2 geom_text geom_point geom_path
@@ -28,8 +28,11 @@
 #' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
 #' and `turbo`.
 #' @param max.points Number of points to plot. Default is `1e5`.
+#' @param gate.color Color to plot the gate boundary line, default is `black`.
 #'
 #' @return Saves the plot as a JPEG file in the specified directory.
+#'
+#' @export
 
 gate.define.plot <- function(
     samp,
@@ -41,7 +44,8 @@ gate.define.plot <- function(
     scatter.and.channel.label,
     asp,
     color.palette = "plasma",
-    max.points = 1e5
+    max.points = 1e5,
+    gate.color = "black"
   ) {
 
   # downsample (faster plotting)
@@ -57,38 +61,42 @@ gate.define.plot <- function(
     y = gate.data[ , 2 ] )
 
   # define search regions and gate boundary as data frames
-  gate.bound.ggp <- data.frame(
-    x = c(
-      gate.bound$x.low,
-      gate.bound$x.high,
-      gate.bound$x.high,
-      gate.bound$x.low,
-      gate.bound$x.low
-    ),
-    y = c(
-      gate.bound$y.low,
-      gate.bound$y.low,
-      gate.bound$y.high,
-      gate.bound$y.high,
-      gate.bound$y.low
+  if ( !is.null( gate.bound ) ) {
+    gate.bound.ggp <- data.frame(
+      x = c(
+        gate.bound$x.low,
+        gate.bound$x.high,
+        gate.bound$x.high,
+        gate.bound$x.low,
+        gate.bound$x.low
+      ),
+      y = c(
+        gate.bound$y.low,
+        gate.bound$y.low,
+        gate.bound$y.high,
+        gate.bound$y.high,
+        gate.bound$y.low
+      )
     )
-  )
+  }
 
-  gate.region.ggp <- data.frame(
-    x = c(
-      gate.region$x.low,
-      gate.region$x.high,
-      gate.region$x.high,
-      gate.region$x.low,
-      gate.region$x.low
-    ),
-    y = c(
-      gate.region$y.low,
-      gate.region$y.low,
-      gate.region$y.high,
-      gate.region$y.high,
-      gate.region$y.low )
-  )
+  if ( !is.null( gate.region ) ) {
+    gate.region.ggp <- data.frame(
+      x = c(
+        gate.region$x.low,
+        gate.region$x.high,
+        gate.region$x.high,
+        gate.region$x.low,
+        gate.region$x.low
+      ),
+      y = c(
+        gate.region$y.low,
+        gate.region$y.low,
+        gate.region$y.high,
+        gate.region$y.high,
+        gate.region$y.low )
+    )
+  }
 
   gate.population$boundary$x <- pmin( gate.population$boundary$x, asp$scatter.data.max.x )
   gate.population$boundary$y <- pmin( gate.population$boundary$y, asp$scatter.data.max.y )
@@ -140,16 +148,17 @@ gate.define.plot <- function(
       name = x.lab,
       breaks = x.breaks,
       labels = x.labels,
-      limits = x.limits,
+      #limits = x.limits,
       expand = expansion( asp$figure.gate.scale.expand )
     ) +
     scale_y_continuous(
       name = y.lab,
       breaks = y.breaks,
       labels = y.labels,
-      limits = y.limits,
+      #limits = y.limits,
       expand = expansion( asp$figure.gate.scale.expand )
     ) +
+    coord_cartesian( xlim = x.limits, ylim = y.limits ) +
     # search boundary
     geom_path(
       data = gate.bound.ggp,
@@ -157,34 +166,13 @@ gate.define.plot <- function(
       color = "gray30",
       linewidth = asp$figure.gate.line.size,
       linetype = "dashed"
-      ) +
-    # valid search region
-    geom_path(
-      data = gate.region.ggp,
-      aes( x, y ),
-      color = "black",
-      linewidth = asp$figure.gate.line.size
-      ) +
+    ) +
     # final gate
     geom_path(
       data = gate.boundary.ggp,
       aes( x, y ),
-      color = "black",
+      color = gate.color,
       linewidth = asp$figure.gate.line.size
-      ) +
-    # max density points (see asp$density.max.target)
-    geom_point(
-      data = gate.bound$density.max,
-      size = 1.9 * asp$figure.gate.point.size,
-      stroke = 0.1 * asp$figure.gate.point.size,
-      color = asp$gate.tesselation.color
-      ) +
-    # label the density points, nudging the label off the point
-    geom_text(
-      data = gate.bound$density.max,
-      aes( label = num.label ),
-      hjust = 0, vjust = 0, size = asp$figure.axis.text.size / 2.5,
-      color = asp$gate.tesselation.color
       ) +
     theme_bw() +
     theme(
@@ -199,7 +187,36 @@ gate.define.plot <- function(
       panel.border = element_rect( fill = NA, linewidth = asp$figure.panel.line.size ),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()
+    )
+
+  if ( !is.null( gate.region ) ) {
+    gate.plot <- gate.plot +
+      # valid search region
+      geom_path(
+        data = gate.region.ggp,
+        aes( x, y ),
+        color = "black",
+        linewidth = asp$figure.gate.line.size
       )
+  }
+
+  if ( !is.null( gate.bound$density.max ) ) {
+    gate.plot <- gate.plot +
+      # max density points (see asp$density.max.target)
+      geom_point(
+        data = gate.bound$density.max,
+        size = 1.9 * asp$figure.gate.point.size,
+        stroke = 0.1 * asp$figure.gate.point.size,
+        color = asp$gate.tesselation.color
+      ) +
+      # label the density points, nudging the label off the point
+      geom_text(
+        data = gate.bound$density.max,
+        aes( label = num.label ),
+        hjust = 0, vjust = 0, size = asp$figure.axis.text.size / 2.5,
+        color = asp$gate.tesselation.color
+      )
+  }
 
   # color options
   viridis.colors <- c(
