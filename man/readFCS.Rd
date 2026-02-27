@@ -4,7 +4,7 @@
 \alias{readFCS}
 \title{Read FCS File}
 \usage{
-readFCS(fcs.path, return.keywords = FALSE)
+readFCS(fcs.path, return.keywords = FALSE, start.row = NULL, end.row = NULL)
 }
 \arguments{
 \item{fcs.path}{A character string specifying the file path (directory and
@@ -12,6 +12,14 @@ file name) for the .fcs file to be read.}
 
 \item{return.keywords}{Logical, default \code{FALSE}. Controls whether keywords are
 returned as well as the expression data matrix (useful for writing a new file).}
+
+\item{start.row}{Optional numeric specifying the row to begin reading on. Can
+be useful for reading in just the metadata or for chunking files. Default is
+\code{NULL}, which will read the whole file.}
+
+\item{end.row}{Optional numeric specifying the row to end reading on. Can
+be useful for reading in just the metadata or for chunking files. Default is
+\code{NULL}, which will read the whole file.}
 }
 \value{
 If \code{return.keywords = TRUE}, a list containing two elements:
@@ -31,7 +39,6 @@ Laniewski, Nathan. \emph{flowstate}.
 Ellis B, Haaland P, Hahne F, Le Meur N, Gopalakrishnan N, Spidlen J, Jiang M,
 Finak G (2025). \emph{flowCore: Basic structures for flow cytometry data}.
 \doi{10.18129/B9.bioc.flowCore}
-\url{https://bioconductor.org/packages/flowCore}
 }
 \seealso{
 \code{\link[flowCore:read.FCS]{read.FCS}}

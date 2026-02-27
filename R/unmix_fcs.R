@@ -90,6 +90,10 @@
 #' choices. Providing a numeric value to `n.variants` will override `speed`,
 #' allowing up to `n.variants` (or the max available) variants to be tested. The
 #' default is `NULL`, in which case `n.variants` will be ignored.
+#' @param chunk.size Numeric, number of events to use per chunk of unmixing. Used
+#' to manage memory when processing large FCS files. As a rough guide, you will
+#' need approximately 10x the size of the raw FCS file on disk as available
+#' memory. Default is set at `2e6` events, assuming ~20GB memory available.
 #' @param ... Ignored. Used to catch deprecated arguments.
 #'
 #' @return None. The function writes the unmixed FCS data to a file.
@@ -119,6 +123,7 @@ unmix.fcs <- function(
     threads = if ( parallel ) 0 else 1,
     verbose = TRUE,
     n.variants = NULL,
+    chunk.size = 2e6,
     ...
 ) {
 
@@ -206,32 +211,26 @@ unmix.fcs <- function(
     if ( is.null( n.variants ) ) {
       n.variants <- switch( match.arg( speed ), "fast" = 1L, "medium" = 3L, "slow" = 10L )
     }
+
+    # remove any existing "AF" parameter in spectra
+    if ( "AF" %in% rownames( spectra ) )
+      spectra <- spectra[ rownames( spectra ) != "AF", , drop = FALSE ]
   }
 
   # create output folder if it doesn't exist
-  if ( is.null( output.dir ) )
-    output.dir <- asp$unmixed.fcs.dir
-  if ( !dir.exists( output.dir ) )
-    dir.create( output.dir )
-
-  # set multithreading
-  if ( parallel & is.null( threads ) )
-    threads <- asp$worker.process.n
-  else if ( parallel & threads == 0 )
-    threads <- parallelly::availableCores()
+  if ( is.null( output.dir ) ) output.dir <- asp$unmixed.fcs.dir
+  if ( !dir.exists( output.dir ) ) dir.create( output.dir )
 
   # import FCS, without warnings for fcs 3.2
-  if ( verbose ) message( "Reading FCS: ", fcs.file )
-  import <- readFCS( fcs.file, return.keywords = TRUE )
-  fcs.exprs <- import$data
-  fcs.keywords <- import$keywords
-  original.param <- colnames( fcs.exprs )
+  if ( verbose ) message( "Reading FCS metadata: ", fcs.file )
+  import.meta <- readFCS( fcs.file, return.keywords = TRUE, start.row = 1, end.row = 1 )
+  fcs.keywords <- import.meta$keywords
+  total.events <- as.numeric( fcs.keywords[[ "$TOT" ]] )
+  original.param <- colnames( import.meta$data )
 
   # determine original file name
   file.name <- if ( !is.null( fcs.keywords$`$FIL` ) ) fcs.keywords$`$FIL` else basename( fcs.file )
-  if (!grepl("\\.fcs$", file.name, ignore.case = TRUE)) {
-    file.name <- paste0(file.name, ".fcs")
-  }
+  if ( !grepl( "\\.fcs$", file.name, ignore.case = TRUE ) )  file.name <- paste0( file.name, ".fcs" )
 
   # deal with manufacturer peculiarities in writing fcs files
   if ( asp$cytometer %in% c( "ID7000", "Mosaic" ) ) {
@@ -254,8 +253,7 @@ unmix.fcs <- function(
 
   # extract spectral data
   spectral.channel <- colnames( spectra )
-  spectral.exprs <- fcs.exprs[ , spectral.channel, drop = FALSE ]
-  other.channels <- setdiff( colnames( fcs.exprs ), spectral.channel )
+  other.channels <- setdiff( original.param, spectral.channel )
 
   # remove height and width if present
   for ( ch in spectral.channel[ grepl( "-A$", spectral.channel ) ] ) {
@@ -265,55 +263,65 @@ unmix.fcs <- function(
   if ( grepl("Discover", asp$cytometer ) && !include.imaging ) {
     other.channels <- intersect( other.channels, asp$time.and.scatter )
   }
-  other.exprs <- fcs.exprs[ , other.channels, drop = FALSE ]
 
-  if ( !include.raw )
-    rm( fcs.exprs ); gc() # free up memory
-
-  # define weights if needed
-  if ( weighted | method == "WLS"| method == "Poisson"| method == "FastPoisson" ) {
-    if ( is.null( weights ) ) {
-      # Poisson-like weighting based on mean expression
-      # (variance = mean in a Poisson distribution)
-      # enforce non-zero
-      weights <- pmax( abs( colMeans( spectral.exprs ) ), 1e-6 )
-      # weights are inverse of signal (more signal, more noise, less reliable)
-      weights <- 1 / weights
-    }
-  }
+  # set multithreading
+  if ( parallel & is.null( threads ) )
+    threads <- asp$worker.process.n
+  else if ( parallel & threads == 0 )
+    threads <- parallelly::availableCores()
 
   # apply unmixing using selected method ---------------
-  unmixed.data <- switch(
-    method,
-    "OLS" = unmix.ols( spectral.exprs, spectra ),
-    "WLS" = unmix.wls( spectral.exprs, spectra, weights ),
-    "AutoSpectral" = {
-      if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
-           "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
-        tryCatch(
-          AutoSpectralRcpp::unmix.autospectral.rcpp(
-            raw.data = spectral.exprs,
-            spectra = spectra,
-            af.spectra = af.spectra,
-            spectra.variants = spectra.variants,
-            use.dist0 = use.dist0,
-            verbose = verbose,
-            speed = speed,
-            parallel = parallel,
-            threads = threads,
-            n.variants = n.variants
-          ),
-          error = function( e ) {
-            warning(
-              "AutoSpectralRcpp unmixing failed, falling back to standard AutoSpectral: ",
-              e$message,
-              call. = FALSE
-            )
-            unmix.autospectral(
-              raw.data = spectral.exprs,
+  # pre-allocate the full results matrix
+  extra.cols <- if ( method == "AutoSpectral" ) 2 else 0
+  cols.n <- length( other.channels ) + nrow( spectra ) + extra.cols
+  final.matrix <- matrix( 0, nrow = total.events, ncol = cols.n )
+
+  # how many chunks do we need?
+  chunk.n <- ceiling( total.events / chunk.size )
+
+  # track if we've set the column names
+  colnames.set <- FALSE
+
+  # define weights if needed
+  if ( ( weighted || method %in% c( "WLS", "Poisson", "FastPoisson" ) ) && is.null( weights ) ) {
+    # Poisson-like weighting based on mean expression (variance = mean in a Poisson distribution)
+    weight.sample <- readFCS( fcs.file, start.row = 1, end.row = min( 1e5, total.events ) )
+    # weights are inverse of signal (more signal, more noise, less reliable)
+    weights <- 1 / pmax( abs( colMeans( weight.sample[ , spectral.channel ] ) ), 1e-6 )
+    rm( weight.sample )
+  }
+
+  # unmix in chunks for big files
+  for ( i in 1:chunk.n ) {
+    s.row <- ( (i - 1) * chunk.size ) + 1
+    e.row <- min( i * chunk.size, total.events )
+
+    if ( verbose )
+      message( sprintf( "Processing chunk %d/%d (Events %d to %d)", i, chunk.n, s.row, e.row ) )
+
+    # read in only events from this chunk
+    chunk.data <- readFCS(
+      fcs.file,
+      return.keywords = FALSE,
+      start.row = s.row,
+      end.row = e.row
+    )
+    chunk.spectral <- chunk.data[ , spectral.channel, drop = FALSE ]
+    chunk.other <- chunk.data[ , other.channels, drop = FALSE ]
+
+    # unmix this chunk of data with the selected unmixing method
+    unmixed.chunk <- switch(
+      method,
+      "OLS" = unmix.ols( chunk.spectral, spectra ),
+      "WLS" = unmix.wls( chunk.spectral, spectra, weights ),
+      "AutoSpectral" = {
+        if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+             "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+          tryCatch(
+            AutoSpectralRcpp::unmix.autospectral.rcpp(
+              raw.data = chunk.spectral,
               spectra = spectra,
               af.spectra = af.spectra,
-              asp = asp,
               spectra.variants = spectra.variants,
               use.dist0 = use.dist0,
               verbose = verbose,
@@ -321,95 +329,116 @@ unmix.fcs <- function(
               parallel = parallel,
               threads = threads,
               n.variants = n.variants
-            )
-          }
-        )
-      } else {
-        warning( "AutoSpectralRcpp not available, falling back to standard AutoSpectral" )
-        unmix.autospectral(
-          raw.data = spectral.exprs,
-          spectra = spectra,
-          af.spectra = af.spectra,
-          asp = asp,
-          spectra.variants = spectra.variants,
-          use.dist0 = use.dist0,
-          verbose = verbose,
-          speed = speed,
-          parallel = parallel,
-          threads = threads,
-          n.variants = n.variants
-        )
-      }
-    },
-    "Poisson" = unmix.poisson( spectral.exprs, spectra, asp, weights ),
-    "FastPoisson" = {
-      if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
-           "unmix.poisson.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
-        tryCatch(
-          AutoSpectralRcpp::unmix.poisson.fast(
-            raw.data = spectral.exprs,
+            ),
+            error = function( e ) {
+              warning(
+                "AutoSpectralRcpp unmixing failed, falling back to standard AutoSpectral: ",
+                e$message,
+                call. = FALSE
+              )
+              unmix.autospectral(
+                raw.data = chunk.spectral,
+                spectra = spectra,
+                af.spectra = af.spectra,
+                asp = asp,
+                spectra.variants = spectra.variants,
+                use.dist0 = use.dist0,
+                verbose = verbose,
+                speed = speed,
+                parallel = parallel,
+                threads = threads,
+                n.variants = n.variants
+              )
+            }
+          )
+        } else {
+          warning( "AutoSpectralRcpp not available, falling back to standard AutoSpectral" )
+          unmix.autospectral(
+            raw.data = chunk.spectral,
             spectra = spectra,
-            weights = weights,
-            maxit = asp$rlm.iter.max,
-            tol = 1e-6,
-            n_threads = threads,
-            divergence.threshold = divergence.threshold,
-            divergence.handling = divergence.handling,
-            balance.weight = balance.weight
-          ),
-          error = function( e ) {
-            warning(
-              "FastPoisson failed, falling back to standard Poisson: ",
-              e$message,
-              call. = FALSE
-            )
-            unmix.poisson(
-              raw.data = spectral.exprs,
+            af.spectra = af.spectra,
+            asp = asp,
+            spectra.variants = spectra.variants,
+            use.dist0 = use.dist0,
+            verbose = verbose,
+            speed = speed,
+            parallel = parallel,
+            threads = threads,
+            n.variants = n.variants
+          )
+        }
+      },
+      "Poisson" = unmix.poisson( chunk.spectral, spectra, asp, weights ),
+      "FastPoisson" = {
+        if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+             "unmix.poisson.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+          tryCatch(
+            AutoSpectralRcpp::unmix.poisson.fast(
+              raw.data = chunk.spectral,
               spectra = spectra,
-              asp = asp,
-              initial.weights = weights,
-              parallel = parallel,
-              threads = threads
-            )
-          }
-        )
-      } else {
-        warning( "AutoSpectralRcpp not available, falling back to standard Poisson.",
-                 call. = FALSE )
-        unmix.poisson(
-          raw.data = spectral.exprs,
-          spectra = spectra,
-          asp = asp,
-          initial.weights = weights,
-          parallel = parallel,
-          threads = threads
-        )
-      }
-    },
-    stop( "Unknown method" )
-  )
-  rm( spectral.exprs )
+              weights = weights,
+              maxit = asp$rlm.iter.max,
+              tol = 1e-6,
+              n_threads = threads,
+              divergence.threshold = divergence.threshold,
+              divergence.handling = divergence.handling,
+              balance.weight = balance.weight
+            ),
+            error = function( e ) {
+              warning(
+                "FastPoisson failed, falling back to standard Poisson: ",
+                e$message,
+                call. = FALSE
+              )
+              unmix.poisson(
+                raw.data = chunk.spectral,
+                spectra = spectra,
+                asp = asp,
+                initial.weights = weights,
+                parallel = parallel,
+                threads = threads
+              )
+            }
+          )
+        } else {
+          warning( "AutoSpectralRcpp not available, falling back to standard Poisson.",
+                   call. = FALSE )
+          unmix.poisson(
+            raw.data = chunk.spectral,
+            spectra = spectra,
+            asp = asp,
+            initial.weights = weights,
+            parallel = parallel,
+            threads = threads
+          )
+        }
+      },
+      stop( "Unknown method" )
+    )
 
-  # combine with non-fluorescence data (scatter, time, etc.)
-  base.exprs <- if ( include.raw ) fcs.exprs else other.exprs
-  final.colnames <- c( colnames( base.exprs ), colnames( unmixed.data ) )
-  final.matrix <- matrix( 0,
-                          nrow = nrow( unmixed.data ),
-                          ncol = length( final.colnames ) )
-  colnames( final.matrix ) <- final.colnames
-  final.matrix[, 1:ncol( base.exprs ) ] <- base.exprs
-  final.matrix[ , ( ncol( base.exprs ) + 1 ):ncol( final.matrix ) ] <- unmixed.data
-  rm( unmixed.data, base.exprs, other.exprs )
+    if ( !colnames.set ) {
+      colnames( final.matrix ) <- c( other.channels, colnames( unmixed.chunk ) )
+      colnames.set <- TRUE
+    }
+
+    # store in Pre-allocated Matrix
+    final.matrix[ s.row:e.row, 1:ncol( chunk.other ) ] <- chunk.other
+    final.matrix[ s.row:e.row, ( ncol( chunk.other ) + 1 ):cols.n ] <- unmixed.chunk
+
+    # cleanup memory immediately
+    rm( chunk.data, chunk.spectral, chunk.other, unmixed.chunk )
+    if (i %% 5 == 0) gc()
+  }
 
   # fix any NA values (e.g., plate location with S8)
-  if ( anyNA( final.matrix ) )
-    final.matrix[ is.na( final.matrix ) ] <- 0
+  if ( anyNA( final.matrix ) ) final.matrix[ is.na( final.matrix ) ] <- 0
 
   # append "-A" to fluorophore and AF channel names
-  colnames( final.matrix ) <-
-    ifelse( colnames( final.matrix ) %in% c( rownames( spectra ), "AF" ),
-            paste0( colnames( final.matrix ), "-A" ),
-            colnames( final.matrix ) )
+  colnames( final.matrix ) <- ifelse(
+    colnames( final.matrix ) %in% c( rownames( spectra ), "AF" ),
+    paste0( colnames( final.matrix ), "-A" ),
+    colnames( final.matrix )
+  )
 
   # update keywords
   new.keywords <- define.keywords(

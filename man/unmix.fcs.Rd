@@ -27,6 +27,7 @@ unmix.fcs(
   threads = if (parallel) 0 else 1,
   verbose = TRUE,
   n.variants = NULL,
+  chunk.size = 2e+06,
   ...
 )
 }
@@ -134,6 +135,11 @@ over the number used, as opposed to \code{speed}, which selects from pre-defined
 choices. Providing a numeric value to \code{n.variants} will override \code{speed},
 allowing up to \code{n.variants} (or the max available) variants to be tested. The
 default is \code{NULL}, in which case \code{n.variants} will be ignored.}
+
+\item{chunk.size}{Numeric, number of events to use per chunk of unmixing. Used
+to manage memory when processing large FCS files. As a rough guide, you will
+need approximately 10x the size of the raw FCS file on disk as available
+memory. Default is set at \code{2e6} events, assuming ~20GB memory available.}
 
 \item{...}{Ignored. Used to catch deprecated arguments.}
 }
