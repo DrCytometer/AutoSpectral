@@ -1,13 +1,28 @@
 # AutoSpectral 1.1.0 (2026-02-24)
 
 ## Improvements
+
+- New gating approach adapted from `flowstate`. This uses cellular landmarks to
+identify the position of key populations on forward and side-scatter. Essentially,
+we backgate. This means that you can use well-expressed markers on known cell
+populations (think CD3, CD19, CD14) to define the location of your cells. This is
+fast, appears to be pretty robust, and should be easy for you, the user, to change
+how it works. Control over this is provided via the CSV control file spreadsheet
+using two new columns: "gate.name" to define which controls should share the same
+gate, and "gate.define" (TRUE/FALSE) to specify which samples should be used to
+define the gate boundaries (e.g., we might use CD4 but not TIM-3 or IL-4).
+- To assist with the new gating, there is a `tune.gate()` function that allows
+you to put in a range of parameters to quickly see the impact on the gate boundary
+prior to running `define.flow.control()`.
 - Native FCS read/write functionality adapted from `flowstate`.
+- FCS file concatenation via `concatenateFCS()`.
 - Faster gating by reducing `MASS::kde2d` calls and allowing C++ kernel density
 estimation if `AutoSpectralRcpp` is installed.
 - Faster plotting along the same lines.
 - Hopefully graceful error handling during `clean.controls()`.
 - Success/failure reporting from `clean.controls()`.
 - Reduced memory usage when unmixing.
+- Chunking of files when unmixing to support unmixing of any size of file.
 
 
 # AutoSpectral 1.0.0 (2026-02-10)
