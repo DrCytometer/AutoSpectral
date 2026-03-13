@@ -297,6 +297,17 @@ get.fluorophore.spectra <- function(
              \033[0m" )
   }
 
+  # library reference QC
+  tryCatch(
+    expr = {
+      spectral.reference.plot( marker.spectra, asp )
+    },
+    error = function( e ) {
+      message( "Error in plotting fluorophore spectra: ", e$message )
+      return( NULL )
+    }
+  )
+
   return( marker.spectra )
 }
 
