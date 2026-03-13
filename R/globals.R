@@ -21,6 +21,8 @@ utils::globalVariables(
      "label",
      "num.label",
      "median.spec",
-     "dens"
+     "dens",
+     "library",
+     "experiment"
   )
 )
