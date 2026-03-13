@@ -347,19 +347,82 @@ validate.control.file <- function(
                   message = "Event count < 1000" )
   }
 
-  ## ---------- parameter consistency ----------
-  params <- lapply( valid, `[[`, "parameters")
+  ## ---------- parameter and voltage consistency ----------
+  # 1. Prepare reference information from the first valid file
+  ref.params   <- valid[[ 1 ]]$parameters
+  ref.file     <- valid[[ 1 ]]$file
 
-  if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8" ) ) {
-    nonspec <- asp$non.spectral.channel[ 4:length( asp$non.spectral.channel ) ]
-    params <- lapply( params, function( p )
-      p[!grepl(paste(nonspec, collapse = "|"), p ) ] )
+  # Identify indices for spectral channels based on the first file
+  non.spec.regex <- paste0( asp$non.spectral.channel, collapse = "|" )
+  spec.indices   <- which( !grepl( non.spec.regex, ref.params ) )
+
+  # Extract reference voltages for these indices
+  # Note: We re-read the header once for the reference to get the $PnV keys
+  ref.h <- readFCSheader( file.path( control.dir, ref.file ) )[[ 1 ]]
+  ref.voltages <- vapply( spec.indices, function( idx ) {
+    v <- ref.h[[ paste0( "$P", idx, "V" ) ]]
+    if ( is.null( v ) ) return( NA_character_ ) else return( as.character( v ) )
+  }, character( 1 ) )
+
+  # 2. Iterate through subsequent files and compare
+  mismatched.params   <- character()
+  mismatched.voltages <- character()
+
+  # We skip index 1 since it's our reference
+  if ( length( valid ) > 1 ) {
+    for ( i in 2:length( valid ) ) {
+      curr.file <- valid[[ i ]]$file
+      curr.params <- valid[[ i ]]$parameters
+
+      # Check A: Parameter Name Consistency
+      # We check the spectral subset as per your Discover logic if applicable
+      check.params <- curr.params
+      if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8" ) ) {
+        nonspec.sub <- asp$non.spectral.channel[ 4:length( asp$non.spectral.channel ) ]
+        check.params <- check.params[ !grepl( paste( nonspec.sub, collapse = "|" ), check.params ) ]
+        # Note: If comparing against the Discover-filtered list, ensure ref.params is filtered too
+      }
+
+      if ( !identical( ref.params, curr.params ) ) {
+        mismatched.params <- c( mismatched.params, curr.file )
+      }
+
+      # Check B: Voltage Consistency (Safe lookup)
+      curr.h <- readFCSheader( file.path( control.dir, curr.file ) )[[ 1 ]]
+      curr.n.par <- as.integer( curr.h[[ "$PAR" ]] )
+
+      curr.v.vector <- vapply( spec.indices, function( idx ) {
+        # Construct the specific keyword name we are looking for
+        v_key <- paste0( "$P", idx, "V" )
+
+        # Check if this keyword exists in the header names
+        if ( !v_key %in% names( curr.h ) ) {
+          return( "MISSING_OR_OUT_OF_BOUNDS" )
+        }
+
+        v <- curr.h[[ v_key ]]
+        if ( is.null( v ) ) return( NA_character_ ) else return( as.character( v ) )
+      }, character( 1 ) )
+
+      if ( !identical( ref.voltages, curr.v.vector ) ) {
+        mismatched.voltages <- c( mismatched.voltages, curr.file )
+      }
+    }
   }
 
-  if ( !all( vapply( params[ -1 ], identical, logical( 1 ), params[[ 1 ]] ) ) ) {
+  # 3. Log issues
+  if ( length( mismatched.params ) > 0 ) {
     issues[[ length( issues ) + 1 ]] <-
       .new_issue( "error", "parameter_mismatch",
-                  message = "Parameter names inconsistent across FCS files" )
+                  filename = mismatched.params,
+                  message = "Parameter names or count inconsistent across FCS files" )
+  }
+
+  if ( length( mismatched.voltages ) > 0 ) {
+    issues[[ length( issues ) + 1 ]] <-
+      .new_issue( "error", "voltage_mismatch",
+                  filename = mismatched.voltages,
+                  message = "Spectral channel voltages do not match across all controls" )
   }
 
   ## ---------- cytometer ----------
@@ -377,7 +440,7 @@ validate.control.file <- function(
 
   ## ---------- channel vs parameters ----------
   peak.channels <- ct$channel[ !is.na( ct$channel ) ]
-  if ( !all( peak.channels %in% params[[ 1 ]] ) ) {
+  if ( !all( peak.channels %in% ref.params ) ) {
     issues[[ length( issues ) + 1 ]] <-
       .new_issue( "error", "channel_parameter_mismatch",
                   column = "channel",

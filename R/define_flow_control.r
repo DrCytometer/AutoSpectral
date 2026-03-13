@@ -97,23 +97,33 @@ define.flow.control <- function(
   } )
 
   # read channels from an FCS file
-  flow.set.channel <- colnames(
+  all.channels <- colnames(
     readFCS( file.path( control.dir, control.table$filename[ 1 ] ) )
   )
 
   # remove unnecessary channels
-  non.spectral.channel <- asp$non.spectral.channel
-  non.spectral.channel <- paste0( non.spectral.channel, collapse = "|" )
-  flow.spectral.channel <- flow.set.channel[
-    !grepl( non.spectral.channel, flow.set.channel ) ]
+  non.spectral.pattern <- paste0( asp$non.spectral.channel, collapse = "|" )
 
-  if ( grepl( "Discover", asp$cytometer ) )
-    flow.spectral.channel <- flow.spectral.channel[
-      grep( asp$spectral.channel, flow.spectral.channel ) ]
+  if ( grepl( "Discover", asp$cytometer ) ) {
+    spec.idx <- grep( asp$spectral.channel, all.channels )
+  } else {
+    spec.idx <- grep( non.spectral.pattern, all.channels, invert = TRUE )
+  }
+
+  spectral.channel <- all.channels[ spec.idx ]
 
   # reorganize channels if necessary
-  flow.spectral.channel <- check.channels( flow.spectral.channel, asp )
-  flow.spectral.channel.n <- length( flow.spectral.channel )
+  spectral.channel <- check.channels( spectral.channel, asp )
+  spectral.channel.n <- length( spectral.channel )
+
+  # record and store voltages for checks during unmixing
+  header <- readFCSheader( file.path( control.dir, control.table$filename[ 1 ] ) )[[ 1 ]]
+  # extract the $PnV values
+  spectral.voltages <- vapply( spec.idx, function( idx ) {
+    v <- header[[ paste0( "$P", idx, "V" ) ]]
+    if ( is.null( v ) ) return( NA_character_ ) else return( as.character( v ) )
+  }, character( 1 ) )
+  names( spectral.voltages ) <- all.channels[ spec.idx ]
 
   # get fluorophores and markers
   control.table$sample <- control.table$fluorophore
@@ -122,8 +132,7 @@ define.flow.control <- function(
 
   # universal.negative must be strictly filename or NA
   control.table$universal.negative[
-    control.table$universal.negative == "" |
-      is.na(control.table$universal.negative)
+    control.table$universal.negative == "" | is.na( control.table$universal.negative )
   ] <- NA
 
   # identify universal negative types
@@ -156,13 +165,13 @@ define.flow.control <- function(
 
       if ( !match.found ) {
         # create a new row copying from the source negative
-        matching.row <- control.table[control.table$filename == neg.file, ]
+        matching.row <- control.table[ control.table$filename == neg.file, ]
         new.row <- matching.row[ 1, ]
         new.row$large.gate        <- lg
         new.row$is.viability      <- vi
-        new.row$fluorophore       <- paste(new.row$control.type, "Negative", i)
+        new.row$fluorophore       <- paste( new.row$control.type, "Negative", i )
         new.row$sample            <- new.row$fluorophore
-        new.row$universal.negative <- NA   # new row is a replicate, not a source
+        new.row$universal.negative <- NA
         control.table <- rbind(control.table, new.row)
       }
     }
@@ -283,10 +292,10 @@ define.flow.control <- function(
   flow.scatter.and.channel.spectral <- c(
     asp$default.time.parameter,
     flow.scatter.parameter,
-    flow.spectral.channel )
+    spectral.channel )
 
   flow.scatter.and.channel.matched.bool <-
-    flow.scatter.and.channel.spectral %in% flow.set.channel
+    flow.scatter.and.channel.spectral %in% all.channels
 
   if ( ! all( flow.scatter.and.channel.matched.bool ) ) {
     channel.matched <-
@@ -295,7 +304,7 @@ define.flow.control <- function(
       sort( setdiff( flow.scatter.and.channel.spectral, channel.matched ) ),
       collapse = ", " )
     flow.set.unmatched <- paste0(
-      sort( setdiff( flow.set.channel, channel.matched ) ),
+      sort( setdiff( all.channels, channel.matched ) ),
       collapse = ", " )
     error.msg <- sprintf(
       "wrong channel name, not found in fcs data\n\texpected: %s\n\tfound: %s",
@@ -399,7 +408,7 @@ define.flow.control <- function(
     file.name = flow.file.name,
     control.dir = control.dir,
     scatter.and.spectral.channel = flow.scatter.and.channel.spectral,
-    spectral.channel = flow.spectral.channel,
+    spectral.channel = spectral.channel,
     set.resolution = flow.set.resolution,
     flow.gate = flow.gate,
     gate.list = gate.list,
@@ -505,8 +514,8 @@ define.flow.control <- function(
   if ( any( flow.fluorophore == "AF" ) ) {
     idx <- which( flow.fluorophore == "AF" )
     af.data <- flow.expr.data[ which( flow.event.sample == "AF" ), ]
-    af.max <- which.max( colMeans( af.data[ , flow.spectral.channel ] ) )
-    flow.channel[ idx ] <- flow.spectral.channel[ af.max ]
+    af.max <- which.max( colMeans( af.data[ , spectral.channel ] ) )
+    flow.channel[ idx ] <- spectral.channel[ af.max ]
   }
 
   # make control info
@@ -525,8 +534,9 @@ define.flow.control <- function(
     expr.data.min = flow.expr.data.min,
     channel = flow.channel,
     channel.n = flow.channel.n,
-    spectral.channel = flow.spectral.channel,
-    spectral.channel.n = flow.spectral.channel.n,
+    spectral.channel = spectral.channel,
+    spectral.channel.n = spectral.channel.n,
+    voltages = spectral.voltages,
     sample = flow.sample,
     scatter.and.channel = flow.scatter.and.channel,
     scatter.and.channel.label = flow.scatter.and.channel.label,

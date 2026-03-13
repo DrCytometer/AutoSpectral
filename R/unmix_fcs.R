@@ -221,18 +221,54 @@ unmix.fcs <- function(
   if ( is.null( output.dir ) ) output.dir <- asp$unmixed.fcs.dir
   if ( !dir.exists( output.dir ) ) dir.create( output.dir )
 
-  # import FCS, without warnings for fcs 3.2
+  # import FCS
   if ( verbose ) message( "Reading FCS metadata: ", fcs.file )
   import.meta <- readFCS( fcs.file, return.keywords = TRUE, start.row = 1, end.row = 1 )
   fcs.keywords <- import.meta$keywords
   total.events <- as.numeric( fcs.keywords[[ "$TOT" ]] )
   original.param <- colnames( import.meta$data )
 
+  ### check for voltage settings consistency with single-stained controls
+  if ( !is.null( flow.control$voltages ) ) {
+    # if ( verbose ) message( "Validating detector voltages..." )
+
+    # map current file keyword keys ($PnN) to channel names
+    all.keys <- names( fcs.keywords )
+    p.name.keys <- grep( "^\\$P\\d+N$", all.keys, value = TRUE )
+    p.names <- vapply( p.name.keys, function( k ) fcs.keywords[[ k ]], character( 1 ) )
+
+    # check against each spectral voltage stored in flow.control
+    for ( ch.name in names( flow.control$voltages ) ) {
+
+      # find which $PnN key matches this channel name in the current file
+      matching.key <- names( p.names )[ p.names == ch.name ]
+
+      if ( length( matching.key ) > 0 ) {
+        # convert the name key (e.g., $P10N) to voltage key (e.g., $P10V)
+        v.key <- gsub( "N$", "V", matching.key )
+        current.v <- fcs.keywords[[ v.key ]]
+        ref.v <- flow.control$voltages[[ ch.name ]]
+
+        # compare as strings to avoid floating point/type mismatches
+        if ( !identical( as.character( current.v ), as.character( ref.v ) ) ) {
+          stop( sprintf(
+            "Voltage mismatch for channel %s! Controls: %s, Current: %s. Unmixing aborted.",
+            ch.name, ref.v, current.v
+          ) )
+        }
+      } else {
+        # if the channel name isn't found at all, that's a much bigger problem
+        stop( paste( "Spectral channel", ch.name, "not found in target FCS file." ) )
+      }
+    }
+    # if ( verbose ) message( "Voltage check passed." )
+  }
+
   # determine original file name
   file.name <- if ( !is.null( fcs.keywords$`$FIL` ) ) fcs.keywords$`$FIL` else basename( fcs.file )
   if ( !grepl( "\\.fcs$", file.name, ignore.case = TRUE ) )  file.name <- paste0( file.name, ".fcs" )
 
-  # deal with manufacturer peculiarities in writing fcs files
+  # deal with manufacturer peculiarities in writing FCS files
   if ( asp$cytometer %in% c( "ID7000", "Mosaic" ) ) {
     file.name <- sub(
       "([ _])Raw(\\.fcs$|\\s|$)",
@@ -296,7 +332,7 @@ unmix.fcs <- function(
     s.row <- ( (i - 1) * chunk.size ) + 1
     e.row <- min( i * chunk.size, total.events )
 
-    if ( verbose )
+    if ( verbose & chunk.n > 1 )
       message( sprintf( "Processing chunk %d/%d (Events %d to %d)", i, chunk.n, s.row, e.row ) )
 
     # read in only events from this chunk

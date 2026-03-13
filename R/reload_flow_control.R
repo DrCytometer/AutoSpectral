@@ -42,24 +42,34 @@ reload.flow.control <- function(
   if ( anyDuplicated( control.table$filename ) != 0 )
     stop( "duplicated filenames in fcs data", call. = FALSE )
 
-  flow.set.channel <- colnames(
+  # read channels from an FCS file
+  all.channels <- colnames(
     readFCS( file.path( control.dir, control.table$filename[ 1 ] ) )
   )
 
   # remove unnecessary channels
-  non.spectral.channel <- asp$non.spectral.channel
-  non.spectral.channel <- paste0( non.spectral.channel, collapse = "|" )
-  flow.spectral.channel <- flow.set.channel[
-    !grepl( non.spectral.channel, flow.set.channel ) ]
+  non.spectral.pattern <- paste0( asp$non.spectral.channel, collapse = "|" )
 
   if ( grepl( "Discover", asp$cytometer ) ) {
-    flow.spectral.channel <- flow.spectral.channel[
-      grep( asp$spectral.channel, flow.spectral.channel ) ]
+    spec.idx <- grep( asp$spectral.channel, all.channels )
+  } else {
+    spec.idx <- grep( non.spectral.pattern, all.channels, invert = TRUE )
   }
 
+  spectral.channel <- all.channels[ spec.idx ]
+
   # reorganize channels if necessary
-  flow.spectral.channel <- check.channels( flow.spectral.channel, asp )
-  flow.spectral.channel.n <- length( flow.spectral.channel )
+  spectral.channel <- check.channels( spectral.channel, asp )
+  spectral.channel.n <- length( spectral.channel )
+
+  # record and store voltages for checks during unmixing
+  header <- readFCSheader( file.path( control.dir, control.table$filename[ 1 ] ) )[[ 1 ]]
+  # extract the $PnV values
+  spectral.voltages <- vapply( spec.idx, function( idx ) {
+    v <- header[[ paste0( "$P", idx, "V" ) ]]
+    if ( is.null( v ) ) return( NA_character_ ) else return( as.character( v ) )
+  }, character( 1 ) )
+  names( spectral.voltages ) <- all.channels[ spec.idx ]
 
   # get fluorophores and markers
   flow.fluorophore <- control.table$fluorophore
@@ -81,7 +91,7 @@ reload.flow.control <- function(
   flow.scatter.and.channel.spectral <- c(
     asp$default.time.parameter,
     flow.scatter.parameter,
-    flow.spectral.channel
+    spectral.channel
   )
 
   flow.scatter.and.channel.label <- c(
@@ -103,7 +113,8 @@ reload.flow.control <- function(
     channel = flow.channel,
     expr.data.max = asp$expr.data.max,
     expr.data.min = asp$expr.data.min,
-    spectral.channel = flow.spectral.channel,
+    spectral.channel = spectral.channel,
+    voltages = spectral.voltages,
     sample = control.table$sample,
     scatter.and.channel.label = flow.scatter.and.channel.label,
     scatter.and.channel.spectral = flow.scatter.and.channel.spectral,
