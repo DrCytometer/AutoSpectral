@@ -62,8 +62,7 @@ spectral.reference.plot <- function(
   if ( grepl( "Discover", cyt ) ) cyt <- "Discover"
 
   # read in the reference spectra for this cytometer
-  #database.path <- system.file( "extdata", package = "AutoSpectral" )
-  database.path <- getwd()
+  database.path <- system.file( "extdata", package = "AutoSpectral" )
   ref.file.name <- paste0( cyt, "_spectral_reference_library.csv" )
 
   # set fluors as row names when reading in the reference spectra
