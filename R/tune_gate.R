@@ -66,7 +66,7 @@
 #' @param width Numeric, default `4`. Width of the saved plot.
 #' @param height Numeric, default `4`. Height of the saved plot.
 #'
-#' @seealso#'
+#' @seealso
 #' * [define.gate.landmarks()]
 #' * [define.gate.density()]
 #' * [gate.sample.plot()]
@@ -371,7 +371,7 @@ tune.gate <- function(
       )
 
       # find the density threshold
-      z.sort <- sort( dens$z, decreasing = TRUE)
+      z.sort <- sort( dens$z, decreasing = TRUE )
       cumulative.dens <- cumsum( z.sort ) / sum( z.sort )
       threshold <- z.sort[ which.min( abs( cumulative.dens - p/100 ) ) ]
 

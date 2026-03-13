@@ -26,8 +26,10 @@ check.channels <- function( spectral.channels, asp ) {
              This may cause errors in reading FCS files or unmixing due to channel mismatches." )
 
   # match against reference channels for this cytometer
-  database.path <- system.file( "extdata", "cytometer_database.csv",
-                                package = "AutoSpectral" )
+  database.path <- system.file(
+    "extdata", "cytometer_database.csv",
+    package = "AutoSpectral"
+  )
 
   cytometers <- utils::read.csv( database.path )
 

@@ -111,7 +111,6 @@ Laniewski, Nathan. \emph{flowstate}.
 \url{https://github.com/nlaniewski/flowstate}
 }
 \seealso{
-#'
 \itemize{
 \item \code{\link[=define.gate.landmarks]{define.gate.landmarks()}}
 \item \code{\link[=define.gate.density]{define.gate.density()}}

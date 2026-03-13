@@ -79,8 +79,11 @@ spectral.variant.plot <- function(
       breaks = variant.data$detector.n,
       labels = variant.data$detector
     ) +
-    labs( x = "Detector", y = "Intensity",
-         title = title ) +
+    labs(
+      x = "Detector",
+      y = "Intensity",
+      title = title
+    ) +
     theme_minimal() +
     theme( axis.text.x = element_text( angle = 45, hjust = 1 ) )
 

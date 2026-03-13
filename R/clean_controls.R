@@ -451,7 +451,7 @@ clean.controls <- function(
 
   # report for user
   if ( verbose ) {
-    cat( "\n", rep( "=", 30 ), "\n" )
+    cat( rep( "=", 30 ), "\n" )
     message( "Cleaning summary:" )
 
     # Helper to print status lines
