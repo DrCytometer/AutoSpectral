@@ -14,6 +14,10 @@
   Controls](https://drcytometer.github.io/AutoSpectral/articles/05_Preparing_Controls.md):
 - [06
   Gating](https://drcytometer.github.io/AutoSpectral/articles/06_Gating.md):
+- [06 Gating parameters for density
+  gating](https://drcytometer.github.io/AutoSpectral/articles/06_Gating_Parameters_Density.md):
+- [07 Controlled Gating: Landmarks and
+  Tuning](https://drcytometer.github.io/AutoSpectral/articles/07_Advanced_Gating.md):
 - [07 Control
   clean-up](https://drcytometer.github.io/AutoSpectral/articles/07_Cleaning.md):
 - [08 Single Cell

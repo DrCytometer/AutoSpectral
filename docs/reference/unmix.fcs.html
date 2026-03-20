@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,6 +24,8 @@
     <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
     <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
     <li><a class="dropdown-item" href="../articles/06_Gating.html">06 Gating</a></li>
+    <li><a class="dropdown-item" href="../articles/06_Gating_Parameters_Density.html">06 Gating parameters for density gating</a></li>
+    <li><a class="dropdown-item" href="../articles/07_Advanced_Gating.html">07 Controlled Gating: Landmarks and Tuning</a></li>
     <li><a class="dropdown-item" href="../articles/07_Cleaning.html">07 Control clean-up</a></li>
     <li><a class="dropdown-item" href="../articles/08_Single_Cell_AutoFluorescence.html">08 Single Cell Autofluorescence</a></li>
     <li><a class="dropdown-item" href="../articles/09_Per_Cell_Optimization.html">09 Per Cell Optimization</a></li>
@@ -76,6 +78,7 @@
 <span>  threads <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">parallel</span><span class="op">)</span> <span class="fl">0</span> <span class="kw">else</span> <span class="fl">1</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  chunk.size <span class="op">=</span> <span class="fl">2e+06</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -232,9 +235,15 @@ allowing up to <code>n.variants</code> (or the max available) variants to be tes
 default is <code>NULL</code>, in which case <code>n.variants</code> will be ignored.</p></dd>
 
 
+<dt id="arg-chunk-size">chunk.size<a class="anchor" aria-label="anchor" href="#arg-chunk-size"></a></dt>
+<dd><p>Numeric, number of events to use per chunk of unmixing. Used
+to manage memory when processing large FCS files. As a rough guide, you will
+need approximately 10x the size of the raw FCS file on disk as available
+memory. Default is set at <code>2e6</code> events, assuming ~20GB memory available.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Ignored. Previously used for deprecated arguments such as
-<code>calculate.error</code>.</p></dd>
+<dd><p>Ignored. Used to catch deprecated arguments.</p></dd>
 
 </dl></div>
     <div class="section level2">

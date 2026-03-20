@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,6 +24,8 @@
     <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
     <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
     <li><a class="dropdown-item" href="../articles/06_Gating.html">06 Gating</a></li>
+    <li><a class="dropdown-item" href="../articles/06_Gating_Parameters_Density.html">06 Gating parameters for density gating</a></li>
+    <li><a class="dropdown-item" href="../articles/07_Advanced_Gating.html">07 Controlled Gating: Landmarks and Tuning</a></li>
     <li><a class="dropdown-item" href="../articles/07_Cleaning.html">07 Control clean-up</a></li>
     <li><a class="dropdown-item" href="../articles/08_Single_Cell_AutoFluorescence.html">08 Single Cell Autofluorescence</a></li>
     <li><a class="dropdown-item" href="../articles/09_Per_Cell_Optimization.html">09 Per Cell Optimization</a></li>
@@ -57,6 +59,13 @@
 
       <dl><dt>
 
+          <code><a href="af.qc.plot.html">af.qc.plot()</a></code>
+
+        </dt>
+        <dd>Autofluorescence QC Plot</dd>
+
+        <dt>
+
           <code><a href="assign.af.fluorophores.html">assign.af.fluorophores()</a></code>
 
         </dt>
@@ -68,6 +77,27 @@
 
         </dt>
         <dd>Assign AF Spectrum By Residual Alignment</dd>
+
+        <dt>
+
+          <code><a href="assign.gates.html">assign.gates()</a></code>
+
+        </dt>
+        <dd>Assign Gates</dd>
+
+        <dt>
+
+          <code><a href="assign.variants.cosine.html">assign.variants.cosine()</a></code>
+
+        </dt>
+        <dd>Assign Variant Spectrum By Fluorophore Projection</dd>
+
+        <dt>
+
+          <code><a href="assign.variants.html">assign.variants()</a></code>
+
+        </dt>
+        <dd>Assign Variant Spectrum By Fluorophore Projection</dd>
 
         <dt>
 
@@ -99,6 +129,13 @@
 
         <dt>
 
+          <code><a href="check.consistency.html">check.consistency()</a></code>
+
+        </dt>
+        <dd>Check Gate Consistency</dd>
+
+        <dt>
+
           <code><a href="check.control.file.html">check.control.file()</a></code>
 
         </dt>
@@ -106,10 +143,24 @@
 
         <dt>
 
+          <code><a href="check.gates.html">check.gates()</a></code>
+
+        </dt>
+        <dd>Check Gates For Errors</dd>
+
+        <dt>
+
           <code><a href="clean.controls.html">clean.controls()</a></code>
 
         </dt>
         <dd>Clean Controls</dd>
+
+        <dt>
+
+          <code><a href="concatenateFCS.html">concatenateFCS()</a></code>
+
+        </dt>
+        <dd>Concatenate Multiple FCS Files</dd>
 
         <dt>
 
@@ -169,6 +220,27 @@
 
         <dt>
 
+          <code><a href="define.flow.control.test.html">define.flow.control.test()</a></code>
+
+        </dt>
+        <dd>Define Flow Control</dd>
+
+        <dt>
+
+          <code><a href="define.gate.density.html">define.gate.density()</a></code>
+
+        </dt>
+        <dd>Define Gate by Density</dd>
+
+        <dt>
+
+          <code><a href="define.gate.landmarks.html">define.gate.landmarks()</a></code>
+
+        </dt>
+        <dd>Define Gate by Landmarks</dd>
+
+        <dt>
+
           <code><a href="define.keywords.html">define.keywords()</a></code>
 
         </dt>
@@ -190,10 +262,10 @@
 
         <dt>
 
-          <code><a href="do.peacoQC.html">do.peacoQC()</a></code>
+          <code><a href="do.gate.test.html">do.gate.test()</a></code>
 
         </dt>
-        <dd>Perform Quality Control on Flow Cytometry Data using PeacoQC</dd>
+        <dd>Do Gate</dd>
 
         <dt>
 
@@ -372,10 +444,10 @@
 
         <dt>
 
-          <code><a href="get.ungated.flow.expression.data.html">get.ungated.flow.expression.data()</a></code>
+          <code><a href="get.top.events.html">get.top.events()</a></code>
 
         </dt>
-        <dd>Get Ungated Flow Expression Data</dd>
+        <dd>Get Top (Brightest) Events</dd>
 
         <dt>
 
@@ -383,6 +455,13 @@
 
         </dt>
         <dd>Get Universal Negative Control</dd>
+
+        <dt>
+
+          <code><a href="handle.gating.error.html">handle.gating.error()</a></code>
+
+        </dt>
+        <dd>Handle and Plot Gating Failures</dd>
 
         <dt>
 
@@ -411,6 +490,13 @@
 
         </dt>
         <dd>Parallel Backend</dd>
+
+        <dt>
+
+          <code><a href="qc.af.spectra.html">qc.af.spectra()</a></code>
+
+        </dt>
+        <dd>QC Autofluorescence Spectra</dd>
 
         <dt>
 
@@ -449,6 +535,20 @@
 
         <dt>
 
+          <code><a href="readFCS.html">readFCS()</a></code>
+
+        </dt>
+        <dd>Read FCS File</dd>
+
+        <dt>
+
+          <code><a href="readFCSheader.html">readFCSheader()</a></code>
+
+        </dt>
+        <dd>Read FCS Header</dd>
+
+        <dt>
+
           <code><a href="reload.flow.control.html">reload.flow.control()</a></code>
 
         </dt>
@@ -474,20 +574,6 @@
 
         </dt>
         <dd>Run Downsample</dd>
-
-        <dt>
-
-          <code><a href="run.peacoQC.html">run.peacoQC()</a></code>
-
-        </dt>
-        <dd>Run PeacoQC</dd>
-
-        <dt>
-
-          <code><a href="run.trim.events.html">run.trim.events()</a></code>
-
-        </dt>
-        <dd>Run Trim Events</dd>
 
         <dt>
 
@@ -533,6 +619,13 @@
 
         <dt>
 
+          <code><a href="spectral.reference.plot.html">spectral.reference.plot()</a></code>
+
+        </dt>
+        <dd>Spectral Reference Plot</dd>
+
+        <dt>
+
           <code><a href="spectral.ribbon.plot.html">spectral.ribbon.plot()</a></code>
 
         </dt>
@@ -554,10 +647,10 @@
 
         <dt>
 
-          <code><a href="trim.extreme.events.html">trim.extreme.events()</a></code>
+          <code><a href="tune.gate.html">tune.gate()</a></code>
 
         </dt>
-        <dd>Trim Extreme Events</dd>
+        <dd>Define Gate by Density</dd>
 
         <dt>
 
@@ -628,6 +721,13 @@
 
         </dt>
         <dd>Validate Control File</dd>
+
+        <dt>
+
+          <code><a href="writeFCS.html">writeFCS()</a></code>
+
+        </dt>
+        <dd>Write FCS File</dd>
       </dl></div>
   </main></div>
 

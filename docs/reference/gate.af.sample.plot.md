@@ -44,7 +44,8 @@ gate.af.sample.plot(
   Optional character string defining the viridis color palette to be
   used for the fluorophore traces. Default is `viridis`. Options are the
   viridis color options: `magma`, `inferno`, `plasma`, `viridis`,
-  `cividis`, `rocket`, `mako` and `turbo`.
+  `cividis`, `rocket`, `mako` and `turbo`. Use `rainbow`to be similar to
+  FlowJo or SpectroFlo.
 
 ## Value
 

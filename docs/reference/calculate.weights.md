@@ -15,7 +15,8 @@ calculate.weights(
   spectral.channels,
   save = FALSE,
   output.dir = "./table_spectra",
-  filename = "weights.csv"
+  filename = "weights.csv",
+  verbose = TRUE
 )
 ```
 
@@ -43,7 +44,11 @@ calculate.weights(
 - filename:
 
   Character string specifying the filename for the CSV file. Default is
-  `weights.csv`.
+  `weights.csv`.#'
+
+- verbose:
+
+  Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
 
 ## Value
 

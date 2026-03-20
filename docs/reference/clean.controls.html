@@ -21,7 +21,7 @@ from matching negative, and downsampling to speed up RLM spectra optimization.
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,8 @@ from matching negative, and downsampling to speed up RLM spectra optimization.
     <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
     <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
     <li><a class="dropdown-item" href="../articles/06_Gating.html">06 Gating</a></li>
+    <li><a class="dropdown-item" href="../articles/06_Gating_Parameters_Density.html">06 Gating parameters for density gating</a></li>
+    <li><a class="dropdown-item" href="../articles/07_Advanced_Gating.html">07 Controlled Gating: Landmarks and Tuning</a></li>
     <li><a class="dropdown-item" href="../articles/07_Cleaning.html">07 Control clean-up</a></li>
     <li><a class="dropdown-item" href="../articles/08_Single_Cell_AutoFluorescence.html">08 Single Cell Autofluorescence</a></li>
     <li><a class="dropdown-item" href="../articles/09_Per_Cell_Optimization.html">09 Per Cell Optimization</a></li>
@@ -74,21 +76,18 @@ from matching negative, and downsampling to speed up RLM spectra optimization.</
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">clean.controls</span><span class="op">(</span></span>
 <span>  <span class="va">flow.control</span>,</span>
 <span>  <span class="va">asp</span>,</span>
-<span>  time.clean <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  trim <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  trim.factor <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  af.remove <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  universal.negative <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  downsample <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  negative.n <span class="op">=</span> <span class="va">asp</span><span class="op">$</span><span class="va">negative.n</span>,</span>
 <span>  positive.n <span class="op">=</span> <span class="va">asp</span><span class="op">$</span><span class="va">positive.n</span>,</span>
 <span>  scatter.match <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  scrub <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  intermediate.figures <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  main.figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  threads <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -104,21 +103,6 @@ the data and essential information about the cytometer and data structure.</p></
 <dt id="arg-asp">asp<a class="anchor" aria-label="anchor" href="#arg-asp"></a></dt>
 <dd><p>The AutoSpectral parameter list, prepared using
 <code>get.autospectral.param</code>.</p></dd>
-
-
-<dt id="arg-time-clean">time.clean<a class="anchor" aria-label="anchor" href="#arg-time-clean"></a></dt>
-<dd><p>Logical, default is <code>FALSE</code>. Whether to run PeacoQC to
-remove time-based inconsistencies in the controls.</p></dd>
-
-
-<dt id="arg-trim">trim<a class="anchor" aria-label="anchor" href="#arg-trim"></a></dt>
-<dd><p>Logical, default is <code>FALSE</code>. Whether to remove extreme events
-(positive and negative) from controls. Deprecated.</p></dd>
-
-
-<dt id="arg-trim-factor">trim.factor<a class="anchor" aria-label="anchor" href="#arg-trim-factor"></a></dt>
-<dd><p>Numeric. Default is <code>asp$rlm.trim.factor</code>. Required if
-<code>trim = TRUE</code>. Deprecated.</p></dd>
 
 
 <dt id="arg-af-remove">af.remove<a class="anchor" aria-label="anchor" href="#arg-af-remove"></a></dt>
@@ -155,11 +139,6 @@ events based on scatter profiles matching the positive events. Defines a
 region of FSC and SSC based on the distribution of selected positive events.</p></dd>
 
 
-<dt id="arg-scrub">scrub<a class="anchor" aria-label="anchor" href="#arg-scrub"></a></dt>
-<dd><p>Logical, if <code>TRUE</code> allows for re-cleaning of already cleaned
-data, provided there are clean data in <code>flow.control</code>. Deprecated.</p></dd>
-
-
 <dt id="arg-intermediate-figures">intermediate.figures<a class="anchor" aria-label="anchor" href="#arg-intermediate-figures"></a></dt>
 <dd><p>Logical, if <code>TRUE</code> returns additional figures to
 show the inner workings of the cleaning, including definition of low-AF cell
@@ -188,6 +167,10 @@ accelerate the process much.</p></dd>
 <dd><p>Numeric, number of threads to use for parallel processing.
 Default is <code>NULL</code> which will revert to <code>asp$worker.process.n</code> if
 <code>parallel=TRUE</code>.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Ignored. Used to catch deprecated arguments.</p></dd>
 
 </dl></div>
     <div class="section level2">

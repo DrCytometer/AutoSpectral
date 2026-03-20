@@ -51,3 +51,10 @@ unmix.poisson(
 ## Value
 
 A matrix containing the unmixed data.
+
+## References
+
+Novo D. et al. (2014). "Generalized Unmixing Model for Multispectral
+Flow Cytometry Utilizing Nonsquare Compensation Matrices" *Cytometry
+Part A*, 83(5):508–520.
+[doi:10.1002/cyto.a.22272](https://doi.org/10.1002/cyto.a.22272)

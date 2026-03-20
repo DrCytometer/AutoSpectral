@@ -24,7 +24,8 @@ do.gate(
   samp,
   scatter.and.channel.label,
   control.type,
-  asp
+  asp,
+  color.palette = "plasma"
 )
 ```
 
@@ -58,6 +59,14 @@ do.gate(
 
   The AutoSpectral parameter list, prepared using
   `get.autospectral.param`.
+
+- color.palette:
+
+  Optional character string defining the viridis color palette to be
+  used for the fluorophore traces. Default is `plasma`. Use `rainbow` to
+  be similar to FlowJo or SpectroFlo. Other options are the viridis
+  color options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`,
+  `rocket`, `mako` and `turbo`.
 
 ## Value
 

@@ -21,7 +21,8 @@ define.flow.control(
   gate = TRUE,
   parallel = FALSE,
   verbose = TRUE,
-  threads = NULL
+  threads = NULL,
+  color.palette = NULL
 )
 ```
 
@@ -64,6 +65,14 @@ define.flow.control(
 
   Numeric, number of threads to use for parallel processing. Default is
   `NULL` which will revert to `asp$worker.process.n` if `parallel=TRUE`.
+
+- color.palette:
+
+  Optional character string defining the viridis color palette to be
+  used for the fluorophore traces. Use `rainbow` to be similar to FlowJo
+  or SpectroFlo. Other options are the viridis color options: `magma`,
+  `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako` and
+  `turbo`.
 
 ## Value
 

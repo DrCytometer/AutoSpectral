@@ -29,6 +29,7 @@ unmix.fcs(
   threads = if (parallel) 0 else 1,
   verbose = TRUE,
   n.variants = NULL,
+  chunk.size = 2e+06,
   ...
 )
 ```
@@ -186,10 +187,17 @@ unmix.fcs(
   to be tested. The default is `NULL`, in which case `n.variants` will
   be ignored.
 
+- chunk.size:
+
+  Numeric, number of events to use per chunk of unmixing. Used to manage
+  memory when processing large FCS files. As a rough guide, you will
+  need approximately 10x the size of the raw FCS file on disk as
+  available memory. Default is set at `2e6` events, assuming ~20GB
+  memory available.
+
 - ...:
 
-  Ignored. Previously used for deprecated arguments such as
-  `calculate.error`.
+  Ignored. Used to catch deprecated arguments.
 
 ## Value
 

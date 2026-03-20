@@ -1,5 +1,48 @@
 # Changelog
 
+## AutoSpectral 1.5.0 (2026-03-25)
+
+### Improvements
+
+- New gating approach adapted from `flowstate`. This uses cellular
+  landmarks to identify the position of key populations on forward and
+  side-scatter. Essentially, we backgate. This means that you can use
+  well-expressed markers on known cell populations (think CD3, CD19,
+  CD14) to define the location of your cells. This is fast, appears to
+  be pretty robust, and should be easy for you, the user, to change how
+  it works. Control over this is provided via the CSV control file
+  spreadsheet using two new columns: “gate.name” to define which
+  controls should share the same gate, and “gate.define” (TRUE/FALSE) to
+  specify which samples should be used to define the gate boundaries
+  (e.g., we might use CD4 but not TIM-3 or IL-4).
+- To assist with the new gating, there is a
+  [`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md)
+  function that allows you to put in a range of parameters to quickly
+  see the impact on the gate boundary prior to running
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md).
+- Native FCS read/write functionality adapted from `flowstate`.
+- FCS file concatenation via
+  [`concatenateFCS()`](https://drcytometer.github.io/AutoSpectral/reference/concatenateFCS.md).
+- Faster gating by reducing
+  [`MASS::kde2d`](https://rdrr.io/pkg/MASS/man/kde2d.html) calls and
+  allowing C++ kernel density estimation if `AutoSpectralRcpp` is
+  installed.
+- Faster plotting along the same lines.
+- Hopefully graceful error handling during
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md).
+- Hopefully graceful error handling with diagnostic plotting during gate
+  definition, both with the gate.define functions and directly in
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md).
+- Success/failure reporting from
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md).
+- Reduced memory usage when unmixing.
+- Chunking of files when unmixing to support unmixing of any size of
+  file.
+- Spectral signature QC when running
+  [`get.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluorophore.spectra.md).
+- Autofluorescence profile QC when running
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md).
+
 ## AutoSpectral 1.0.0 (2026-02-10)
 
 ### Improvements

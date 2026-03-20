@@ -13,7 +13,7 @@ reload.flow.control(control.dir, control.def.file, asp)
 
 - control.dir:
 
-  file path to the single stained control fcs files
+  file path to the single stained control FCS files
 
 - control.def.file:
 

@@ -17,7 +17,9 @@ get.gated.flow.expression.data(
   gate.list,
   scatter.param,
   scatter.and.channel.label,
-  asp
+  asp,
+  apply.gate,
+  color.palette = "mako"
 )
 ```
 
@@ -65,8 +67,19 @@ get.gated.flow.expression.data(
 
 - asp:
 
-  The AutoSpectral parameter list. Prepare using
-  `get.autospectral.param`
+  The AutoSpectral parameter list.
+
+- apply.gate:
+
+  Logical, whether to apply a scatter gate (supplied to `gate.list`).
+
+- color.palette:
+
+  Optional character string defining the viridis color palette to be
+  used for the fluorophore traces. Default is `mako`. Use `rainbow` to
+  be similar to FlowJo or SpectroFlo. Other options are the viridis
+  color options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`,
+  `rocket`, `mako` and `turbo`.
 
 ## Value
 

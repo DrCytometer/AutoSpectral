@@ -16,21 +16,18 @@ fluorophore signatures. Any part can be run independently:
 clean.controls(
   flow.control,
   asp,
-  time.clean = FALSE,
-  trim = FALSE,
-  trim.factor = NULL,
   af.remove = TRUE,
   universal.negative = TRUE,
   downsample = TRUE,
   negative.n = asp$negative.n,
   positive.n = asp$positive.n,
   scatter.match = TRUE,
-  scrub = FALSE,
   intermediate.figures = FALSE,
   main.figures = TRUE,
   parallel = FALSE,
   verbose = TRUE,
-  threads = NULL
+  threads = NULL,
+  ...
 )
 ```
 
@@ -45,21 +42,6 @@ clean.controls(
 
   The AutoSpectral parameter list, prepared using
   `get.autospectral.param`.
-
-- time.clean:
-
-  Logical, default is `FALSE`. Whether to run PeacoQC to remove
-  time-based inconsistencies in the controls.
-
-- trim:
-
-  Logical, default is `FALSE`. Whether to remove extreme events
-  (positive and negative) from controls. Deprecated.
-
-- trim.factor:
-
-  Numeric. Default is `asp$rlm.trim.factor`. Required if `trim = TRUE`.
-  Deprecated.
 
 - af.remove:
 
@@ -95,11 +77,6 @@ clean.controls(
   scatter profiles matching the positive events. Defines a region of FSC
   and SSC based on the distribution of selected positive events.
 
-- scrub:
-
-  Logical, if `TRUE` allows for re-cleaning of already cleaned data,
-  provided there are clean data in `flow.control`. Deprecated.
-
 - intermediate.figures:
 
   Logical, if `TRUE` returns additional figures to show the inner
@@ -129,6 +106,10 @@ clean.controls(
 
   Numeric, number of threads to use for parallel processing. Default is
   `NULL` which will revert to `asp$worker.process.n` if `parallel=TRUE`.
+
+- ...:
+
+  Ignored. Used to catch deprecated arguments.
 
 ## Value
 

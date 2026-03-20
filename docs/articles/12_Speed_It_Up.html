@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,8 @@
     <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
     <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
     <li><a class="dropdown-item" href="../articles/06_Gating.html">06 Gating</a></li>
+    <li><a class="dropdown-item" href="../articles/06_Gating_Parameters_Density.html">06 Gating parameters for density gating</a></li>
+    <li><a class="dropdown-item" href="../articles/07_Advanced_Gating.html">07 Controlled Gating: Landmarks and Tuning</a></li>
     <li><a class="dropdown-item" href="../articles/07_Cleaning.html">07 Control clean-up</a></li>
     <li><a class="dropdown-item" href="../articles/08_Single_Cell_AutoFluorescence.html">08 Single Cell Autofluorescence</a></li>
     <li><a class="dropdown-item" href="../articles/09_Per_Cell_Optimization.html">09 Per Cell Optimization</a></li>
@@ -221,55 +223,44 @@ methods will likely run about 10x slower.</p>
 <p>Benchmarks for “C3 Lung_GFP_003_Samples.fcs”, again on the 8-core
 laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:</p>
 <ul>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v0.8.7: 9sec</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v0.9.0: 9sec</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v1.0.0: 9-10sec (most of this is
-handling the FCS file)</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v0.8.7: 2min</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v0.9.0: 1min</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.0.0: 11sec (45s in
-R without C++)</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.0.3: 10sec</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
-v0.8.7: 9min</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
-v0.9.0: &lt;2min</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v0.8.7: 9sec</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v0.9.0: 9sec</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v1.0.0: 9-10sec (most of this
+is handling the FCS file)</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v1.1.0: 4sec</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v0.8.7:
+2min</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v0.9.0:
+1min</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.0.0: 11sec (45s
+in R without C++)</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.0.3:
+10sec</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.1.0:
+4.5sec</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
+v0.8.7: 9min</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
+v0.9.0: &lt;2min</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
 v1.0.0: &lt;2min (note: performance here should now be comparable to the
-previous “slow”)</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
-v1.0.2: 1.3min</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
-v0.8.7: 62min</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
-v0.9.0: 19min</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
-v1.0.0: 11min</li>
-<li>
-<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
-v1.0.2: 9min</li>
-<li>
-<code><a href="../reference/unmix.folder.html">unmix.folder()</a></code> WLS or OLS, 6 files, v0.8.7: 67sec
-sequential, interrupted parallel</li>
-<li>
-<code><a href="../reference/unmix.folder.html">unmix.folder()</a></code> WLS or OLS, 6 files, v0.9.0: 62sec
-sequential, 31sec parallel</li>
+previous “slow”)</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
+v1.0.2: 1.3min</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
+v0.8.7: 62min</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
+v0.9.0: 19min</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
+v1.0.0: 11min</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “slow”
+v1.0.2: 9min</p></li>
+<li><p><code><a href="../reference/unmix.folder.html">unmix.folder()</a></code> WLS or OLS, 6 files, v0.8.7: 67sec
+sequential, interrupted parallel</p></li>
+<li><p><code><a href="../reference/unmix.folder.html">unmix.folder()</a></code> WLS or OLS, 6 files, v0.9.0: 62sec
+sequential, 31sec parallel</p></li>
 </ul>
-<p>I do not expect more major gains, although I will look into GPU
+<p>I do not expect more major gains, but I will look into GPU
 acceleration.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

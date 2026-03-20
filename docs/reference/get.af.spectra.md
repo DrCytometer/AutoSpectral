@@ -18,7 +18,8 @@ get.af.spectra(
   title = "Autofluorescence spectra",
   verbose = TRUE,
   refine = FALSE,
-  problem.quantile = 0.99
+  problem.quantile = 0.99,
+  remove.contaminants = TRUE
 )
 ```
 
@@ -93,6 +94,25 @@ get.af.spectra(
   the top 1% of cells, those farthest from zero, will be selected for
   further investigation.
 
+- remove.contaminants:
+
+  Logical, default is `TRUE`. A QC check is performed to exclude any
+  autofluorescence spectra that are nearly identical to the fluorophore
+  signatures in `spectra`. This helps deal with low-level contamination
+  of unstained samples by single-stained control samples, which happens
+  sometimes. To include these AF spectra, which can mess up unmixing if
+  they are really fluorophore spectra, set `FALSE`.
+
 ## Value
 
 A matrix of autofluorescence spectra.
+
+## References
+
+Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
+visualization and interpretation of cytometry data." *Cytometry Part A*,
+87(7), 636-645.
+[doi:10.1002/cyto.a.22625](https://doi.org/10.1002/cyto.a.22625) Wehrens
+R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
+3.0.” *Journal of Statistical Software*, *87*(7), 1-18.
+[doi:10.18637/jss.v087.i07](https://doi.org/10.18637/jss.v087.i07)

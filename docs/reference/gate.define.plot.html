@@ -9,7 +9,7 @@ including boundaries and regions."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,8 @@ including boundaries and regions."></head><body>
     <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
     <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
     <li><a class="dropdown-item" href="../articles/06_Gating.html">06 Gating</a></li>
+    <li><a class="dropdown-item" href="../articles/06_Gating_Parameters_Density.html">06 Gating parameters for density gating</a></li>
+    <li><a class="dropdown-item" href="../articles/07_Advanced_Gating.html">07 Controlled Gating: Landmarks and Tuning</a></li>
     <li><a class="dropdown-item" href="../articles/07_Cleaning.html">07 Control clean-up</a></li>
     <li><a class="dropdown-item" href="../articles/08_Single_Cell_AutoFluorescence.html">08 Single Cell Autofluorescence</a></li>
     <li><a class="dropdown-item" href="../articles/09_Per_Cell_Optimization.html">09 Per Cell Optimization</a></li>
@@ -66,7 +68,8 @@ including boundaries and regions.</p>
 <span>  <span class="va">scatter.and.channel.label</span>,</span>
 <span>  <span class="va">asp</span>,</span>
 <span>  color.palette <span class="op">=</span> <span class="st">"plasma"</span>,</span>
-<span>  max.points <span class="op">=</span> <span class="fl">1e+05</span></span>
+<span>  max.points <span class="op">=</span> <span class="fl">1e+05</span>,</span>
+<span>  gate.color <span class="op">=</span> <span class="st">"black"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -108,14 +111,18 @@ including boundaries and regions.</p>
 
 <dt id="arg-color-palette">color.palette<a class="anchor" aria-label="anchor" href="#arg-color-palette"></a></dt>
 <dd><p>Optional character string defining the viridis color
-palette to be used for the fluorophore traces. Default is <code>rainbow</code>, which will
-be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
+palette to be used for the fluorophore traces. Default is <code>plasma</code>. Use <code>rainbow</code>
+to be similar to FlowJo or SpectroFlo. Other options are the viridis color
 options: <code>magma</code>, <code>inferno</code>, <code>plasma</code>, <code>viridis</code>, <code>cividis</code>, <code>rocket</code>, <code>mako</code>
 and <code>turbo</code>.</p></dd>
 
 
 <dt id="arg-max-points">max.points<a class="anchor" aria-label="anchor" href="#arg-max-points"></a></dt>
 <dd><p>Number of points to plot. Default is <code>1e5</code>.</p></dd>
+
+
+<dt id="arg-gate-color">gate.color<a class="anchor" aria-label="anchor" href="#arg-gate-color"></a></dt>
+<dd><p>Color to plot the gate boundary line, default is <code>black</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

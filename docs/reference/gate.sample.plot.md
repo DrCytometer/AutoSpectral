@@ -15,7 +15,9 @@ gate.sample.plot(
   control.type,
   asp,
   color.palette = "mako",
-  max.points = 50000
+  max.points = 50000,
+  gate.color = "darkgoldenrod1",
+  switch.n = 20000
 )
 ```
 
@@ -53,14 +55,23 @@ gate.sample.plot(
 - color.palette:
 
   Optional character string defining the viridis color palette to be
-  used for the fluorophore traces. Default is `rainbow`, which will be
-  similar to FlowJo or SpectroFlo. Other pptions are the viridis color
-  options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`,
-  `mako` and `turbo`.
+  used for the fluorophore traces. Default is `mako`. Use `rainbow` to
+  be similar to FlowJo or SpectroFlo. Other options are the viridis
+  color options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`,
+  `rocket`, `mako` and `turbo`.
 
 - max.points:
 
   Number of points to plot (speeds up plotting). Default is `5e4`.
+
+- gate.color:
+
+  Color to plot the gate boundary line, default is `darkgoldenrod1`.
+
+- switch.n:
+
+  Number of points to trigger the switch to using slower but more robust
+  density plotting. Default is `1e4`.
 
 ## Value
 
