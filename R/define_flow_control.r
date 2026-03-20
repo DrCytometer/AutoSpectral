@@ -13,6 +13,12 @@
 #' considerably on Mac and Linux systems supporting forking, but will likely
 #' not help much on Windows unless >10 cores are available.
 #'
+#' @importFrom ggplot2 ggplot aes stat_density_2d scale_fill_viridis_c
+#' @importFrom ggplot2 coord_cartesian theme scale_color_manual geom_path
+#' @importFrom ggplot2 theme_bw labs ggsave after_stat guides
+#' @importFrom ragg agg_jpeg
+#' @importFrom scattermore geom_scattermore
+#'
 #' @param control.dir File path to the single-stained control FCS files.
 #' @param control.def.file CSV file defining the single-color control file names,
 #' fluorophores they represent, marker names, peak channels, and gating requirements.
@@ -30,6 +36,11 @@
 #' @param threads Numeric, number of threads to use for parallel processing.
 #' Default is `NULL` which will revert to `asp$worker.process.n` if
 #' `parallel=TRUE`.
+#' @param color.palette Optional character string defining the viridis color
+#' palette to be used for the fluorophore traces. Use `rainbow`
+#' to be similar to FlowJo or SpectroFlo. Other options are the viridis color
+#' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
+#' and `turbo`.
 #'
 #' @return A list (`flow.control`) with the following components:
 #' - `filename`: Names of the single-color control files.
@@ -68,7 +79,8 @@ define.flow.control <- function(
     gate = TRUE,
     parallel = FALSE,
     verbose = TRUE,
-    threads = NULL
+    threads = NULL,
+    color.palette = NULL
   ) {
 
   if ( verbose ) message( "\033[34mChecking control file for errors \033[0m" )
@@ -169,10 +181,14 @@ define.flow.control <- function(
         new.row <- matching.row[ 1, ]
         new.row$large.gate        <- lg
         new.row$is.viability      <- vi
-        new.row$fluorophore       <- paste( new.row$control.type, "Negative", i )
+        new.row$fluorophore       <-  if ( grepl( "negative", new.row$fluorophore, ignore.case = TRUE ) ) {
+          paste( new.row$fluorophore,  )
+        } else {
+          paste( new.row$fluorophore, "Negative", i )
+        }
         new.row$sample            <- new.row$fluorophore
         new.row$universal.negative <- NA
-        control.table <- rbind(control.table, new.row)
+        control.table <- rbind( control.table, new.row )
       }
     }
   }
@@ -315,7 +331,7 @@ define.flow.control <- function(
   names( flow.channel ) <- flow.sample
 
   if ( anyDuplicated( flow.scatter.and.channel.spectral ) != 0 )
-    stop( "internal error: names for channels overlap", call. = FALSE )
+    stop( "Names for channels overlap", call. = FALSE )
 
   # set labels for time, scatter parameters and channels
   flow.scatter.and.channel.label <- c(
@@ -363,6 +379,13 @@ define.flow.control <- function(
 
       scatter.coords <- do.call( rbind, scatter.coords )
 
+      # check that we actually have data here
+      if ( is.null( scatter.coords ) || nrow( scatter.coords ) == 0 ) {
+        message( "\n\033[31mError: No data found for Gate ID: ", gate.id, "\033[0m" )
+        message( "Files checked: ", paste( files.to.gate, collapse = ", " ) )
+        stop( "Execution halted: scatter.coords is empty. Check if FCS files are empty or paths are correct." )
+      }
+
       viability.gate <- unique(
         control.table.valid[ control.table.valid$gate == gate.id, ]$is.viability
       )
@@ -386,15 +409,32 @@ define.flow.control <- function(
         length( control.type ) == 1
       )
 
-      gate.boundary <- do.gate(
-        scatter.coords,
-        viability.gate,
-        large.gate,
-        samp,
-        flow.scatter.and.channel.label,
-        control.type,
-        asp
-      )
+      # define the gate, with error handling for exceptions
+      gate.boundary <- tryCatch({
+        do.gate(
+          scatter.coords,
+          viability.gate,
+          large.gate,
+          samp,
+          flow.scatter.and.channel.label,
+          control.type,
+          asp,
+          color.palette = if ( is.null(color.palette) ) "plasma" else color.palette
+        )
+      }, error = function(e) {
+        # execute error handling with diagnostic plotting
+        handle.gating.error(
+          e = e,
+          gate.id = gate.id,
+          files.to.gate = files.to.gate,
+          scatter.coords = scatter.coords,
+          samp = samp,
+          viability.gate = viability.gate,
+          control.type = control.type,
+          flow.scatter.and.channel.label = flow.scatter.and.channel.label,
+          asp = asp
+        )
+      })
 
       gate.list[[ gate.id ]] <- gate.boundary
     }
@@ -415,7 +455,8 @@ define.flow.control <- function(
     scatter.param = flow.scatter.parameter,
     scatter.and.channel.label = flow.scatter.and.channel.label,
     asp = asp,
-    apply.gate = gate
+    apply.gate = gate,
+    color.palette = if ( is.null(color.palette) ) "mako" else color.palette
   )
 
   # set up parallel processing

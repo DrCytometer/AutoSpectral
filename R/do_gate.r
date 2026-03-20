@@ -27,6 +27,11 @@
 #' @param control.type The type of control used, either "beads" or "cells".
 #' @param asp The AutoSpectral parameter list, prepared using
 #' `get.autospectral.param`.
+#' @param color.palette Optional character string defining the viridis color
+#' palette to be used for the fluorophore traces. Default is `plasma`. Use `rainbow`
+#' to be similar to FlowJo or SpectroFlo. Other options are the viridis color
+#' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
+#' and `turbo`.
 #'
 #' @return A vector with the indexes of events inside the initial gate.
 #'
@@ -39,7 +44,8 @@ do.gate <- function(
     samp,
     scatter.and.channel.label,
     control.type,
-    asp
+    asp,
+    color.palette = "plasma"
 ) {
 
   # set parameters for beads or cells
@@ -411,7 +417,8 @@ do.gate <- function(
     gate.region,
     gate.population,
     scatter.and.channel.label,
-    asp )
+    asp,
+    color.palette )
 
   return( gate.population.boundary )
 }

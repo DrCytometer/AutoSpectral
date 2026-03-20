@@ -212,8 +212,13 @@ gate.sample.plot <- function(
     n.bins <- max( 1, length( density.breaks ) - 1 )
     rainbow.palette <- grDevices::colorRampPalette( asp$density.palette.base.color )( n.bins )
 
-    gate.plot <- gate.plot +
-      scale_fill_manual( values = rainbow.palette )
+    if ( n.points > switch.n ) {
+      # Use discrete scale for binned contours
+      gate.plot <- gate.plot + scale_fill_manual( values = rainbow.palette )
+    } else {
+      # Use continuous scale for stat_density_2d
+      gate.plot <- gate.plot + scale_fill_gradientn( colors = rainbow.palette )
+    }
   }
 
   ggsave(
