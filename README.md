@@ -7,7 +7,7 @@
 
 <!-- badges: end -->
 
-**Version 1.1.0**
+**Version 1.5.0**
 
 Welcome to the Development branch of AutoSpectral.
 
