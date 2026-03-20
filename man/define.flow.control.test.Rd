@@ -13,7 +13,8 @@ define.flow.control.test(
   gate.list = NULL,
   parallel = FALSE,
   verbose = TRUE,
-  threads = NULL
+  threads = NULL,
+  color.palette = NULL
 )
 }
 \arguments{
@@ -59,6 +60,12 @@ accelerate the process much.}
 \item{threads}{Numeric, number of threads to use for parallel processing.
 Default is \code{NULL} which will revert to \code{asp$worker.process.n} if
 \code{parallel=TRUE}.}
+
+\item{color.palette}{Optional character string defining the viridis color
+palette to be used for the fluorophore traces. Use \code{rainbow}
+to be similar to FlowJo or SpectroFlo. Other options are the viridis color
+options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
+and \code{turbo}.}
 }
 \value{
 A list (\code{flow.control}) with the following components:

@@ -47,6 +47,11 @@
 #' @param threads Numeric, number of threads to use for parallel processing.
 #' Default is `NULL` which will revert to `asp$worker.process.n` if
 #' `parallel=TRUE`.
+#' @param color.palette Optional character string defining the viridis color
+#' palette to be used for the fluorophore traces. Use `rainbow`
+#' to be similar to FlowJo or SpectroFlo. Other options are the viridis color
+#' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
+#' and `turbo`.
 #'
 #' @return A list (`flow.control`) with the following components:
 #' - `filename`: Names of the single-color control files.
@@ -98,7 +103,8 @@ define.flow.control.test <- function(
     gate.list = NULL,
     parallel = FALSE,
     verbose = TRUE,
-    threads = NULL
+    threads = NULL,
+    color.palette = NULL
   ) {
 
   if ( verbose ) message( "\033[34mChecking control file for errors \033[0m" )
@@ -275,7 +281,8 @@ define.flow.control.test <- function(
             output.dir = asp$figure.gate.dir,
             gate.name = g.name,
             verbose = FALSE,
-            control.table = control.table
+            control.table = control.table,
+            color.palette = if ( is.null(color.palette) ) "plasma" else color.palette
           )
         } else {
           final.gate.list[[ g.name ]] <- define.gate.landmarks(
@@ -286,7 +293,8 @@ define.flow.control.test <- function(
             gate.name = g.name,
             verbose = FALSE,
             control.table = control.table,
-            check = FALSE
+            check = FALSE,
+            color.palette = if ( is.null(color.palette) ) "plasma" else color.palette
           )
         }
       }
@@ -311,7 +319,8 @@ define.flow.control.test <- function(
     scatter.param = flow.scatter.parameter,
     scatter.and.channel.label = flow.scatter.and.channel.label,
     asp = asp,
-    apply.gate = gate
+    apply.gate = gate,
+    color.palette = if ( is.null(color.palette) ) "mako" else color.palette
   )
 
   # set up parallel processing
