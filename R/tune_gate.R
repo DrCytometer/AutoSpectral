@@ -158,18 +158,13 @@ tune.gate <- function(
   sample.n <- length( file.idx )
 
   if ( sample.n < 1 ) {
-    stop( "No samples left after excluding unstained samples. Please check control file and try again.",
-          call. = FALSE )
+    stop(
+      "No samples left after excluding unstained samples. Please check control file and try again.",
+      call. = FALSE
+    )
   }
 
   # check that everything matches (same type of particles, same gating definitions)
-  check.consistency <- function( vec, var.name ) {
-    u <- unique( vec )
-    if ( length( u ) > 1 ) {
-      stop( paste( "Inconsistent values for", var.name, "found in selected samples." ), call. = FALSE )
-    }
-    return( u )
-  }
   sample.type <- check.consistency( control.table$control.type[ file.idx ], "control.type" )
   large.gate  <- check.consistency( control.table$large.gate[ file.idx ], "large.gate" )
   viability   <- check.consistency( control.table$is.viability[ file.idx ], "is.viability" )
@@ -230,30 +225,53 @@ tune.gate <- function(
   plot.data[ , 1 ] <- pmin( plot.data[ , 1 ], asp$scatter.data.max.x )
   plot.data[ , 2 ] <- pmin( plot.data[ , 2 ], asp$scatter.data.max.y )
 
-  # calculate density once for plotting
-  bw <- apply( plot.data, 2, bandwidth.nrd ) * bandwidth.factor
-
-  if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
-       "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
-       nrow( plot.data ) > 1e4 ) {
-    # use C++ function to get density
-    gate.bound.density <- AutoSpectralRcpp::fast_kde2d_cpp(
-      x = plot.data[ , 1 ],
-      y = plot.data[ , 2 ],
-      n = grid.n,
-      h = bw * 0.1,
-      x_limits = range( plot.data[ , 1 ] ),
-      y_limits = range( plot.data[ , 2 ] )
-    )
-  } else {
-    # use slower MASS call
-    gate.bound.density <- MASS::kde2d(
-      x = plot.data[ , 1 ],
-      y = plot.data[ , 2 ],
-      n = grid.n,
-      h = bw
-    )
+  # check that we actually have data here
+  if ( is.null( plot.data ) || nrow( plot.data ) == 0 ) {
+    message( "\n\033[31mError: No data found for plotting gate: ", gate.name, "\033[0m" )
+    message( "Files checked: ", paste( names( files.channels ), collapse = ", " ) )
+    stop( "Execution halted: no data in FCS files. Check if FCS files are empty or paths are correct." )
   }
+
+  # find dense region, with error handling for exceptions
+  tryCatch({
+    # calculate density once for plotting
+    bw <- apply( plot.data, 2, bandwidth.nrd ) * bandwidth.factor
+
+    if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+         "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
+         nrow( plot.data ) > 1e4 ) {
+      # use C++ function to get density
+      gate.bound.density <- AutoSpectralRcpp::fast_kde2d_cpp(
+        x = plot.data[ , 1 ],
+        y = plot.data[ , 2 ],
+        n = grid.n,
+        h = bw * 0.1,
+        x_limits = range( plot.data[ , 1 ] ),
+        y_limits = range( plot.data[ , 2 ] )
+      )
+    } else {
+      # use slower MASS call
+      gate.bound.density <- MASS::kde2d(
+        x = plot.data[ , 1 ],
+        y = plot.data[ , 2 ],
+        n = grid.n,
+        h = bw
+      )
+    }
+  }, error = function(e) {
+    # execute error handling with diagnostic plotting
+    handle.gating.error(
+      e = e,
+      gate.id = gate.name,
+      files.to.gate = names( files.channels ),
+      scatter.coords = plot.data,
+      samp = paste0( filename, gate.name ),
+      viability.gate = viability,
+      control.type = sample.type,
+      flow.scatter.and.channel.label = c( fsc.channel, ssc.channel ),
+      asp = asp
+    )
+  })
 
   # format the density for plotting
   density.df <- data.frame( expand.grid(

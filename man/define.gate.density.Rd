@@ -29,7 +29,9 @@ define.gate.density(
   boundary.color = "black",
   points.to.plot = 1e+05,
   width = 5,
-  height = 5
+  height = 5,
+  verbose = TRUE,
+  control.table = NULL
 )
 }
 \arguments{
@@ -39,8 +41,7 @@ channels, and gating requirements.}
 
 \item{control.dir}{File path to the single-stained control FCS files.}
 
-\item{asp}{The AutoSpectral parameter list defined using
-\code{get.autospectral.param}.}
+\item{asp}{The AutoSpectral parameter list defined using \code{get.autospectral.param}.}
 
 \item{gating.params}{Previously saved gating parameters. Load in the .rds file
 using \code{readRDS} and pass the result here if you wish to replicate a previous
@@ -130,6 +131,11 @@ close to this number when defining the gate with landmarks.}
 \item{width}{Numeric, default \code{5}. Width of the saved plot.}
 
 \item{height}{Numeric, default \code{5}. Height of the saved plot.}
+
+\item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
+
+\item{control.table}{Dataframe or table of the control file, read in via
+\code{define.flow.control()} and cleaned up by that function.}
 }
 \value{
 A set of points describing the gate boundary.

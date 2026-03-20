@@ -107,7 +107,7 @@ do.gate.test <- function(
   if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
        "find_local_maxima" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
        "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
-       length( gate.bound.data.idx > 10000 ) ) {
+       length( gate.bound.data.idx ) > 1e4 ) {
     # use C++ functions if available
     master.density <- AutoSpectralRcpp::fast_kde2d_cpp(
       gate.data[ gate.bound.data.idx, 1 ],

@@ -68,6 +68,12 @@
 #' close to this number when defining the gate with landmarks.
 #' @param width Numeric, default `5`. Width of the saved plot.
 #' @param height Numeric, default `5`. Height of the saved plot.
+#' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+#' @param control.table Dataframe or table of the control file, read in via
+#' `define.flow.control()` and cleaned up by that function.
+#' @param check Logical, default is `TRUE`. Set to `FALSE` to skip consistency
+#' checks on gate defining columns in the control table: `large.gate`,
+#' `is.viability` and `sample.type`.
 #'
 #' @seealso
 #' * [tune.gate()]
@@ -103,24 +109,29 @@ define.gate.landmarks <- function(
     boundary.color = "black",
     points.to.plot = 1e5,
     width = 5,
-    height = 5
+    height = 5,
+    verbose = TRUE,
+    control.table = NULL,
+    check = TRUE
 ) {
 
   # read control info
-  control.table <- utils::read.csv(
-    control.file,
-    stringsAsFactors = FALSE,
-    strip.white = TRUE
-  )
+  if ( is.null( control.table ) ) {
+    control.table <- utils::read.csv(
+      control.file,
+      stringsAsFactors = FALSE,
+      strip.white = TRUE
+    )
 
-  # trim white space, convert blanks to NAs
-  control.table[] <- lapply( control.table, function( x ) {
-    if ( is.character( x ) ) {
-      x <- trimws( x )
-      x[ x == "" ] <- NA
-      x
-    } else x
-  } )
+    # trim white space, convert blanks to NAs
+    control.table[] <- lapply( control.table, function( x ) {
+      if ( is.character( x ) ) {
+        x <- trimws( x )
+        x[ x == "" ] <- NA
+        x
+      } else x
+    } )
+  }
 
   # fill in blanks
   control.table$is.viability[ is.na( control.table$is.viability ) ] <- FALSE
@@ -135,17 +146,19 @@ define.gate.landmarks <- function(
   unstained.samples <- grepl( "AF|negative", sample.fluors, ignore.case = TRUE )
 
   if ( any( unstained.samples ) ) {
+    unstained.sample.names <- control.table$filename[ file.idx[ unstained.samples ] ]
+    formatted.list <- paste0( "\n - ", unstained.sample.names, collapse = "" )
     file.idx <- file.idx[ !unstained.samples ]
-    unstained.samples <- control.table$filename[ file.idx[ unstained.samples ] ]
     files.to.use <- control.table$filename[ file.idx ]
 
-    message(
-      paste(
-        "Unstained samples were included in the files to be used for gating.",
-        "These have been removed:",
-        unstained.samples
+    if ( verbose ) {
+      message(
+        paste(
+          "Unstained samples were included in the files to be used for gating.",
+          "These have been removed:", formatted.list
+        )
       )
-    )
+    }
   }
 
   # re-check to be sure we still have samples
@@ -157,16 +170,11 @@ define.gate.landmarks <- function(
   }
 
   # check that everything matches (same type of particles, same gating definitions)
-  check.consistency <- function( vec, var.name ) {
-    u <- unique( vec )
-    if ( length( u ) > 1 ) {
-      stop( paste( "Inconsistent values for", var.name, "found in selected samples." ), call. = FALSE )
-    }
-    return( u )
+  if ( check ) {
+    sample.type <- check.consistency( control.table$control.type[ file.idx ], "control.type" )
+    large.gate  <- check.consistency( control.table$large.gate[ file.idx ], "large.gate" )
+    viability   <- check.consistency( control.table$is.viability[ file.idx ], "is.viability" )
   }
-  sample.type <- check.consistency( control.table$control.type[ file.idx ], "control.type" )
-  large.gate  <- check.consistency( control.table$large.gate[ file.idx ], "large.gate" )
-  viability   <- check.consistency( control.table$is.viability[ file.idx ], "is.viability" )
 
   # if the user has provided gating.params (asp), replace asp and start here as base
   if ( !is.null( gating.params ) ) asp <- gating.params
@@ -194,7 +202,8 @@ define.gate.landmarks <- function(
 
   percentile <- percentile * 0.01 # convert to percentage (quantile)
 
-  message( paste( "Defining", gate.name, "gate using", length( file.idx ), "FCS files." ) )
+  if ( verbose )
+    message( paste( "Defining", gate.name, "gate using", length( file.idx ), "FCS files." ) )
 
   files.channels <- control.table$channel[ file.idx ]
   names( files.channels ) <- control.table$filename[ file.idx ]
@@ -210,19 +219,56 @@ define.gate.landmarks <- function(
       n.cells,
       scatter.param = c( fsc.channel, ssc.channel )
     )
-  } ) )
+  }))
 
-  # kernel density estimation
-  bw <- apply( pooled.scatter.data, 2, bandwidth.nrd )
-  dens <- MASS::kde2d(
-    pooled.scatter.data[, fsc.channel ],
-    pooled.scatter.data[, ssc.channel ],
-    h = bandwidth.factor * bw,
-    n = grid.n
-  )
+  # check that we actually have data here
+  if ( is.null( pooled.scatter.data ) || nrow( pooled.scatter.data ) == 0 ) {
+    message( "\n\033[31mError: No data found for gate: ", gate.name, "\033[0m" )
+    message( "Files checked: ", paste( names( files.channels ), collapse = ", " ) )
+    stop( "Execution halted: no data in FCS files. Check if FCS files are empty or paths are correct." )
+  }
 
-  # can add namespace switch to use kde2d from AutoSpectralRcpp if available
-  # and if this proves slow
+  # find dense region, with error handling for exceptions
+  tryCatch({
+    # calculate bandwidth for kernel density estimation
+    bw <- apply( pooled.scatter.data, 2, bandwidth.nrd )
+
+    # kernel density estimation, use Rcpp if lots of data
+    if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+         "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
+         nrow( pooled.scatter.data ) > 1e4 ) {
+      # use C++ function if available
+      dens <- AutoSpectralRcpp::fast_kde2d_cpp(
+        pooled.scatter.data[, fsc.channel ],
+        pooled.scatter.data[, ssc.channel ],
+        n = grid.n,
+        h = bandwidth.factor * bw * 0.1,
+        x_limits = range( pooled.scatter.data[, fsc.channel ] ),
+        y_limits = range( pooled.scatter.data[, ssc.channel ] )
+      )
+    } else {
+      # slower R fallback
+      dens <- MASS::kde2d(
+        pooled.scatter.data[, fsc.channel ],
+        pooled.scatter.data[, ssc.channel ],
+        h = bandwidth.factor * bw,
+        n = grid.n
+      )
+    }
+  }, error = function(e) {
+    # execute error handling with diagnostic plotting
+    handle.gating.error(
+      e = e,
+      gate.id = gate.name,
+      files.to.gate = names( files.channels ),
+      scatter.coords = pooled.scatter.data,
+      samp = paste0( filename, gate.name ),
+      viability.gate = viability,
+      control.type = sample.type,
+      flow.scatter.and.channel.label = c( fsc.channel, ssc.channel ),
+      asp = asp
+    )
+  })
 
   # find the density threshold
   z.sort <- sort( dens$z, decreasing = TRUE)
@@ -238,14 +284,11 @@ define.gate.landmarks <- function(
 
   # define a smooth convex hull around those coordinates
   gate.hull <- gate.coords[ grDevices::chull( gate.coords ), ]
-  gate.hull <- rbind( gate.hull, gate.hull[ 1, ] )
-
-  gate.boundary <- list(
-    x = gate.hull[ , 1 ],
-    y = gate.hull[ , 2 ]
+  gate.boundary <- tripack::convex.hull(
+    tripack::tri.mesh( gate.hull[, 1], gate.hull[, 2] )
   )
+
   gate.population <- list( boundary = gate.boundary )
-  names( gate.boundary ) <- gate.name
 
   # format regions for plotting
   gate.bound <- list(
@@ -281,20 +324,24 @@ define.gate.landmarks <- function(
     }
   )
 
+  # create output subfolder
+  output.dir <- paste0( output.dir, "/gate_definitions" )
+  if ( !dir.exists( output.dir ) ) dir.create( output.dir )
+
   # generate timestamp
   ts <- format( Sys.time(), "%Y%m%d_%H%M%S" )
 
   # save the gate as an R object for later use
   saveRDS(
     gate.boundary,
-    file = file.path( output.dir, paste0( filename, "_", gate.name, "_", ts, ".rds" ) )
+    file = file.path( output.dir, paste0( filename, gate.name, "_", ts, ".rds" ) )
   )
   saveRDS(
     asp,
-    file = file.path( output.dir, paste0( filename, "_params_", gate.name, "_", ts, ".rds" ) )
+    file = file.path( output.dir, paste0( filename, "params_", gate.name, "_", ts, ".rds" ) )
   )
 
-  message( paste( "Files saved with timestamp suffix:", ts ) )
+  if ( verbose ) message( paste( "Files saved with timestamp suffix:", ts ) )
 
   return( gate.boundary )
 

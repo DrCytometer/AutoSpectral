@@ -18,8 +18,7 @@
 #' color control file names, fluorophores they represent, marker names, peak
 #' channels, and gating requirements.
 #' @param control.dir File path to the single-stained control FCS files.
-#' @param asp The AutoSpectral parameter list defined using
-#' `get.autospectral.param`.
+#' @param asp The AutoSpectral parameter list defined using `get.autospectral.param`.
 #' @param gating.params Previously saved gating parameters. Load in the .rds file
 #' using `readRDS` and pass the result here if you wish to replicate a previous
 #' run. This is essentially just an updated version of `asp` containing any
@@ -87,6 +86,9 @@
 #' close to this number when defining the gate with landmarks.
 #' @param width Numeric, default `5`. Width of the saved plot.
 #' @param height Numeric, default `5`. Height of the saved plot.
+#' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+#' @param control.table Dataframe or table of the control file, read in via
+#' `define.flow.control()` and cleaned up by that function.
 #'
 #' @seealso
 #' * [tune.gate()]
@@ -128,24 +130,28 @@ define.gate.density <- function(
     boundary.color = "black",
     points.to.plot = 1e5,
     width = 5,
-    height = 5
+    height = 5,
+    verbose = TRUE,
+    control.table = NULL
 ) {
 
   # read control info
-  control.table <- utils::read.csv(
-    control.file,
-    stringsAsFactors = FALSE,
-    strip.white = TRUE
-  )
+  if ( is.null( control.table ) ) {
+    control.table <- utils::read.csv(
+      control.file,
+      stringsAsFactors = FALSE,
+      strip.white = TRUE
+    )
 
-  # trim white space, convert blanks to NAs
-  control.table[] <- lapply( control.table, function( x ) {
-    if ( is.character( x ) ) {
-      x <- trimws( x )
-      x[ x == "" ] <- NA
-      x
-    } else x
-  } )
+    # trim white space, convert blanks to NAs
+    control.table[] <- lapply( control.table, function( x ) {
+      if ( is.character( x ) ) {
+        x <- trimws( x )
+        x[ x == "" ] <- NA
+        x
+      } else x
+    } )
+  }
 
   # fill in blanks
   control.table$is.viability[ is.na( control.table$is.viability ) ] <- FALSE
@@ -156,13 +162,6 @@ define.gate.density <- function(
   files.to.use <- control.table$filename[ file.idx ]
 
   # check that everything matches (same type of particles, same gating definitions)
-  check.consistency <- function( vec, var.name ) {
-    u <- unique( vec )
-    if ( length( u ) > 1 ) {
-      stop( paste( "Inconsistent values for", var.name, "found in selected samples." ), call. = FALSE )
-    }
-    return( u )
-  }
   sample.type <- check.consistency( control.table$control.type[ file.idx ], "control.type" )
   large.gate  <- check.consistency( control.table$large.gate[ file.idx ], "large.gate" )
   viability   <- check.consistency( control.table$is.viability[ file.idx ], "is.viability" )
@@ -219,7 +218,8 @@ define.gate.density <- function(
   if ( !is.null( ssc.search.min ) ) asp[[ target ]]$region.factor.y.low  <- ssc.search.min
   if ( !is.null( ssc.search.max ) ) asp[[ target ]]$region.factor.y.high <- ssc.search.max
 
-  message( paste( "Defining", gate.name, "gate using", length( file.idx ), "FCS files." ) )
+  if ( verbose )
+    message( paste( "Defining", gate.name, "gate using", length( file.idx ), "FCS files." ) )
 
   # read in up to 100k events, split between files
   max.event.n <- ceiling( 1e5 / length( files.to.use ) )
@@ -243,19 +243,45 @@ define.gate.density <- function(
 
   gate.data <- do.call( rbind, gate.data )
 
-  gate <- do.gate.test(
-    gate.data = gate.data,
-    viability.gate = viability,
-    large.gate = large.gate,
-    samp = paste0( filename, gate.name ),
-    scatter.and.channel.label = c( fsc.channel, ssc.channel ),
-    control.type = sample.type,
-    asp = asp,
-    color.palette = color.palette,
-    max.points = points.to.plot,
-    gate.color = boundary.color
-  )
-  names( gate ) <- gate.name
+  # check that we actually have data here
+  if ( is.null( gate.data ) || nrow( gate.data ) == 0 ) {
+    message( "\n\033[31mError: No data found for gate: ", gate.name, "\033[0m" )
+    message( "Files checked: ", paste( files.to.use, collapse = ", " ) )
+    stop( "Execution halted: no data in FCS files. Check if FCS files are empty or paths are correct." )
+  }
+
+  # define the gate, with error handling for exceptions
+  gate <- tryCatch({
+    do.gate.test(
+      gate.data = gate.data,
+      viability.gate = viability,
+      large.gate = large.gate,
+      samp = paste0( filename, gate.name ),
+      scatter.and.channel.label = c( fsc.channel, ssc.channel ),
+      control.type = sample.type,
+      asp = asp,
+      color.palette = color.palette,
+      max.points = points.to.plot,
+      gate.color = boundary.color
+    )
+  }, error = function(e) {
+    # execute error handling with diagnostic plotting
+    handle.gating.error(
+      e = e,
+      gate.id = gate.name,
+      files.to.gate = files.to.use,
+      scatter.coords = gate.data,
+      samp = paste0( filename, gate.name ),
+      viability.gate = viability,
+      control.type = sample.type,
+      flow.scatter.and.channel.label = c( fsc.channel, ssc.channel ),
+      asp = asp
+    )
+  })
+
+  # create output subfolder
+  output.dir <- paste0( output.dir, "/gate_definitions" )
+  if ( !dir.exists( output.dir ) ) dir.create( output.dir )
 
   # generate timestamp
   ts <- format( Sys.time(), "%Y%m%d_%H%M%S" )
@@ -263,14 +289,14 @@ define.gate.density <- function(
   # save the gate as an R object for later use
   saveRDS(
     gate,
-    file = file.path( output.dir, paste0( filename, "_", gate.name, "_", ts, ".rds" ) )
+    file = file.path( output.dir, paste0( filename, gate.name, "_", ts, ".rds" ) )
   )
   saveRDS(
     asp,
-    file = file.path( output.dir, paste0( filename, "_params_", gate.name, "_", ts, ".rds" ) )
+    file = file.path( output.dir, paste0( filename, "params_", gate.name, "_", ts, ".rds" ) )
   )
 
-  message( paste( "Files saved with timestamp suffix:", ts ) )
+  if ( verbose ) message( paste( "Files saved with timestamp suffix:", ts ) )
 
   return( gate )
 }

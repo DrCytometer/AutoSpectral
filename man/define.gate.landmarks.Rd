@@ -24,7 +24,10 @@ define.gate.landmarks(
   boundary.color = "black",
   points.to.plot = 1e+05,
   width = 5,
-  height = 5
+  height = 5,
+  verbose = TRUE,
+  control.table = NULL,
+  check = TRUE
 )
 }
 \arguments{
@@ -103,6 +106,15 @@ close to this number when defining the gate with landmarks.}
 \item{width}{Numeric, default \code{5}. Width of the saved plot.}
 
 \item{height}{Numeric, default \code{5}. Height of the saved plot.}
+
+\item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
+
+\item{control.table}{Dataframe or table of the control file, read in via
+\code{define.flow.control()} and cleaned up by that function.}
+
+\item{check}{Logical, default is \code{TRUE}. Set to \code{FALSE} to skip consistency
+checks on gate defining columns in the control table: \code{large.gate},
+\code{is.viability} and \code{sample.type}.}
 }
 \value{
 A set of points describing the gate boundary.

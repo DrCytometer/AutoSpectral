@@ -11,7 +11,8 @@ do.gate(
   samp,
   scatter.and.channel.label,
   control.type,
-  asp
+  asp,
+  color.palette = "plasma"
 )
 }
 \arguments{
@@ -29,6 +30,12 @@ do.gate(
 
 \item{asp}{The AutoSpectral parameter list, prepared using
 \code{get.autospectral.param}.}
+
+\item{color.palette}{Optional character string defining the viridis color
+palette to be used for the fluorophore traces. Default is \code{plasma}. Use \code{rainbow}
+to be similar to FlowJo or SpectroFlo. Other options are the viridis color
+options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
+and \code{turbo}.}
 }
 \value{
 A vector with the indexes of events inside the initial gate.
