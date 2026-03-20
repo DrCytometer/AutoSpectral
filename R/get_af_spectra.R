@@ -43,6 +43,12 @@
 #' of clustering and modulation of the previously selected autofluorescence
 #' spectra. A value of `0.99` means the top 1% of cells, those farthest from zero,
 #' will be selected for further investigation.
+#' @param remove.contaminants Logical, default is `TRUE`. A QC check is performed
+#' to exclude any autofluorescence spectra that are nearly identical to the
+#' fluorophore signatures in `spectra`. This helps deal with low-level contamination
+#' of unstained samples by single-stained control samples, which happens sometimes.
+#' To include these AF spectra, which can mess up unmixing if they are really
+#' fluorophore spectra, set `FALSE`.
 #'
 #' @return A matrix of autofluorescence spectra.
 #'
@@ -67,7 +73,8 @@ get.af.spectra <- function(
     title = "Autofluorescence spectra",
     verbose = TRUE,
     refine = FALSE,
-    problem.quantile = 0.99
+    problem.quantile = 0.99,
+    remove.contaminants = TRUE
 ) {
 
   # set up output folders
@@ -140,6 +147,10 @@ get.af.spectra <- function(
 
   # set names
   rownames( af.spectra ) <- paste0( "AF", 1:nrow( af.spectra ) )
+
+  # run QC to check for fluorophore contamination in the unstained
+  # this happens quite a bit, particularly when the samples are run on plate with shaking
+  af.spectra <- qc.af.spectra( af.spectra, spectra, plot.dir, remove.contaminants, pass = 2 )
 
   if ( figures ) {
     if ( verbose ) message( "Plotting autofluorescence spectra" )
@@ -339,6 +350,10 @@ get.af.spectra <- function(
 
       # add names
       rownames( af.spectra ) <- paste0( "AF", 1:nrow( af.spectra ) )
+
+      # run QC to check for fluorophore contamination in the unstained
+      # this happens quite a bit, particularly when the samples are run on plate with shaking
+      af.spectra <- qc.af.spectra( af.spectra, spectra, plot.dir, remove.contaminants )
 
       if ( figures ) {
         ### before and after AF extraction plotting ###
