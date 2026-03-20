@@ -283,18 +283,25 @@ get.fluorophore.spectra <- function(
 
     print( similarity.qc )
 
+    warning.message <- paste(
+      "\033[31m",
+      "Similarity over 0.95 detected for one or more pairs of fluorophores.",
+      "\n\n",
+      "Check the printed table in the console for problematic combinations. If both",
+      "Fluor1 and Fluor2 are fluorophores, manually inspect the controls to confirm",
+      "they have been prepared correctly. Check the fcs_control_file to be sure you",
+      "have set it up properly. If one of the pair is AF, the other likely has",
+      "minimal signal. In this case, run clean.controls and set use.clean.expr to TRUE.",
+      "If you have already done that, manually inspect the control for real signal.",
+      "\033[0m"
+    )
+
     message(
-    "\033[31mSimilarity over 0.95 detected for one or more pairs of fluorophores.
-
-    Check the printed table in the console for problematic combinations.
-    If both Fluor1 and Fluor2 are fluorophores,
-    manually inspect the controls to confirm they have been prepared correctly.
-    Check the fcs_control_file to be sure you have set it up properly.
-
-    If one of the pair is AF, the other likely has minimal signal.
-    In this case, run clean.controls and set use.clean.expr to TRUE.
-    If you have already done that, manually inspect the control for real signal.
-             \033[0m" )
+      paste(
+        strwrap( warning.message, width = 80 ),
+        collapse = "\n"
+      )
+    )
   }
 
   # library reference QC
