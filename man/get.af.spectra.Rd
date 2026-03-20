@@ -15,7 +15,8 @@ get.af.spectra(
   title = "Autofluorescence spectra",
   verbose = TRUE,
   refine = FALSE,
-  problem.quantile = 0.99
+  problem.quantile = 0.99,
+  remove.contaminants = TRUE
 )
 }
 \arguments{
@@ -63,6 +64,13 @@ be used to determine additional autofluorescence spectra, using a second round
 of clustering and modulation of the previously selected autofluorescence
 spectra. A value of \code{0.99} means the top 1\% of cells, those farthest from zero,
 will be selected for further investigation.}
+
+\item{remove.contaminants}{Logical, default is \code{TRUE}. A QC check is performed
+to exclude any autofluorescence spectra that are nearly identical to the
+fluorophore signatures in \code{spectra}. This helps deal with low-level contamination
+of unstained samples by single-stained control samples, which happens sometimes.
+To include these AF spectra, which can mess up unmixing if they are really
+fluorophore spectra, set \code{FALSE}.}
 }
 \value{
 A matrix of autofluorescence spectra.
