@@ -23,6 +23,8 @@ utils::globalVariables(
      "median.spec",
      "dens",
      "library",
-     "experiment"
+     "experiment",
+     "AF_Intensity",
+     "Fluorophore_Intensity"
   )
 )
