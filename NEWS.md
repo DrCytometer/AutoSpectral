@@ -1,4 +1,4 @@
-# AutoSpectral 1.1.0 (2026-02-24)
+# AutoSpectral 1.5.0 (2026-03-25)
 
 ## Improvements
 
@@ -20,9 +20,13 @@ prior to running `define.flow.control()`.
 estimation if `AutoSpectralRcpp` is installed.
 - Faster plotting along the same lines.
 - Hopefully graceful error handling during `clean.controls()`.
+- Hopefully graceful error handling with diagnostic plotting during gate definition,
+both with the gate.define functions and directly in `define.flow.control()`.
 - Success/failure reporting from `clean.controls()`.
 - Reduced memory usage when unmixing.
 - Chunking of files when unmixing to support unmixing of any size of file.
+- Spectral signature QC when running `get.fluorophore.spectra()`.
+- Autofluorescence profile QC when running `get.af.spectra()`.
 
 
 # AutoSpectral 1.0.0 (2026-02-10)
