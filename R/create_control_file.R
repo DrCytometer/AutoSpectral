@@ -155,7 +155,7 @@ create.control.file <- function(
   if ( fill.gate.name ) {
     control.table <- assign.gates(
       control.table,
-      ggating.system = "density",
+      gating.system = "density",
       gate = TRUE
     )
   }

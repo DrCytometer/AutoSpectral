@@ -110,12 +110,12 @@ assign.gates <- function(
   )
 
   if ( nrow( neg.map ) > 0 ) {
-    for (i in seq_len( nrow( neg.map ) ) ) {
+    for ( i in seq_len( nrow( neg.map ) ) ) {
       target.file <- neg.map$universal.negative[i]
       target.gate <- neg.map$gate.name[i]
 
       # Find original rows for this negative file
-      neg.idx <- which(is.neg.sample & control.table$filename == target.file )
+      neg.idx <- which( is.neg.sample & control.table$filename == target.file )
 
       if ( length( neg.idx ) > 0 ) {
         # Check if one of these negative rows already matches this gate
