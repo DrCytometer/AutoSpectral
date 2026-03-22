@@ -93,6 +93,10 @@
 #' choices. Providing a numeric value to `n.variants` will override `speed`,
 #' allowing up to `n.variants` (or the max available) variants to be tested. The
 #' default is `NULL`, in which case `n.variants` will be ignored.
+#' @param chunk.size Numeric, number of events to use per chunk of unmixing. Used
+#' to manage memory when processing large FCS files. As a rough guide, you will
+#' need approximately 10x the size of the raw FCS file on disk as available
+#' memory. Default is set at `2e6` events, assuming ~20GB memory available.
 #' @param ... Ignored. Previously used for deprecated arguments such as
 #' `calculate.error`.
 #'
@@ -123,6 +127,7 @@ unmix.folder <- function(
     threads = NULL,
     verbose = TRUE,
     n.variants = NULL,
+    chunk.size = 2e6,
     ...
 ) {
 
@@ -263,7 +268,8 @@ unmix.folder <- function(
     parallel = parallel,
     threads = threads,
     verbose = verbose,
-    n.variants = n.variants
+    n.variants = n.variants,
+    chunk.size = chunk.size
   )
 
   # Set up parallel processing
