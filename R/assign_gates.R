@@ -65,10 +65,10 @@ assign.gates <- function(
   neg.pattern <- "(^AF$)|(\\bAF\\b)|(\\bnegative\\b)|(\\bunstained\\b)"
   is.neg.sample <- grepl( neg.pattern, control.table$fluorophore, ignore.case = TRUE )
 
-  get.gate.label <- function(vi, lg) {
-    if (vi) return("viabilityGate")
-    if (lg) return("largeGate")
-    return("smallGate")
+  get.gate.label <- function( vi, lg ) {
+    if ( vi ) return( "viabilityGate" )
+    if ( lg ) return( "largeGate" )
+    return( "smallGate" )
   }
 
   gate.types <- data.frame(
@@ -81,11 +81,11 @@ assign.gates <- function(
   unique.gate.combos <- unique( gate.types )
 
   # Assign names to stained samples only
-  for (i in which(!is.neg.sample)) {
+  for ( i in which( !is.neg.sample ) ) {
     # If user provided a name, keep it.
     # Otherwise, generate one based on parameters.
-    if (is.na(control.table$gate.name[i])) {
-      match_idx <- which(
+    if ( is.na( control.table$gate.name[i] ) ) {
+      match.idx <- which(
         ( ( gate.types$negative[i] %in% unique.gate.combos$negative ) |
             ( is.na( gate.types$negative[i] ) & is.na( unique.gate.combos$negative ) ) ) &
           ( gate.types$type[i]       == unique.gate.combos$type ) &
@@ -93,8 +93,8 @@ assign.gates <- function(
           ( gate.types$large.gate[i] == unique.gate.combos$large.gate )
       )[1]
 
-      label <- get.gate.label(control.table$is.viability[i], control.table$large.gate[i])
-      control.table$gate.name[i] <- paste0(label, "_", match_idx)
+      label <- get.gate.label( control.table$is.viability[i], control.table$large.gate[i] )
+      control.table$gate.name[i] <- paste0( label, "_", match.idx )
     }
   }
 
@@ -105,25 +105,25 @@ assign.gates <- function(
   neg.map <- unique(
     control.table[
       !is.neg.sample & !is.na(control.table$universal.negative),
-      c("universal.negative", "gate.name", "large.gate", "is.viability")
+      c( "universal.negative", "gate.name", "large.gate", "is.viability" )
     ]
   )
 
-  if (nrow(neg.map) > 0) {
-    for (i in seq_len(nrow(neg.map))) {
+  if ( nrow( neg.map ) > 0 ) {
+    for (i in seq_len( nrow( neg.map ) ) ) {
       target.file <- neg.map$universal.negative[i]
       target.gate <- neg.map$gate.name[i]
 
       # Find original rows for this negative file
       neg.idx <- which(is.neg.sample & control.table$filename == target.file )
 
-      if (length(neg.idx) > 0) {
+      if ( length( neg.idx ) > 0 ) {
         # Check if one of these negative rows already matches this gate
-        if (!any(control.table$gate.name[neg.idx] == target.gate, na.rm = TRUE)) {
+        if ( !any( control.table$gate.name[neg.idx] == target.gate, na.rm = TRUE ) ) {
 
-          unassigned <- neg.idx[is.na(control.table$gate.name[neg.idx])]
+          unassigned <- neg.idx[ is.na( control.table$gate.name[neg.idx] ) ]
 
-          if (length(unassigned) > 0) {
+          if ( length( unassigned ) > 0 ) {
             # Assign the gate to the existing NA row
             idx <- unassigned[1]
             control.table$gate.name[idx] <- target.gate
@@ -136,7 +136,7 @@ assign.gates <- function(
             }
           } else {
             # Replicate the row if all existing rows for this file are busy in other gates
-            new.row <- control.table[neg.idx[1], ]
+            new.row <- control.table[ neg.idx[1], ]
             new.row$gate.name <- target.gate
             new.row$large.gate <- neg.map$large.gate[i]
             new.row$is.viability <- neg.map$is.viability[i]
@@ -154,12 +154,12 @@ assign.gates <- function(
         }
       }
       # update negative sample boolean--could be with c()
-      is.neg.sample <- grepl(neg.pattern, control.table$fluorophore, ignore.case = TRUE)
+      is.neg.sample <- grepl( neg.pattern, control.table$fluorophore, ignore.case = TRUE )
       # update the map with the new rows
       neg.map <- unique(
         control.table[
-          !is.neg.sample & !is.na(control.table$universal.negative),
-          c("universal.negative", "gate.name", "large.gate", "is.viability")
+          !is.neg.sample & !is.na( control.table$universal.negative ),
+          c( "universal.negative", "gate.name", "large.gate", "is.viability" )
         ]
       )
 
@@ -167,14 +167,14 @@ assign.gates <- function(
   }
 
   # If a negative sample still has no gate.name (meaning no stained sample uses it as a universal negative)
-  is.neg.sample <- grepl(neg.pattern, control.table$fluorophore, ignore.case = TRUE)
-  orphans <- which(is.neg.sample & is.na(control.table$gate.name))
+  is.neg.sample <- grepl( neg.pattern, control.table$fluorophore, ignore.case = TRUE )
+  orphans <- which( is.neg.sample & is.na( control.table$gate.name ) )
 
-  if (length(orphans) > 0) {
+  if ( length( orphans ) > 0 ) {
     for (idx in orphans) {
       # Fallback to density gating nomenclature
-      label <- get.gate.label(control.table$is.viability[idx], control.table$large.gate[idx])
-      control.table$gate.name[idx] <- paste0(label, "_density_orphan")
+      label <- get.gate.label( control.table$is.viability[idx], control.table$large.gate[idx] )
+      control.table$gate.name[idx] <- paste0(label, "_density_orphan" )
 
       # The "AF" sample should never be modified as there are hard-coded uses of "AF"
       control.table$sample[idx] <- if ( control.table$fluorophore[ idx ]  == "AF" ) {
@@ -190,20 +190,20 @@ assign.gates <- function(
   }
 
   # Update universal.negative to point to the correct Sample Name within that gate
-  control.table$universal.negative <- sapply(seq_len(nrow(control.table)), function(i) {
+  control.table$universal.negative <- sapply( seq_len( nrow( control.table ) ), function(i) {
     neg.file <- control.table$universal.negative[i]
-    if (is.na(neg.file)) return(NA)
+    if ( is.na( neg.file ) ) return( NA )
 
     # Match the filename AND the gate name to ensure the correct "Negative" is picked
     match.row <- control.table[
       control.table$filename == neg.file & control.table$gate.name == control.table$gate.name[i],
     ]
-    if (nrow(match.row) > 0) return(match.row$sample[1])
+    if ( nrow( match.row ) > 0 ) return( match.row$sample[1] )
 
     # Fallback to first matching filename if no gate-specific match (safety)
-    match.fallback <- control.table[control.table$filename == neg.file, ]
-    if (nrow(match.fallback) > 0) return(match.fallback$sample[1])
-    return(NA)
+    match.fallback <- control.table[ control.table$filename == neg.file, ]
+    if ( nrow( match.fallback ) > 0 ) return( match.fallback$sample[1] )
+    return( NA )
   })
 
   if ( gate ) {
