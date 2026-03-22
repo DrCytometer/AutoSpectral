@@ -8,17 +8,18 @@ articles:
   articles/04_ID7000_WLS_example: 04_ID7000_WLS_example.html
   articles/05_Preparing_Controls: 05_Preparing_Controls.html
   articles/06_Gating: 06_Gating.html
-  articles/06_Gating_Parameters_Density: 06_Gating_Parameters_Density.html
-  articles/07_Advanced_Gating: 07_Advanced_Gating.html
-  articles/07_Cleaning: 07_Cleaning.html
-  articles/08_Single_Cell_AutoFluorescence: 08_Single_Cell_AutoFluorescence.html
-  articles/09_Per_Cell_Optimization: 09_Per_Cell_Optimization.html
-  articles/10_Reload_AutoSpectral: 10_Reload_AutoSpectral.html
-  articles/11_Plotting: 11_Plotting.html
-  articles/12_Speed_It_Up: 12_Speed_It_Up.html
-  articles/13_Updates_And_Issues: 13_Updates_And_Issues.html
-  articles/14_Development: 14_Development.html
-last_built: 2026-03-20T18:46Z
+  articles/07_Gating_Parameters_Density: 07_Gating_Parameters_Density.html
+  articles/08_Advanced_Gating: 08_Advanced_Gating.html
+  articles/09_Cleaning: 09_Cleaning.html
+  articles/10_Single_Cell_AutoFluorescence: 10_Single_Cell_AutoFluorescence.html
+  articles/11_Per_Cell_Optimization: 11_Per_Cell_Optimization.html
+  articles/12_Reload_AutoSpectral: 12_Reload_AutoSpectral.html
+  articles/13_Plotting: 13_Plotting.html
+  articles/14_Speed_It_Up: 14_Speed_It_Up.html
+  articles/15_Updates_And_Issues: 15_Updates_And_Issues.html
+  articles/16_Development: 16_Development.html
+  articles/17_Acknowledgements: 17_Acknowledgements.html
+last_built: 2026-03-22T09:44Z
 urls:
   reference: https://drcytometer.github.io/AutoSpectral/reference
   article: https://drcytometer.github.io/AutoSpectral/articles

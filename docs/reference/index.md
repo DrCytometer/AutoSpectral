@@ -48,8 +48,6 @@
   : Create Parallel Lapply
 - [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
   : Define Flow Control
-- [`define.flow.control.test()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.test.md)
-  : Define Flow Control
 - [`define.gate.density()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.density.md)
   : Define Gate by Density
 - [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md)
@@ -59,8 +57,6 @@
 - [`do.gate.af()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.af.md)
   : Perform Gating on Autofluorescence Parameters
 - [`do.gate()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.md)
-  : Do Gate
-- [`do.gate.test()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.test.md)
   : Do Gate
 - [`.new_issue()`](https://drcytometer.github.io/AutoSpectral/reference/dot-new_issue.md)
   : New Issue

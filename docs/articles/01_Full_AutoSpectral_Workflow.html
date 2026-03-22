@@ -39,16 +39,17 @@
     <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
     <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
     <li><a class="dropdown-item" href="../articles/06_Gating.html">06 Gating</a></li>
-    <li><a class="dropdown-item" href="../articles/06_Gating_Parameters_Density.html">06 Gating parameters for density gating</a></li>
-    <li><a class="dropdown-item" href="../articles/07_Advanced_Gating.html">07 Controlled Gating: Landmarks and Tuning</a></li>
-    <li><a class="dropdown-item" href="../articles/07_Cleaning.html">07 Control clean-up</a></li>
-    <li><a class="dropdown-item" href="../articles/08_Single_Cell_AutoFluorescence.html">08 Single Cell Autofluorescence</a></li>
-    <li><a class="dropdown-item" href="../articles/09_Per_Cell_Optimization.html">09 Per Cell Optimization</a></li>
-    <li><a class="dropdown-item" href="../articles/10_Reload_AutoSpectral.html">10 Re-running AutoSpectral</a></li>
-    <li><a class="dropdown-item" href="../articles/11_Plotting.html">11 Plotting</a></li>
-    <li><a class="dropdown-item" href="../articles/12_Speed_It_Up.html">12 Speed It Up (Why So Slow?)</a></li>
-    <li><a class="dropdown-item" href="../articles/13_Updates_And_Issues.html">13 Updates and Issues</a></li>
-    <li><a class="dropdown-item" href="../articles/14_Development.html">14 Development</a></li>
+    <li><a class="dropdown-item" href="../articles/07_Gating_Parameters_Density.html">06 Gating parameters for density gating</a></li>
+    <li><a class="dropdown-item" href="../articles/08_Advanced_Gating.html">07 Controlled Gating: Landmarks and Tuning</a></li>
+    <li><a class="dropdown-item" href="../articles/09_Cleaning.html">07 Control clean-up</a></li>
+    <li><a class="dropdown-item" href="../articles/10_Single_Cell_AutoFluorescence.html">08 Single Cell Autofluorescence</a></li>
+    <li><a class="dropdown-item" href="../articles/11_Per_Cell_Optimization.html">09 Per Cell Optimization</a></li>
+    <li><a class="dropdown-item" href="../articles/12_Reload_AutoSpectral.html">10 Re-running AutoSpectral</a></li>
+    <li><a class="dropdown-item" href="../articles/13_Plotting.html">11 Plotting</a></li>
+    <li><a class="dropdown-item" href="../articles/14_Speed_It_Up.html">12 Speed It Up (Why So Slow?)</a></li>
+    <li><a class="dropdown-item" href="../articles/15_Updates_And_Issues.html">13 Updates and Issues</a></li>
+    <li><a class="dropdown-item" href="../articles/16_Development.html">14 Development</a></li>
+    <li><a class="dropdown-item" href="../articles/17_Acknowledgements.html">17 Ackowledgements</a></li>
   </ul>
 </li>
       </ul>
@@ -118,11 +119,17 @@ which has the advantage of also working on large panels.</p>
 <div class="section level2">
 <h2 id="getting-your-fluorophore-spectra-from-the-controls">Getting your fluorophore spectra from the controls<a class="anchor" aria-label="anchor" href="#getting-your-fluorophore-spectra-from-the-controls"></a>
 </h2>
+<div class="section level3">
+<h3 id="creating-the-control-file">Creating the Control File<a class="anchor" aria-label="anchor" href="#creating-the-control-file"></a>
+</h3>
 <p>Since the default cytometer is the Aurora, we can actually just call
 this without any arguments. Otherwise you need to specify the cytometer
 you’re using.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">asp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.autospectral.param.html">get.autospectral.param</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">asp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.autospectral.param.html">get.autospectral.param</a></span><span class="op">(</span></span>
+<span>  cytometer <span class="op">=</span> <span class="st">"aurora"</span>,</span>
+<span>  figures <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># plot figures throughout to show what's going on</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>Where are the controls? This must be typed correctly.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">control.dir</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Reference Group"</span></span></code></pre></div>
@@ -152,18 +159,102 @@ file and run the error checking function.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">control.file</span> <span class="op">&lt;-</span> <span class="st">"fcs_control_file.csv"</span></span>
 <span><span class="fu"><a href="../reference/check.control.file.html">check.control.file</a></span><span class="op">(</span><span class="va">control.dir</span>, <span class="va">control.file</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
-<p>Once, the control file passes the error checks, we can load in the
-data. This part can be a bit slow, particularly if you have lots of big
-files. There is a parallelization option, which can cut the time in
-half, probably even better on Mac/Linux. There are some improvements I
-could make to this, including the gating. These will take time to
-implement, though, because they affect everything downstream of this,
-which is to say, everything.</p>
+</div>
+<div class="section level3">
+<h3 id="gating">Gating<a class="anchor" aria-label="anchor" href="#gating"></a>
+</h3>
+<p>Once, the control file passes the error checks, we can create some
+gates.</p>
+<p>Gating allows us to identify which events in the file are actually
+our cells, as opposed to debris, doublets or other stuff. While you can
+directly proceed to loading in all of the data by calling
+<code><a href="../reference/define.flow.control.html">define.flow.control()</a></code>, which automatically defines gates as
+best it can, taking a moment to check that the gates are correct prior
+to doing this will work more consistently.</p>
+<p>The first step here is to consider which samples should share the
+same gates. AutoSpectral will try to help you with this when creating
+the control file, at least if you have version 1.5.0 or higher
+installed. It will create simple groupings of your samples based on the
+type of sample (beads vs cells) and whether the marker identifies dead
+cells. If AutoSpectral cannot identify the type of sample or any
+information about the markers from the file names, it will be unable to
+help here, and you must do this manually.</p>
+<p>For this, we are going to be working with the control file. Let’s
+take our example as it is currently. We have some controls that are
+beads, some that are cells, one that is a viability marker, and one cell
+control that we have marked as needing a larger gate because it is a
+myeloid population with higher expected side scatter values. We need at
+least four gates. We can call these whatever we want, but I’m going to
+pick somewhat informative names: “beads”, “lymphocytes”, “myeloid” and
+“dead”. We add these names to the appropriate rows of our table in the
+<code>gate.name</code> column:</p>
+<p>Now we can choose which samples we want to use to define the gate
+boundaries. The simplest option is to just use everything. To do this,
+put “TRUE” in every row of the <code>gate.define</code> column. This
+should be done by default in version 1.5.0 and higher.</p>
+<p>If you want to get fancier about it, you can choose which samples you
+use to define the gates. This can be helpful if some samples are
+“better” than others. It is particularly useful when using the
+“landmarks” gating system. This system finds the brightest positive
+events in the expected peak channel for the sample(s) and uses those to
+define the boundary. This means that you can use your anti-CD3 or
+anti-CD4-stained sample to define the boundary of the lymphocyte region
+based on where the CD3+ or CD4+ cells are. For today’s example, we will
+use the landmark gating system. We can define one gate using our
+CD4-BV421 (cells) and apply it to the CD45 BUV395 (cells) as well for
+lymphocytes. We can define a second gate using our CD11b-BUV805 (cells)
+for the myeloid cells. We can define a third gate using our
+viability-e780 (cells) for dead cells, and we can define a fourth gate
+on all of the stained bead samples, which will all be in the same
+position since they are beads.</p>
+<p>Now our control file looks like this:</p>
+<p>Note that you can create any number of gates and pass them in the
+next step. Gates are saved and can be reused. See the dedicated articles
+on this for more information, including on how to use the
+<code><a href="../reference/tune.gate.html">tune.gate()</a></code> function.</p>
+<p>Before proceeding, run the control file check to be sure that what
+you’re doing with the gates is consistent with what AutoSpectral
+expects.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.flow.control.html">define.flow.control</a></span><span class="op">(</span><span class="va">control.dir</span>, <span class="va">control.file</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/check.control.file.html">check.control.file</a></span><span class="op">(</span><span class="va">control.dir</span>, <span class="va">control.file</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
+<p>Assuming that passes with no errors, define the gates:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gate.lymphocyte</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.gate.landmarks.html">define.gate.landmarks</a></span><span class="op">(</span></span>
+<span>  control.file <span class="op">=</span> <span class="va">control.file</span>,</span>
+<span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  n.cells <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  percentile <span class="op">=</span> <span class="fl">70</span>,</span>
+<span>  gate.name <span class="op">=</span> <span class="st">"lymphocytes"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">gate.meloid</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.gate.landmarks.html">define.gate.landmarks</a></span><span class="op">(</span></span>
+<span>  control.file <span class="op">=</span> <span class="va">control.file</span>,</span>
+<span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  n.cells <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  percentile <span class="op">=</span> <span class="fl">70</span>,</span>
+<span>  gate.name <span class="op">=</span> <span class="st">"myeloid"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">gate.dead</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.gate.landmarks.html">define.gate.landmarks</a></span><span class="op">(</span></span>
+<span>  control.file <span class="op">=</span> <span class="va">control.file</span>,</span>
+<span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  n.cells <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  percentile <span class="op">=</span> <span class="fl">70</span>,</span>
+<span>  gate.name <span class="op">=</span> <span class="st">"dead"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">gate.beads</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.gate.landmarks.html">define.gate.landmarks</a></span><span class="op">(</span></span>
+<span>  control.file <span class="op">=</span> <span class="va">control.file</span>,</span>
+<span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  n.cells <span class="op">=</span> <span class="fl">2000</span>,</span>
+<span>  percentile <span class="op">=</span> <span class="fl">70</span>,</span>
+<span>  gate.name <span class="op">=</span> <span class="st">"beads"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Note that this can be simplified to an lapply loop, if desired.</p>
 <p>Be sure to check the gates that are generated in the
 <code>figure_gate</code> folder–do they look right? If not, go to the
-Gating article on <a href="https://drcytometer.github.io/AutoSpectral/articles/04_Gating.html">GitHub</a>
+Gating articles on <a href="https://drcytometer.github.io/AutoSpectral/articles/04_Gating.html">GitHub</a>
 <a href="https://www.colibri-cytometry.com/post/autospectral-gating" class="external-link">Colibri</a>
 for tips on how fix it.</p>
 <div class="float">
@@ -172,36 +263,69 @@ for tips on how fix it.</p>
 <div class="float">
 <img src="figures/Workflow/bead_gate.jpg" alt="Bead Gate"><div class="figcaption">Bead Gate</div>
 </div>
-<p>If everything looks okay with the gating, we proceed to control
-clean-up. This helps remove noisy events, like autofluorescence spikes,
-and tries to match the positive events for each control to corresponding
-cells/beads in the unstained <code>universal.negative</code> that you
-defined in the control.file.</p>
+</div>
+<div class="section level3">
+<h3 id="loading-the-data">Loading the Data<a class="anchor" aria-label="anchor" href="#loading-the-data"></a>
+</h3>
+<p>If everything looks okay with the gating, we proceed to load in all
+of the data, applying those gates to select the events we want.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Combine your gates into a list</span></span>
+<span><span class="va">my.gates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"lymphocyte"</span> <span class="op">=</span> <span class="va">gate.lymph</span>, <span class="st">"beads"</span> <span class="op">=</span> <span class="va">gate.beads</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Pass them to the function call</span></span>
+<span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.flow.control.html">define.flow.control</a></span><span class="op">(</span></span>
+<span>  control.dir <span class="op">=</span> <span class="va">control</span>,<span class="va">dir</span>,</span>
+<span>  control.def.file <span class="op">=</span> <span class="va">control.file</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  gate.list <span class="op">=</span> <span class="va">my.gates</span>,</span>
+<span>  color.palette <span class="op">=</span> <span class="st">"rainbow"</span> <span class="co"># optional: changes the plot color scheme</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>This will create a plot of each reference control sample with the
+intended gate applied to it. To see these, check the
+<code>figure_gate</code> folder.</p>
+</div>
+<div class="section level3">
+<h3 id="control-cleaning">Control Cleaning<a class="anchor" aria-label="anchor" href="#control-cleaning"></a>
+</h3>
+<p>Now we can continue to control clean-up. This helps remove noisy
+events, like autofluorescence spikes, and tries to match the positive
+events for each control to corresponding cells/beads in the unstained
+<code>universal.negative</code> that you defined in the
+control.file.</p>
 <p>The default settings here are usually best. See more on the cleaning
 article on <a href="https://drcytometer.github.io/AutoSpectral/articles/05_Cleaning.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-cleaning" class="external-link">Colibri</a>.
-There is a parallelization option, which is being converted to the new
-parallel backend. Once that is in place, it should be faster.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+There is a parallelization option, which may be faster.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clean.controls.html">clean.controls</a></span><span class="op">(</span><span class="va">flow.control</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
 <p>There are lots of plots generated with this, in
 <code>figure_clean_controls</code> and in
 <code>figure_spectral_ribbon</code>.</p>
+<p>#s# Calculating the Fluorophore Spectra</p>
 <p>Now we can isolate the spectra from the controls. By default, this
 uses the cleaned data if they are available.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spectra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.fluorophore.spectra.html">get.fluorophore.spectra</a></span><span class="op">(</span><span class="va">flow.control</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
 <p>With this, we get plots of the spectra as traces and a heatmap. We
 also get a cosine similarity heatmap. You can check these, if you aren’t
 familiar with what they should look like, against the expected profiles
-in online webtools. For the Aurora, check on Cytek Cloud.</p>
+in online webtools. For the Aurora, check on Cytek Cloud. As of version
+1.5.0, you should also get a pdf document showing you your fluorophore
+profiles in overlay compared to a reference standard for that
+fluorophore on the same instrument. Not all fluorophores will be
+available, particularly for the instruments I don’t have regular access
+to, so if you want to contribute, visit the database and add your
+spectral profiles. See the Discussions page for more details on
+this.</p>
 <p><img src="figures/Workflow/spectral_trace.jpg" alt="Spectral Trace"><img src="figures/Workflow/spectral_heatmap.jpg" alt="Spectral Heatmap"><img src="figures/Workflow/similarity_matrix.jpg" alt="Similarity Matrix"></p>
 <p>The spectra themselves are saved to a CSV file in the
 <code>table_spectra</code> folder. You can open CSV files as a
 spreadsheet in Excel and other programs.</p>
 </div>
+</div>
 <div class="section level2">
-<h2 id="now-on-to-unmixing-">Now, on to unmixing.<a class="anchor" aria-label="anchor" href="#now-on-to-unmixing-"></a>
+<h2 id="unmixing">Unmixing<a class="anchor" aria-label="anchor" href="#unmixing"></a>
 </h2>
 <p>AutoSpectral provides options for unmixing. Let’s start with the most
 basic, which is replicating the OLS unmixing as in SpectroFlo.
@@ -213,7 +337,7 @@ without autofluorescence extraction by removing this row from the
 <code>spectra</code> matrix before we pass it to the unmixing call. Here
 are two easy ways to do that: 1) subset <code>spectra</code> 2) read in
 the CSV file in <code>table_spectra</code>, removing the AF channel</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">spectra</span><span class="op">)</span></span>
 <span><span class="va">no.af.spectra</span> <span class="op">&lt;-</span> <span class="va">spectra</span><span class="op">[</span> <span class="op">!</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">spectra</span><span class="op">)</span> <span class="op">==</span> <span class="st">"AF"</span><span class="op">)</span>,<span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">no.af.spectra</span><span class="op">)</span></span>
@@ -222,7 +346,7 @@ the CSV file in <code>table_spectra</code>, removing the AF channel</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">no.af.spectra.2</span><span class="op">)</span></span></code></pre></div>
 <p>To unmix, specify the file (and path) of the FCS file you want to
 unmix:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spleen.fcs.file</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Stained/D4 Spleen_Set1.fcs"</span></span>
 <span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">spleen.fcs.file</span>,</span>
@@ -244,21 +368,32 @@ unmixing method, we are just using the AutoSpectral R package to perform
 bog standard unmixing.</p>
 <p>If we have a folder full of FCS files, we can do all the files in the
 folder. Note that this is essentially just an <code>lapply</code> loop
-over the files. It can, however, be parallelized, which will work as
-long as you have enough memory to handle the number of threads
-multiplied by the size of the files. So, if your FCS files are ~100MB,
-fine, if they’re multiple GB, maybe not. May not be much faster.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.folder.html">unmix.folder</a></span><span class="op">(</span><span class="st">"./Raw/Set1/Stained/"</span>, <span class="va">spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>, </span>
-<span>             method <span class="op">=</span> <span class="st">"OLS"</span>, parallel <span class="op">=</span> <span class="cn">TRUE</span>, threads <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+over the files. It can, however, be parallelized (set
+<code>parallel=TRUE</code>). Memory usage is handled via file chunking,
+which you can modify using the <code>chunk.size</code> argument, if
+needed.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.folder.html">unmix.folder</a></span><span class="op">(</span></span>
+<span>  fcs.dir <span class="op">=</span> <span class="st">"./Raw/Set1/Stained/"</span>,</span>
+<span>  spectra <span class="op">=</span> <span class="va">spectra</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  flow.control <span class="op">=</span> <span class="va">flow.control</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"OLS"</span>, <span class="co"># use OLS unmixing (not AutoSpectral unmixing)</span></span>
+<span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  threads <span class="op">=</span> <span class="fl">3</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>By default, the unmixed files are generated in
 <code>Autospectral_unmixed</code>, but you can change that by passing a
 path to <code>output.dir</code>.</p>
 <p>If we want to use weighted least-squares, we call like this:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span><span class="va">spleen.fcs.file</span>, <span class="va">spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>, method <span class="op">=</span> <span class="st">"WLS"</span><span class="op">)</span></span></code></pre></div>
 <p>The <code>method</code> is automatically appended to the output file
-name.</p>
+name. If you wish to add something else to the file name, use the
+<code>file.suffix</code> argument.</p>
+<p>More details on WLS unmmixing, including calculating and re-using
+weights will be detailed in a separate article later. Reach out if this
+is important to you now.</p>
 <p>Okay, that’s basic unmixing. And, I think you should see a bit of
 improvement using AutoSpectral even with the same unmixing algorithms
 due to the improvements in single-colour control handling. We do.</p>
@@ -266,6 +401,9 @@ due to the improvements in single-colour control handling. We do.</p>
 <div class="section level2">
 <h2 id="per-cell-unmixing">Per-cell unmixing<a class="anchor" aria-label="anchor" href="#per-cell-unmixing"></a>
 </h2>
+<div class="section level3">
+<h3 id="per-cell-autofluorescence-extraction">Per-cell Autofluorescence Extraction<a class="anchor" aria-label="anchor" href="#per-cell-autofluorescence-extraction"></a>
+</h3>
 <p>For per-cell autofluorescence extraction and per-cell fluorophore
 optimization, AutoSpectral needs more information. We will extract
 autofluorescence signatures from the three tissues involved here, and
@@ -277,22 +415,30 @@ improve the unmixing.</p>
 <p>As of version 1.0.0, per-cell autofluorescence extraction will be
 faster using <code>AutoSpectralRcpp</code>. On Windows, you will first
 need to install Rtools.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectralRcpp"</span><span class="op">)</span></span></code></pre></div>
 <p>Once <code>AutoSpectralRcpp</code> is installed, it takes over when
-the unmixing starts. You don’t need to do anything else.</p>
+the unmixing starts. You don’t need to do anything else. It also helps
+out in a couple other computationally heavy spots, so you may experience
+faster processing elsewhere. There is no need for you to do anything–it
+will hapen automatically once installed.</p>
 <p>To use per-cell autofluorescence extraction only, no fluorophore
 optimization, do this:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spleen.unstained</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Unstained/D1 Spleen_Set1.fcs"</span></span>
-<span><span class="va">spleen.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span><span class="va">spleen.unstained</span>, <span class="va">asp</span>, <span class="va">spectra</span><span class="op">)</span></span>
+<span><span class="va">spleen.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span></span>
+<span>  unstained.sample <span class="op">=</span> <span class="va">spleen.unstained</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  spectra <span class="op">=</span> <span class="va">spectra</span>,</span>
+<span>  refine <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># optional; when TRUE, more AF spectra will be generated, focusing on problem cells</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
-<span>  <span class="va">spleen.fcs.file</span>,</span>
-<span>  <span class="va">spectra</span>,</span>
-<span>  <span class="va">asp</span>,</span>
-<span>  <span class="va">flow.control</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
-<span>  af.spectra <span class="op">=</span> <span class="va">spleen.af</span>,</span>
+<span>  fcs.file <span class="op">=</span> <span class="va">spleen.fcs.file</span>,</span>
+<span>  spectra <span class="op">=</span> <span class="va">spectra</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  flow.control <span class="op">=</span> <span class="va">flow.control</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"AutoSpectral"</span>, <span class="co"># use AutoSpectral unmixing</span></span>
+<span>  af.spectra <span class="op">=</span> <span class="va">spleen.af</span>, <span class="co"># use these AF signatures as the options</span></span>
 <span>  file.suffix <span class="op">=</span> <span class="st">"per-cell AF extraction"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>We get the distribution of autofluorescence spectra as a spectral
@@ -310,7 +456,7 @@ folder. So, if you have a whole set of stained lung samples, you’d pull
 your AF spectra from the unstained lung sample, and then call
 <code>unmix.folder</code> on the folder containing your lung (and only
 lung) samples. Repeat for each type of autofluorescence sample. Read
-more about how the per-cell autofluorescence extraction works in the <a href="https://drcytometer.github.io/AutoSpectral/articles/08_Single_Cell_AutoFluorescence.html">GitHub</a>
+more about how the per-cell autofluorescence extraction works in the <a href="https://drcytometer.github.io/AutoSpectral/articles/10_Single_Cell_AutoFluorescence.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-single-cell-autofluorescence" class="external-link">Colibri</a>
 article.</p>
 <p>In this case, we have three types of samples: spleen, liver and lung
@@ -319,7 +465,7 @@ tissues. If you are working with human PBMCs, usually a single
 samples from very sick donors, you might consider collecting unstained
 sample from each donor and matching the autofluorescence more
 closely.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lung.unstained</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Unstained/D2 Lung_Set1.fcs"</span></span>
 <span><span class="va">lung.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span><span class="va">lung.unstained</span>, <span class="va">asp</span>, <span class="va">spectra</span><span class="op">)</span></span>
 <span><span class="va">lung.fcs.file</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Stained/D5 Lung_Set1.fcs"</span></span>
@@ -345,12 +491,20 @@ closely.</p>
 <span>  af.spectra <span class="op">=</span> <span class="va">liver.af</span>,</span>
 <span>  file.suffix <span class="op">=</span> <span class="st">"per-cell AF extraction"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p>You can easily set this up as a for loop or an lapply loop matching
+elements by names from a list.</p>
+<p>For more detail on the per-cell AF extraction, see the dedicated
+article on this subject.</p>
+</div>
+<div class="section level3">
+<h3 id="per-cell-fluorophore-optimization">Per-cell Fluorophore Optimization<a class="anchor" aria-label="anchor" href="#per-cell-fluorophore-optimization"></a>
+</h3>
 <p>To do per-cell fluorophore optimization, we will first measure the
 variation in the spectrum for each fluorophore. For the unmixing, we’ll
 supply the <code>af.spectra</code> and the
 <code>spectra.variants</code>, calling <code>AutoSpectral</code>
 unmixing. Read more about how the per-cell fluorophore optimization
-works in the <a href="https://drcytometer.github.io/AutoSpectral/articles/09_Per_Cell_Optimization.html">GitHub</a>
+works in the <a href="https://drcytometer.github.io/AutoSpectral/articles/11_Per_Cell_Optimization.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization" class="external-link">Colibri</a>
 article.</p>
 <p>We provide <code>spleen.af</code> as the <code>af.spectra</code> here
@@ -358,15 +512,15 @@ because the control samples are from spleen. Provide whatever is the
 best fit for your single-stained controls. The point here is to match
 the AF of the controls so that we isolate the variation in the
 fluorophore signatures independent of any AF variation.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">variants</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.spectral.variants.html">get.spectral.variants</a></span><span class="op">(</span></span>
-<span>  <span class="va">control.dir</span>,</span>
-<span>  <span class="va">control.file</span>,</span>
-<span>  <span class="va">asp</span>,</span>
-<span>  <span class="va">spectra</span>,</span>
-<span>  af.spectra <span class="op">=</span> <span class="va">spleen.af</span>,</span>
-<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>variants <span class="ot">&lt;-</span> <span class="fu">get.spectral.variants</span>(</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="at">control.dir =</span> control.dir,</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="at">control.def.file =</span> control.file,</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="at">asp =</span> asp,</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>  <span class="at">spectra =</span> spectra,</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>  <span class="at">af.spectra =</span> spleen.af, <span class="co"># the AF relevant to any cell-based single-stained controls</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>  <span class="at">parallel =</span> <span class="cn">FALSE</span> <span class="co"># use parallel if TRUE</span></span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>  <span class="at">refine =</span> <span class="cn">TRUE</span> <span class="co"># optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass</span></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>)</span></code></pre></div>
 <p>The output of this is saved as an RDS file in folder
 <code>figure_spectral_variants</code>. You can load it back in using the
 <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code> function in base R.</p>
@@ -378,23 +532,22 @@ expressing CD11b. <img src="figures/Workflow/BUV805_variants.jpg" alt="BUV805"><
 blue and yellow-green lasers, which would cause spread if we had a
 fluorophore in that range on the blue laser, such as RB780. We don’t in
 this case. <img src="figures/Workflow/PECy7_variants.jpg" alt="PE-Cy7"></p>
-<p>We can now pass this to the unmixing call. For quicker results, we’ll
-set the <code>speed</code> to <code>fast</code>, which checks fewer
-pre-screened variants per cell. This can be a bit slow. Parallelization
-is automatic here if you have installed <code>AutoSpectralRcpp</code>.
-If you are using base R only, try turning on the
-<code>parallel=TRUE</code>.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<p>We can now pass this to the unmixing call. For quicker results, you
+may set the <code>speed</code> to <code>fast</code>, which checks fewer
+pre-screened variants per cell. This can be a bit slow if you have not
+installed <code>AutoSpectralRcpp</code>.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">lung.fcs.file</span>,</span>
 <span>  <span class="va">spectra</span>,</span>
 <span>  <span class="va">asp</span>,</span>
 <span>  <span class="va">flow.control</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
-<span>  af.spectra <span class="op">=</span> <span class="va">lung.af</span>,</span>
-<span>  spectra.variants <span class="op">=</span> <span class="va">variants</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"AutoSpectral"</span>, <span class="co"># use AutoSpectral unmixing</span></span>
+<span>  af.spectra <span class="op">=</span> <span class="va">lung.af</span>, <span class="co"># use this set of AF (matched to sample source)</span></span>
+<span>  spectra.variants <span class="op">=</span> <span class="va">variants</span>, <span class="co"># by providing variants, we instruct the unmixing to perform per-cell fluorophore optimization</span></span>
 <span>  file.suffix <span class="op">=</span> <span class="st">"per-cell AF and fluorophore optimization"</span>,</span>
-<span>  speed <span class="op">=</span> <span class="st">"fast"</span></span>
+<span>  speed <span class="op">=</span> <span class="st">"slow"</span>, <span class="co"># slow will be a bit better</span></span>
+<span>  parallel <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Please note that if you are comparing the output FCS files from
 AutoSpectral to others you may have from the cytometer and you are doing
@@ -404,23 +557,25 @@ coefficients in order to do a fair comparison. Otherwise you’ll see
 whatever you’ve already done to tune your display (e.g., biexponential
 width basis) for your existing files versus some random default
 selection by FlowJo for AutoSpectral’s files. Nothing to do with me.</p>
+<p>For more detail on the per-cell fluorophore optimization, see the
+dedicated article on this subject.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="plotting">Plotting<a class="anchor" aria-label="anchor" href="#plotting"></a>
+</h2>
 <p>You can do a comparison using the plotting functions in AutoSpectral,
 but a dedicated flow cytometry analysis program with a graphical
 interface will be better. More on plotting on the dedicated article on
-<a href="https://drcytometer.github.io/AutoSpectral/articles/09_Plotting.html">GitHub</a>
+<a href="https://drcytometer.github.io/AutoSpectral/articles/13_Plotting.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-plotting" class="external-link">Colibri</a>.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">autospectral.unmixed.lung</span> <span class="op">&lt;-</span> <span class="st">"AutoSpectral_unmixed/D5 Lung_Set1 AutoSpectral per-cell AF and fluorophore optimization.fcs"</span></span>
 <span><span class="va">spectroflo.unmixed.lung</span> <span class="op">&lt;-</span> <span class="st">"./Unmixed/Set1/Stained/D5 Lung_Set1.fcs"</span></span>
 <span></span>
-<span><span class="va">asp.lung</span> <span class="op">&lt;-</span> <span class="fu">flowCore</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Biobase/man/exprs.html" class="external-link">exprs</a></span><span class="op">(</span></span>
-<span>  <span class="fu">flowCore</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/read.FCS.html" class="external-link">read.FCS</a></span><span class="op">(</span><span class="va">autospectral.unmixed.lung</span>,</span>
-<span>                     truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="va">sf.lung</span> <span class="op">&lt;-</span> <span class="fu">flowCore</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Biobase/man/exprs.html" class="external-link">exprs</a></span><span class="op">(</span></span>
-<span>  <span class="fu">flowCore</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/read.FCS.html" class="external-link">read.FCS</a></span><span class="op">(</span><span class="va">spectroflo.unmixed.lung</span>,</span>
-<span>                     truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
+<span><span class="co"># using native AutoSpectral reader here (see `flowstate`)</span></span>
+<span><span class="va">asp.lung</span> <span class="op">&lt;-</span> <span class="fu">AutoSpectral</span><span class="fu">::</span><span class="fu"><a href="../reference/readFCS.html">readFCS</a></span><span class="op">(</span><span class="va">autospectral.unmixed.lung</span><span class="op">)</span></span>
+<span><span class="va">sf.lung</span> <span class="op">&lt;-</span> <span class="fu">AutoSpectral</span><span class="fu">::</span><span class="fu"><a href="../reference/readFCS.html">readFCS</a></span><span class="op">(</span><span class="va">spectroflo.unmixed.lung</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/create.biplot.html">create.biplot</a></span><span class="op">(</span><span class="va">sf.lung</span>, <span class="st">"BUV395-A"</span>, <span class="st">"BV421-A"</span>, <span class="va">asp</span>, title <span class="op">=</span> <span class="st">"SpectroFlo"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/create.biplot.html">create.biplot</a></span><span class="op">(</span><span class="va">asp.lung</span>, <span class="st">"BUV395"</span>, <span class="st">"BV421"</span>, <span class="va">asp</span>, title <span class="op">=</span> <span class="st">"AutoSpectral"</span><span class="op">)</span></span></code></pre></div>

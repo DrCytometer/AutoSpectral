@@ -1,0 +1,25 @@
+# 17 Ackowledgements
+
+Thank you to anyone who has used AutoSpectral and provided feedback. In
+no particular order, here are some people who have helped or provided
+insights that allowed me to develop this tool: + [Nathan
+Laniewski](https://github.com/nlaniewski) + [Florian
+Mair](https://fccf.ethz.ch/people1.html) + [Andrew
+Konecny](https://www.immunology.washington.edu/about/directory/konecny/) +
+[Charlotte Christie
+Petersen](https://pure.au.dk/portal/en/persons/ccp%40biomed.au.dk) + The
+[Department of Pathology Flow Core at the University of
+Cambridge](https://www.path.cam.ac.uk/research/facilities/flow-cytometry) +
+The [FACS Core at the University of Leuven
+(KUL)](https://gbiomed.kuleuven.be/english/corefacilities/facs) +
+[Jochen Lamote](https://flowcore-leuven.sites.vib.be/en)
+
+I am also indebted to prior work by David Novo, Bartek Rajwa, Ryan Kmet,
+Mario Roederer, Peter Mage, [Chris Hall](https://github.com/hally166),
+[Sofie Van Gassen](https://www.crig.ugent.be/en/dr-sofie-van-gassen-phd)
+and others. Flow cytometry is a great, collaborative field to be in.
+
+This work was supported by the Medical Research Council grant
+MR/Y004450/1 through the MRC Proactive Vaccinology consortium IMMPROVE
+(<https://immprove.ac.uk/>), and the Wellcome Trust through Wellcome
+Investigator Award 222442/A/21/Z.

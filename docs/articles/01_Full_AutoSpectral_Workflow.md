@@ -43,12 +43,17 @@ library(AutoSpectral)
 
 ## Getting your fluorophore spectra from the controls
 
+### Creating the Control File
+
 Since the default cytometer is the Aurora, we can actually just call
 this without any arguments. Otherwise you need to specify the cytometer
 you’re using.
 
 ``` r
-asp <- get.autospectral.param()
+asp <- get.autospectral.param(
+  cytometer = "aurora",
+  figures = TRUE # plot figures throughout to show what's going on
+)
 ```
 
 Where are the controls? This must be typed correctly.
@@ -96,20 +101,116 @@ control.file <- "fcs_control_file.csv"
 check.control.file(control.dir, control.file, asp)
 ```
 
-Once, the control file passes the error checks, we can load in the data.
-This part can be a bit slow, particularly if you have lots of big files.
-There is a parallelization option, which can cut the time in half,
-probably even better on Mac/Linux. There are some improvements I could
-make to this, including the gating. These will take time to implement,
-though, because they affect everything downstream of this, which is to
-say, everything.
+### Gating
+
+Once, the control file passes the error checks, we can create some
+gates.
+
+Gating allows us to identify which events in the file are actually our
+cells, as opposed to debris, doublets or other stuff. While you can
+directly proceed to loading in all of the data by calling
+[`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md),
+which automatically defines gates as best it can, taking a moment to
+check that the gates are correct prior to doing this will work more
+consistently.
+
+The first step here is to consider which samples should share the same
+gates. AutoSpectral will try to help you with this when creating the
+control file, at least if you have version 1.5.0 or higher installed. It
+will create simple groupings of your samples based on the type of sample
+(beads vs cells) and whether the marker identifies dead cells. If
+AutoSpectral cannot identify the type of sample or any information about
+the markers from the file names, it will be unable to help here, and you
+must do this manually.
+
+For this, we are going to be working with the control file. Let’s take
+our example as it is currently. We have some controls that are beads,
+some that are cells, one that is a viability marker, and one cell
+control that we have marked as needing a larger gate because it is a
+myeloid population with higher expected side scatter values. We need at
+least four gates. We can call these whatever we want, but I’m going to
+pick somewhat informative names: “beads”, “lymphocytes”, “myeloid” and
+“dead”. We add these names to the appropriate rows of our table in the
+`gate.name` column:
+
+Now we can choose which samples we want to use to define the gate
+boundaries. The simplest option is to just use everything. To do this,
+put “TRUE” in every row of the `gate.define` column. This should be done
+by default in version 1.5.0 and higher.
+
+If you want to get fancier about it, you can choose which samples you
+use to define the gates. This can be helpful if some samples are
+“better” than others. It is particularly useful when using the
+“landmarks” gating system. This system finds the brightest positive
+events in the expected peak channel for the sample(s) and uses those to
+define the boundary. This means that you can use your anti-CD3 or
+anti-CD4-stained sample to define the boundary of the lymphocyte region
+based on where the CD3+ or CD4+ cells are. For today’s example, we will
+use the landmark gating system. We can define one gate using our
+CD4-BV421 (cells) and apply it to the CD45 BUV395 (cells) as well for
+lymphocytes. We can define a second gate using our CD11b-BUV805 (cells)
+for the myeloid cells. We can define a third gate using our
+viability-e780 (cells) for dead cells, and we can define a fourth gate
+on all of the stained bead samples, which will all be in the same
+position since they are beads.
+
+Now our control file looks like this:
+
+Note that you can create any number of gates and pass them in the next
+step. Gates are saved and can be reused. See the dedicated articles on
+this for more information, including on how to use the
+[`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md)
+function.
+
+Before proceeding, run the control file check to be sure that what
+you’re doing with the gates is consistent with what AutoSpectral
+expects.
 
 ``` r
-flow.control <- define.flow.control(control.dir, control.file, asp)
+check.control.file(control.dir, control.file, asp)
 ```
 
+Assuming that passes with no errors, define the gates:
+
+``` r
+gate.lymphocyte <- define.gate.landmarks(
+  control.file = control.file,
+  control.dir = control.dir,
+  asp = asp,
+  n.cells = 2000,
+  percentile = 70,
+  gate.name = "lymphocytes"
+)
+gate.meloid <- define.gate.landmarks(
+  control.file = control.file,
+  control.dir = control.dir,
+  asp = asp,
+  n.cells = 2000,
+  percentile = 70,
+  gate.name = "myeloid"
+)
+gate.dead <- define.gate.landmarks(
+  control.file = control.file,
+  control.dir = control.dir,
+  asp = asp,
+  n.cells = 2000,
+  percentile = 70,
+  gate.name = "dead"
+)
+gate.beads <- define.gate.landmarks(
+  control.file = control.file,
+  control.dir = control.dir,
+  asp = asp,
+  n.cells = 2000,
+  percentile = 70,
+  gate.name = "beads"
+)
+```
+
+Note that this can be simplified to an lapply loop, if desired.
+
 Be sure to check the gates that are generated in the `figure_gate`
-folder–do they look right? If not, go to the Gating article on
+folder–do they look right? If not, go to the Gating articles on
 [GitHub](https://drcytometer.github.io/AutoSpectral/articles/04_Gating.html)
 [Colibri](https://www.colibri-cytometry.com/post/autospectral-gating)
 for tips on how fix it.
@@ -122,19 +223,42 @@ Cell Gate
 
 Bead Gate
 
-If everything looks okay with the gating, we proceed to control
-clean-up. This helps remove noisy events, like autofluorescence spikes,
-and tries to match the positive events for each control to corresponding
-cells/beads in the unstained `universal.negative` that you defined in
-the control.file.
+### Loading the Data
+
+If everything looks okay with the gating, we proceed to load in all of
+the data, applying those gates to select the events we want.
+
+``` r
+# Combine your gates into a list
+my.gates <- list("lymphocyte" = gate.lymph, "beads" = gate.beads)
+
+# Pass them to the function call
+flow.control <- define.flow.control(
+  control.dir = control,dir,
+  control.def.file = control.file,
+  asp = asp,
+  gate.list = my.gates,
+  color.palette = "rainbow" # optional: changes the plot color scheme
+)
+```
+
+This will create a plot of each reference control sample with the
+intended gate applied to it. To see these, check the `figure_gate`
+folder.
+
+### Control Cleaning
+
+Now we can continue to control clean-up. This helps remove noisy events,
+like autofluorescence spikes, and tries to match the positive events for
+each control to corresponding cells/beads in the unstained
+`universal.negative` that you defined in the control.file.
 
 The default settings here are usually best. See more on the cleaning
 article on
 [GitHub](https://drcytometer.github.io/AutoSpectral/articles/05_Cleaning.html)
 or
 [Colibri](https://www.colibri-cytometry.com/post/autospectral-cleaning).
-There is a parallelization option, which is being converted to the new
-parallel backend. Once that is in place, it should be faster.
+There is a parallelization option, which may be faster.
 
 ``` r
 flow.control <- clean.controls(flow.control, asp)
@@ -142,6 +266,8 @@ flow.control <- clean.controls(flow.control, asp)
 
 There are lots of plots generated with this, in `figure_clean_controls`
 and in `figure_spectral_ribbon`.
+
+\#s# Calculating the Fluorophore Spectra
 
 Now we can isolate the spectra from the controls. By default, this uses
 the cleaned data if they are available.
@@ -153,7 +279,13 @@ spectra <- get.fluorophore.spectra(flow.control, asp)
 With this, we get plots of the spectra as traces and a heatmap. We also
 get a cosine similarity heatmap. You can check these, if you aren’t
 familiar with what they should look like, against the expected profiles
-in online webtools. For the Aurora, check on Cytek Cloud.
+in online webtools. For the Aurora, check on Cytek Cloud. As of version
+1.5.0, you should also get a pdf document showing you your fluorophore
+profiles in overlay compared to a reference standard for that
+fluorophore on the same instrument. Not all fluorophores will be
+available, particularly for the instruments I don’t have regular access
+to, so if you want to contribute, visit the database and add your
+spectral profiles. See the Discussions page for more details on this.
 
 ![Spectral Trace](figures/Workflow/spectral_trace.jpg)![Spectral
 Heatmap](figures/Workflow/spectral_heatmap.jpg)![Similarity
@@ -163,7 +295,7 @@ The spectra themselves are saved to a CSV file in the `table_spectra`
 folder. You can open CSV files as a spreadsheet in Excel and other
 programs.
 
-## Now, on to unmixing.
+## Unmixing
 
 AutoSpectral provides options for unmixing. Let’s start with the most
 basic, which is replicating the OLS unmixing as in SpectroFlo.
@@ -212,14 +344,20 @@ standard unmixing.
 
 If we have a folder full of FCS files, we can do all the files in the
 folder. Note that this is essentially just an `lapply` loop over the
-files. It can, however, be parallelized, which will work as long as you
-have enough memory to handle the number of threads multiplied by the
-size of the files. So, if your FCS files are ~100MB, fine, if they’re
-multiple GB, maybe not. May not be much faster.
+files. It can, however, be parallelized (set `parallel=TRUE`). Memory
+usage is handled via file chunking, which you can modify using the
+`chunk.size` argument, if needed.
 
 ``` r
-unmix.folder("./Raw/Set1/Stained/", spectra, asp, flow.control, 
-             method = "OLS", parallel = TRUE, threads = 3)
+unmix.folder(
+  fcs.dir = "./Raw/Set1/Stained/",
+  spectra = spectra,
+  asp = asp,
+  flow.control = flow.control,
+  method = "OLS", # use OLS unmixing (not AutoSpectral unmixing)
+  parallel = TRUE,
+  threads = 3
+)
 ```
 
 By default, the unmixed files are generated in `Autospectral_unmixed`,
@@ -231,13 +369,21 @@ If we want to use weighted least-squares, we call like this:
 unmix.fcs(spleen.fcs.file, spectra, asp, flow.control, method = "WLS")
 ```
 
-The `method` is automatically appended to the output file name.
+The `method` is automatically appended to the output file name. If you
+wish to add something else to the file name, use the `file.suffix`
+argument.
+
+More details on WLS unmmixing, including calculating and re-using
+weights will be detailed in a separate article later. Reach out if this
+is important to you now.
 
 Okay, that’s basic unmixing. And, I think you should see a bit of
 improvement using AutoSpectral even with the same unmixing algorithms
 due to the improvements in single-colour control handling. We do.
 
 ## Per-cell unmixing
+
+### Per-cell Autofluorescence Extraction
 
 For per-cell autofluorescence extraction and per-cell fluorophore
 optimization, AutoSpectral needs more information. We will extract
@@ -258,21 +404,29 @@ devtools::install_github("DrCytometer/AutoSpectralRcpp")
 ```
 
 Once `AutoSpectralRcpp` is installed, it takes over when the unmixing
-starts. You don’t need to do anything else.
+starts. You don’t need to do anything else. It also helps out in a
+couple other computationally heavy spots, so you may experience faster
+processing elsewhere. There is no need for you to do anything–it will
+hapen automatically once installed.
 
 To use per-cell autofluorescence extraction only, no fluorophore
 optimization, do this:
 
 ``` r
 spleen.unstained <- "./Raw/Set1/Unstained/D1 Spleen_Set1.fcs"
-spleen.af <- get.af.spectra(spleen.unstained, asp, spectra)
+spleen.af <- get.af.spectra(
+  unstained.sample = spleen.unstained,
+  asp = asp,
+  spectra = spectra,
+  refine = TRUE # optional; when TRUE, more AF spectra will be generated, focusing on problem cells
+)
 unmix.fcs(
-  spleen.fcs.file,
-  spectra,
-  asp,
-  flow.control,
-  method = "AutoSpectral",
-  af.spectra = spleen.af,
+  fcs.file = spleen.fcs.file,
+  spectra = spectra,
+  asp = asp,
+  flow.control = flow.control,
+  method = "AutoSpectral", # use AutoSpectral unmixing
+  af.spectra = spleen.af, # use these AF signatures as the options
   file.suffix = "per-cell AF extraction"
 )
 ```
@@ -295,7 +449,7 @@ from the unstained lung sample, and then call `unmix.folder` on the
 folder containing your lung (and only lung) samples. Repeat for each
 type of autofluorescence sample. Read more about how the per-cell
 autofluorescence extraction works in the
-[GitHub](https://drcytometer.github.io/AutoSpectral/articles/08_Single_Cell_AutoFluorescence.html)
+[GitHub](https://drcytometer.github.io/AutoSpectral/articles/10_Single_Cell_AutoFluorescence.html)
 or
 [Colibri](https://www.colibri-cytometry.com/post/autospectral-single-cell-autofluorescence)
 article.
@@ -334,12 +488,20 @@ unmix.fcs(
 )
 ```
 
+You can easily set this up as a for loop or an lapply loop matching
+elements by names from a list.
+
+For more detail on the per-cell AF extraction, see the dedicated article
+on this subject.
+
+### Per-cell Fluorophore Optimization
+
 To do per-cell fluorophore optimization, we will first measure the
 variation in the spectrum for each fluorophore. For the unmixing, we’ll
 supply the `af.spectra` and the `spectra.variants`, calling
 `AutoSpectral` unmixing. Read more about how the per-cell fluorophore
 optimization works in the
-[GitHub](https://drcytometer.github.io/AutoSpectral/articles/09_Per_Cell_Optimization.html)
+[GitHub](https://drcytometer.github.io/AutoSpectral/articles/11_Per_Cell_Optimization.html)
 or
 [Colibri](https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization)
 article.
@@ -352,12 +514,13 @@ independent of any AF variation.
 
 ``` r
 variants <- get.spectral.variants(
-  control.dir,
-  control.file,
-  asp,
-  spectra,
-  af.spectra = spleen.af,
-  parallel = FALSE
+  control.dir = control.dir,
+  control.def.file = control.file,
+  asp = asp,
+  spectra = spectra,
+  af.spectra = spleen.af, # the AF relevant to any cell-based single-stained controls
+  parallel = FALSE # use parallel if TRUE
+  refine = TRUE # optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass
 )
 ```
 
@@ -375,11 +538,10 @@ blue and yellow-green lasers, which would cause spread if we had a
 fluorophore in that range on the blue laser, such as RB780. We don’t in
 this case. ![PE-Cy7](figures/Workflow/PECy7_variants.jpg)
 
-We can now pass this to the unmixing call. For quicker results, we’ll
+We can now pass this to the unmixing call. For quicker results, you may
 set the `speed` to `fast`, which checks fewer pre-screened variants per
-cell. This can be a bit slow. Parallelization is automatic here if you
-have installed `AutoSpectralRcpp`. If you are using base R only, try
-turning on the `parallel=TRUE`.
+cell. This can be a bit slow if you have not installed
+`AutoSpectralRcpp`.
 
 ``` r
 unmix.fcs(
@@ -387,11 +549,12 @@ unmix.fcs(
   spectra,
   asp,
   flow.control,
-  method = "AutoSpectral",
-  af.spectra = lung.af,
-  spectra.variants = variants,
+  method = "AutoSpectral", # use AutoSpectral unmixing
+  af.spectra = lung.af, # use this set of AF (matched to sample source)
+  spectra.variants = variants, # by providing variants, we instruct the unmixing to perform per-cell fluorophore optimization
   file.suffix = "per-cell AF and fluorophore optimization",
-  speed = "fast"
+  speed = "slow", # slow will be a bit better
+  parallel = TRUE
 )
 ```
 
@@ -404,10 +567,15 @@ whatever you’ve already done to tune your display (e.g., biexponential
 width basis) for your existing files versus some random default
 selection by FlowJo for AutoSpectral’s files. Nothing to do with me.
 
+For more detail on the per-cell fluorophore optimization, see the
+dedicated article on this subject.
+
+## Plotting
+
 You can do a comparison using the plotting functions in AutoSpectral,
 but a dedicated flow cytometry analysis program with a graphical
 interface will be better. More on plotting on the dedicated article on
-[GitHub](https://drcytometer.github.io/AutoSpectral/articles/09_Plotting.html)
+[GitHub](https://drcytometer.github.io/AutoSpectral/articles/13_Plotting.html)
 or
 [Colibri](https://www.colibri-cytometry.com/post/autospectral-plotting).
 
@@ -415,14 +583,9 @@ or
 autospectral.unmixed.lung <- "AutoSpectral_unmixed/D5 Lung_Set1 AutoSpectral per-cell AF and fluorophore optimization.fcs"
 spectroflo.unmixed.lung <- "./Unmixed/Set1/Stained/D5 Lung_Set1.fcs"
 
-asp.lung <- flowCore::exprs(
-  flowCore::read.FCS(autospectral.unmixed.lung,
-                     truncate_max_range = FALSE)
-  )
-sf.lung <- flowCore::exprs(
-  flowCore::read.FCS(spectroflo.unmixed.lung,
-                     truncate_max_range = FALSE)
-  )
+# using native AutoSpectral reader here (see `flowstate`)
+asp.lung <- AutoSpectral::readFCS(autospectral.unmixed.lung)
+sf.lung <- AutoSpectral::readFCS(spectroflo.unmixed.lung)
 
 create.biplot(sf.lung, "BUV395-A", "BV421-A", asp, title = "SpectroFlo")
 create.biplot(asp.lung, "BUV395", "BV421", asp, title = "AutoSpectral")

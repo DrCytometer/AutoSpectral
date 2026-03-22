@@ -1,7 +1,7 @@
 # Do Gate
 
 Performs gating on scatter parameters and returns a vector with the
-indexes of events inside the initial gate.
+points describing the gate boundary.
 
 The gating proceeds in three steps:
 
@@ -25,7 +25,9 @@ do.gate(
   scatter.and.channel.label,
   control.type,
   asp,
-  color.palette = "plasma"
+  color.palette = "plasma",
+  max.points = 50000,
+  gate.color = "darkgoldenrod1"
 )
 ```
 
@@ -68,6 +70,14 @@ do.gate(
   color options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`,
   `rocket`, `mako` and `turbo`.
 
+- max.points:
+
+  Number of points to plot (speeds up plotting). Default is `5e4`.
+
+- gate.color:
+
+  Color to plot the gate boundary line, default is `darkgoldenrod1`.
+
 ## Value
 
-A vector with the indexes of events inside the initial gate.
+A set of points describing the gate boundary.

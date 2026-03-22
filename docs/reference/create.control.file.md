@@ -13,7 +13,12 @@ manually.
 ## Usage
 
 ``` r
-create.control.file(control.dir, asp)
+create.control.file(
+  control.dir,
+  asp,
+  fill.gate.name = TRUE,
+  filename = "fcs_control_file"
+)
 ```
 
 ## Arguments
@@ -26,6 +31,16 @@ create.control.file(control.dir, asp)
 
   The AutoSpectral parameter list. Generate using
   `get.autospectral.param`
+
+- fill.gate.name:
+
+  Logical, default is `TRUE`. Will attempt to automatically assign gate
+  names for the `gate.name` column if `TRUE`.
+
+- filename:
+
+  Character string defining the output filename. Default is
+  "fcs_control_file", to which .csv will be appended.
 
 ## Value
 

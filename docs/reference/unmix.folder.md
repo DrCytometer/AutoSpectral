@@ -30,6 +30,7 @@ unmix.folder(
   threads = NULL,
   verbose = TRUE,
   n.variants = NULL,
+  chunk.size = 2e+06,
   ...
 )
 ```
@@ -189,6 +190,14 @@ unmix.folder(
   `speed`, allowing up to `n.variants` (or the max available) variants
   to be tested. The default is `NULL`, in which case `n.variants` will
   be ignored.
+
+- chunk.size:
+
+  Numeric, number of events to use per chunk of unmixing. Used to manage
+  memory when processing large FCS files. As a rough guide, you will
+  need approximately 10x the size of the raw FCS file on disk as
+  available memory. Default is set at `2e6` events, assuming ~20GB
+  memory available.
 
 - ...:
 

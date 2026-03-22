@@ -1,7 +1,0 @@
-"filename","fluorophore","marker","channel","control.type","universal.negative","large.gate","is.viability"
-"Spark UV 387 cells__006.fcs","Spark UV 387","","UV1 (375)-A","cells","","",""
-"Pacific Blue beads_001.fcs","Pacific Blue","","V3 (460)-A","beads","","",""
-"Qdot 545 cells__003.fcs","Qdot 545","","V8 (545)-A","cells","","",""
-"ViaKrome 808 cells__002.fcs","ViaKrome 808","","R5 (750)-A","cells","","","TRUE"
-"Autofluorescence cells_001.fcs","No match","AF","","cells","","",""
-"Negative beads_001.fcs","Negative","","","beads","","",""

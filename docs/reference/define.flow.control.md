@@ -19,6 +19,8 @@ define.flow.control(
   control.def.file,
   asp,
   gate = TRUE,
+  gating.system = c("landmarks", "density"),
+  gate.list = NULL,
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
@@ -49,6 +51,33 @@ define.flow.control(
   automatically generated gates applied. That is, all data in the files
   will be used. This is intended to allow the user to pre-gate the files
   in commercial software.
+
+- gating.system:
+
+  Character string selecting the automated gating system to employ in
+  defining the initial scatter gates for identifying cells in the FCS
+  files. Options are `landmarks` and `density`. The `density` option
+  uses the original gating system from AutoSpill, picking cell
+  populations based on dense regions on FSC/SSC. The default `landmarks`
+  system picks out the cell regions using the brightest events in the
+  peak channel for the single-stained control(s). This approach is
+  generally more robust. A good way to use this is to utilize
+  `landmarks` in combination with specifying which single-stained
+  control files should be used for defining the gates. For example,
+  abundant, bright cell markers such as CD4 will reliably identify the
+  lymphocyte region, as CD14 will identify the monocyte region, etc. For
+  more instructions, see the help pages on GitHub.
+
+- gate.list:
+
+  Optional named list of gates. To use this, pre-define the gates using
+  [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md)
+  and/or
+  [`define.gate.density()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.density.md),
+  ensure that the names of the gates correspond to the names in the
+  `control.def.file`, and ensure that the `gate.name` column has been
+  filled in for the `control.def.file`. Default `NULL` will revert to
+  creating new gates.
 
 - parallel:
 
@@ -132,3 +161,21 @@ A list (`flow.control`) with the following components:
 - `event.type`: Type of events.
 
 - `expr.data`: Expression data used for extracting spectra.
+
+## References
+
+Roca, Carlos P et al. "AutoSpill is a principled framework that
+simplifies the analysis of multichromatic flow cytometry data" *Nature
+Communications* 12 (2890) 2021.
+
+## See also
+
+- [`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md)
+
+- [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md)
+
+- [`define.gate.density()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.density.md)
+
+- [`do.gate()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.md)
+
+- [`gate.define.plot()`](https://drcytometer.github.io/AutoSpectral/reference/gate.define.plot.md)

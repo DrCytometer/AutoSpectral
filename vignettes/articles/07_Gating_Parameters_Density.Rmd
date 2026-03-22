@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
 
 In this article, we'll go into more depth on how the automated density-based gating in AUtoSpectral works, covering the parameters that modify it. For this, we are focusing on the original gating system copied from AutoSpill. This article is most relevant if you are using a version of AutoSpectral prior to 1.5.0 or if you are using `gating.system = "density"` without supplying any pre-defined gates to `define.flow.control()`.
 
-For better control of the gating, update to AutoSpectral version 1.5.0, and use the `tune.gates()` function to get the gates looking the way you want before calling `define.flow.control()`. For this, see article [Tuning Gates]().
+For better control of the gating, update to AutoSpectral version 1.5.0, and use the `tune.gates()` function to get the gates looking the way you want before calling `define.flow.control()`. For this, see article [Advanced Gating](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html).
 
 That said, let's go over the various parameters that control the automated density-based gating in AutoSpectral, which can help you adjust the gates to work better for your samples.
 
@@ -22,7 +22,7 @@ library(AutoSpectral)
 knitr::opts_knit$set(root.dir = 'C:/Users/Oliver Burton/OneDrive - University of Cambridge/Documents/AutoSpectral_data/Gating_params')
 ```
 
-Today we're going to use a simple PBMC set run on the FACSDiscover A8. The FACSDiscover cytometers are, I think, a nice example for today because they have a very wide working range for the scatter detectors, which, while great for dealing with a huge array of sample types, makes the automated gating more challenging due to the large search space. You can try this out by downloading some files from the [OMIP-102 dataset](), or better, try it out on your own data (be sure to set the correct cytometer).
+Today we're going to use a [simple PBMC set](https://data.mendeley.com/datasets/77wwgtmvrc/1) run on the FACSDiscover A8. The FACSDiscover cytometers are, I think, a nice example for today because they have a very wide working range for the scatter detectors, which, while great for dealing with a huge array of sample types, makes the automated gating more challenging due to the large search space. You can try this out by downloading some files from the [OMIP-102 dataset](https://data.mendeley.com/datasets/j6yvfgdrcp/2), or better, try it out on your own data (be sure to set the correct cytometer when calling get.autospectral.param()).
 
 Since this is all about gating and understanding how it works, we don't need a full set of single-stained controls, so I'm just going to include a single stained and unstained sample, but use one from cells, one from BD comp beads and one from BD SpectraComp beads. This will give us a bunch of stuff to work with.
 
@@ -58,7 +58,7 @@ Let's start by just loading in the data using `define.flow.control()`, which wil
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
 
-Immediately we have a failure, at least with this version of AutoSpectral. You may have run into this sort of issue, with incomprensible error messages, which is really frustrating. The new approach (see article here) should make this a lot more manageable, but let's work through it here as well.
+Immediately we have a failure, at least with this version of AutoSpectral. You may have run into this sort of issue, with incomprehensible error messages, which is really frustrating. The new approach (see [article](https://drcytometer.github.io/AutoSpectral/articles/07_Advanced_Gating.html)) should make this a lot more manageable, but let's work through it here as well.
 
 We have a diagnostic plot generated in folder "figure_gate". Let's look at that:
 ![Diagnostic plot](figures/Gating_params/FAILURE_beads_nonViability_smallGate.jpg)
