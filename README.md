@@ -70,6 +70,9 @@ The central ideas are as follows:
 - Fluorophore emissions are variable, and this variability manifests on
   the level of the cell. Again, we can more or less figure this out and
   deal with it.
+- By formalizing the unmixing workflow, we make it reproducible and
+  available to users of any experience level (although this is currently
+  limited by the R interface).
 
 At the moment, the following cytometers are supported:
 
@@ -84,12 +87,16 @@ At the moment, the following cytometers are supported:
 - Beckman Coulter CytoFLEX mosaic (“mosaic”)
 - ThermoFisher Attune Xenith (“xenith”)
 
+If you have data from a different instrument and are willing to share
+files, contact the author/maintainer.
+
 AutoSpectral will probably not solve all your unmixing issues; hopefully
-it will help. Here are some other unmixing tools that may also help:
+it will help. Here are some other tools that may also help:
 
 - [flowUnmix](https://github.com/hally166/flowUnmix)
 - [PanelBuilder](https://github.com/exaexa/panelbuilder)
 - [Ozette Resolve](https://www.ozette.com/)
+- [CompensAID](https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html)
 
 What AutoSpectral cannot do:
 
@@ -173,7 +180,7 @@ be working well.
 
 AutoSpectral is open source. If you are interested in contributing,
 please visit
-[Development](https://drcytometer.github.io/AutoSpectral/articles/14_Development.html)
+[Development](https://drcytometer.github.io/AutoSpectral/articles/16_Development.html)
 for suggestions of where help is needed most.
 
 ## Bug fixes and known issues
@@ -213,25 +220,26 @@ there.
 In particular, see the [Full
 Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html).
 
-All functions available in AutoSpectral can be viewed
-[here](https://drcytometer.github.io/AutoSpectral/reference/index.html).
-
 Resolved issues, bug patches and improvements will be announced via the
-NEWS and also tracked in the [Updates and
-Issues](https://drcytometer.github.io/AutoSpectral/articles/13_Updates_And_Issues.html)
+NEWS, in
+[Discussions](https://github.com/DrCytometer/AutoSpectral/discussions/24),
+and also tracked in the [Updates and
+Issues](https://drcytometer.github.io/AutoSpectral/articles/15_Updates_And_Issues.html)
 article.
 
 ### Known shortcomings
 
-- Gating. The automated gating is not great. See the [help
-  page](https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html)
-  for tips. I’m working on an alternative.
-- Please note that FCS 3.2 files from the S8 and A8 cytometers are not
-  fully supported in flowCore. You may receive warnings, but things
-  should still work.
-- More stuff in progress will appear in the [Development
-  article](https://drcytometer.github.io/AutoSpectral/articles/14_Development.html).
+- Not all unmixing errors will be fixed. Still working on this.
+- AutoSpectral currently does not permit unmixing of samples run on
+  different PMT/APD voltage settings than what were used for the
+  controls.
+- Data from the A5SE may be more problematic–I’m looking into this.
+- This would be better with a graphical interface.
 - This is my first R package.
+- R is not exactly a fast or modern programming language.
+- The documentation is probably not amazingly clear. You can help with
+  this by highlighting points that are unclear, or, even better,
+  providing example workflows and explanations for other users.
 
 If you want to use data from another cytometer and are wiling to provide
 files for establishing the workflow, contact the author/maintainer. See
@@ -270,20 +278,21 @@ If you know why this happens, let me know.
 
 Installation of `AutoSpectralRcpp` will take a couple of minutes because
 the code needs to compile. You will also first have to install Rtools to
-have a compiler, and that will take longer, probably 10 minutes or so.
+have a compiler, and that will take longer, probably 10 minutes or so
+including time to find it and download it.
 
 For more details and benchmarking of specific functions with an example
-40-color cell control data set, see the article on
-[Speed](https://drcytometer.github.io/AutoSpectral/articles/12_Speed_It_Up.html).
+42-color cell control data set, see the article on
+[Speed](https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.html).
 
 ## Go Faster
 
 See the article on
-“[Speed](https://drcytometer.github.io/AutoSpectral/articles/12_Speed_It_Up.html)
+[Speed](https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.html)
 for details on how to improve AutoSpectral’s performance on your system.
 
 ## Updates and news
 
 See the article [Updates and
-Issues](https://drcytometer.github.io/AutoSpectral/articles/13_Updates_And_Issues.html)
+Issues](https://drcytometer.github.io/AutoSpectral/articles/15_Updates_And_Issues.html)
 for more on this, or read the NEWS with the latest release.
