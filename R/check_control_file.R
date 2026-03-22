@@ -85,6 +85,30 @@ check.control.file <- function(
         "Mixing cytometers is not supported.",
         "\033[0m"
       )
+    },
+
+    reserved_gate_name = function( x ) {
+      paste0(
+        "\033[31m",
+        "Invalid gate names detected. Avoid names like 'AF' or 'UniversalNegative'.",
+        "\033[0m"
+      )
+    },
+
+    no_gate_definition = function( x ) {
+      paste0(
+        "\033[31m",
+        "Every gate group must have at least one row where gate.define is TRUE.",
+        "\033[0m"
+      )
+    },
+
+    unstained_gate_definition = function( x ) {
+      paste0(
+        "\033[33m",
+        "Warning: Gates defined without stained samples may be inaccurate.",
+        "\033[0m"
+      )
     }
   )
 

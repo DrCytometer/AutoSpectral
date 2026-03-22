@@ -15,19 +15,27 @@
 #' @param control.dir file path to the single stained control fcs files
 #' @param asp The AutoSpectral parameter list. Generate using
 #' `get.autospectral.param`
+#' @param fill.gate.name Logical, default is `TRUE`. Will attempt to automatically
+#' assign gate names for the `gate.name` column if `TRUE`.
+#' @param filename Character string defining the output filename. Default is
+#' "fcs_control_file", to which .csv will be appended.
 #'
 #' @return No returns. Outputs a csv file called fcs_control_file.csv
 #' @export
 
-create.control.file <- function( control.dir, asp ){
+create.control.file <- function(
+    control.dir,
+    asp,
+    fill.gate.name = TRUE,
+    filename = "fcs_control_file"
+  ) {
 
   # check for existing control file and generate a new name if it exists
-  control.file.name.base <- "fcs_control_file"
-  control.file.name <- paste0( control.file.name.base, ".csv" )
+  control.file.name <- paste0( filename, ".csv" )
   file.count <- 1
 
   while ( file.exists( control.file.name ) ) {
-    control.file.name <- paste0( control.file.name.base, "_", file.count, ".csv")
+    control.file.name <- paste0( filename, "_", file.count, ".csv")
     file.count <- file.count + 1
   }
 
@@ -38,35 +46,40 @@ create.control.file <- function( control.dir, asp ){
     stop( "Single-stained control files not found. Check directory.", call. = FALSE )
   }
 
-  control.colnames <- c( "filename", "fluorophore", "marker", "channel",
-                         "control.type", "universal.negative", "large.gate" )
+  control.colnames <- c(
+    "filename", "fluorophore", "marker", "channel", "control.type",
+    "universal.negative", "large.gate", "is.viability", "gate.name", "gate.define"
+  )
 
-  control.def.file <- data.frame( matrix( ncol = length( control.colnames ),
-                                                nrow = length( control.files ) ) )
-
-  colnames( control.def.file ) <- control.colnames
+  control.table <- data.frame(
+    matrix(
+      ncol = length( control.colnames ),
+      nrow = length( control.files )
+    )
+  )
+  colnames( control.table ) <- control.colnames
 
   # define filenames
-  control.def.file$filename <- control.files
+  control.table$filename <- control.files
 
   # find corresponding fluorophores if possible
   fluor.data.path <- system.file(
     "extdata", "fluorophore_database.csv", package = "AutoSpectral"
-    )
+  )
   fluorophore.database <- utils::read.csv( fluor.data.path )
   fluorophore.database[ fluorophore.database == "" ] <- NA
   fluorophore.matches <- match.fluorophores( control.files, fluorophore.database )
 
-  control.def.file$fluorophore <- fluorophore.matches[ control.def.file$filename ]
+  control.table$fluorophore <- fluorophore.matches[ control.table$filename ]
 
   # find markers if possible
   marker.data.path <- system.file(
     "extdata", "marker_database.csv", package = "AutoSpectral"
-    )
+  )
   marker.database <- utils::read.csv( marker.data.path )
   marker.database[ marker.database == "" ] <- NA
   marker.matches <- match.markers( control.files, marker.database )
-  control.def.file$marker <- marker.matches[ control.def.file$filename ]
+  control.table$marker <- marker.matches[ control.table$filename ]
 
   # set corresponding peak detectors based on cytometer
   if ( asp$cytometer == "Aurora" ) {
@@ -102,12 +115,12 @@ create.control.file <- function( control.dir, asp ){
     stop( "Unsupported cytometer" )
   }
 
-  detector.idx <- match( control.def.file$fluorophore, names( detectors ) )
+  detector.idx <- match( control.table$fluorophore, names( detectors ) )
 
-  control.def.file$channel <- detectors[ detector.idx ]
+  control.table$channel <- detectors[ detector.idx ]
 
-  control.def.file$control.type <- sapply(
-    control.def.file$filename, function( filename ) {
+  control.table$control.type <- sapply(
+    control.table$filename, function( filename ) {
     if ( grepl( "cells", filename, ignore.case = TRUE ) ){
       type <- "cells"
     } else if ( grepl( "beads", filename, ignore.case = TRUE ) ){
@@ -119,48 +132,74 @@ create.control.file <- function( control.dir, asp ){
   } )
 
   # reorder list by wavelength column in database file
-  control.def.file.merged <- merge(
-    control.def.file, fluorophore.database, by = "fluorophore", all.x = TRUE )
+  control.table.merged <- merge(
+    control.table, fluorophore.database, by = "fluorophore", all.x = TRUE )
 
   laser.order <- c( "DeepUV", "UV", "Violet", "Blue", "YellowGreen", "Red", "IR" )
 
-  control.def.file.merged$excitation.laser <- factor(
-    control.def.file.merged$excitation.laser,
+  control.table.merged$excitation.laser <- factor(
+    control.table.merged$excitation.laser,
     levels = laser.order
     )
 
-  control.def.file.merged <- control.def.file.merged[
-    order( control.def.file.merged$excitation.laser,
-           control.def.file.merged$nominal.wavelength ), ]
+  control.table.merged <- control.table.merged[
+    order( control.table.merged$excitation.laser,
+           control.table.merged$nominal.wavelength ), ]
 
-  desired.col <- c( control.colnames, "is.viability" )
+  # desired.col <- c( control.colnames, "is.viability" )
+  control.table <- control.table.merged[ , control.colnames ]
 
-  control.def.file <- control.def.file.merged[, desired.col ]
+  # automatically fill gate names if requested
+  if ( !"gate.name" %in% colnames( control.table ) ) control.table$gate.name <- ""
+  if ( !"gate.define" %in% colnames( control.table ) ) control.table$gate.define <- TRUE
+  if ( fill.gate.name ) {
+    control.table <- assign.gates(
+      control.table,
+      ggating.system = "density",
+      gate = TRUE
+    )
+  }
 
   # fill AF for unstained cells, Negative for unstained beads
-  control.def.file$fluorophore[ grepl( "Unstained", control.def.file$filename ) ] <-
+  control.table$fluorophore[ grepl( "Unstained", control.table$filename ) ] <-
     ifelse(
-      control.def.file$control.type[ grepl(
-        "Unstained", control.def.file$filename ) ] == "cells",
+      control.table$control.type[
+        grepl( "Unstained", control.table$filename ) ] == "cells",
            "AF",
            "Negative" )
 
   # fill Negative for Negative
-  control.def.file$fluorophore[ grepl(
-    "Negative", control.def.file$filename ) ] <- "Negative"
+  control.table$fluorophore[
+    grepl( "Negative", control.table$filename ) ] <- "Negative"
 
   # replace any NAs
-  control.def.file[ is.na( control.def.file ) ] <- ""
-  control.def.file[ control.def.file == "NA" ] <- ""
+  control.table[ is.na( control.table ) ] <- ""
+  control.table[ control.table == "NA" ] <- ""
+
 
   utils::write.csv(
-    control.def.file,
+    control.table,
     file = control.file.name,
     row.names = FALSE
   )
 
+  # check for "No Match"
+  no.match <- grepl( "No match", control.table$fluorophore )
+
+  if ( any( no.match ) ) {
+    warning(
+      paste0(
+        "\033[31m",
+        "One or more fluorophores could not be matched.",
+        "\n",
+        "Edit any 'No match' values before proceeding.",
+        "\033[0m"
+      )
+    )
+  }
+
   # check for duplicate fluorophores
-  duplicate.fluorophores <- anyDuplicated( control.def.file$fluorophore )
+  duplicate.fluorophores <- anyDuplicated( control.table$fluorophore[ !no.match ] )
 
   if ( duplicate.fluorophores != 0 ) {
     warning(

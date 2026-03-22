@@ -348,59 +348,56 @@ validate.control.file <- function(
   }
 
   ## ---------- parameter and voltage consistency ----------
-  # 1. Prepare reference information from the first valid file
+  # Prepare reference information from the first valid file
   ref.params   <- valid[[ 1 ]]$parameters
   ref.file     <- valid[[ 1 ]]$file
 
-  # Identify indices for spectral channels based on the first file
   non.spec.regex <- paste0( asp$non.spectral.channel, collapse = "|" )
   spec.indices   <- which( !grepl( non.spec.regex, ref.params ) )
 
-  # Extract reference voltages for these indices
-  # Note: We re-read the header once for the reference to get the $PnV keys
+  # Extract reference voltages for these parameters (first file)
   ref.h <- readFCSheader( file.path( control.dir, ref.file ) )[[ 1 ]]
   ref.voltages <- vapply( spec.indices, function( idx ) {
     v <- ref.h[[ paste0( "$P", idx, "V" ) ]]
     if ( is.null( v ) ) return( NA_character_ ) else return( as.character( v ) )
   }, character( 1 ) )
 
-  # 2. Iterate through subsequent files and compare
+  # Iterate through subsequent files and compare
   mismatched.params   <- character()
   mismatched.voltages <- character()
 
-  # We skip index 1 since it's our reference
+  # skip the first file since we're using it as the reference to check the others
   if ( length( valid ) > 1 ) {
     for ( i in 2:length( valid ) ) {
       curr.file <- valid[[ i ]]$file
       curr.params <- valid[[ i ]]$parameters
 
-      # Check A: Parameter Name Consistency
-      # We check the spectral subset as per your Discover logic if applicable
+      # check parameter name consistency, with filtering for Discover system
+      # we only really care about matching the spectral channels (scatter would be good too)
       check.params <- curr.params
       if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8" ) ) {
         nonspec.sub <- asp$non.spectral.channel[ 4:length( asp$non.spectral.channel ) ]
         check.params <- check.params[ !grepl( paste( nonspec.sub, collapse = "|" ), check.params ) ]
-        # Note: If comparing against the Discover-filtered list, ensure ref.params is filtered too
+        # filter reference set as well
+        ref.check.params <- ref.params[ !grepl( paste( nonspec.sub, collapse = "|" ), ref.params ) ]
       }
 
-      if ( !identical( ref.params, curr.params ) ) {
+      if ( !identical( ref.check.params, check.params ) ) {
         mismatched.params <- c( mismatched.params, curr.file )
       }
 
-      # Check B: Voltage Consistency (Safe lookup)
+      # check voltage consistency
       curr.h <- readFCSheader( file.path( control.dir, curr.file ) )[[ 1 ]]
       curr.n.par <- as.integer( curr.h[[ "$PAR" ]] )
 
       curr.v.vector <- vapply( spec.indices, function( idx ) {
-        # Construct the specific keyword name we are looking for
-        v_key <- paste0( "$P", idx, "V" )
+        v.key <- paste0( "$P", idx, "V" )
 
-        # Check if this keyword exists in the header names
-        if ( !v_key %in% names( curr.h ) ) {
-          return( "MISSING_OR_OUT_OF_BOUNDS" )
+        if ( !v.key %in% names( curr.h ) ) {
+          return( paste( "Unable to locate:", v.key ) )
         }
 
-        v <- curr.h[[ v_key ]]
+        v <- curr.h[[ v.key ]]
         if ( is.null( v ) ) return( NA_character_ ) else return( as.character( v ) )
       }, character( 1 ) )
 
@@ -410,7 +407,7 @@ validate.control.file <- function(
     }
   }
 
-  # 3. Log issues
+  # track issues
   if ( length( mismatched.params ) > 0 ) {
     issues[[ length( issues ) + 1 ]] <-
       .new_issue( "error", "parameter_mismatch",
@@ -447,7 +444,89 @@ validate.control.file <- function(
                   message = "One or more channels not found in FCS parameters" )
   }
 
-  if ( length( issues ) == 0) {
+  ## ---------- gating rules ----------
+  # gate.name and gate.define do not have to be present ( for backward compatibility)
+  # but if they are, we validate them.
+  if ( "gate.name" %in% colnames( ct ) ) {
+    gn <- ct$gate.name
+    is.blank <- is.na( gn ) | gn == ""
+    active.gn <- gn[ !is.blank ]
+
+    if ( any( !is.blank ) && any( is.blank ) ) {
+      issues[[ length( issues ) + 1 ]] <-
+        .new_issue( "error", "incomplete_gate_naming",
+                    column = "gate.name",
+                    message = "gate.name must be entirely blank or entirely filled; partial naming is not allowed." )
+    }
+
+    # check for illegal characters
+    illegal.chars <- grepl( "[^[:alnum:]_. ]", gn[ !is.blank ] )
+    if ( any( illegal.chars ) ) {
+      issues[[ length( issues ) + 1 ]] <-
+        .new_issue( "error", "invalid_gate_characters",
+                    column = "gate.name",
+                    message = "gate.name contains illegal characters. Use only letters, numbers, underscores, or dots." )
+    }
+
+
+    # Reserved names check
+    reserved <- c("AF", "UniversalNegative", "Neg", "N/A")
+    if ( any( toupper( active.gn ) %in% toupper( reserved ) ) ) {
+      issues[[ length( issues ) + 1 ]] <-
+        .new_issue( "error", "reserved_gate_name", column = "gate.name",
+                    message = "gate.name cannot use reserved terms (AF, UniversalNegative, etc.)" )
+    }
+
+    # Logic for per-gate consistency and definition
+    unique.gates <- unique( active.gn )
+    for ( g in unique.gates ) {
+      g.rows <- ct[ !is.blank & gn == g, ]
+
+      # at least one gate.define must be TRUE per group
+      if ( !any( as.logical( g.rows$gate.define ), na.rm = TRUE ) ) {
+        issues[[ length( issues ) + 1 ]] <-
+          .new_issue( "error", "no_gate_definition",
+                      message = paste0( "Gate '", g, "' has no samples marked as gate.define = TRUE." ) )
+      }
+
+      # warning if only Unstained/Negative samples are used to define the gate
+      is.stained <- !( toupper( g.rows$fluorophore ) %in% c( "AF", "NEGATIVE" ) )
+      defining.stained <- is.stained & as.logical( g.rows$gate.define )
+
+      if ( !any( defining.stained, na.rm = TRUE ) ) {
+        issues[[ length( issues ) + 1 ]] <-
+          .new_issue( "warning", "unstained_gate_definition",
+                      message = paste0( "Gate '", g, "' is defined only by unstained/negative controls. ",
+                                        "This will not work with landmark gating." ) )
+      }
+
+      # Existing Consistency Checks
+      tryCatch({
+        check.consistency( g.rows$control.type, paste( "gate", g, "control.type" ) )
+        check.consistency( g.rows$large.gate, paste( "gate", g, "large.gate" ) )
+        check.consistency( g.rows$is.viability, paste( "gate", g, "is.viability" ) )
+      }, error = function( e ) {
+        issues[[ length( issues ) + 1 ]] <- .new_issue( "error", "gate_inconsistency", message = e$message )
+      })
+    }
+  }
+
+  # gate.define must be logical (TRUE/FALSE/NA)
+  if ( "gate.define" %in% colnames( ct ) ) {
+    val.gd <- ct$gate.define
+    if ( !is.logical( val.gd ) ) {
+      is.valid.logical <- all( val.gd %in% c( "TRUE", "FALSE", "T", "F", NA, "" ) )
+      if ( !is.valid.logical ) {
+        issues[[ length( issues ) + 1 ]] <-
+          .new_issue("error", "invalid_gate_define",
+                     column = "gate.define",
+                     message = "gate.define column may only contain TRUE, FALSE, or be blank.")
+      }
+    }
+  }
+
+  # wrap up
+  if ( length( issues ) == 0 ) {
     return( data.frame() )
   }
 

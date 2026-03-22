@@ -4,13 +4,24 @@
 \alias{create.control.file}
 \title{Create Control File}
 \usage{
-create.control.file(control.dir, asp)
+create.control.file(
+  control.dir,
+  asp,
+  fill.gate.name = TRUE,
+  filename = "fcs_control_file"
+)
 }
 \arguments{
 \item{control.dir}{file path to the single stained control fcs files}
 
 \item{asp}{The AutoSpectral parameter list. Generate using
 \code{get.autospectral.param}}
+
+\item{fill.gate.name}{Logical, default is \code{TRUE}. Will attempt to automatically
+assign gate names for the \code{gate.name} column if \code{TRUE}.}
+
+\item{filename}{Character string defining the output filename. Default is
+"fcs_control_file", to which .csv will be appended.}
 }
 \value{
 No returns. Outputs a csv file called fcs_control_file.csv
