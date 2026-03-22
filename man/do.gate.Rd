@@ -12,7 +12,9 @@ do.gate(
   scatter.and.channel.label,
   control.type,
   asp,
-  color.palette = "plasma"
+  color.palette = "plasma",
+  max.points = 50000,
+  gate.color = "darkgoldenrod1"
 )
 }
 \arguments{
@@ -36,13 +38,18 @@ palette to be used for the fluorophore traces. Default is \code{plasma}. Use \co
 to be similar to FlowJo or SpectroFlo. Other options are the viridis color
 options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
 and \code{turbo}.}
+
+\item{max.points}{Number of points to plot (speeds up plotting). Default is
+\code{5e4}.}
+
+\item{gate.color}{Color to plot the gate boundary line, default is \code{darkgoldenrod1}.}
 }
 \value{
-A vector with the indexes of events inside the initial gate.
+A set of points describing the gate boundary.
 }
 \description{
-Performs gating on scatter parameters and returns a vector with the indexes
-of events inside the initial gate.
+Performs gating on scatter parameters and returns a vector with the points
+describing the gate boundary.
 
 The gating proceeds in three steps:
 \itemize{

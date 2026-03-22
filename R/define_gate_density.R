@@ -252,7 +252,7 @@ define.gate.density <- function(
 
   # define the gate, with error handling for exceptions
   gate <- tryCatch({
-    do.gate.test(
+    do.gate(
       gate.data = gate.data,
       viability.gate = viability,
       large.gate = large.gate,

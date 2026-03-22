@@ -13,12 +13,6 @@
 #' considerably on Mac and Linux systems supporting forking, but will likely
 #' not help much on Windows unless >10 cores are available.
 #'
-#' @importFrom ggplot2 ggplot aes stat_density_2d scale_fill_viridis_c
-#' @importFrom ggplot2 coord_cartesian theme scale_color_manual geom_path
-#' @importFrom ggplot2 theme_bw labs ggsave after_stat guides
-#' @importFrom ragg agg_jpeg
-#' @importFrom scattermore geom_scattermore
-#'
 #' @param control.dir File path to the single-stained control FCS files.
 #' @param control.def.file CSV file defining the single-color control file names,
 #' fluorophores they represent, marker names, peak channels, and gating requirements.
@@ -28,6 +22,23 @@
 #' be performed. If `FALSE`, the FCS files will be imported without automatically
 #' generated gates applied. That is, all data in the files will be used. This is
 #' intended to allow the user to pre-gate the files in commercial software.
+#' @param gating.system Character string selecting the automated gating system to
+#' employ in defining the initial scatter gates for identifying cells in the FCS
+#' files. Options are `landmarks` and `density`. The `density` option uses the
+#' original gating system from AutoSpill, picking cell populations based on dense
+#' regions on FSC/SSC. The default `landmarks` system picks out the cell regions
+#' using the brightest events in the peak channel for the single-stained control(s).
+#' This approach is generally more robust. A good way to use this is to utilize
+#' `landmarks` in combination with specifying which single-stained control files
+#' should be used for defining the gates. For example, abundant, bright cell
+#' markers such as CD4 will reliably identify the lymphocyte region, as CD14 will
+#' identify the monocyte region, etc. For more instructions, see the help pages
+#' on GitHub.
+#' @param gate.list Optional named list of gates. To use this, pre-define the
+#' gates using `define.gate.landmarks()` and/or `define.gate.density()`, ensure
+#' that the names of the gates correspond to the names in the `control.def.file`,
+#' and ensure that the `gate.name` column has been filled in for the
+#' `control.def.file`. Default `NULL` will revert to creating new gates.
 #' @param parallel Logical, default is `FALSE`, in which case parallel processing
 #' will not be used. Parallel processing will likely be faster when many small
 #' files are read in. If the data is larger, parallel processing may not
@@ -70,13 +81,26 @@
 #' - `event.type`: Type of events.
 #' - `expr.data`: Expression data used for extracting spectra.
 #'
+#' @seealso
+#' * [tune.gate()]
+#' * [define.gate.landmarks()]
+#' * [define.gate.density()]
+#' * [do.gate()]
+#' * [gate.define.plot()]
+#'
 #' @export
+#'
+#' @references Roca, Carlos P et al. "AutoSpill is a principled framework that
+#' simplifies the analysis of multichromatic flow cytometry data" \emph{Nature
+#' Communications} 12 (2890) 2021.
 
 define.flow.control <- function(
     control.dir,
     control.def.file,
     asp,
     gate = TRUE,
+    gating.system = c("landmarks", "density"),
+    gate.list = NULL,
     parallel = FALSE,
     verbose = TRUE,
     threads = NULL,
@@ -84,15 +108,10 @@ define.flow.control <- function(
   ) {
 
   if ( verbose ) message( "\033[34mChecking control file for errors \033[0m" )
-
   check.control.file( control.dir, control.def.file, asp, strict = TRUE )
 
-  if ( parallel && is.null( threads ) ) threads <- asp$worker.process.n
-
-  # read channels from controls
-  if ( verbose ) message( "\033[34mReading control information \033[0m" )
-
   # read control info
+  if ( verbose ) message( "\033[34mReading control information \033[0m" )
   control.table <- utils::read.csv(
     control.def.file,
     stringsAsFactors = FALSE,
@@ -107,6 +126,9 @@ define.flow.control <- function(
       x
     } else x
   } )
+
+  # check the user-supplied gates for consistency and structure
+  if ( !is.null( gate.list ) ) check.gates( gate.list, control.table, asp )
 
   # read channels from an FCS file
   all.channels <- colnames(
@@ -137,164 +159,45 @@ define.flow.control <- function(
   }, character( 1 ) )
   names( spectral.voltages ) <- all.channels[ spec.idx ]
 
-  # get fluorophores and markers
-  control.table$sample <- control.table$fluorophore
-  control.table$is.viability[ is.na( control.table$is.viability ) ] <- FALSE
-  control.table$large.gate[ is.na( control.table$large.gate ) ] <- FALSE
-
-  # universal.negative must be strictly filename or NA
-  control.table$universal.negative[
-    control.table$universal.negative == "" | is.na( control.table$universal.negative )
-  ] <- NA
-
-  # identify universal negative types
-  negative.types <- data.frame(
-    negative = control.table$universal.negative,
-    large.gate = control.table$large.gate,
-    viability = control.table$is.viability,
-    stringsAsFactors = FALSE
-  )
-
-  # identify unique ones
-  unique.neg <- unique( negative.types[ !is.na( negative.types$negative ), ] )
-
-  # define samples (replicate variously gated negatives)
-  if ( verbose ) message( "\033[34mMatching negatives for the controls \033[0m" )
-
-  if ( nrow( unique.neg ) > 0 ) {
-    for ( i in seq_len( nrow( unique.neg ) ) ) {
-
-      neg.file <- unique.neg$negative[ i ]
-      lg       <- unique.neg$large.gate[ i ]
-      vi       <- unique.neg$viability[ i ]
-
-      # does a negative with this gate combination already exist?
-      match.found <- any(
-        control.table$filename == neg.file &
-          control.table$large.gate == lg &
-          control.table$is.viability == vi
-      )
-
-      if ( !match.found ) {
-        # create a new row copying from the source negative
-        matching.row <- control.table[ control.table$filename == neg.file, ]
-        new.row <- matching.row[ 1, ]
-        new.row$large.gate        <- lg
-        new.row$is.viability      <- vi
-        new.row$fluorophore       <-  if ( grepl( "negative", new.row$fluorophore, ignore.case = TRUE ) ) {
-          paste( new.row$fluorophore,  )
-        } else {
-          paste( new.row$fluorophore, "Negative", i )
-        }
-        new.row$sample            <- new.row$fluorophore
-        new.row$universal.negative <- NA
-        control.table <- rbind( control.table, new.row )
-      }
-    }
-  }
-
-  # define gates needed
-  if ( verbose ) message( "\033[34mDetermining the gates that will be needed \033[0m" )
-
-  gate.list <- list()
-  gate.types <- data.frame(
-    negative        = control.table$universal.negative,
-    type        = control.table$control.type,
-    viability   = control.table$is.viability,
-    large.gate  = control.table$large.gate,
-    stringsAsFactors = FALSE
-  )
-
-  # replace FALSE with NA so missing universal negatives will be treated identically
-  unique.gates <- unique( gate.types )
-  match.gate <- function( row, unique.gates ) {
-    matches <- which(
-      ( ( row$negative %in% unique.gates$negative ) |
-          ( is.na( row$negative ) & is.na( unique.gates$negative ) ) ) &
-        ( row$type       == unique.gates$type ) &
-        ( row$viability  == unique.gates$viability ) &
-        ( row$large.gate == unique.gates$large.gate )
-    )
-
-    if ( length( matches ) == 0 )
-      return( NA_integer_ )  # no match found (should not happen)
-
-    matches[ 1 ]
-  }
-
-  control.table$gate <- vapply(
-    seq_len( nrow( gate.types ) ),
-    function( i ) match.gate( gate.types[ i, ], unique.gates ),
-    FUN.VALUE = integer( 1 )
-  )
-  flow.gate <- control.table$gate
-
-  # rewrite universal.negative as sample names rather than filenames
-  control.table$universal.negative <- sapply(
-    seq_len( nrow( control.table ) ), function( i ) {
-    neg.file <- control.table$universal.negative[ i ]
-
-    # If no assigned universal negative, keep NA
-    if ( is.na( neg.file ) ) return( NA )
-
-    # Try matching within the same gate
-    match.row <- subset(
-      control.table,
-      filename == neg.file &
-        gate == control.table$gate[ i ]
-    )
-
-    if ( nrow( match.row ) > 0 )
-      return( match.row$sample[ 1 ] )
-
-    # Else fallback to any matching filename
-    match.row <- subset( control.table, filename == neg.file )
-    if ( nrow( match.row ) > 0 )
-      return( match.row$sample[ 1 ] )
-
-    return( NA )
-  } )
-
   # set samples and gate combos
-  flow.sample <- control.table$sample
-  flow.sample.n <- length( flow.sample )
+  control.table$sample <- control.table$fluorophore
+  gating.system <- match.arg( gating.system )
+  control.table <- assign.gates( control.table, gating.system, gate, verbose )
 
-  if ( gate )
-    names( flow.gate ) <- flow.sample
-
-  flow.file.name <- control.table$filename
-  names( flow.file.name ) <- flow.sample
+  # set factors and fill in missing data
   flow.fluorophore <- control.table$fluorophore
   flow.fluorophore[ is.na( flow.fluorophore ) ] <- "Negative"
   flow.antigen <- control.table$marker
-  flow.channel <- control.table$channel
+
   flow.control.type <- control.table$control.type
-  flow.universal.negative <- control.table$universal.negative
-  flow.viability <- control.table$is.viability
-  flow.large.gate <- control.table$large.gate
+
   flow.antigen[ flow.fluorophore == "AF" ] <- "AF"
   flow.antigen[ is.na( flow.antigen ) ] <- "other"
 
+  flow.viability <- control.table$is.viability
+  flow.viability[ is.na( flow.viability ) ] <- FALSE
+  names( flow.viability ) <- control.table$sample
+
+  flow.universal.negative <- control.table$universal.negative
+  flow.universal.negative[ is.na( flow.universal.negative ) ] <- FALSE
+  names( flow.universal.negative ) <- control.table$sample
+
+  flow.large.gate <- control.table$large.gate
+  flow.large.gate[ is.na( flow.large.gate ) ] <- FALSE
+  names( flow.large.gate ) <- control.table$sample
+
   # set default AF channel if none has been provided
+  flow.channel <- control.table$channel
   if ( any( flow.fluorophore == "AF" ) ) {
     idx <- which( flow.fluorophore == "AF" )
     if ( length( flow.channel[ idx ] ) == 0 || all( is.na( flow.channel[ idx ] ) ) ) {
       flow.channel[ idx ] <- asp$af.channel
     }
   }
-
   flow.channel[ is.na( flow.channel ) ] <- "other"
-  flow.universal.negative[ is.na( flow.universal.negative ) ] <- FALSE
-  names( flow.universal.negative ) <- flow.sample
-  flow.viability[ is.na( flow.viability ) ] <- FALSE
-  flow.large.gate[ is.na( flow.large.gate ) ] <- FALSE
-  flow.channel.n <- length( flow.channel )
-  flow.autof.marker.idx <- which( flow.antigen == "AF" )
-  if ( length( flow.autof.marker.idx ) != 1 )
-    flow.autof.marker.idx <- NULL
 
-  names( flow.viability ) <- flow.sample
-  names( flow.large.gate ) <- flow.sample
+  flow.autof.marker.idx <- which( flow.antigen == "AF" )
+  if ( length( flow.autof.marker.idx ) != 1 ) flow.autof.marker.idx <- NULL
 
   # read scatter parameters
   if ( verbose ) message( "\033[34mDetermining channels to be used \033[0m" )
@@ -304,7 +207,8 @@ define.flow.control <- function(
   # set scatter parameters and channels
   flow.scatter.and.channel <- c(
     asp$default.time.parameter,
-    flow.scatter.parameter, flow.channel )
+    flow.scatter.parameter,
+    flow.channel )
   flow.scatter.and.channel.spectral <- c(
     asp$default.time.parameter,
     flow.scatter.parameter,
@@ -313,7 +217,7 @@ define.flow.control <- function(
   flow.scatter.and.channel.matched.bool <-
     flow.scatter.and.channel.spectral %in% all.channels
 
-  if ( ! all( flow.scatter.and.channel.matched.bool ) ) {
+  if ( !all( flow.scatter.and.channel.matched.bool ) ) {
     channel.matched <-
       flow.scatter.and.channel.spectral[ flow.scatter.and.channel.matched.bool ]
     flow.scatter.and.channel.unmatched <- paste0(
@@ -328,7 +232,7 @@ define.flow.control <- function(
     stop( error.msg, call. = FALSE )
   }
 
-  names( flow.channel ) <- flow.sample
+  names( flow.channel ) <- control.table$sample
 
   if ( anyDuplicated( flow.scatter.and.channel.spectral ) != 0 )
     stop( "Names for channels overlap", call. = FALSE )
@@ -350,96 +254,56 @@ define.flow.control <- function(
 
   # create figure and table directories
   if ( verbose ) message( "\033[34mCreating output folders \033[0m" )
-
   create.directory( asp )
 
+  # Ensure flow.file.name and other vectors match the expanded control.table
+  flow.file.name <- control.table$filename
+  names( flow.file.name ) <- control.table$sample
+
+  final.gate.list <- list()
+
   if ( gate ) {
-    # define gates on downsampled pooled fcs by type
-    if ( verbose ) message( "\033[34mDefining the gates \033[0m" )
+    if ( verbose ) message( "\033[34mDefining gates \033[0m" )
+    unique.names <- unique( control.table$gate.name )
 
-    # Remove rows with NA filenames before making gate list
-    valid.rows <- !is.na( control.table$filename )
-    control.table.valid <- control.table[valid.rows, ]
-
-    for( gate.id in unique( control.table.valid$gate ) ) {
-      files.to.gate <- unique(
-        control.table.valid[ control.table.valid$gate == gate.id, ]$filename
-      )
-
-      files.n <- length( files.to.gate )
-      downsample.n <- ceiling( asp$gate.downsample.n.cells / files.n )
-      scatter.coords <- lapply( files.to.gate, function( f ) {
-        sample.fcs.file(
-          f,
-          control.dir = control.dir,
-          downsample.n = downsample.n,
-          asp = asp
-        )
-      } )
-
-      scatter.coords <- do.call( rbind, scatter.coords )
-
-      # check that we actually have data here
-      if ( is.null( scatter.coords ) || nrow( scatter.coords ) == 0 ) {
-        message( "\n\033[31mError: No data found for Gate ID: ", gate.id, "\033[0m" )
-        message( "Files checked: ", paste( files.to.gate, collapse = ", " ) )
-        stop( "Execution halted: scatter.coords is empty. Check if FCS files are empty or paths are correct." )
+    for ( g.name in unique.names ) {
+      is.orphan <- grepl( "density_orphan", g.name )
+      # prioritize pre-defined gate from user
+      if ( !is.null( gate.list ) && g.name %in% names( gate.list ) ) {
+        final.gate.list[[ g.name ]] <- gate.list[[ g.name ]]
+      } else {
+        # define gate using the chosen system (landmarks/density)
+        if ( is.orphan || gating.system == "density" ) {
+          final.gate.list[[ g.name ]] <- define.gate.density(
+            control.file = NULL,
+            control.dir = control.dir,
+            asp = asp,
+            output.dir = asp$figure.gate.dir,
+            gate.name = g.name,
+            verbose = FALSE,
+            control.table = control.table,
+            color.palette = if ( is.null(color.palette) ) "plasma" else color.palette
+          )
+        } else {
+          final.gate.list[[ g.name ]] <- define.gate.landmarks(
+            control.file = NULL,
+            control.dir = control.dir,
+            asp = asp,
+            output.dir = asp$figure.gate.dir,
+            gate.name = g.name,
+            verbose = FALSE,
+            control.table = control.table,
+            check = FALSE,
+            color.palette = if ( is.null(color.palette) ) "plasma" else color.palette
+          )
+        }
       }
-
-      viability.gate <- unique(
-        control.table.valid[ control.table.valid$gate == gate.id, ]$is.viability
-      )
-      is.viability <- ifelse(
-        viability.gate,
-        "viabilityMarker",
-        "nonViability"
-      )
-      large.gate <- unique(
-        control.table.valid[ control.table.valid$gate == gate.id, ]$large.gate
-      )
-      is.large.gate <- ifelse( large.gate, "largeGate", "smallGate" )
-      control.type <- unique(
-        control.table.valid[ control.table.valid$gate == gate.id, ]$control.type
-      )
-      samp <- paste( control.type, is.viability, is.large.gate, sep = "_" )
-
-      stopifnot(
-        length( viability.gate ) == 1,
-        length( large.gate ) == 1,
-        length( control.type ) == 1
-      )
-
-      # define the gate, with error handling for exceptions
-      gate.boundary <- tryCatch({
-        do.gate(
-          scatter.coords,
-          viability.gate,
-          large.gate,
-          samp,
-          flow.scatter.and.channel.label,
-          control.type,
-          asp,
-          color.palette = if ( is.null(color.palette) ) "plasma" else color.palette
-        )
-      }, error = function(e) {
-        # execute error handling with diagnostic plotting
-        handle.gating.error(
-          e = e,
-          gate.id = gate.id,
-          files.to.gate = files.to.gate,
-          scatter.coords = scatter.coords,
-          samp = samp,
-          viability.gate = viability.gate,
-          control.type = control.type,
-          flow.scatter.and.channel.label = flow.scatter.and.channel.label,
-          asp = asp
-        )
-      })
-
-      gate.list[[ gate.id ]] <- gate.boundary
     }
-
   }
+
+  # map sample names to gate names
+  flow.gate <- control.table$gate.name
+  names( flow.gate ) <- control.table$sample
 
   # read in FCS files
   if ( verbose ) message( "\033[34mReading FCS files \033[0m" )
@@ -451,7 +315,7 @@ define.flow.control <- function(
     spectral.channel = spectral.channel,
     set.resolution = flow.set.resolution,
     flow.gate = flow.gate,
-    gate.list = gate.list,
+    gate.list = final.gate.list,
     scatter.param = flow.scatter.parameter,
     scatter.and.channel.label = flow.scatter.and.channel.label,
     asp = asp,
@@ -461,9 +325,11 @@ define.flow.control <- function(
 
   # set up parallel processing
   if ( parallel ) {
+    if ( is.null( threads ) ) threads <- asp$worker.process.n
+
     if ( verbose & gate ) message( "\033[34mPlotting gates... \033[0m" )
 
-    exports <- c( "flow.sample", "args.list", "gate.sample.plot",
+    exports <- c( "control.table$sample", "args.list", "gate.sample.plot",
                   "get.gated.flow.expression.data", "readFCS" )
     result <- create.parallel.lapply(
       asp,
@@ -479,31 +345,29 @@ define.flow.control <- function(
     result <- list( cleanup = NULL )
   }
 
-  FUN_local <- get.gated.flow.expression.data
-
   # main call to read in flow data
   flow.expr.data <- tryCatch( {
-    lapply.function( flow.sample, function( f ) {
-      do.call( FUN_local, c( list( f ), args.list ) )
+    lapply.function( control.table$sample, function( f ) {
+      do.call( get.gated.flow.expression.data, c( list( f ), args.list ) )
     } )
   }, finally = {
-    # clean up cluster when done
+    # clean up cluster when done if applicable
     if ( !is.null( result$cleanup ) ) result$cleanup()
   } )
 
-  names( flow.expr.data ) <- flow.sample
+  names( flow.expr.data ) <- control.table$sample
 
   # organize data
   if ( verbose ) message( "\033[34mOrganizing control info \033[0m" )
 
+  flow.sample.n <- length( control.table$sample )
   flow.sample.event.number.max <- 0
 
-  for ( fs.idx in 1 : flow.sample.n )
-  {
+  for ( fs.idx in 1 : flow.sample.n ) {
     flow.sample.event.number <- nrow( flow.expr.data[[ fs.idx ]]  )
 
     rownames( flow.expr.data[[ fs.idx ]] ) <- paste(
-      flow.sample[ fs.idx ], seq_len( flow.sample.event.number ), sep = "_" )
+      control.table$sample[ fs.idx ], seq_len( flow.sample.event.number ), sep = "_" )
 
     if ( flow.sample.event.number < 500 ) {
       warning(
@@ -528,7 +392,7 @@ define.flow.control <- function(
   # set rownames
   for ( fs.idx in 1 : flow.sample.n ) {
     flow.sample.event.number <- nrow( flow.expr.data[[ fs.idx ]]  )
-    flow.the.sample <- flow.sample[ fs.idx ]
+    flow.the.sample <- control.table$sample[ fs.idx ]
     flow.the.event <- sprintf(
       "%s.%0*d", flow.the.sample,
       flow.event.number.width, 1 : flow.sample.event.number
@@ -542,8 +406,8 @@ define.flow.control <- function(
   flow.event <- rownames( flow.expr.data )
   flow.event.n <- length( flow.event )
   flow.event.sample <- sub( flow.event.regexp, "", flow.event )
-  flow.event.sample <- factor( flow.event.sample, levels = flow.sample )
-  event.type.factor <- flow.sample
+  flow.event.sample <- factor( flow.event.sample, levels = control.table$sample )
+  event.type.factor <- control.table$sample
   names( event.type.factor ) <- flow.control.type
   flow.event.type <- factor(
     flow.event.sample,
@@ -574,11 +438,11 @@ define.flow.control <- function(
     expr.data.max.ceil = flow.expr.data.max.ceil,
     expr.data.min = flow.expr.data.min,
     channel = flow.channel,
-    channel.n = flow.channel.n,
+    channel.n = length( flow.channel ),
     spectral.channel = spectral.channel,
     spectral.channel.n = spectral.channel.n,
     voltages = spectral.voltages,
-    sample = flow.sample,
+    sample = control.table$sample,
     scatter.and.channel = flow.scatter.and.channel,
     scatter.and.channel.label = flow.scatter.and.channel.label,
     scatter.and.channel.spectral = flow.scatter.and.channel.spectral,

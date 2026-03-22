@@ -9,6 +9,8 @@ define.flow.control(
   control.def.file,
   asp,
   gate = TRUE,
+  gating.system = c("landmarks", "density"),
+  gate.list = NULL,
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
@@ -28,6 +30,25 @@ fluorophores they represent, marker names, peak channels, and gating requirement
 be performed. If \code{FALSE}, the FCS files will be imported without automatically
 generated gates applied. That is, all data in the files will be used. This is
 intended to allow the user to pre-gate the files in commercial software.}
+
+\item{gating.system}{Character string selecting the automated gating system to
+employ in defining the initial scatter gates for identifying cells in the FCS
+files. Options are \code{landmarks} and \code{density}. The \code{density} option uses the
+original gating system from AutoSpill, picking cell populations based on dense
+regions on FSC/SSC. The default \code{landmarks} system picks out the cell regions
+using the brightest events in the peak channel for the single-stained control(s).
+This approach is generally more robust. A good way to use this is to utilize
+\code{landmarks} in combination with specifying which single-stained control files
+should be used for defining the gates. For example, abundant, bright cell
+markers such as CD4 will reliably identify the lymphocyte region, as CD14 will
+identify the monocyte region, etc. For more instructions, see the help pages
+on GitHub.}
+
+\item{gate.list}{Optional named list of gates. To use this, pre-define the
+gates using \code{define.gate.landmarks()} and/or \code{define.gate.density()}, ensure
+that the names of the gates correspond to the names in the \code{control.def.file},
+and ensure that the \code{gate.name} column has been filled in for the
+\code{control.def.file}. Default \code{NULL} will revert to creating new gates.}
 
 \item{parallel}{Logical, default is \code{FALSE}, in which case parallel processing
 will not be used. Parallel processing will likely be faster when many small
@@ -87,4 +108,18 @@ and gates the data in the FCS files and assigns various factors to track
 the data. Parallel processing \code{parallel=TRUE} will likely speed up the run
 considerably on Mac and Linux systems supporting forking, but will likely
 not help much on Windows unless >10 cores are available.
+}
+\references{
+Roca, Carlos P et al. "AutoSpill is a principled framework that
+simplifies the analysis of multichromatic flow cytometry data" \emph{Nature
+Communications} 12 (2890) 2021.
+}
+\seealso{
+\itemize{
+\item \code{\link[=tune.gate]{tune.gate()}}
+\item \code{\link[=define.gate.landmarks]{define.gate.landmarks()}}
+\item \code{\link[=define.gate.density]{define.gate.density()}}
+\item \code{\link[=do.gate]{do.gate()}}
+\item \code{\link[=gate.define.plot]{gate.define.plot()}}
+}
 }
