@@ -91,6 +91,9 @@ is really important, though. We’ll look at common failure points, how to
 get the gates to look the way you want and also cover how to skip the
 gating entirely. For the latter, you can just import pre-gated files
 exported from your favorite FCS analysis program.</p>
+<p>See the <a href="https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html">Advanced
+Gating</a> and <a href="https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html">Gating
+Parameters</a> articles for more detail.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/DrCytometer/AutoSpectral" class="external-link">AutoSpectral</a></span><span class="op">)</span></span></code></pre></div>
 <p>As always, we’ll start by loading in the parameters and telling
@@ -99,7 +102,8 @@ couple samples from the ID7000, largely because this particular machine
 didn’t allow us to set a threshold on scatter without messing up the
 data, and the FSC gain was maxed out. According to the engineer, nothing
 was wrong with it (yay! anyway…). You can get the data from Mendeley
-(see AutoSpectral: 40-colour ID7000 dataset).</p>
+(see <a href="https://data.mendeley.com/datasets/2kvc98hc65/2" class="external-link">AutoSpectral:
+40-colour ID7000 dataset</a>).</p>
 <p>Today I’m including a simple set with a bead control and a cell
 control for Spark Blue 574 (anti-CD14), with corresponding unstained
 samples.</p>

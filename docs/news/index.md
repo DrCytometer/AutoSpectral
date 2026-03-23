@@ -42,6 +42,9 @@
   [`get.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluorophore.spectra.md).
 - Autofluorescence profile QC when running
   [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md).
+- Faster processing in
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
+  through integration of `AutoSpectralRcpp`, when available.
 
 ## AutoSpectral 1.0.0 (2026-02-10)
 

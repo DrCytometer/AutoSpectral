@@ -89,7 +89,7 @@ variants <- get.spectral.variants(
 ```
 
 Set `parallel` to `TRUE` for faster processing. This should take a
-couple of minutes.
+couple of minutes or less.
 
 This outputs a list containing: 1) The thresholds for positivity in each
 unmixed channel, as determined by the 99.5th percentile on the `AF`
@@ -259,7 +259,7 @@ Note that the “fast” approach in version 1.0.0 is very different from
 the “fast” approximation in earlier version of AutoSpectral. It is not
 expected to produce any substantial discontinuities in the data–if you
 see this, please reach out (data will be helpful in identifying any
-issues).
+issues). Further work on improving this is ongoing.
 
 Unmixed FCS files will appear in folder `./autospectral_unmixed`.
 

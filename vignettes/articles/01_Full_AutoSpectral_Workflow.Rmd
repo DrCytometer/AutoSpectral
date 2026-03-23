@@ -147,7 +147,9 @@ gate.beads <- define.gate.density(
 
 Note that this can be simplified to an lapply loop, if desired.
 
-Be sure to check the gates that are generated in the `figure_gate` folder--do they look right? If not, go to the Gating articles on [GitHub](https://drcytometer.github.io/AutoSpectral/articles/04_Gating.html) [Colibri](https://www.colibri-cytometry.com/post/autospectral-gating) for tips on how fix it.
+Be sure to check the gates that are generated in the `figure_gate` folder--do they look right? If not, go to the Gating articles on [GitHub](https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html) [Colibri](https://www.colibri-cytometry.com/post/autospectral-gating) for tips on how fix it.
+[Gating Parameters](https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html)
+[Gate Tuning](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html)
 
 ![Lymphocyte Gate](figures/Workflow/landmark_gate_definition_lymphocytes.jpg)
 
@@ -240,7 +242,7 @@ There are lots of plots generated with this, in `figure_clean_controls`, `figure
 For instance, here is a plot showing the matching that has been applied in terms of selecting cells with similar scatter profiles between the viability (live/dead) marker single-stained control and the unstained sample:
 
 ![Scatter match](figures/Workflow/eFluor780_scatter_plot.jpg)
-And here we have the attempt to gate out and exclude intrusive autofluorescence in the CD11b BUV805 single-stained control. BUV805 will peak in UV16-A on the Cytek Aurora, while autofluorescence often apeasr in UV7-A (although this is determined empirically and automatically by AutoSpectral).
+And here we have the attempt to gate out and exclude intrusive autofluorescence in the CD11b BUV805 single-stained control. BUV805 will peak in UV16-A on the Cytek Aurora, while autofluorescence often appear in UV7-A (although this is determined empirically and automatically by AutoSpectral).
 ![AF Removal](figures/Workflow/AF_removal_BUV805_.jpg)
 
 ## Calculating the Fluorophore Spectra
@@ -265,9 +267,8 @@ The BUV395 looks quite good:
 The BUV805 has "failed" QC. Let's have a look. This QC feature is new, so it will need to be adjusted and improved. In this case, it's flagging something worth looking at: the BUV805 spectrum in this experiment has an extra minor peak in the UV. That is autofluorescence because the BUV805+ cells are myeloid cells such as neutrophils and macrophages, and the scatter-matching for this population has not worked perfectly. Something for me to work on.
 
 This will be fine.
-![BUV805 QC](figures/Workflow/BUV805_QC.jpg)
+![BUV805 QC](figures/Workflow/BUV805_QC2.jpg)
 ![BUV805 scatter matching](figures/Workflow/BUV805_scatter_match.jpg)
-The scatter matching is too loose here.
 
 The spectra themselves are saved to a CSV file in the `table_spectra` folder. You can open CSV files as a spreadsheet in Excel and other programs.
 
@@ -369,12 +370,22 @@ unmix.fcs(
 )
 ```
 
+Using `refine=TRUE` will take longer, both during the `get.af.spectra()` call and during subsequent unmixing calls. The benefit of this is primarily in messier samples, particularly those from tissues. If you are just using PBMCs or nice lymphoid samples like spleen, you probably won't see much benefit from this. This is a situation where AutoSpectralRcpp helps out in the background, so be sure to install that for faster processing. This may be sped up further in the future.
+
 We get the distribution of autofluorescence spectra as a spectral trace and as a heatmap in `figure_autofluorescence`. The AF spectra are saved as a CSV file in `table_spectra`.
 
 ![Spleen AF](figures/Workflow/af_spectra.jpg)
-We also get images showing us the impact of the AF extraction on the unstained sample we have supplied:
+We can also look at the distribution of autofluorescence like this, where the black line represents a median signature (what you might use with an automated single AF parameter), and the red region represents the variation:
+![Spleen AF Variation](figures/Workflow/af_variation.jpg)
 
-![AF extraction]()
+We also get images showing us the impact of the AF extraction on the unstained sample we have supplied.
+
+This is without any AF extraction, looking at what AutoSpectral has determined are the two most-affected fluorophore channels:
+![No AF extraction](figures/Workflow/Spleen_No_AF_Extraction.jpg)
+What you get on the same unstained sample with per-cell AF extraction, without refinement (refine=FALSE):
+![Per-cell AF extraction](figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg)
+What you get on the same unstained sample with per-cell AF extraction, *with* refinement (refine=TRUE):
+![Per-cell AF extraction refined](figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg)
 
 If you want to do this with samples containing different autofluorescence profiles, such as we have here, we extract the AF spectral variation from each type of unstained sample. We then provide the corresponding `af.spectra` to each unmixing call. The unmixing call can be to a single FCS file, or it can be, as above, to a folder. So, if you have a whole set of stained lung samples, you'd pull your AF spectra from the unstained lung sample, and then call `unmix.folder` on the folder containing your lung (and only lung) samples. Repeat for each type of autofluorescence sample.  Read more about how the per-cell autofluorescence extraction works in the [GitHub](https://drcytometer.github.io/AutoSpectral/articles/10_Single_Cell_AutoFluorescence.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-single-cell-autofluorescence) article.
 
@@ -382,7 +393,7 @@ In this case, we have three types of samples: spleen, liver and lung tissues. If
 
 ```{r, eval=FALSE}
 lung.unstained <- "./Raw/Set1/Unstained/D2 Lung_Set1.fcs"
-lung.af <- get.af.spectra(lung.unstained, asp, spectra)
+lung.af <- get.af.spectra(lung.unstained, asp, spectra) # use refine=TRUE for a modest improvement, default is FALSE
 lung.fcs.file <- "./Raw/Set1/Stained/D5 Lung_Set1.fcs"
 unmix.fcs(
   lung.fcs.file,
@@ -395,7 +406,7 @@ unmix.fcs(
 )
 
 liver.unstained <- "./Raw/Set1/Unstained/D3 Liver_Set1.fcs"
-liver.af <- get.af.spectra(liver.unstained, asp, spectra)
+liver.af <- get.af.spectra(liver.unstained, asp, spectra) # use refine=TRUE for a modest improvement, default is FALSE
 liver.fcs.file <- "./Raw/Set1/Stained/D6 Liver_Set1.fcs"
 unmix.fcs(
   liver.fcs.file,
@@ -410,7 +421,7 @@ unmix.fcs(
 
 You can easily set this up as a for loop or an lapply loop matching elements by names from a list.
 
-For more detail on the per-cell AF extraction, see the dedicated article on this subject.
+For more detail on the per-cell AF extraction, see the [dedicated article](https://drcytometer.github.io/AutoSpectral/articles/10_Single_Cell_AutoFluorescence.html) on this subject.
 
 
 ## Per-cell Fluorophore Optimization
@@ -425,16 +436,19 @@ variants <- get.spectral.variants(
   asp = asp,
   spectra = spectra,
   af.spectra = spleen.af, # the AF relevant to any cell-based single-stained controls
-  parallel = FALSE # use parallel if TRUE
+  parallel = FALSE, # use parallel if TRUE
   refine = TRUE # optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass
 )
 ```
 The output of this is saved as an RDS file in folder `figure_spectral_variants`. You can load it back in using the `readRDS()` function in base R.
 
-There are plots of the spectral variation for each fluorophore. For something like the CD11b-BUV805 in this data, the variation is largely changes in the autofluorescence because there are multiple cell types expressing CD11b.
+There are plots of the spectral variation for each fluorophore. For something like the CD11b-BUV805 in this data, the variation is largely changes in the autofluorescence because there are multiple cell types expressing CD11b. We also have variation in the long wavelength spillover on the violet and red laser, as should be expected from a tandem dye.
 ![BUV805](figures/Workflow/BUV805_variants.jpg)
 
 For PE-Cy7, we get a modest difference in the excitation between the blue and yellow-green lasers, which would cause spread if we had a fluorophore in that range on the blue laser, such as RB780. We don't in this case.
+
+If we had tandem breakdown, we would probably see variability in the YG1-A detector.
+
 ![PE-Cy7](figures/Workflow/PECy7_variants.jpg)
 
 We can now pass this to the unmixing call. For quicker results, you may set the `speed` to `fast`, which checks fewer pre-screened variants per cell. This can be a bit slow if you have not installed `AutoSpectralRcpp`.
@@ -455,7 +469,7 @@ unmix.fcs(
 
 Please note that if you are comparing the output FCS files from AutoSpectral to others you may have from the cytometer and you are doing this in FlowJo, FlowJo V10 is still terrible at handling scales. You must set the transformations on the axes to be the same for all coefficients in order to do a fair comparison. Otherwise you'll see whatever you've already done to tune your display (e.g., biexponential width basis) for your existing files versus some random default selection by FlowJo for AutoSpectral's files. Nothing to do with me.
 
-For more detail on the per-cell fluorophore optimization, see the dedicated article on this subject.
+For more detail on the per-cell fluorophore optimization, see the [dedicated article](https://drcytometer.github.io/AutoSpectral/articles/11_Per_Cell_Optimization.html) on this subject.
 
 
 # Plotting
@@ -471,14 +485,14 @@ asp.lung <- AutoSpectral::readFCS(autospectral.unmixed.lung)
 sf.lung <- AutoSpectral::readFCS(spectroflo.unmixed.lung)
 
 create.biplot(sf.lung, "BUV395-A", "BV421-A", asp, title = "SpectroFlo")
-create.biplot(asp.lung, "BUV395", "BV421", asp, title = "AutoSpectral")
+create.biplot(asp.lung, "BUV395-A", "BV421-A", asp, title = "AutoSpectral")
 
 ```
 
 ![SpectroFlo](figures/Workflow/SpectroFlo.jpg)
 ![AutoSpectral](figures/Workflow/AutoSpectral.jpg)
 
-Here we have CD45-BUV395 and CD4-BV421. There really shouldn't be much of anything low for CD4 in the mouse.
+Here we have CD45-BUV395 and CD4-BV421. There really shouldn't be much of anything low for CD4 in the mouse. This is ungated data, so we're seeing everythign, without any clean-up.
 
 
 

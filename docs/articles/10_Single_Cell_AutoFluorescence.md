@@ -39,9 +39,9 @@ A note about pooling: This can be done in the wet lab by mixing the
 cells into a single tube. A safer, and likely more representative option
 is to mix in silico after acquisition. This can be done by concatenating
 the FCS files or by using a function such as `AggregateFlowFrame()` from
-`FlowSOM`. I really, really do not recommend concatenating with FlowJo
-v10 (and have not tested v11). Also, `premessa` also does not produce
-FCS files with all the information intact, so avoid that.
+`FlowSOM`. There is now a concatenation function available directly in
+AutoSpectral, which you can access via
+[`concatenateFCS()`](https://drcytometer.github.io/AutoSpectral/reference/concatenateFCS.md).
 
 ``` r
 library( AutoSpectral )
@@ -140,7 +140,9 @@ and run a second round of cluster on these, updating the AF spectra that
 were used to unmix them. This expands the set of possibilities, focusing
 on the worst offenders. This is most useful for complex tissue samples,
 and allows extraction of the problematic last 1-3% of cells that are in
-the wrong place.
+the wrong place. To use this expanded set, run
+[`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
+with `refine=TRUE`.
 
 ## Extracting AF for each cell
 

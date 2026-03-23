@@ -27,6 +27,10 @@ get.spectral.variants(
   threads = NULL,
   refine = FALSE,
   problem.quantile = 0.95,
+  variant.fill.color = "red",
+  variant.fill.alpha = 0.7,
+  median.line.color = "black",
+  median.linewidth = 1,
   ...
 )
 ```
@@ -124,6 +128,25 @@ get.spectral.variants(
   previously selected autofluroescence spectra. A value of `0.95` means
   the top 5% of cells, those farthest from zero, will be selected for
   further investigation.
+
+- variant.fill.color:
+
+  Color for the shaded region indicating the range of variation in the
+  spectra. Feeds to `fill` in `geom_ribbon`. Default is "red".
+
+- variant.fill.alpha:
+
+  Transparency (alpha) for the color in `variant.fill.color`. How
+  intense the color of the variant spectra will be. Default is `0.7`
+
+- median.line.color:
+
+  Color for the line representing the median or optimized single
+  spectrum. Default is "black".
+
+- median.linewidth:
+
+  Width of the line for the single optimized spectrum. Default is `1`.
 
 - ...:
 

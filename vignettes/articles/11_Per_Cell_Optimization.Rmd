@@ -51,7 +51,7 @@ variants <- get.spectral.variants(
 )
 ```
 
-Set `parallel` to `TRUE` for faster processing. This should take a couple of minutes.
+Set `parallel` to `TRUE` for faster processing. This should take a couple of minutes or less.
 
 This outputs a list containing:
 1) The thresholds for positivity in each unmixed channel, as determined by the 99.5th percentile on the `AF` sample in `flow.control`. If you refer back to your `control.file`, this will be whichever sample contains "AF" as the fluorophore. This should be an unstained cell control matching the single-colour controls in `control.file` and hence `flow.control`. 2) A named list of matrices, one per fluorophore in `flow.control`. Each matrix contains up to 100 spectra per fluorophore. This number can be adjusted by argument `som.dim` to `get.spectral.variants()`, which is by default `10`.
@@ -118,7 +118,7 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
            k = 100 )
 ```
 
-Note that the "fast" approach in version 1.0.0 is very different from the "fast" approximation in earlier version of AutoSpectral. It is not expected to produce any substantial discontinuities in the data--if you see this, please reach out (data will be helpful in identifying any issues).
+Note that the "fast" approach in version 1.0.0 is very different from the "fast" approximation in earlier version of AutoSpectral. It is not expected to produce any substantial discontinuities in the data--if you see this, please reach out (data will be helpful in identifying any issues). Further work on improving this is ongoing.
 
 Unmixed FCS files will appear in folder `./autospectral_unmixed`.
 

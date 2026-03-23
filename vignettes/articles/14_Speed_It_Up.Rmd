@@ -31,9 +31,9 @@ On Mac, you can use the vecLib library BLAS that ships with Mac OS as this shoul
 [Performance BLAS](https://csantill.github.io/RPerformanceWBLAS/)
 Feedback from users on Mac who successfully upgrade their BLAS would be appreciated.
 
-Do not set multiple threads for the BLAS as this will conflict with higher level parallelization, either in AutoSpectral or other packages.
+Do not set multiple threads for the BLAS as this will conflict with higher level parallelization, either in AutoSpectral or other  That said, AutoSpectral checks for this internally, overriding anything you do in that regard.
 
-After upgrading the BLAS, you probably need to reinstall `Rcpp` and `RcppArmadillo` to have this compiled with the BLAS.
+After upgrading the BLAS, you probably need to re-install `Rcpp` and `RcppArmadillo` to have this compiled with the BLAS.
 
 ```{r, eval=FALSE}
 install.packages( c( "Rcpp", "RcppArmadillo" ) )
@@ -107,13 +107,13 @@ Benchmarks for "C3 Lung_GFP_003_Samples.fcs", again on the 8-core laptop, using 
 * `unmix.fcs()` WLS or OLS v0.8.7: 9sec
 * `unmix.fcs()` WLS or OLS v0.9.0: 9sec
 * `unmix.fcs()` WLS or OLS v1.0.0: 9-10sec (most of this is handling the FCS file)
-* `unmix.fcs()` WLS or OLS v1.1.0: 4sec
+* `unmix.fcs()` WLS or OLS v1.1.0: 4sec (now with native FCS handling)
 
 * `unmix.fcs()` perCell AF extraction v0.8.7: 2min
 * `unmix.fcs()` perCell AF extraction v0.9.0: 1min
 * `unmix.fcs()` perCell AF extraction v1.0.0: 11sec (45s in R without C++)
 * `unmix.fcs()` perCell AF extraction v1.0.3: 10sec
-* `unmix.fcs()` perCell AF extraction v1.1.0: 4.5sec
+* `unmix.fcs()` perCell AF extraction v1.1.0: 4.5sec (now with native FCS handling)
 
 * `unmix.fcs()` perCell fluorophore optimization "fast" v0.8.7: 9min
 * `unmix.fcs()` perCell fluorophore optimization "fast" v0.9.0: <2min

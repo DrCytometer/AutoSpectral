@@ -80,16 +80,20 @@
 <div class="section level2">
 <h2 id="a-simple-id7000-workflow">A simple ID7000 workflow<a class="anchor" aria-label="anchor" href="#a-simple-id7000-workflow"></a>
 </h2>
-<p>Below is a basic example of the workflow, using samples from the
-ID7000. This only illustrates weighted least squares unmixing. For
-per-cell autofluorescence extraction or per-cell fluorophore
-optimization, see the articles on those topics. The point of this
-workflow is to show how the control clean-up and automated determination
-of fluorophore spectra can mimic or improve upon the unmixing obtained
-on the Sony using their WLSM unmixing. The workflow here just uses
-weighted least squares (WLS) for unmixing.</p>
+<p>Below is a basic example of a non-AutoSpectral unmixing workflow,
+using samples from the ID7000. This only illustrates weighted least
+squares unmixing. For per-cell autofluorescence extraction or per-cell
+fluorophore optimization, see the articles on those topics. The point of
+this workflow is to show how the control clean-up and automated
+determination of fluorophore spectra can mimic or improve upon the
+unmixing obtained on the Sony using their WLSM unmixing. The workflow
+here <em>just</em> uses weighted least squares (WLS) for unmixing.</p>
 <p>Please see the <a href="https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html">Full
 Workflow</a></p>
+<p><em>NOTE</em> This has not yet been updated to reflect changes in
+version 1.5.0. See the full workflow article for more detail. This will
+still work as before, but more control over the process is now
+available.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span> <span class="va"><a href="https://github.com/DrCytometer/AutoSpectral" class="external-link">AutoSpectral</a></span> <span class="op">)</span></span>
 <span></span>

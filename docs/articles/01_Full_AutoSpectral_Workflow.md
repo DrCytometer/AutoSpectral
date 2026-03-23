@@ -88,8 +88,9 @@ best choices.
 Here’s what the control file looks like as first generated: ![Initial
 Control File](figures/Workflow/initial_control_file.jpg)
 
-Here’s what we want it to look like: ![Final Control
-File](figures/Workflow/final_control_file.jpg)
+Here’s what we want it to look like, in terms of assigning universal
+negatives and setting fluorophore names. We’ll get to the gating in a
+moment. ![Fixed Control File](figures/Workflow/fixed_control_file.jpg)
 
 For more on this, see the Control File article on GitHub.
 
@@ -131,7 +132,8 @@ myeloid population with higher expected side scatter values. We need at
 least four gates. We can call these whatever we want, but I’m going to
 pick somewhat informative names: “beads”, “lymphocytes”, “myeloid” and
 “dead”. We add these names to the appropriate rows of our table in the
-`gate.name` column:
+`gate.name` column: ![Penultimate Control
+File](figures/Workflow/penultimate_control_file.jpg)
 
 Now we can choose which samples we want to use to define the gate
 boundaries. The simplest option is to just use everything. To do this,
@@ -154,7 +156,8 @@ viability-e780 (cells) for dead cells, and we can define a fourth gate
 on all of the stained bead samples, which will all be in the same
 position since they are beads.
 
-Now our control file looks like this:
+Now our control file looks like this: ![Final Control
+File](figures/Workflow/final_control_file.jpg)
 
 Note that you can create any number of gates and pass them in the next
 step. Gates are saved and can be reused. See the dedicated articles on
@@ -197,13 +200,15 @@ gate.dead <- define.gate.landmarks(
   percentile = 70,
   gate.name = "dead"
 )
-gate.beads <- define.gate.landmarks(
+
+# for beads, we'll use the density-based gating instead
+gate.beads <- define.gate.density(
   control.file = control.file,
   control.dir = control.dir,
   asp = asp,
-  n.cells = 2000,
-  percentile = 70,
-  gate.name = "beads"
+  gate.name = "beads",
+  color.palette = "turbo", # pseudocolor heatmapping palette
+  boundary.color = "darkgoldenrod" # what color is the gate edge?
 )
 ```
 
@@ -211,17 +216,71 @@ Note that this can be simplified to an lapply loop, if desired.
 
 Be sure to check the gates that are generated in the `figure_gate`
 folder–do they look right? If not, go to the Gating articles on
-[GitHub](https://drcytometer.github.io/AutoSpectral/articles/04_Gating.html)
+[GitHub](https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html)
 [Colibri](https://www.colibri-cytometry.com/post/autospectral-gating)
-for tips on how fix it.
+for tips on how fix it. [Gating
+Parameters](https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html)
+[Gate
+Tuning](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html)
 
-![Cell Gate](figures/Workflow/cell_gate.jpg)
+![Lymphocyte
+Gate](figures/Workflow/landmark_gate_definition_lymphocytes.jpg)
 
-Cell Gate
+Lymphocyte Gate
 
-![Bead Gate](figures/Workflow/bead_gate.jpg)
+![Myeloid Gate](figures/Workflow/landmark_gate_definition_myeloid.jpg)
+
+Myeloid Gate
+
+![Dead Cell Gate](figures/Workflow/landmark_gate_definition_dead.jpg)
+This one could probably do with some tuning.
+
+![Bead Gate](figures/Workflow/density_gate_definition_beads.jpg)
 
 Bead Gate
+
+Let’s adjust the dead cell gate quickly.
+
+``` r
+tune.gate(
+  control.file = control.file,
+  control.dir = control.dir,
+  asp = asp,
+  n.cells = c(500, 2000, 5000),
+  percentile = c(10, 50, 80),
+  gate.name = "dead",
+  color.palette = "mako",
+  boundary.color = "red"
+)
+```
+
+There results appear in folder figure_gate_tuning: ![Dead cell gate
+tuning](figures/Workflow/dead_gate_tuning.jpeg) Now we have some
+options. We want a gate that includes the dead cells, which are the
+population on the lower left. We can pick the n=500, p=80% one, which
+pretty much only includes the dead cells, same for n=2000 p = 50%, or
+something like the n=5000, p=80%, which includes the live cells as well.
+Any of those will end up in basically the same place in the end,
+provided we do the control cleaning. Our original gate would also have
+been fine, to be honest. I’m going to select n=5000, p=50%. To do that,
+we re-run the gate definition call:
+
+``` r
+gate.dead <- define.gate.landmarks(
+  control.file = control.file,
+  control.dir = control.dir,
+  asp = asp,
+  n.cells = 5000,
+  percentile = 50,
+  gate.name = "dead",
+  color.palette = "rainbow" # FlowJo-like colours
+)
+```
+
+![Dead cell gate
+final](figures/Workflow/landmark_gate_definition_dead_tuned.jpg)
+
+Dead cell gate final
 
 ### Loading the Data
 
@@ -230,11 +289,16 @@ the data, applying those gates to select the events we want.
 
 ``` r
 # Combine your gates into a list
-my.gates <- list("lymphocyte" = gate.lymph, "beads" = gate.beads)
+my.gates <- list(
+  "lymphocytes" = gate.lymphocyte,
+  "myeloid" = gate.meloid,
+  "dead" = gate.dead,
+  "beads" = gate.beads
+)
 
 # Pass them to the function call
 flow.control <- define.flow.control(
-  control.dir = control,dir,
+  control.dir = control.dir,
   control.def.file = control.file,
   asp = asp,
   gate.list = my.gates,
@@ -245,6 +309,21 @@ flow.control <- define.flow.control(
 This will create a plot of each reference control sample with the
 intended gate applied to it. To see these, check the `figure_gate`
 folder.
+
+For instance, here is the lymphocyte gate applied to the CD45 BUV395
+sample: ![CD45 BUV395](figures/Workflow/BUV395.jpg) And we can also see
+that AutoSpectral has re-used the unstained cell sample to create
+matching negative samples with corresponding gates applied for the
+myeloid, dead cells and lymphocytes: ![Unstained lymphocyte
+gate](figures/Workflow/AF.jpg)
+
+![Unstained dead cell gate](figures/Workflow/AF%20Negative%20dead.jpg)
+
+Unstained dead cell gate
+
+![Unstained myeloid gate](figures/Workflow/AF%20Negative%20myeloid.jpg)
+
+Unstained myeloid gate
 
 ### Control Cleaning
 
@@ -264,10 +343,22 @@ There is a parallelization option, which may be faster.
 flow.control <- clean.controls(flow.control, asp)
 ```
 
-There are lots of plots generated with this, in `figure_clean_controls`
-and in `figure_spectral_ribbon`.
+There are lots of plots generated with this, in `figure_clean_controls`,
+`figure_scatter` and in `figure_spectral_ribbon`.
 
-\#s# Calculating the Fluorophore Spectra
+For instance, here is a plot showing the matching that has been applied
+in terms of selecting cells with similar scatter profiles between the
+viability (live/dead) marker single-stained control and the unstained
+sample:
+
+![Scatter match](figures/Workflow/eFluor780_scatter_plot.jpg) And here
+we have the attempt to gate out and exclude intrusive autofluorescence
+in the CD11b BUV805 single-stained control. BUV805 will peak in UV16-A
+on the Cytek Aurora, while autofluorescence often appear in UV7-A
+(although this is determined empirically and automatically by
+AutoSpectral). ![AF Removal](figures/Workflow/AF_removal_BUV805_.jpg)
+
+### Calculating the Fluorophore Spectra
 
 Now we can isolate the spectra from the controls. By default, this uses
 the cleaned data if they are available.
@@ -289,7 +380,28 @@ spectral profiles. See the Discussions page for more details on this.
 
 ![Spectral Trace](figures/Workflow/spectral_trace.jpg)![Spectral
 Heatmap](figures/Workflow/spectral_heatmap.jpg)![Similarity
-Matrix](figures/Workflow/similarity_matrix.jpg)
+Matrix](figures/Workflow/Clean_autospectral_similarity_matrix.jpg) You
+also get a “Hotspot” matrix, as in the paper my Peter Mage et al.
+![Hotspot Matrix](figures/Workflow/Clean_Hotspot_Matrix%20heatmap.jpg)
+As per their manuscript, we probably don’t need to worry about anything
+under 4, may want to check stuff between 4-6, and should definitely look
+into values above 6. That said, this hotspot matrix will include the
+“AF” as if you were doing OLS unmixing, and that is not really relevant
+if you proceed with AutoSpectral unmixing of per-cell autofluorescence.
+
+As of version 1.5.0, you should also get a pdf quality control report.
+![Spectral QC](figures/Workflow/Spectral_QC.jpg) The BUV395 looks quite
+good: ![BUV395 QC](figures/Workflow/BUV395_QC.jpg) The BUV805 has
+“failed” QC. Let’s have a look. This QC feature is new, so it will need
+to be adjusted and improved. In this case, it’s flagging something worth
+looking at: the BUV805 spectrum in this experiment has an extra minor
+peak in the UV. That is autofluorescence because the BUV805+ cells are
+myeloid cells such as neutrophils and macrophages, and the
+scatter-matching for this population has not worked perfectly. Something
+for me to work on.
+
+This will be fine. ![BUV805 QC](figures/Workflow/BUV805_QC2.jpg)![BUV805
+scatter matching](figures/Workflow/BUV805_scatter_match.jpg)
 
 The spectra themselves are saved to a CSV file in the `table_spectra`
 folder. You can open CSV files as a spreadsheet in Excel and other
@@ -407,7 +519,7 @@ Once `AutoSpectralRcpp` is installed, it takes over when the unmixing
 starts. You don’t need to do anything else. It also helps out in a
 couple other computationally heavy spots, so you may experience faster
 processing elsewhere. There is no need for you to do anything–it will
-hapen automatically once installed.
+happen automatically once installed.
 
 To use per-cell autofluorescence extraction only, no fluorophore
 optimization, do this:
@@ -418,7 +530,7 @@ spleen.af <- get.af.spectra(
   unstained.sample = spleen.unstained,
   asp = asp,
   spectra = spectra,
-  refine = TRUE # optional; when TRUE, more AF spectra will be generated, focusing on problem cells
+  refine = TRUE # optional; when TRUE, more AF spectra will be generated, focusing on problem cells. This takes longer, though.
 )
 unmix.fcs(
   fcs.file = spleen.fcs.file,
@@ -431,13 +543,37 @@ unmix.fcs(
 )
 ```
 
+Using `refine=TRUE` will take longer, both during the
+[`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
+call and during subsequent unmixing calls. The benefit of this is
+primarily in messier samples, particularly those from tissues. If you
+are just using PBMCs or nice lymphoid samples like spleen, you probably
+won’t see much benefit from this. This is a situation where
+AutoSpectralRcpp helps out in the background, so be sure to install that
+for faster processing. This may be sped up further in the future.
+
 We get the distribution of autofluorescence spectra as a spectral trace
 and as a heatmap in `figure_autofluorescence`. The AF spectra are saved
 as a CSV file in `table_spectra`.
 
-![Spleen AF](figures/Workflow/spleen_af_variation.jpg)
+![Spleen AF](figures/Workflow/af_spectra.jpg) We can also look at the
+distribution of autofluorescence like this, where the black line
+represents a median signature (what you might use with an automated
+single AF parameter), and the red region represents the variation:
+![Spleen AF Variation](figures/Workflow/af_variation.jpg)
 
-Spleen AF
+We also get images showing us the impact of the AF extraction on the
+unstained sample we have supplied.
+
+This is without any AF extraction, looking at what AutoSpectral has
+determined are the two most-affected fluorophore channels: ![No AF
+extraction](figures/Workflow/Spleen_No_AF_Extraction.jpg) What you get
+on the same unstained sample with per-cell AF extraction, without
+refinement (refine=FALSE): ![Per-cell AF
+extraction](figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg)
+What you get on the same unstained sample with per-cell AF extraction,
+*with* refinement (refine=TRUE): ![Per-cell AF extraction
+refined](figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg)
 
 If you want to do this with samples containing different
 autofluorescence profiles, such as we have here, we extract the AF
@@ -462,7 +598,7 @@ sample from each donor and matching the autofluorescence more closely.
 
 ``` r
 lung.unstained <- "./Raw/Set1/Unstained/D2 Lung_Set1.fcs"
-lung.af <- get.af.spectra(lung.unstained, asp, spectra)
+lung.af <- get.af.spectra(lung.unstained, asp, spectra) # use refine=TRUE for a modest improvement, default is FALSE
 lung.fcs.file <- "./Raw/Set1/Stained/D5 Lung_Set1.fcs"
 unmix.fcs(
   lung.fcs.file,
@@ -475,7 +611,7 @@ unmix.fcs(
 )
 
 liver.unstained <- "./Raw/Set1/Unstained/D3 Liver_Set1.fcs"
-liver.af <- get.af.spectra(liver.unstained, asp, spectra)
+liver.af <- get.af.spectra(liver.unstained, asp, spectra) # use refine=TRUE for a modest improvement, default is FALSE
 liver.fcs.file <- "./Raw/Set1/Stained/D6 Liver_Set1.fcs"
 unmix.fcs(
   liver.fcs.file,
@@ -491,7 +627,8 @@ unmix.fcs(
 You can easily set this up as a for loop or an lapply loop matching
 elements by names from a list.
 
-For more detail on the per-cell AF extraction, see the dedicated article
+For more detail on the per-cell AF extraction, see the [dedicated
+article](https://drcytometer.github.io/AutoSpectral/articles/10_Single_Cell_AutoFluorescence.html)
 on this subject.
 
 ### Per-cell Fluorophore Optimization
@@ -519,7 +656,7 @@ variants <- get.spectral.variants(
   asp = asp,
   spectra = spectra,
   af.spectra = spleen.af, # the AF relevant to any cell-based single-stained controls
-  parallel = FALSE # use parallel if TRUE
+  parallel = FALSE, # use parallel if TRUE
   refine = TRUE # optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass
 )
 ```
@@ -531,12 +668,21 @@ The output of this is saved as an RDS file in folder
 There are plots of the spectral variation for each fluorophore. For
 something like the CD11b-BUV805 in this data, the variation is largely
 changes in the autofluorescence because there are multiple cell types
-expressing CD11b. ![BUV805](figures/Workflow/BUV805_variants.jpg)
+expressing CD11b. We also have variation in the long wavelength
+spillover on the violet and red laser, as should be expected from a
+tandem dye. ![BUV805](figures/Workflow/BUV805_variants.jpg)
 
 For PE-Cy7, we get a modest difference in the excitation between the
 blue and yellow-green lasers, which would cause spread if we had a
 fluorophore in that range on the blue laser, such as RB780. We don’t in
-this case. ![PE-Cy7](figures/Workflow/PECy7_variants.jpg)
+this case.
+
+If we had tandem breakdown, we would probably see variability in the
+YG1-A detector.
+
+![PE-Cy7](figures/Workflow/PECy7_variants.jpg)
+
+PE-Cy7
 
 We can now pass this to the unmixing call. For quicker results, you may
 set the `speed` to `fast`, which checks fewer pre-screened variants per
@@ -568,7 +714,9 @@ width basis) for your existing files versus some random default
 selection by FlowJo for AutoSpectral’s files. Nothing to do with me.
 
 For more detail on the per-cell fluorophore optimization, see the
-dedicated article on this subject.
+[dedicated
+article](https://drcytometer.github.io/AutoSpectral/articles/11_Per_Cell_Optimization.html)
+on this subject.
 
 ## Plotting
 
@@ -588,10 +736,11 @@ asp.lung <- AutoSpectral::readFCS(autospectral.unmixed.lung)
 sf.lung <- AutoSpectral::readFCS(spectroflo.unmixed.lung)
 
 create.biplot(sf.lung, "BUV395-A", "BV421-A", asp, title = "SpectroFlo")
-create.biplot(asp.lung, "BUV395", "BV421", asp, title = "AutoSpectral")
+create.biplot(asp.lung, "BUV395-A", "BV421-A", asp, title = "AutoSpectral")
 ```
 
 ![SpectroFlo](figures/Workflow/SpectroFlo.jpg)![AutoSpectral](figures/Workflow/AutoSpectral.jpg)
 
 Here we have CD45-BUV395 and CD4-BV421. There really shouldn’t be much
-of anything low for CD4 in the mouse.
+of anything low for CD4 in the mouse. This is ungated data, so we’re
+seeing everythign, without any clean-up.

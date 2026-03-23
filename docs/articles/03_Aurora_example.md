@@ -1,5 +1,9 @@
 # 03 Aurora AutoSpectral Example
 
+*NOTE* This has not yet been updated to reflect changes in version
+1.5.0. See the full workflow article for more detail. This will still
+work as before, but more control over the process is now available.
+
 ``` r
 library(AutoSpectral)
 ```

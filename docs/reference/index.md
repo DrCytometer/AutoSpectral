@@ -74,6 +74,8 @@
   : Gate Definition Plot
 - [`gate.sample.plot()`](https://drcytometer.github.io/AutoSpectral/reference/gate.sample.plot.md)
   : Plot Pre-defined Gate on Sample
+- [`gate.scatter.match()`](https://drcytometer.github.io/AutoSpectral/reference/gate.scatter.match.md)
+  : Gate Matching Scatter
 - [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
   : Get Autofluorescence Spectra
 - [`get.autospectral.param.a5se()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.a5se.md)

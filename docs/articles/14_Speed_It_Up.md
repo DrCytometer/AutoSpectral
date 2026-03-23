@@ -44,9 +44,11 @@ Feedback from users on Mac who successfully upgrade their BLAS would be
 appreciated.
 
 Do not set multiple threads for the BLAS as this will conflict with
-higher level parallelization, either in AutoSpectral or other packages.
+higher level parallelization, either in AutoSpectral or other That said,
+AutoSpectral checks for this internally, overriding anything you do in
+that regard.
 
-After upgrading the BLAS, you probably need to reinstall `Rcpp` and
+After upgrading the BLAS, you probably need to re-install `Rcpp` and
 `RcppArmadillo` to have this compiled with the BLAS.
 
 ``` r
@@ -180,7 +182,7 @@ laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:
   WLS or OLS v1.0.0: 9-10sec (most of this is handling the FCS file)
 
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
-  WLS or OLS v1.1.0: 4sec
+  WLS or OLS v1.1.0: 4sec (now with native FCS handling)
 
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell AF extraction v0.8.7: 2min
@@ -195,7 +197,7 @@ laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:
   perCell AF extraction v1.0.3: 10sec
 
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
-  perCell AF extraction v1.1.0: 4.5sec
+  perCell AF extraction v1.1.0: 4.5sec (now with native FCS handling)
 
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
   perCell fluorophore optimization “fast” v0.8.7: 9min

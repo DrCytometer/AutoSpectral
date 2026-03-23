@@ -9,6 +9,21 @@ have identified where it has shortcomings or needs improvement.
 Suggestions for strategies, or better, code suggestions, would be
 appreciated.
 
+- Unmixing with controls from different days or different voltages
+
+- AutoSpectral does not currently support this, although it may work
+  reasonably well anyway since these modern spectral cytometers are
+  fairly well calibrated for PMT/APD linearity.
+
+- In most cases, AutoSpectral does not have access to the information
+  needed to normalize the files between different voltage settings. For
+  Cytek instruments, this would be QC information and the initial
+  linearity response curve for the APDs. For FACSDiscover systems, this
+  is likely the QSPE values, which are in the FCS files.
+
+- I’d need to sit down and work out the normalization functions. This
+  hasn’t been a top priority.
+
 - Parallelization improvements.
 
   - The parallelization of functions like `define.flow.control` was

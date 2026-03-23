@@ -19,31 +19,9 @@ reduce the influence of these problems, aiming to give you cleaner
 spectra. Cleaner spectra should lead to more accurate, more precise and
 more reproducible unmixing.
 
-Right, so there are four cleaning options in AutoSpectral:
+Right, so there are two cleaning methods in AutoSpectral:
 
-1.  Trimming. *Update* Trimming will be deprecated soon and then phased
-    out as an option. Trimming removes extreme events, usually the top
-    and bottom 0.5%. This was implemented in the original AutoSpill
-    where detector noise was more of an issue. We don’t generally want
-    to use this with spectral data where we have low-noise detectors
-    because it would remove the brightest (and most accurate) events. If
-    you have an issue with aggregates in your single-colour controls
-    (which can happen with nanoparticles, old antibodies and
-    NovaFluors), you can try the trimming. We’re not going to cover it
-    in this article.
-
-2.  Time-based cleaning. *Update* Time-based cleaning will be deprecated
-    soon and then phased out as an option. We do this with our fully
-    stained data through tools like flowClean, flowAI and PeacoQC. This
-    removes inconsistencies in the flow, which are less accurate.
-    AutoSpectral employs PeacoQC with the “MAD” (robust standard
-    deviation) method to clean controls, if you activate this option. By
-    default, it’s off. This is because it’s fairly slow and time-based
-    variability shouldn’t really be an issue unless you’re doing things
-    like running unfiltered cells on a high flow rate. If you are, try
-    time.clean.
-
-3.  AF exclusion. For this, we need matching unstained samples.
+1.  AF exclusion. For this, we need matching unstained samples.
     AutoSpectral identifies populations of cells with high variance and
     signal in the unstained sample, and creates a gate around the main
     trajectory of these cells. It does this by figuring out where the
@@ -58,7 +36,7 @@ Right, so there are four cleaning options in AutoSpectral:
     (e.g., splenocytes), this can definitely help. AF exclusion is never
     performed on beads.
 
-4.  Matching negatives. Again, we need matching unstained samples
+2.  Matching negatives. Again, we need matching unstained samples
     (universal negatives). Here, we’re trying to match the background of
     the unstained and stained cells as closely as possible. For
     instance, if we are staining a T cell marker, the correct background

@@ -148,7 +148,7 @@ in the peak channel, and cluster those to get variants.</p>
 <span>   verbose <span class="op">=</span> <span class="cn">TRUE</span> </span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Set <code>parallel</code> to <code>TRUE</code> for faster processing.
-This should take a couple of minutes.</p>
+This should take a couple of minutes or less.</p>
 <p>This outputs a list containing: 1) The thresholds for positivity in
 each unmixed channel, as determined by the 99.5th percentile on the
 <code>AF</code> sample in <code>flow.control</code>. If you refer back
@@ -298,7 +298,7 @@ the previous “slow” brute force approach.</p>
 the “fast” approximation in earlier version of AutoSpectral. It is not
 expected to produce any substantial discontinuities in the data–if you
 see this, please reach out (data will be helpful in identifying any
-issues).</p>
+issues). Further work on improving this is ongoing.</p>
 <p>Unmixed FCS files will appear in folder
 <code>./autospectral_unmixed</code>.</p>
 <p>Add a <code>file.suffix</code> argument if you want a tag on the FCS

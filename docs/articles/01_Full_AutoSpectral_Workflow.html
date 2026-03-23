@@ -152,7 +152,9 @@ like this, you can run the controls in different
 <code>flow.control</code> sets, figure out which you like best, and then
 do a final version with the best choices.</p>
 <p>Here’s what the control file looks like as first generated: <img src="figures/Workflow/initial_control_file.jpg" alt="Initial Control File"></p>
-<p>Here’s what we want it to look like: <img src="figures/Workflow/final_control_file.jpg" alt="Final Control File"></p>
+<p>Here’s what we want it to look like, in terms of assigning universal
+negatives and setting fluorophore names. We’ll get to the gating in a
+moment. <img src="figures/Workflow/fixed_control_file.jpg" alt="Fixed Control File"></p>
 <p>For more on this, see the Control File article on GitHub.</p>
 <p>Once you’ve got it the way you want, write in the name of the control
 file and run the error checking function.</p>
@@ -187,7 +189,7 @@ myeloid population with higher expected side scatter values. We need at
 least four gates. We can call these whatever we want, but I’m going to
 pick somewhat informative names: “beads”, “lymphocytes”, “myeloid” and
 “dead”. We add these names to the appropriate rows of our table in the
-<code>gate.name</code> column:</p>
+<code>gate.name</code> column: <img src="figures/Workflow/penultimate_control_file.jpg" alt="Penultimate Control File"></p>
 <p>Now we can choose which samples we want to use to define the gate
 boundaries. The simplest option is to just use everything. To do this,
 put “TRUE” in every row of the <code>gate.define</code> column. This
@@ -207,7 +209,7 @@ for the myeloid cells. We can define a third gate using our
 viability-e780 (cells) for dead cells, and we can define a fourth gate
 on all of the stained bead samples, which will all be in the same
 position since they are beads.</p>
-<p>Now our control file looks like this:</p>
+<p>Now our control file looks like this: <img src="figures/Workflow/final_control_file.jpg" alt="Final Control File"></p>
 <p>Note that you can create any number of gates and pass them in the
 next step. Gates are saved and can be reused. See the dedicated articles
 on this for more information, including on how to use the
@@ -243,25 +245,67 @@ expects.</p>
 <span>  percentile <span class="op">=</span> <span class="fl">70</span>,</span>
 <span>  gate.name <span class="op">=</span> <span class="st">"dead"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">gate.beads</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.gate.landmarks.html">define.gate.landmarks</a></span><span class="op">(</span></span>
+<span></span>
+<span><span class="co"># for beads, we'll use the density-based gating instead</span></span>
+<span><span class="va">gate.beads</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.gate.density.html">define.gate.density</a></span><span class="op">(</span></span>
 <span>  control.file <span class="op">=</span> <span class="va">control.file</span>,</span>
 <span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
 <span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
-<span>  n.cells <span class="op">=</span> <span class="fl">2000</span>,</span>
-<span>  percentile <span class="op">=</span> <span class="fl">70</span>,</span>
-<span>  gate.name <span class="op">=</span> <span class="st">"beads"</span></span>
+<span>  gate.name <span class="op">=</span> <span class="st">"beads"</span>,</span>
+<span>  color.palette <span class="op">=</span> <span class="st">"turbo"</span>, <span class="co"># pseudocolor heatmapping palette</span></span>
+<span>  boundary.color <span class="op">=</span> <span class="st">"darkgoldenrod"</span> <span class="co"># what color is the gate edge?</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Note that this can be simplified to an lapply loop, if desired.</p>
 <p>Be sure to check the gates that are generated in the
 <code>figure_gate</code> folder–do they look right? If not, go to the
-Gating articles on <a href="https://drcytometer.github.io/AutoSpectral/articles/04_Gating.html">GitHub</a>
+Gating articles on <a href="https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html">GitHub</a>
 <a href="https://www.colibri-cytometry.com/post/autospectral-gating" class="external-link">Colibri</a>
-for tips on how fix it.</p>
+for tips on how fix it. <a href="https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html">Gating
+Parameters</a> <a href="https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html">Gate
+Tuning</a></p>
 <div class="float">
-<img src="figures/Workflow/cell_gate.jpg" alt="Cell Gate"><div class="figcaption">Cell Gate</div>
+<img src="figures/Workflow/landmark_gate_definition_lymphocytes.jpg" alt="Lymphocyte Gate"><div class="figcaption">Lymphocyte Gate</div>
 </div>
 <div class="float">
-<img src="figures/Workflow/bead_gate.jpg" alt="Bead Gate"><div class="figcaption">Bead Gate</div>
+<img src="figures/Workflow/landmark_gate_definition_myeloid.jpg" alt="Myeloid Gate"><div class="figcaption">Myeloid Gate</div>
+</div>
+<p><img src="figures/Workflow/landmark_gate_definition_dead.jpg" alt="Dead Cell Gate"> This one could probably do with some tuning.</p>
+<div class="float">
+<img src="figures/Workflow/density_gate_definition_beads.jpg" alt="Bead Gate"><div class="figcaption">Bead Gate</div>
+</div>
+<p>Let’s adjust the dead cell gate quickly.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/tune.gate.html">tune.gate</a></span><span class="op">(</span></span>
+<span>  control.file <span class="op">=</span> <span class="va">control.file</span>,</span>
+<span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  n.cells <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">2000</span>, <span class="fl">5000</span><span class="op">)</span>,</span>
+<span>  percentile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">50</span>, <span class="fl">80</span><span class="op">)</span>,</span>
+<span>  gate.name <span class="op">=</span> <span class="st">"dead"</span>,</span>
+<span>  color.palette <span class="op">=</span> <span class="st">"mako"</span>,</span>
+<span>  boundary.color <span class="op">=</span> <span class="st">"red"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>There results appear in folder figure_gate_tuning: <img src="figures/Workflow/dead_gate_tuning.jpeg" alt="Dead cell gate tuning"> Now we have some options. We want a gate
+that includes the dead cells, which are the population on the lower
+left. We can pick the n=500, p=80% one, which pretty much only includes
+the dead cells, same for n=2000 p = 50%, or something like the n=5000,
+p=80%, which includes the live cells as well. Any of those will end up
+in basically the same place in the end, provided we do the control
+cleaning. Our original gate would also have been fine, to be honest. I’m
+going to select n=5000, p=50%. To do that, we re-run the gate definition
+call:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gate.dead</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.gate.landmarks.html">define.gate.landmarks</a></span><span class="op">(</span></span>
+<span>  control.file <span class="op">=</span> <span class="va">control.file</span>,</span>
+<span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  n.cells <span class="op">=</span> <span class="fl">5000</span>,</span>
+<span>  percentile <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>  gate.name <span class="op">=</span> <span class="st">"dead"</span>,</span>
+<span>  color.palette <span class="op">=</span> <span class="st">"rainbow"</span> <span class="co"># FlowJo-like colours</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="float">
+<img src="figures/Workflow/landmark_gate_definition_dead_tuned.jpg" alt="Dead cell gate final"><div class="figcaption">Dead cell gate final</div>
 </div>
 </div>
 <div class="section level3">
@@ -269,13 +313,18 @@ for tips on how fix it.</p>
 </h3>
 <p>If everything looks okay with the gating, we proceed to load in all
 of the data, applying those gates to select the events we want.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Combine your gates into a list</span></span>
-<span><span class="va">my.gates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"lymphocyte"</span> <span class="op">=</span> <span class="va">gate.lymph</span>, <span class="st">"beads"</span> <span class="op">=</span> <span class="va">gate.beads</span><span class="op">)</span></span>
+<span><span class="va">my.gates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="st">"lymphocytes"</span> <span class="op">=</span> <span class="va">gate.lymphocyte</span>,</span>
+<span>  <span class="st">"myeloid"</span> <span class="op">=</span> <span class="va">gate.meloid</span>,</span>
+<span>  <span class="st">"dead"</span> <span class="op">=</span> <span class="va">gate.dead</span>,</span>
+<span>  <span class="st">"beads"</span> <span class="op">=</span> <span class="va">gate.beads</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Pass them to the function call</span></span>
 <span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.flow.control.html">define.flow.control</a></span><span class="op">(</span></span>
-<span>  control.dir <span class="op">=</span> <span class="va">control</span>,<span class="va">dir</span>,</span>
+<span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
 <span>  control.def.file <span class="op">=</span> <span class="va">control.file</span>,</span>
 <span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
 <span>  gate.list <span class="op">=</span> <span class="va">my.gates</span>,</span>
@@ -284,6 +333,17 @@ of the data, applying those gates to select the events we want.</p>
 <p>This will create a plot of each reference control sample with the
 intended gate applied to it. To see these, check the
 <code>figure_gate</code> folder.</p>
+<p>For instance, here is the lymphocyte gate applied to the CD45 BUV395
+sample: <img src="figures/Workflow/BUV395.jpg" alt="CD45 BUV395"> And
+we can also see that AutoSpectral has re-used the unstained cell sample
+to create matching negative samples with corresponding gates applied for
+the myeloid, dead cells and lymphocytes: <img src="figures/Workflow/AF.jpg" alt="Unstained lymphocyte gate"></p>
+<div class="float">
+<img src="figures/Workflow/AF%20Negative%20dead.jpg" alt="Unstained dead cell gate"><div class="figcaption">Unstained dead cell gate</div>
+</div>
+<div class="float">
+<img src="figures/Workflow/AF%20Negative%20myeloid.jpg" alt="Unstained myeloid gate"><div class="figcaption">Unstained myeloid gate</div>
+</div>
 </div>
 <div class="section level3">
 <h3 id="control-cleaning">Control Cleaning<a class="anchor" aria-label="anchor" href="#control-cleaning"></a>
@@ -297,15 +357,27 @@ control.file.</p>
 article on <a href="https://drcytometer.github.io/AutoSpectral/articles/05_Cleaning.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-cleaning" class="external-link">Colibri</a>.
 There is a parallelization option, which may be faster.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clean.controls.html">clean.controls</a></span><span class="op">(</span><span class="va">flow.control</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
 <p>There are lots of plots generated with this, in
-<code>figure_clean_controls</code> and in
+<code>figure_clean_controls</code>, <code>figure_scatter</code> and in
 <code>figure_spectral_ribbon</code>.</p>
-<p>#s# Calculating the Fluorophore Spectra</p>
+<p>For instance, here is a plot showing the matching that has been
+applied in terms of selecting cells with similar scatter profiles
+between the viability (live/dead) marker single-stained control and the
+unstained sample:</p>
+<p><img src="figures/Workflow/eFluor780_scatter_plot.jpg" alt="Scatter match"> And here we have the attempt to gate out and
+exclude intrusive autofluorescence in the CD11b BUV805 single-stained
+control. BUV805 will peak in UV16-A on the Cytek Aurora, while
+autofluorescence often appear in UV7-A (although this is determined
+empirically and automatically by AutoSpectral). <img src="figures/Workflow/AF_removal_BUV805_.jpg" alt="AF Removal"></p>
+</div>
+<div class="section level3">
+<h3 id="calculating-the-fluorophore-spectra">Calculating the Fluorophore Spectra<a class="anchor" aria-label="anchor" href="#calculating-the-fluorophore-spectra"></a>
+</h3>
 <p>Now we can isolate the spectra from the controls. By default, this
 uses the cleaned data if they are available.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spectra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.fluorophore.spectra.html">get.fluorophore.spectra</a></span><span class="op">(</span><span class="va">flow.control</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
 <p>With this, we get plots of the spectra as traces and a heatmap. We
 also get a cosine similarity heatmap. You can check these, if you aren’t
@@ -318,7 +390,23 @@ available, particularly for the instruments I don’t have regular access
 to, so if you want to contribute, visit the database and add your
 spectral profiles. See the Discussions page for more details on
 this.</p>
-<p><img src="figures/Workflow/spectral_trace.jpg" alt="Spectral Trace"><img src="figures/Workflow/spectral_heatmap.jpg" alt="Spectral Heatmap"><img src="figures/Workflow/similarity_matrix.jpg" alt="Similarity Matrix"></p>
+<p><img src="figures/Workflow/spectral_trace.jpg" alt="Spectral Trace"><img src="figures/Workflow/spectral_heatmap.jpg" alt="Spectral Heatmap"><img src="figures/Workflow/Clean_autospectral_similarity_matrix.jpg" alt="Similarity Matrix"> You also get a “Hotspot” matrix, as in the
+paper my Peter Mage et al. <img src="figures/Workflow/Clean_Hotspot_Matrix%20heatmap.jpg" alt="Hotspot Matrix"> As per their manuscript, we probably don’t need
+to worry about anything under 4, may want to check stuff between 4-6,
+and should definitely look into values above 6. That said, this hotspot
+matrix will include the “AF” as if you were doing OLS unmixing, and that
+is not really relevant if you proceed with AutoSpectral unmixing of
+per-cell autofluorescence.</p>
+<p>As of version 1.5.0, you should also get a pdf quality control
+report. <img src="figures/Workflow/Spectral_QC.jpg" alt="Spectral QC">
+The BUV395 looks quite good: <img src="figures/Workflow/BUV395_QC.jpg" alt="BUV395 QC"> The BUV805 has “failed” QC. Let’s have a look. This
+QC feature is new, so it will need to be adjusted and improved. In this
+case, it’s flagging something worth looking at: the BUV805 spectrum in
+this experiment has an extra minor peak in the UV. That is
+autofluorescence because the BUV805+ cells are myeloid cells such as
+neutrophils and macrophages, and the scatter-matching for this
+population has not worked perfectly. Something for me to work on.</p>
+<p>This will be fine. <img src="figures/Workflow/BUV805_QC2.jpg" alt="BUV805 QC"><img src="figures/Workflow/BUV805_scatter_match.jpg" alt="BUV805 scatter matching"></p>
 <p>The spectra themselves are saved to a CSV file in the
 <code>table_spectra</code> folder. You can open CSV files as a
 spreadsheet in Excel and other programs.</p>
@@ -337,7 +425,7 @@ without autofluorescence extraction by removing this row from the
 <code>spectra</code> matrix before we pass it to the unmixing call. Here
 are two easy ways to do that: 1) subset <code>spectra</code> 2) read in
 the CSV file in <code>table_spectra</code>, removing the AF channel</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">spectra</span><span class="op">)</span></span>
 <span><span class="va">no.af.spectra</span> <span class="op">&lt;-</span> <span class="va">spectra</span><span class="op">[</span> <span class="op">!</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">spectra</span><span class="op">)</span> <span class="op">==</span> <span class="st">"AF"</span><span class="op">)</span>,<span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">no.af.spectra</span><span class="op">)</span></span>
@@ -346,7 +434,7 @@ the CSV file in <code>table_spectra</code>, removing the AF channel</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">no.af.spectra.2</span><span class="op">)</span></span></code></pre></div>
 <p>To unmix, specify the file (and path) of the FCS file you want to
 unmix:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spleen.fcs.file</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Stained/D4 Spleen_Set1.fcs"</span></span>
 <span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">spleen.fcs.file</span>,</span>
@@ -372,7 +460,7 @@ over the files. It can, however, be parallelized (set
 <code>parallel=TRUE</code>). Memory usage is handled via file chunking,
 which you can modify using the <code>chunk.size</code> argument, if
 needed.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.folder.html">unmix.folder</a></span><span class="op">(</span></span>
 <span>  fcs.dir <span class="op">=</span> <span class="st">"./Raw/Set1/Stained/"</span>,</span>
 <span>  spectra <span class="op">=</span> <span class="va">spectra</span>,</span>
@@ -386,7 +474,7 @@ needed.</p>
 <code>Autospectral_unmixed</code>, but you can change that by passing a
 path to <code>output.dir</code>.</p>
 <p>If we want to use weighted least-squares, we call like this:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span><span class="va">spleen.fcs.file</span>, <span class="va">spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>, method <span class="op">=</span> <span class="st">"WLS"</span><span class="op">)</span></span></code></pre></div>
 <p>The <code>method</code> is automatically appended to the output file
 name. If you wish to add something else to the file name, use the
@@ -415,22 +503,22 @@ improve the unmixing.</p>
 <p>As of version 1.0.0, per-cell autofluorescence extraction will be
 faster using <code>AutoSpectralRcpp</code>. On Windows, you will first
 need to install Rtools.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectralRcpp"</span><span class="op">)</span></span></code></pre></div>
 <p>Once <code>AutoSpectralRcpp</code> is installed, it takes over when
 the unmixing starts. You don’t need to do anything else. It also helps
 out in a couple other computationally heavy spots, so you may experience
 faster processing elsewhere. There is no need for you to do anything–it
-will hapen automatically once installed.</p>
+will happen automatically once installed.</p>
 <p>To use per-cell autofluorescence extraction only, no fluorophore
 optimization, do this:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spleen.unstained</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Unstained/D1 Spleen_Set1.fcs"</span></span>
 <span><span class="va">spleen.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span></span>
 <span>  unstained.sample <span class="op">=</span> <span class="va">spleen.unstained</span>,</span>
 <span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
 <span>  spectra <span class="op">=</span> <span class="va">spectra</span>,</span>
-<span>  refine <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># optional; when TRUE, more AF spectra will be generated, focusing on problem cells</span></span>
+<span>  refine <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># optional; when TRUE, more AF spectra will be generated, focusing on problem cells. This takes longer, though.</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
 <span>  fcs.file <span class="op">=</span> <span class="va">spleen.fcs.file</span>,</span>
@@ -441,12 +529,29 @@ optimization, do this:</p>
 <span>  af.spectra <span class="op">=</span> <span class="va">spleen.af</span>, <span class="co"># use these AF signatures as the options</span></span>
 <span>  file.suffix <span class="op">=</span> <span class="st">"per-cell AF extraction"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p>Using <code>refine=TRUE</code> will take longer, both during the
+<code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> call and during subsequent unmixing calls.
+The benefit of this is primarily in messier samples, particularly those
+from tissues. If you are just using PBMCs or nice lymphoid samples like
+spleen, you probably won’t see much benefit from this. This is a
+situation where AutoSpectralRcpp helps out in the background, so be sure
+to install that for faster processing. This may be sped up further in
+the future.</p>
 <p>We get the distribution of autofluorescence spectra as a spectral
 trace and as a heatmap in <code>figure_autofluorescence</code>. The AF
 spectra are saved as a CSV file in <code>table_spectra</code>.</p>
-<div class="float">
-<img src="figures/Workflow/spleen_af_variation.jpg" alt="Spleen AF"><div class="figcaption">Spleen AF</div>
-</div>
+<p><img src="figures/Workflow/af_spectra.jpg" alt="Spleen AF"> We can
+also look at the distribution of autofluorescence like this, where the
+black line represents a median signature (what you might use with an
+automated single AF parameter), and the red region represents the
+variation: <img src="figures/Workflow/af_variation.jpg" alt="Spleen AF Variation"></p>
+<p>We also get images showing us the impact of the AF extraction on the
+unstained sample we have supplied.</p>
+<p>This is without any AF extraction, looking at what AutoSpectral has
+determined are the two most-affected fluorophore channels: <img src="figures/Workflow/Spleen_No_AF_Extraction.jpg" alt="No AF extraction"> What you get on the same unstained sample with
+per-cell AF extraction, without refinement (refine=FALSE): <img src="figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg" alt="Per-cell AF extraction"> What you get on the same unstained
+sample with per-cell AF extraction, <em>with</em> refinement
+(refine=TRUE): <img src="figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg" alt="Per-cell AF extraction refined"></p>
 <p>If you want to do this with samples containing different
 autofluorescence profiles, such as we have here, we extract the AF
 spectral variation from each type of unstained sample. We then provide
@@ -465,9 +570,9 @@ tissues. If you are working with human PBMCs, usually a single
 samples from very sick donors, you might consider collecting unstained
 sample from each donor and matching the autofluorescence more
 closely.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lung.unstained</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Unstained/D2 Lung_Set1.fcs"</span></span>
-<span><span class="va">lung.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span><span class="va">lung.unstained</span>, <span class="va">asp</span>, <span class="va">spectra</span><span class="op">)</span></span>
+<span><span class="va">lung.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span><span class="va">lung.unstained</span>, <span class="va">asp</span>, <span class="va">spectra</span><span class="op">)</span> <span class="co"># use refine=TRUE for a modest improvement, default is FALSE</span></span>
 <span><span class="va">lung.fcs.file</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Stained/D5 Lung_Set1.fcs"</span></span>
 <span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">lung.fcs.file</span>,</span>
@@ -480,7 +585,7 @@ closely.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">liver.unstained</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Unstained/D3 Liver_Set1.fcs"</span></span>
-<span><span class="va">liver.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span><span class="va">liver.unstained</span>, <span class="va">asp</span>, <span class="va">spectra</span><span class="op">)</span></span>
+<span><span class="va">liver.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span><span class="va">liver.unstained</span>, <span class="va">asp</span>, <span class="va">spectra</span><span class="op">)</span> <span class="co"># use refine=TRUE for a modest improvement, default is FALSE</span></span>
 <span><span class="va">liver.fcs.file</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Stained/D6 Liver_Set1.fcs"</span></span>
 <span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">liver.fcs.file</span>,</span>
@@ -493,8 +598,8 @@ closely.</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>You can easily set this up as a for loop or an lapply loop matching
 elements by names from a list.</p>
-<p>For more detail on the per-cell AF extraction, see the dedicated
-article on this subject.</p>
+<p>For more detail on the per-cell AF extraction, see the <a href="https://drcytometer.github.io/AutoSpectral/articles/10_Single_Cell_AutoFluorescence.html">dedicated
+article</a> on this subject.</p>
 </div>
 <div class="section level3">
 <h3 id="per-cell-fluorophore-optimization">Per-cell Fluorophore Optimization<a class="anchor" aria-label="anchor" href="#per-cell-fluorophore-optimization"></a>
@@ -512,31 +617,39 @@ because the control samples are from spleen. Provide whatever is the
 best fit for your single-stained controls. The point here is to match
 the AF of the controls so that we isolate the variation in the
 fluorophore signatures independent of any AF variation.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>variants <span class="ot">&lt;-</span> <span class="fu">get.spectral.variants</span>(</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="at">control.dir =</span> control.dir,</span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="at">control.def.file =</span> control.file,</span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="at">asp =</span> asp,</span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>  <span class="at">spectra =</span> spectra,</span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>  <span class="at">af.spectra =</span> spleen.af, <span class="co"># the AF relevant to any cell-based single-stained controls</span></span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>  <span class="at">parallel =</span> <span class="cn">FALSE</span> <span class="co"># use parallel if TRUE</span></span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>  <span class="at">refine =</span> <span class="cn">TRUE</span> <span class="co"># optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass</span></span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">variants</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.spectral.variants.html">get.spectral.variants</a></span><span class="op">(</span></span>
+<span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
+<span>  control.def.file <span class="op">=</span> <span class="va">control.file</span>,</span>
+<span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>  spectra <span class="op">=</span> <span class="va">spectra</span>,</span>
+<span>  af.spectra <span class="op">=</span> <span class="va">spleen.af</span>, <span class="co"># the AF relevant to any cell-based single-stained controls</span></span>
+<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>, <span class="co"># use parallel if TRUE</span></span>
+<span>  refine <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>The output of this is saved as an RDS file in folder
 <code>figure_spectral_variants</code>. You can load it back in using the
 <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code> function in base R.</p>
 <p>There are plots of the spectral variation for each fluorophore. For
 something like the CD11b-BUV805 in this data, the variation is largely
 changes in the autofluorescence because there are multiple cell types
-expressing CD11b. <img src="figures/Workflow/BUV805_variants.jpg" alt="BUV805"></p>
+expressing CD11b. We also have variation in the long wavelength
+spillover on the violet and red laser, as should be expected from a
+tandem dye. <img src="figures/Workflow/BUV805_variants.jpg" alt="BUV805"></p>
 <p>For PE-Cy7, we get a modest difference in the excitation between the
 blue and yellow-green lasers, which would cause spread if we had a
 fluorophore in that range on the blue laser, such as RB780. We don’t in
-this case. <img src="figures/Workflow/PECy7_variants.jpg" alt="PE-Cy7"></p>
+this case.</p>
+<p>If we had tandem breakdown, we would probably see variability in the
+YG1-A detector.</p>
+<div class="float">
+<img src="figures/Workflow/PECy7_variants.jpg" alt="PE-Cy7"><div class="figcaption">PE-Cy7</div>
+</div>
 <p>We can now pass this to the unmixing call. For quicker results, you
 may set the <code>speed</code> to <code>fast</code>, which checks fewer
 pre-screened variants per cell. This can be a bit slow if you have not
 installed <code>AutoSpectralRcpp</code>.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">lung.fcs.file</span>,</span>
 <span>  <span class="va">spectra</span>,</span>
@@ -557,8 +670,8 @@ coefficients in order to do a fair comparison. Otherwise you’ll see
 whatever you’ve already done to tune your display (e.g., biexponential
 width basis) for your existing files versus some random default
 selection by FlowJo for AutoSpectral’s files. Nothing to do with me.</p>
-<p>For more detail on the per-cell fluorophore optimization, see the
-dedicated article on this subject.</p>
+<p>For more detail on the per-cell fluorophore optimization, see the <a href="https://drcytometer.github.io/AutoSpectral/articles/11_Per_Cell_Optimization.html">dedicated
+article</a> on this subject.</p>
 </div>
 </div>
 <div class="section level2">
@@ -569,7 +682,7 @@ but a dedicated flow cytometry analysis program with a graphical
 interface will be better. More on plotting on the dedicated article on
 <a href="https://drcytometer.github.io/AutoSpectral/articles/13_Plotting.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-plotting" class="external-link">Colibri</a>.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">autospectral.unmixed.lung</span> <span class="op">&lt;-</span> <span class="st">"AutoSpectral_unmixed/D5 Lung_Set1 AutoSpectral per-cell AF and fluorophore optimization.fcs"</span></span>
 <span><span class="va">spectroflo.unmixed.lung</span> <span class="op">&lt;-</span> <span class="st">"./Unmixed/Set1/Stained/D5 Lung_Set1.fcs"</span></span>
 <span></span>
@@ -578,10 +691,11 @@ or <a href="https://www.colibri-cytometry.com/post/autospectral-plotting" class=
 <span><span class="va">sf.lung</span> <span class="op">&lt;-</span> <span class="fu">AutoSpectral</span><span class="fu">::</span><span class="fu"><a href="../reference/readFCS.html">readFCS</a></span><span class="op">(</span><span class="va">spectroflo.unmixed.lung</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/create.biplot.html">create.biplot</a></span><span class="op">(</span><span class="va">sf.lung</span>, <span class="st">"BUV395-A"</span>, <span class="st">"BV421-A"</span>, <span class="va">asp</span>, title <span class="op">=</span> <span class="st">"SpectroFlo"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/create.biplot.html">create.biplot</a></span><span class="op">(</span><span class="va">asp.lung</span>, <span class="st">"BUV395"</span>, <span class="st">"BV421"</span>, <span class="va">asp</span>, title <span class="op">=</span> <span class="st">"AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/create.biplot.html">create.biplot</a></span><span class="op">(</span><span class="va">asp.lung</span>, <span class="st">"BUV395-A"</span>, <span class="st">"BV421-A"</span>, <span class="va">asp</span>, title <span class="op">=</span> <span class="st">"AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="figures/Workflow/SpectroFlo.jpg" alt="SpectroFlo"><img src="figures/Workflow/AutoSpectral.jpg" alt="AutoSpectral"></p>
 <p>Here we have CD45-BUV395 and CD4-BV421. There really shouldn’t be
-much of anything low for CD4 in the mouse.</p>
+much of anything low for CD4 in the mouse. This is ungated data, so
+we’re seeing everythign, without any clean-up.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

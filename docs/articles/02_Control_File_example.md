@@ -1,5 +1,9 @@
 # 02 Creating the control file
 
+*NOTE* This has not yet been updated to reflect changes in version
+1.5.0. See the full workflow article for details on setting up the
+gate.name and gate.define columns.
+
 *Update*: there is now a Shiny app you can use to create your control
 file. You may find this to be easier as it provides an interactive
 interface much like a webpage. To use the app, download it from

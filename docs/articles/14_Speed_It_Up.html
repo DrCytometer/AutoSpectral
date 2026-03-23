@@ -114,9 +114,10 @@ for Mac in R</a> <a href="https://csantill.github.io/RPerformanceWBLAS/" class="
 BLAS</a> Feedback from users on Mac who successfully upgrade their BLAS
 would be appreciated.</p>
 <p>Do not set multiple threads for the BLAS as this will conflict with
-higher level parallelization, either in AutoSpectral or other
-packages.</p>
-<p>After upgrading the BLAS, you probably need to reinstall
+higher level parallelization, either in AutoSpectral or other That said,
+AutoSpectral checks for this internally, overriding anything you do in
+that regard.</p>
+<p>After upgrading the BLAS, you probably need to re-install
 <code>Rcpp</code> and <code>RcppArmadillo</code> to have this compiled
 with the BLAS.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -228,7 +229,8 @@ laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:</p>
 <li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v0.9.0: 9sec</p></li>
 <li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v1.0.0: 9-10sec (most of this
 is handling the FCS file)</p></li>
-<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v1.1.0: 4sec</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> WLS or OLS v1.1.0: 4sec (now with native
+FCS handling)</p></li>
 <li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v0.8.7:
 2min</p></li>
 <li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v0.9.0:
@@ -237,8 +239,8 @@ is handling the FCS file)</p></li>
 in R without C++)</p></li>
 <li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.0.3:
 10sec</p></li>
-<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.1.0:
-4.5sec</p></li>
+<li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell AF extraction v1.1.0: 4.5sec
+(now with native FCS handling)</p></li>
 <li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
 v0.8.7: 9min</p></li>
 <li><p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> perCell fluorophore optimization “fast”
