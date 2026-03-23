@@ -23,7 +23,11 @@ get.fluor.variants(
   unmixed.thresholds,
   flow.channel,
   refine = TRUE,
-  problem.quantile = 0.95
+  problem.quantile = 0.95,
+  variant.fill.color = "red",
+  variant.fill.alpha = 0.7,
+  median.line.color = "black",
+  median.linewidth = 1
 )
 }
 \arguments{
@@ -89,6 +93,19 @@ be used to determine additional autofluorescence spectra, using a second round
 of clustering and modulation of the previously selected autofluorescence
 spectra. A value of \code{0.95} means the top 5\% of cells, those farthest from zero,
 will be selected for further investigation.}
+
+\item{variant.fill.color}{Color for the shaded region indicating the range of
+variation in the spectra. Feeds to \code{fill} in \code{geom_ribbon}. Default is "red".}
+
+\item{variant.fill.alpha}{Transparency (alpha) for the color in
+\code{variant.fill.color}. How intense the color of the variant spectra will be.
+Default is \code{0.7}}
+
+\item{median.line.color}{Color for the line representing the median or
+optimized single spectrum. Default is "black".}
+
+\item{median.linewidth}{Width of the line for the single optimized spectrum.
+Default is \code{1}.}
 }
 \value{
 A matrix with the flow expression data.

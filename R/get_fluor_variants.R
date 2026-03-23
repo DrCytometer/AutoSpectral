@@ -53,6 +53,15 @@
 #' of clustering and modulation of the previously selected autofluorescence
 #' spectra. A value of `0.95` means the top 5% of cells, those farthest from zero,
 #' will be selected for further investigation.
+#' @param variant.fill.color Color for the shaded region indicating the range of
+#' variation in the spectra. Feeds to `fill` in `geom_ribbon`. Default is "red".
+#' @param variant.fill.alpha Transparency (alpha) for the color in
+#' `variant.fill.color`. How intense the color of the variant spectra will be.
+#' Default is `0.7`
+#' @param median.line.color Color for the line representing the median or
+#' optimized single spectrum. Default is "black".
+#' @param median.linewidth Width of the line for the single optimized spectrum.
+#' Default is `1`.
 #'
 #' @return A matrix with the flow expression data.
 #'
@@ -83,7 +92,11 @@ get.fluor.variants <- function(
     unmixed.thresholds,
     flow.channel,
     refine = TRUE,
-    problem.quantile = 0.95
+    problem.quantile = 0.95,
+    variant.fill.color = "red",
+    variant.fill.alpha = 0.7,
+    median.line.color = "black",
+    median.linewidth = 1
 ) {
 
   if ( verbose )
@@ -521,7 +534,11 @@ get.fluor.variants <- function(
           median.spectrum = as.numeric( original.spectrum ),
           title = paste0( fluor, "_variants" ),
           save = TRUE,
-          plot.dir = output.dir
+          plot.dir = output.dir,
+          variant.fill.color = variant.fill.color,
+          variant.fill.alpha = variant.fill.alpha,
+          median.line.color = median.line.color,
+          median.linewidth = median.linewidth
         )
       }
 
@@ -648,7 +665,11 @@ get.fluor.variants <- function(
       median.spectrum = as.numeric( original.spectrum ),
       title = paste0( fluor, "_variants" ),
       save = TRUE,
-      plot.dir = output.dir
+      plot.dir = output.dir,
+      variant.fill.color = variant.fill.color,
+      variant.fill.alpha = variant.fill.alpha,
+      median.line.color = median.line.color,
+      median.linewidth = median.linewidth
     )
   }
 
