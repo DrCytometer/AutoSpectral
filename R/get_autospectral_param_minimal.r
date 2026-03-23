@@ -171,7 +171,7 @@ get.autospectral.param.minimal <- function()
       gate.data.trim.factor.y.min.beads = 0.01,
       gate.data.trim.factor.y.max.beads = 0.99,
 
-      gate.bound.density.bw.factor.beads = 6.0,
+      gate.bound.density.bw.factor.beads = 1.0,
       gate.bound.density.grid.n.beads = 100,
       gate.bound.density.neigh.size.beads = 3,
 
@@ -180,7 +180,7 @@ get.autospectral.param.minimal <- function()
       gate.bound.density.max.exclusion.y.beads = 0.05,
       gate.bound.density.max.mad.factor.beads = 6.0,
 
-      gate.region.density.bw.factor.beads = 6.0,
+      gate.region.density.bw.factor.beads = 1.0,
       gate.region.density.grid.n.beads = 100,
       gate.region.density.neigh.size.beads = 3,
 
