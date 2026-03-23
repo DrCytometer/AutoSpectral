@@ -27,6 +27,8 @@ both with the gate.define functions and directly in `define.flow.control()`.
 - Chunking of files when unmixing to support unmixing of any size of file.
 - Spectral signature QC when running `get.fluorophore.spectra()`.
 - Autofluorescence profile QC when running `get.af.spectra()`.
+- Faster processing in `get.af.spectra()` through integration of `AutoSpectralRcpp`,
+when available.
 
 
 # AutoSpectral 1.0.0 (2026-02-10)
