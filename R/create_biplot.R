@@ -65,7 +65,7 @@ create.biplot <- function(
     y.max = asp$expr.data.max,
     x.width.basis = -1000,
     y.width.basis = -1000,
-    max.points = 5e6,
+    max.points = 5e5,
     color.palette = "rainbow",
     save = TRUE,
     title = NULL,

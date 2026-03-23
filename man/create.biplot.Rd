@@ -17,7 +17,7 @@ create.biplot(
   y.max = asp$expr.data.max,
   x.width.basis = -1000,
   y.width.basis = -1000,
-  max.points = 5e+06,
+  max.points = 5e+05,
   color.palette = "rainbow",
   save = TRUE,
   title = NULL,
