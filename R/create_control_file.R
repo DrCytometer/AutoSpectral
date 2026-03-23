@@ -48,7 +48,7 @@ create.control.file <- function(
 
   control.colnames <- c(
     "filename", "fluorophore", "marker", "channel", "control.type",
-    "universal.negative", "large.gate", "is.viability", "gate.name", "gate.define"
+    "universal.negative", "large.gate", "gate.name", "gate.define"
   )
 
   control.table <- data.frame(
@@ -140,14 +140,14 @@ create.control.file <- function(
   control.table.merged$excitation.laser <- factor(
     control.table.merged$excitation.laser,
     levels = laser.order
-    )
+  )
 
   control.table.merged <- control.table.merged[
     order( control.table.merged$excitation.laser,
            control.table.merged$nominal.wavelength ), ]
 
-  # desired.col <- c( control.colnames, "is.viability" )
-  control.table <- control.table.merged[ , control.colnames ]
+  desired.col <- c( control.colnames, "is.viability" )
+  control.table <- control.table.merged[ , desired.col ]
 
   # automatically fill gate names if requested
   if ( !"gate.name" %in% colnames( control.table ) ) control.table$gate.name <- ""
