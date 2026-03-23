@@ -16,7 +16,13 @@ get.af.spectra(
   verbose = TRUE,
   refine = FALSE,
   problem.quantile = 0.99,
-  remove.contaminants = TRUE
+  remove.contaminants = TRUE,
+  parallel = TRUE,
+  threads = if (parallel) 0 else 1,
+  heatmap.color.palette = "viridis",
+  spectral.trace.color.palette = NULL,
+  af.fill.color = "red",
+  af.line.color = "black"
 )
 }
 \arguments{
@@ -71,6 +77,31 @@ fluorophore signatures in \code{spectra}. This helps deal with low-level contami
 of unstained samples by single-stained control samples, which happens sometimes.
 To include these AF spectra, which can mess up unmixing if they are really
 fluorophore spectra, set \code{FALSE}.}
+
+\item{parallel}{Logical, default is \code{TRUE}, which enables parallel processing
+for per-cell AF identification. Used when \code{refine=TRUE}.}
+
+\item{threads}{Numeric, defaults to a single thread for sequential processing
+(\code{parallel=FALSE}) or all available cores if \code{parallel=TRUE}.Used when
+\code{refine=TRUE}.}
+
+\item{heatmap.color.palette}{Optional character string defining the viridis color
+palette to be used for the fluorophore traces. Default is \code{viridis}. Options
+are the viridis color options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis},
+\code{cividis}, \code{rocket}, \code{mako} and \code{turbo}.}
+
+\item{spectral.trace.color.palette}{Optional character string defining the
+color palette to be used for the AF traces. Default is \code{NULL}, in which case
+default R Brewer colors will be assigned automatically. Options are the viridis
+color options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket},
+\code{mako} and \code{turbo}.}
+
+\item{af.fill.color}{Color for the shaded region indicating the range of
+variation in the autofluorescence. Feeds to \code{fill} in \code{geom_ribbon}.
+Default is "red".}
+
+\item{af.line.color}{Color for the line representing the median
+autofluorescence spectrum. Default is "black".}
 }
 \value{
 A matrix of autofluorescence spectra.

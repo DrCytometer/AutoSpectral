@@ -8,6 +8,7 @@
 #' identification of cells with similar AF profiles.
 #'
 #' @importFrom FlowSOM SOM
+#' @importFrom parallelly availableCores
 #'
 #' @param unstained.sample Path and file name for a unstained sample FCS file.
 #' The sample type and processing (protocol) method should match the fully
@@ -49,6 +50,25 @@
 #' of unstained samples by single-stained control samples, which happens sometimes.
 #' To include these AF spectra, which can mess up unmixing if they are really
 #' fluorophore spectra, set `FALSE`.
+#' @param parallel Logical, default is `TRUE`, which enables parallel processing
+#' for per-cell AF identification. Used when `refine=TRUE`.
+#' @param threads Numeric, defaults to a single thread for sequential processing
+#' (`parallel=FALSE`) or all available cores if `parallel=TRUE`.Used when
+#' `refine=TRUE`.
+#' @param heatmap.color.palette Optional character string defining the viridis color
+#' palette to be used for the fluorophore traces. Default is `viridis`. Options
+#' are the viridis color options: `magma`, `inferno`, `plasma`, `viridis`,
+#' `cividis`, `rocket`, `mako` and `turbo`.
+#' @param spectral.trace.color.palette Optional character string defining the
+#' color palette to be used for the AF traces. Default is `NULL`, in which case
+#' default R Brewer colors will be assigned automatically. Options are the viridis
+#' color options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`,
+#' `mako` and `turbo`.
+#' @param af.fill.color Color for the shaded region indicating the range of
+#' variation in the autofluorescence. Feeds to `fill` in `geom_ribbon`.
+#' Default is "red".
+#' @param af.line.color Color for the line representing the median
+#' autofluorescence spectrum. Default is "black".
 #'
 #' @return A matrix of autofluorescence spectra.
 #'
@@ -74,20 +94,27 @@ get.af.spectra <- function(
     verbose = TRUE,
     refine = FALSE,
     problem.quantile = 0.99,
-    remove.contaminants = TRUE
+    remove.contaminants = TRUE,
+    parallel = TRUE,
+    threads = if ( parallel ) 0 else 1,
+    heatmap.color.palette = "viridis",
+    spectral.trace.color.palette = NULL,
+    af.fill.color = "red",
+    af.line.color = "black"
 ) {
 
   # set up output folders
-  if ( is.null( plot.dir ) )
-    plot.dir <- asp$figure.af.dir
-  if ( !dir.exists( plot.dir ) )
-    dir.create( plot.dir )
-  if ( is.null( table.dir ) )
-    table.dir <- asp$table.spectra.dir
-  if ( !dir.exists( table.dir ) )
-    dir.create( table.dir )
-  if ( is.null( title ) )
-    title <- asp$af.file.name
+  if ( is.null( plot.dir ) ) plot.dir <- asp$figure.af.dir
+  if ( !dir.exists( plot.dir ) ) dir.create( plot.dir )
+  if ( is.null( table.dir ) ) table.dir <- asp$table.spectra.dir
+  if ( !dir.exists( table.dir ) ) dir.create( table.dir )
+  if ( is.null( title ) ) title <- asp$af.file.name
+
+  # set multithreading
+  if ( parallel & is.null( threads ) )
+    threads <- asp$worker.process.n
+  else if ( parallel & threads == 0 )
+    threads <- parallelly::availableCores()
 
   # check for AF in spectra, remove if present
   if ( "AF" %in% rownames( spectra ) )
@@ -164,10 +191,14 @@ get.af.spectra <- function(
           asp = asp,
           title = paste( title, "Autofluorescence spectra" ),
           plot.dir = plot.dir,
-          split.lasers = FALSE
+          split.lasers = FALSE,
+          color.palette = spectral.trace.color.palette
         )
         # as a heatmap
-        spectral.heatmap( af.spectra, title, plot.dir )
+        spectral.heatmap(
+          af.spectra, title, plot.dir,
+          color.palette = heatmap.color.palette
+        )
       },
       error = function( e ) {
         message( "Error in plotting AF spectra: ", e$message )
@@ -186,12 +217,23 @@ get.af.spectra <- function(
 
     if ( verbose ) message( "Identifying best-fitting AF: first pass" )
     # allow Rcpp if available
-    # assign AF by fluorophore minimization
-    af.assignments <- assign.af.fluorophores(
-      raw.data = unstained.exprs,
-      spectra = spectra,
-      af.spectra = af.spectra
-    )
+    if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+         "assign.af.fluor.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+      # use C++
+      af.assignments <- AutoSpectralRcpp::assign.af.fluor.fast(
+        raw.data = unstained.exprs,
+        spectra = spectra,
+        af.spectra = af.spectra,
+        threads = asp$worker.process.n
+      )
+    } else {
+      # assign AF by fluorophore minimization using R
+      af.assignments <- assign.af.fluorophores(
+        raw.data = unstained.exprs,
+        spectra = spectra,
+        af.spectra = af.spectra
+      )
+    }
 
     # add dummy AF column (to be filled in)
     af.abundance <- rep( 0, nrow( unstained.exprs ) )
@@ -359,30 +401,44 @@ get.af.spectra <- function(
         ### before and after AF extraction plotting ###
         if ( verbose ) message( "Identifying best-fitting AF: second pass" )
 
-        # reassign AF using full set of AF spectra
-        af.assignments <- assign.af.fluorophores(
-          raw.data = unstained.exprs,
-          spectra = spectra,
-          af.spectra = af.spectra
-        )
+        # allow Rcpp if available
+        if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+             "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+          # use C++
+          unmixed.second <- AutoSpectralRcpp::unmix.autospectral.rcpp(
+            raw.data = unstained.exprs,
+            spectra = spectra,
+            af.spectra = af.spectra,
+            verbose = FALSE,
+            parallel = TRUE,
+            threads = threads
+          )
+        } else {
+          # reassign AF using full set of AF spectra
+          af.assignments <- assign.af.fluorophores(
+            raw.data = unstained.exprs,
+            spectra = spectra,
+            af.spectra = af.spectra
+          )
 
-        # create a copy of the data for AF extraction with the full set of AF spectra
-        unmixed.second <- unmixed
+          # create a copy of the data for AF extraction with the full set of AF spectra
+          unmixed.second <- unmixed
 
-        # unmix per assigned AF
-        for ( af in seq_len( nrow( af.spectra ) ) ) {
-          # set this AF as the spectrum to use
-          combined.spectra[ 1, ] <- af.spectra[ af, ]
+          # unmix per assigned AF
+          for ( af in seq_len( nrow( af.spectra ) ) ) {
+            # set this AF as the spectrum to use
+            combined.spectra[ 1, ] <- af.spectra[ af, ]
 
-          # get the cells using this AF
-          cell.idx <- which( af.assignments == af )
+            # get the cells using this AF
+            cell.idx <- which( af.assignments == af )
 
-          if ( length( cell.idx ) > 0 ) {
-            # unmix with this AF
-            unmixed.second[ cell.idx, ] <- unmix.ols.fast(
-              unstained.exprs[ cell.idx, , drop = FALSE ],
-              combined.spectra
-            )
+            if ( length( cell.idx ) > 0 ) {
+              # unmix with this AF
+              unmixed.second[ cell.idx, ] <- unmix.ols.fast(
+                unstained.exprs[ cell.idx, , drop = FALSE ],
+                combined.spectra
+              )
+            }
           }
         }
 
@@ -458,7 +514,9 @@ get.af.spectra <- function(
           mean.af,
           title = paste( title, "Autofluorescence variation" ),
           save = TRUE,
-          plot.dir = plot.dir
+          plot.dir = plot.dir,
+          variant.fill.color = af.fill.color,
+          median.line.color = af.line.color
         )
       },
       error = function( e ) e
