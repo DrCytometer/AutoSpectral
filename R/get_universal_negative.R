@@ -8,6 +8,7 @@
 #'
 #' @importFrom sp point.in.polygon
 #' @importFrom tripack tri.mesh convex.hull
+#' @importFrom MASS kde2d bandwidth.nrd
 #'
 #' @param clean.expr.data List containing cleaned expression data.
 #' @param samp Sample identifier.
@@ -80,7 +81,8 @@ get.universal.negative <- function(
         samp,
         "\033[0m",
         "\n"
-      )
+      ),
+      call. = FALSE
     )
   }
 
@@ -97,7 +99,8 @@ get.universal.negative <- function(
         "Returning original data.",
         "\033[0m",
         "\n"
-      )
+      ),
+      call. = FALSE
     )
     return( rbind( pos.control.expr, neg.control.expr ) )
   }
@@ -121,15 +124,24 @@ get.universal.negative <- function(
 
   if ( scatter.match ) {
 
-    pos.scatter.coord <- unique( pos.selected.expr[ , scatter.param ] )
-    pos.scatter.gate <- suppressWarnings(
-      tripack::convex.hull(
-        tripack::tri.mesh(
-          pos.scatter.coord[ , 1 ],
-          pos.scatter.coord[ , 2 ]
+    # get the scatter coordinates of the brightest positive events in the stained control
+    pos.scatter.coord <- pos.selected.expr[ , scatter.param ]
+
+    # try to define the density of these points, taking only the dense region
+    # if this fails, revert to using the entire
+    tryCatch({
+      # calculate bandwidth for kernel density estimation
+      pos.scatter.gate <- gate.scatter.match( pos.scatter.coord )
+    }, error = function(e) {
+      # fallback to gating around all events
+      # screen for unique points
+      pos.scatter.coord <- unique( pos.scatter.coord )
+      pos.scatter.gate <- suppressWarnings(
+        tripack::convex.hull(
+          tripack::tri.mesh( pos.scatter.coord[ , 1 ], pos.scatter.coord[ , 2 ] )
         )
       )
-    )
+    })
 
     neg.scatter.matched.pip <- sp::point.in.polygon(
       neg.control.expr[ , scatter.param[ 1 ] ],
@@ -149,7 +161,8 @@ get.universal.negative <- function(
           samp,
           "\033[0m",
           "\n"
-        )
+        ),
+        call. = FALSE
       )
     }
 
@@ -166,7 +179,8 @@ get.universal.negative <- function(
           "Reverting to original negative.",
           "\n",
           "\033[0m"
-        )
+        ),
+        call. = FALSE
       )
 
       # downsample original negative

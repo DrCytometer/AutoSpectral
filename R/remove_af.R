@@ -8,6 +8,7 @@
 #'
 #' @importFrom sp point.in.polygon
 #' @importFrom flowWorkspace flowjo_biexp
+#' @importFrom tripack tri.mesh convex.hull
 #'
 #' @param samp Sample identifier.
 #' @param clean.expr List containing cleaned expression data.
@@ -88,7 +89,8 @@ remove.af <- function(
 
   # check for NaNs before PCA
   if ( any( is.na( scaled.data ) ) ) {
-    warning( paste( "NaNs detected in scaled data for", samp, "- skipping PCA cleaning." ) )
+    warning( paste( "NaNs detected in scaled data for", samp, "- skipping PCA cleaning." ),
+             call. = FALSE )
     return( clean.expr[[ samp ]] ) # fallback
   }
 
@@ -127,7 +129,10 @@ remove.af <- function(
       intermediate.figures
     )
   }, error = function(e) {
-    warning(paste("do.gate.af failed for", samp, "- using 98th percentile fallback. Error:", e$message))
+    warning(
+      paste( "do.gate.af failed for", samp, "- using 98th percentile fallback. Error:", e$message ),
+      call. = FALSE
+    )
 
     # Fallback: identify the "low AF" population as the bottom 98%
     # of the first (most variable) AF component
@@ -372,7 +377,7 @@ remove.af <- function(
     pos.above.threshold <- pos.peak.channel[ pos.peak.channel > positivity.threshold ]
 
     # warn if few events in positive
-    if ( length( pos.above.threshold ) < asp$min.cell.warning.n )
+    if ( length( pos.above.threshold ) < asp$min.cell.warning.n ) {
       warning(
         paste0(
           "\033[31m",
@@ -382,8 +387,11 @@ remove.af <- function(
           samp,
           "\033[0m",
           "\n"
-          )
-        )
+        ),
+        call. = FALSE
+      )
+    }
+
 
     # stop if fewer than minimum acceptable events, returning original data
     if ( length( pos.above.threshold ) < asp$min.cell.stop.n ) {
@@ -398,8 +406,9 @@ remove.af <- function(
           "Returning original data",
           "\033[0m",
           "\n"
-          )
-        )
+        ),
+        call. = FALSE
+      )
       return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
     }
 
@@ -412,40 +421,65 @@ remove.af <- function(
 
     # scatter-match based on positive scatter profile
     pos.selected.expr <- expr.data.pos[ names( pos.selected ), ]
-    pos.scatter.coord <- unique( pos.selected.expr[ , scatter.param ] )
+    pos.scatter.coord <- pos.selected.expr[ , scatter.param ]
 
     if ( nrow( pos.scatter.coord ) < asp$min.cell.stop.n ) {
       warning(
-        paste( "Too few unique scatter points for", samp, "- skipping scatter match." )
+        paste( "Too few unique scatter points for", samp, "- skipping scatter match." ),
+        call. = FALSE
       )
       return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
     }
 
-    pos.scatter.gate <- tryCatch( {
-      suppressWarnings(
-        tripack::convex.hull(
-          tripack::tri.mesh(
-            pos.scatter.coord[ , 1 ],
-            pos.scatter.coord[ , 2 ]
-          ) ) )
-    }, error = function( e ) return( NULL ) )
+    percentile <- 0.2
+    exit <- FALSE
+    while ( !exit ) {
+      # try to define the density of these points, taking only the dense region
+      # if this fails, revert to using the entire region
+      tryCatch({
+        pos.scatter.gate <- gate.scatter.match(
+          pos.scatter.coord,
+          percentile,
+          bw.factor = 5
+        )
+      }, error = function(e) {
+        # fallback to gating around all events
+        tryCatch({
+          # screen for unique points
+          unique.coords <- unique( pos.scatter.coord )
+          pos.scatter.gate <- suppressWarnings(
+            tripack::convex.hull(
+              tripack::tri.mesh( unique.coords[ , 1 ], unique.coords[ , 2 ] )
+            )
+          )
+        }, error = function(e) return( NULL ) )
+      })
 
-    if ( is.null( pos.scatter.gate ) ) {
-      warning(
-        paste( "Convex hull failed for", samp, "- returning non-matched data." )
-      )
-      return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
+      if ( is.null( pos.scatter.gate ) ) {
+        warning(
+          paste( "Convex hull failed for", samp, "- returning non-matched data." ),
+          call. = FALSE
+        )
+        return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
+      }
+
+      neg.scatter.matched.pip <- sp::point.in.polygon(
+        expr.data.neg[ , scatter.param[ 1 ] ],
+        expr.data.neg[ , scatter.param[ 2 ] ],
+        pos.scatter.gate$x, pos.scatter.gate$y )
+
+      neg.population.idx <- which( neg.scatter.matched.pip != 0 )
+
+      # check status
+      if ( length( neg.population.idx ) > 249 || percentile >= 1 ) {
+        exit <- TRUE
+      } else {
+        percentile <- min( 1, percentile + 0.1 )
+      }
     }
-
-    neg.scatter.matched.pip <- sp::point.in.polygon(
-      expr.data.neg[ , scatter.param[ 1 ] ],
-      expr.data.neg[ , scatter.param[ 2 ] ],
-      pos.scatter.gate$x, pos.scatter.gate$y )
-
-    neg.population.idx <- which( neg.scatter.matched.pip != 0 )
 
     # warn if few events in negative
-    if ( length( neg.population.idx ) < asp$min.cell.warning.n )
+    if ( length( neg.population.idx ) < asp$min.cell.warning.n ) {
       warning(
         paste0(
           "\033[31m",
@@ -455,8 +489,11 @@ remove.af <- function(
           samp,
           "\033[0m",
           "\n"
-        )
+        ),
+        call. = FALSE
       )
+    }
+
 
     # stop if fewer than minimum acceptable events, returning original negative
     if ( length( neg.population.idx ) < asp$min.cell.stop.n ) {
@@ -470,8 +507,9 @@ remove.af <- function(
           "Reverting to original negative.",
           "\n",
           "\033[0m"
-          )
-        )
+        ),
+        call. = FALSE
+      )
 
       return( clean.expr[[ samp ]][ gate.population.idx, ] )
     }
