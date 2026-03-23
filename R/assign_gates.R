@@ -142,8 +142,8 @@ assign.gates <- function(
             new.row$is.viability <- neg.map$is.viability[i]
             new.row$fluorophore <- if ( grepl( "negative", new.row$fluorophore, ignore.case = TRUE ) ) {
               paste( new.row$fluorophore, target.gate )
-            } else if ( new.row$fluorophore == "AF" ) {
-              "AF"
+            #} else if ( new.row$fluorophore == "AF" ) {
+            #  "AF"
             } else {
               paste( new.row$fluorophore, "Negative", target.gate )
             }
