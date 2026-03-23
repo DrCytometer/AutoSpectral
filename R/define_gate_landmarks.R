@@ -11,6 +11,7 @@
 #' monocytes (CD14-stained sample) or neutrophils (CD66, CD33).
 #'
 #' @importFrom MASS kde2d bandwidth.nrd
+#' @importFrom tripack tri.mesh convex.hull
 #'
 #' @param control.file File path and name for the CSV file defining the single-
 #' color control file names, fluorophores they represent, marker names, peak
@@ -283,7 +284,7 @@ define.gate.landmarks <- function(
   gate.coords <- cbind( main.contour$x, main.contour$y )
 
   # define a smooth convex hull around those coordinates
-  gate.hull <- gate.coords[ grDevices::chull( gate.coords ), ]
+  gate.hull <- unique( gate.coords[ grDevices::chull( gate.coords ), ] )
   gate.boundary <- tripack::convex.hull(
     tripack::tri.mesh( gate.hull[, 1], gate.hull[, 2] )
   )
