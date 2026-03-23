@@ -44,7 +44,7 @@ check.control.file <- function(
     return( invisible( TRUE ) )
   } else if ( nrow( issues ) == 0 & ! strict ) {
     message( "\033[34m No critical errors found in control file.\033[0m" )
-    return( issues )
+    return( invisible( TRUE ) )
   }
 
   ## ---- group and summarize ----
