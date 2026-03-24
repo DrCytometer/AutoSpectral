@@ -49,27 +49,56 @@ reload.flow.control <- function(
 
   # remove unnecessary channels
   non.spectral.pattern <- paste0( asp$non.spectral.channel, collapse = "|" )
+  spec.idx <- grep( non.spectral.pattern, all.channels, invert = TRUE )
+  spectral.channel <- all.channels[ spec.idx ]
 
   if ( grepl( "Discover", asp$cytometer ) ) {
-    spec.idx <- grep( asp$spectral.channel, all.channels )
-  } else {
-    spec.idx <- grep( non.spectral.pattern, all.channels, invert = TRUE )
+    spec.idx <- grep( asp$spectral.channel, spectral.channel )
+    spectral.channel <- spectral.channel[ spec.idx ]
   }
-
-  spectral.channel <- all.channels[ spec.idx ]
 
   # reorganize channels if necessary
   spectral.channel <- check.channels( spectral.channel, asp )
   spectral.channel.n <- length( spectral.channel )
 
-  # record and store voltages for checks during unmixing
+  ## record and store voltages for checks during unmixing
+  # read header from the first file
   header <- readFCSheader( file.path( control.dir, control.table$filename[ 1 ] ) )[[ 1 ]]
-  # extract the $PnV values
-  spectral.voltages <- vapply( spec.idx, function( idx ) {
-    v <- header[[ paste0( "$P", idx, "V" ) ]]
-    if ( is.null( v ) ) return( NA_character_ ) else return( as.character( v ) )
-  }, character( 1 ) )
-  names( spectral.voltages ) <- all.channels[ spec.idx ]
+
+  # get parameter names
+  p.names <- unlist( header[ grep( "^\\$P\\d+N$", names( header ) ) ] )
+
+  # initialize with fallback
+  spectral.voltages <- stats::setNames(
+    rep( NA_character_, length( spectral.channel ) ), spectral.channel
+  )
+
+  # ID7000 doesn't store voltage/gain info
+  if ( !grepl( "ID7000", asp$cytometer, ignore.case = TRUE ) ) {
+    spectral.voltages <- tryCatch({
+      vapply( spectral.channel, function( ch ) {
+        # match channel name to header index key (e.g., "$P10N")
+        p.idx.key <- names( p.names )[ which( p.names == ch ) ]
+        if ( length( p.idx.key ) == 0 ) return( NA_character_ )
+
+        # extract the numeric part (the 'n')
+        n <- gsub( "[^0-9]", "", p.idx.key )
+
+        # Mosaic uses $PnG; others $PnV
+        pnv.id <- ifelse( grepl( "Mosaic", asp$cytometer, ignore.case = TRUE ), "G", "V" )
+        val <- header[[ paste0( "$P", n, pnv.id ) ]]
+
+        if ( is.null( val ) ) return( NA_character_ ) else return( as.character( val ) )
+
+      }, character( 1 ) )
+    }, error = function( e ) {
+      warning( "Failed to extract spectral voltages/gains: ", e$message,
+               call. = FALSE )
+      return( spectral.voltages )
+    })
+  }
+
+  names( spectral.voltages ) <- spectral.channel
 
   # get fluorophores and markers
   flow.fluorophore <- control.table$fluorophore
