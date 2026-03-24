@@ -137,18 +137,18 @@ define.keywords <- function(
     "$FIL" = file.name,
     "$PAR" = as.character(n.param),
     "$TOT" = as.character(nrow(final.matrix)),
-    "$UNMIXINGMETHOD" = method,
+    "UNMIXINGMETHOD" = method,
     "$BYTEORD" = "1,2,3,4",
     "$DATATYPE" = "F",
-    "$SPECTRA" = format.matrix.string(spectra),
-    "$FLUOROCHROMES" = paste(rownames(spectra), collapse = ","),
-    "$AUTOSPECTRAL" = asp.ver,
-    "$AUTOSPECTRALRCPP" = rcpp.ver
+    "SPECTRA" = format.matrix.string(spectra),
+    "FLUOROCHROMES" = paste(rownames(spectra), collapse = ","),
+    "AUTOSPECTRAL" = asp.ver,
+    "AUTOSPECTRALRCPP" = rcpp.ver
   ))
 
   # add AF spectra if used
   if (!is.null(af.spectra)) {
-    new.keywords[["$AUTOFLUORESCENCE"]] <- format.matrix.string(af.spectra)
+    new.keywords[["AUTOFLUORESCENCE"]] <- format.matrix.string(af.spectra)
   }
 
   # add weights if used
@@ -158,7 +158,7 @@ define.keywords <- function(
         formatC(weights, digits = 8, format = "fg")),
       collapse = ","
     )
-    new.keywords[["$WEIGHTS"]] <- weights.str
+    new.keywords[["WEIGHTS"]] <- weights.str
   }
 
   return(new.keywords)
