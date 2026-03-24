@@ -222,16 +222,14 @@ unmix.fcs <- function(
   if ( !dir.exists( output.dir ) ) dir.create( output.dir )
 
   # import FCS
-  if ( verbose ) message( "Reading FCS metadata: ", fcs.file )
+  if ( verbose ) message( "Reading FCS file: ", fcs.file )
   import.meta <- readFCS( fcs.file, return.keywords = TRUE, start.row = 1, end.row = 1 )
   fcs.keywords <- import.meta$keywords
   total.events <- as.numeric( fcs.keywords[[ "$TOT" ]] )
   original.param <- colnames( import.meta$data )
 
   ### check for voltage settings consistency with single-stained controls
-  if ( !is.null( flow.control$voltages ) ) {
-    # if ( verbose ) message( "Validating detector voltages..." )
-
+  if ( !is.null( flow.control$voltages ) && !all( is.na( flow.control$voltages ) ) ) {
     # map current file keyword keys ($PnN) to channel names
     all.keys <- names( fcs.keywords )
     p.name.keys <- grep( "^\\$P\\d+N$", all.keys, value = TRUE )
@@ -245,23 +243,25 @@ unmix.fcs <- function(
 
       if ( length( matching.key ) > 0 ) {
         # convert the name key (e.g., $P10N) to voltage key (e.g., $P10V)
-        v.key <- gsub( "N$", "V", matching.key )
+        pnv.id <- ifelse( grepl( "Mosaic", asp$cytometer ), "G", "V" )
+        v.key <- gsub( "N$", pnv.id, matching.key )
         current.v <- fcs.keywords[[ v.key ]]
         ref.v <- flow.control$voltages[[ ch.name ]]
 
         # compare as strings to avoid floating point/type mismatches
         if ( !identical( as.character( current.v ), as.character( ref.v ) ) ) {
-          stop( sprintf(
-            "Voltage mismatch for channel %s! Controls: %s, Current: %s. Unmixing aborted.",
+          warning( sprintf(
+            "Voltage mismatch for channel %s! Controls: %s, Current: %s. Unmixing may be inaccurate.",
             ch.name, ref.v, current.v
-          ) )
+          ),
+          call. = FALSE )
         }
       } else {
         # if the channel name isn't found at all, that's a much bigger problem
-        stop( paste( "Spectral channel", ch.name, "not found in target FCS file." ) )
+        stop( paste( "Spectral channel", ch.name, "not found in target FCS file." ),
+              call. = FALSE )
       }
     }
-    # if ( verbose ) message( "Voltage check passed." )
   }
 
   # determine original file name
@@ -301,10 +301,8 @@ unmix.fcs <- function(
   }
 
   # set multithreading
-  if ( parallel & is.null( threads ) )
-    threads <- asp$worker.process.n
-  else if ( parallel & threads == 0 )
-    threads <- parallelly::availableCores()
+  if ( is.null( threads ) ) threads <- asp$worker.process.n
+  if ( parallel & threads == 0 ) threads <- parallelly::availableCores()
 
   # apply unmixing using selected method ---------------
   # pre-allocate the full results matrix
