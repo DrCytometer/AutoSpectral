@@ -2,7 +2,9 @@
 
 *NOTE* This has not yet been updated to reflect changes in version
 1.5.0. See the full workflow article for details on setting up the
-gate.name and gate.define columns.
+gate.name and gate.define columns. These columns do not have to be
+filled it, but can be used to provide additional control over the gating
+process.
 
 *Update*: there is now a Shiny app you can use to create your control
 file. You may find this to be easier as it provides an interactive

@@ -20,7 +20,7 @@
   function that allows you to put in a range of parameters to quickly
   see the impact on the gate boundary prior to running
   [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md).
-- Native FCS read/write functionality adapted from `flowstate`.
+- Native, faster FCS read/write functionality adapted from `flowstate`.
 - FCS file concatenation via
   [`concatenateFCS()`](https://drcytometer.github.io/AutoSpectral/reference/concatenateFCS.md).
 - Faster gating by reducing
@@ -45,6 +45,9 @@
 - Faster processing in
   [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
   through integration of `AutoSpectralRcpp`, when available.
+- Additional checks on FCS files when setting up and unmixing:
+  consistency in the spectral channels used for unmixing, both in the
+  names and the voltages/gains.
 
 ## AutoSpectral 1.0.0 (2026-02-10)
 

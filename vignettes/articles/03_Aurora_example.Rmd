@@ -2,7 +2,7 @@
 title: "03 Aurora AutoSpectral Example"
 ---
 
-*NOTE* This has not yet been updated to reflect changes in version 1.5.0. See the full workflow article for more detail. This will still work as before, but more control over the process is now available.
+*NOTE* This has not yet been updated to reflect changes in version 1.5.0. See the [full workflow article](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html) for more detail. This will still work as before, but more control over the process is now available.
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -25,17 +25,25 @@ Create a folder containing only the single-stained control FCS files describe th
 control.dir <- "~/AutoSpectral_data/Aurora_example/Aurora_controls"
 ```
 
-With this information, we can create a draft of the control file. More detail on this will be included in a separate article. 
+With this information, we can create a draft of the control file. More detail on this in the dedicated [control file article](https://drcytometer.github.io/AutoSpectral/articles/02_Control_File_example.html). 
 ```{r, eval=FALSE}
 create.control.file(control.dir, asp)
 ```
+
+To modify the control file...
+
+
+
+
 
 For now, we'll use the pre-filled control file, which you can get from [Mendeley Data](https://data.mendeley.com/datasets/xzt3h3gnx9/1).
 ```{r, eval=FALSE}
 control.file <- "~/AutoSpectral_data/Aurora_example/aurora_fcs_control_file.csv"
 ```
 
-Now we are ready to read in the fcs files, gate the cells and organize the experiment.
+This 
+
+Now we are ready to read in the FCS files, gate the cells and organize the experiment.
 ```{r, eval=FALSE}
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
@@ -50,7 +58,7 @@ CD14 monocyte gating:
 
 There are several parameters that control the automated gating. This will be covered in a separate article.
 
-Control cleaning is always recommended. The default option downsamples and sets universal negatives, provided these are specified in the control file. More detail on this in the Cleaning article.
+Control cleaning is always recommended. The default option downsamples and sets universal negatives, provided these are specified in the control file. More detail on this in the [Cleaning article](https://drcytometer.github.io/AutoSpectral/articles/05_Cleaning.html).
 ```{r, eval=FALSE}
 flow.control <- clean.controls(flow.control, asp)
 ```

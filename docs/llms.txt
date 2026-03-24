@@ -1,30 +1,5 @@
 # AutoSpectral
 
-**Version 1.5.0**
-
-Welcome to the Development branch of AutoSpectral.
-
-This will always be a work-in-progress, and will not necessarily be
-stable at any given point. At the moment, most of the changes taking
-place relate to speeding things up or fixing any reported bugs.
-
-To install the development version, run the code below in your
-R/RStudio. This will overwrite any prior installation of AutoSpectral.
-To restore the stable version of AutoSpectral, simply re-run the
-`install_github()` command without the @dev bit.
-
-``` r
-# Install Bioconductor packages
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-BiocManager::install(c("flowWorkspace", "FlowSOM"))
-
-# You'll need devtools or remotes to install from GitHub.
-# install.packages("devtools")
-# install.packages("remotes")
-remotes::install_github("DrCytometer/AutoSpectral@dev")
-```
-
 ## Introduction
 
 AutoSpectral is AutoSpill updated for the spectral flow era.
@@ -123,7 +98,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.0.2**
+**Version 1.5.0**
 
 Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and
@@ -162,7 +137,7 @@ To install a specific release, e.g., a previous one, use the version
 number:
 
 ``` r
-remotes::install_github("DrCytometer/AutoSpectral@v0.9.0")
+remotes::install_github("DrCytometer/AutoSpectral@v1.0.2")
 ```
 
 ### Dev branch
@@ -223,7 +198,7 @@ article.
 ### Known shortcomings
 
 - Not all unmixing errors will be fixed. Still working on this.
-- AutoSpectral currently does not permit unmixing of samples run on
+- AutoSpectral may not work well for unmixing of samples run on
   different PMT/APD voltage settings than what were used for the
   controls.
 - Data from the A5SE may be more problematic–I’m looking into this.

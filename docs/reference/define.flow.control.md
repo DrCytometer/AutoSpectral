@@ -19,7 +19,7 @@ define.flow.control(
   control.def.file,
   asp,
   gate = TRUE,
-  gating.system = c("landmarks", "density"),
+  gating.system = c("density", "landmarks"),
   gate.list = NULL,
   parallel = FALSE,
   verbose = TRUE,
@@ -82,9 +82,7 @@ define.flow.control(
 - parallel:
 
   Logical, default is `FALSE`, in which case parallel processing will
-  not be used. Parallel processing will likely be faster when many small
-  files are read in. If the data is larger, parallel processing may not
-  accelerate the process much.
+  not be used. Parallel processing is almost never faster now.
 
 - verbose:
 

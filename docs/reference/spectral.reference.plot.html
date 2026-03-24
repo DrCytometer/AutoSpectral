@@ -68,12 +68,14 @@ two spectral profiles.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">spectral.reference.plot</span><span class="op">(</span></span>
 <span>  <span class="va">spectra</span>,</span>
 <span>  <span class="va">asp</span>,</span>
-<span>  qc.threshold <span class="op">=</span> <span class="fl">0.98</span>,</span>
+<span>  qc.threshold.warn <span class="op">=</span> <span class="fl">0.98</span>,</span>
+<span>  qc.threshold.fail <span class="op">=</span> <span class="fl">0.9</span>,</span>
 <span>  experiment.control.color <span class="op">=</span> <span class="st">"black"</span>,</span>
 <span>  library.reference.color <span class="op">=</span> <span class="st">"blue"</span>,</span>
 <span>  experiment.line.type <span class="op">=</span> <span class="st">"solid"</span>,</span>
 <span>  library.line.type <span class="op">=</span> <span class="st">"dotted"</span>,</span>
 <span>  pass.color <span class="op">=</span> <span class="st">"darkgreen"</span>,</span>
+<span>  warn.color <span class="op">=</span> <span class="st">"darkorange"</span>,</span>
 <span>  fail.color <span class="op">=</span> <span class="st">"red"</span>,</span>
 <span>  linewidth <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  plot.dir <span class="op">=</span> <span class="st">"./figure_spectra"</span>,</span>
@@ -96,9 +98,14 @@ fluorophore names. Column names will be used as the detectors (channels).</p></d
 produced the data.</p></dd>
 
 
-<dt id="arg-qc-threshold">qc.threshold<a class="anchor" aria-label="anchor" href="#arg-qc-threshold"></a></dt>
+<dt id="arg-qc-threshold-warn">qc.threshold.warn<a class="anchor" aria-label="anchor" href="#arg-qc-threshold-warn"></a></dt>
 <dd><p>Numeric, default <code>0.98</code>. The similarity value to trigger
-a QC failure warning.</p></dd>
+a QC warning.</p></dd>
+
+
+<dt id="arg-qc-threshold-fail">qc.threshold.fail<a class="anchor" aria-label="anchor" href="#arg-qc-threshold-fail"></a></dt>
+<dd><p>Numeric, default <code>0.90</code>. The similarity value to trigger
+a QC failure.</p></dd>
 
 
 <dt id="arg-experiment-control-color">experiment.control.color<a class="anchor" aria-label="anchor" href="#arg-experiment-control-color"></a></dt>
@@ -124,12 +131,18 @@ reference standard fluorophore spectrum. Default is <code>dotted</code>.</p></dd
 
 
 <dt id="arg-pass-color">pass.color<a class="anchor" aria-label="anchor" href="#arg-pass-color"></a></dt>
-<dd><p>Color to label similarity values above the <code>qc.threshold</code>,
+<dd><p>Color to label similarity values above the <code>qc.threshold.warn</code>,
 i.e., fluorophores passing QC. Default is <code>darkgreen</code>.</p></dd>
 
 
+<dt id="arg-warn-color">warn.color<a class="anchor" aria-label="anchor" href="#arg-warn-color"></a></dt>
+<dd><p>Color to label similarity values above the <code>qc.threshold.fail</code>
+but below the <code>qc.threshold.warn</code>, i.e., fluorophores in a potentially
+problematic zone. Default is <code>darkorange</code>.</p></dd>
+
+
 <dt id="arg-fail-color">fail.color<a class="anchor" aria-label="anchor" href="#arg-fail-color"></a></dt>
-<dd><p>Color to label similarity values below the <code>qc.threshold</code>,
+<dd><p>Color to label similarity values below the <code>qc.threshold.fail</code>,
 i.e., fluorophores failing QC. Default is <code>red</code>.</p></dd>
 
 

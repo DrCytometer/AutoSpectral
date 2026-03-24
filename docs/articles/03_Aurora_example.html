@@ -78,9 +78,9 @@
     
     
 <p><em>NOTE</em> This has not yet been updated to reflect changes in
-version 1.5.0. See the full workflow article for more detail. This will
-still work as before, but more control over the process is now
-available.</p>
+version 1.5.0. See the <a href="https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html">full
+workflow article</a> for more detail. This will still work as before,
+but more control over the process is now available.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/DrCytometer/AutoSpectral" class="external-link">AutoSpectral</a></span><span class="op">)</span></span></code></pre></div>
 <p>To start, we need to get the relevant parameters for the cytometer.
@@ -93,15 +93,18 @@ describe the path to that folder here.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">control.dir</span> <span class="op">&lt;-</span> <span class="st">"~/AutoSpectral_data/Aurora_example/Aurora_controls"</span></span></code></pre></div>
 <p>With this information, we can create a draft of the control file.
-More detail on this will be included in a separate article.</p>
+More detail on this in the dedicated <a href="https://drcytometer.github.io/AutoSpectral/articles/02_Control_File_example.html">control
+file article</a>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/create.control.file.html">create.control.file</a></span><span class="op">(</span><span class="va">control.dir</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
+<p>To modify the control file…</p>
 <p>For now, we’ll use the pre-filled control file, which you can get
 from <a href="https://data.mendeley.com/datasets/xzt3h3gnx9/1" class="external-link">Mendeley
 Data</a>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">control.file</span> <span class="op">&lt;-</span> <span class="st">"~/AutoSpectral_data/Aurora_example/aurora_fcs_control_file.csv"</span></span></code></pre></div>
-<p>Now we are ready to read in the fcs files, gate the cells and
+<p>This</p>
+<p>Now we are ready to read in the FCS files, gate the cells and
 organize the experiment.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.flow.control.html">define.flow.control</a></span><span class="op">(</span><span class="va">control.dir</span>, <span class="va">control.file</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
@@ -112,7 +115,8 @@ organize the experiment.</p>
 will be covered in a separate article.</p>
 <p>Control cleaning is always recommended. The default option
 downsamples and sets universal negatives, provided these are specified
-in the control file. More detail on this in the Cleaning article.</p>
+in the control file. More detail on this in the <a href="https://drcytometer.github.io/AutoSpectral/articles/05_Cleaning.html">Cleaning
+article</a>.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clean.controls.html">clean.controls</a></span><span class="op">(</span><span class="va">flow.control</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
 <p>This generates scatter-matching plots showing the FSC/SSC of the

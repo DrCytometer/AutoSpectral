@@ -11,12 +11,14 @@ similarity between the two spectral profiles.
 spectral.reference.plot(
   spectra,
   asp,
-  qc.threshold = 0.98,
+  qc.threshold.warn = 0.98,
+  qc.threshold.fail = 0.9,
   experiment.control.color = "black",
   library.reference.color = "blue",
   experiment.line.type = "solid",
   library.line.type = "dotted",
   pass.color = "darkgreen",
+  warn.color = "darkorange",
   fail.color = "red",
   linewidth = 1,
   plot.dir = "./figure_spectra",
@@ -37,10 +39,13 @@ spectral.reference.plot(
   The AutoSpectral parameter list. Used to determine which cytometer
   produced the data.
 
-- qc.threshold:
+- qc.threshold.warn:
 
-  Numeric, default `0.98`. The similarity value to trigger a QC failure
-  warning.
+  Numeric, default `0.98`. The similarity value to trigger a QC warning.
+
+- qc.threshold.fail:
+
+  Numeric, default `0.90`. The similarity value to trigger a QC failure.
 
 - experiment.control.color:
 
@@ -64,12 +69,18 @@ spectral.reference.plot(
 
 - pass.color:
 
-  Color to label similarity values above the `qc.threshold`, i.e.,
+  Color to label similarity values above the `qc.threshold.warn`, i.e.,
   fluorophores passing QC. Default is `darkgreen`.
+
+- warn.color:
+
+  Color to label similarity values above the `qc.threshold.fail` but
+  below the `qc.threshold.warn`, i.e., fluorophores in a potentially
+  problematic zone. Default is `darkorange`.
 
 - fail.color:
 
-  Color to label similarity values below the `qc.threshold`, i.e.,
+  Color to label similarity values below the `qc.threshold.fail`, i.e.,
   fluorophores failing QC. Default is `red`.
 
 - linewidth:

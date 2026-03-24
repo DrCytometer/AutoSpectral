@@ -88,11 +88,85 @@ best choices.
 Here’s what the control file looks like as first generated: ![Initial
 Control File](figures/Workflow/initial_control_file.jpg)
 
+If AutoSpectral does not fill in the marker column, add your marker
+labels. To avail yourself of AutoSpectral’s automation and get it to
+fill in the names of your markers automatically, include the marker name
+in the name of your single-stained FCS files. This should be separated
+from other elements of the filename by a space or an underscore. The
+marker also must be represented in the [marker
+database](https://docs.google.com/spreadsheets/d/16FAinR_Nfnl00mpHvmQFJT_uJJY3VUWk29yAaQ7HHn8/edit?usp=sharing),
+and the way you’ve written the marker must match one of the synonyms in
+the database. If your marker or the way you write it isn’t in the marker
+database, please add it! Changes will be incorporated with the next
+update.
+
+You do not have to use the marker names AutoSpectral provides. Write
+these however you want.
+
+If AutoSpectral does not fill in the fluorophore column, add your
+fluorophore names. Also check to be sure that the names AutoSpectral has
+given you are correct–getting accurate matching of complex fluorophore
+names when people may write them very differently is difficult. It’s
+especially difficult when the fluorophores may contain the same elements
+repeatedly, so we have to try to distinguish “PE”, “PERCP”,
+“PERCP-C5.5”, “PERCP Cy5.5”, etc.
+
+You do not have to use the fluorophore names AutoSpectral provides, but
+you will lose out on the spectral QC if the names do not match the name
+in the database. This is not essential to achieve good unmixing.
+
+If AutoSpectral does not fill in the control.type column, fill this in
+with either “beads” or “cells”, as is appropriate for the sample on that
+line.
+
+If AutoSpectral does not fill in the channel column, you will need to
+add this yourself. This is a bit harder. If you know this already,
+great. I suggest checking against the [cytometer
+database](https://docs.google.com/spreadsheets/d/1wj7QPkgpsuPNeVKyt-WWdBu5R48aZTgEbH8-_bpKeBY/edit?usp=sharing).
+to be sure you write the channel name correctly. If you do not know it,
+the best way to find out is usually to look at one of the cloud spectral
+viewer tools for this, such as [Cytek
+Cloud](https://cloud.cytekbio.com/), [BD Spectrum
+Viewer](https://www.bdbiosciences.com/en-us/resources/bd-spectrum-viewer),
+[BioLegend Spectra
+Analyzer](https://www.biolegend.com/en-gb/spectra-analyzer) or
+[FluoroFinder](https://fluorofinder.com/). Please note that the channel
+names in FluoroFinder do not always match what the names actually are in
+the instrument, so while you can use that figure out more or less where
+the fluorophore has its peak emission, be sure to use the names from the
+cytometer database for AutoSpectral.
+
+To avail yourself of AutoSpectral’s automation and get it to fill in the
+names of your fluorophores automatically, include the fluorophore name
+in the name of your single-stained FCS files. You may alter the names of
+the single-stained FCS files manually prior to running
+[`create.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/create.control.file.md)
+to do this (I would always advise creating a back-up copy before
+altering data or metadata). For the fluorophore names to be recognized
+by AutoSpectral, they need to be separate from other elements in the
+file name by a space or an underscore “\_“. They also need to be in the
+[fluorophore
+database](https://docs.google.com/spreadsheets/d/14j4lAQ6dkjDBKMborDv_MkSptyNBqZiBsq5jNNSCoiQ/edit?usp=sharing),
+and have a synonym in one of the columns that matches the way you have
+written the fluorophore in your FCS filename. If your fluorophore or the
+way you write it isn’t in the marker database, please add it! Changes
+will be incorporated with the next update.
+
+It is always recommended to use a universal negative (a separate
+unstained sample), whether you are using AutoSpectral or any other
+unmixing platform. To specify which sample is the universal.negative for
+each single-stained control, copy and paste the relevant filename into
+the universal.negative column. The negative sample for a given stained
+sample should be the same type of particles (cells or beads), and should
+really be the same thing, just unstained. A universal.negative
+(unstained) sample is its own universal negative.
+
 Here’s what we want it to look like, in terms of assigning universal
 negatives and setting fluorophore names. We’ll get to the gating in a
 moment. ![Fixed Control File](figures/Workflow/fixed_control_file.jpg)
 
-For more on this, see the Control File article on GitHub.
+For more on this, see the [Control File
+article](https://drcytometer.github.io/AutoSpectral/articles/02_Control_File_example.html).
 
 Once you’ve got it the way you want, write in the name of the control
 file and run the error checking function.
@@ -102,10 +176,23 @@ control.file <- "fcs_control_file.csv"
 check.control.file(control.dir, control.file, asp)
 ```
 
+This will either tell you it didn’t find any issues, or, more likely,
+provide you with a table of potential issues to consider fixing. Items
+listed as warnings will not prevent the pipeline from running, but may
+reduce the accuracy of the spectra generated and are things for you to
+check. For instance, AutoSpectral will check how many events you have in
+each of your control files and will raise a flag if you don’t have at
+least 5000 events. The threshold to trigger this particular warning can
+be adjusted using the `min.event.warning` argument. See the help using
+[`?check.control.file`](https://drcytometer.github.io/AutoSpectral/reference/check.control.file.md).
+
 ### Gating
 
 Once, the control file passes the error checks, we can create some
-gates.
+gates. This can be done in full automatic mode, and if you wish to try
+that, jump to the next section: “Loading the Data”. As of version 1.5.0,
+however, there is more control over the gating process, which is covered
+in this section.
 
 Gating allows us to identify which events in the file are actually our
 cells, as opposed to debris, doublets or other stuff. While you can
@@ -138,7 +225,7 @@ File](figures/Workflow/penultimate_control_file.jpg)
 Now we can choose which samples we want to use to define the gate
 boundaries. The simplest option is to just use everything. To do this,
 put “TRUE” in every row of the `gate.define` column. This should be done
-by default in version 1.5.0 and higher.
+by default in version 1.5.0 and higher (as shown here).
 
 If you want to get fancier about it, you can choose which samples you
 use to define the gates. This can be helpful if some samples are
@@ -156,14 +243,22 @@ viability-e780 (cells) for dead cells, and we can define a fourth gate
 on all of the stained bead samples, which will all be in the same
 position since they are beads.
 
+*Note*: I expect to provide a little more automated assistance in future
+version for filling in this part of the control file.
+
 Now our control file looks like this: ![Final Control
 File](figures/Workflow/final_control_file.jpg)
 
-Note that you can create any number of gates and pass them in the next
-step. Gates are saved and can be reused. See the dedicated articles on
-this for more information, including on how to use the
+You can create any number of gates and pass them in the next step. Gates
+are saved and can be reused. See the dedicated articles on this for more
+information, including on how to use the
 [`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md)
 function.
+[Gating](https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html)
+[Density gating
+parameters](https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html)
+[Gate
+tuning](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html)
 
 Before proceeding, run the control file check to be sure that what
 you’re doing with the gates is consistent with what AutoSpectral
@@ -212,7 +307,10 @@ gate.beads <- define.gate.density(
 )
 ```
 
-Note that this can be simplified to an lapply loop, if desired.
+Note that this can be simplified to an lapply loop, if desired. Also,
+defining the gates will proceed more quickly if you have
+AutoSpectralRcpp installed, as it will take over internally for the
+density calculations.
 
 Be sure to check the gates that are generated in the `figure_gate`
 folder–do they look right? If not, go to the Gating articles on
@@ -317,11 +415,11 @@ matching negative samples with corresponding gates applied for the
 myeloid, dead cells and lymphocytes: ![Unstained lymphocyte
 gate](figures/Workflow/AF.jpg)
 
-![Unstained dead cell gate](figures/Workflow/AF%20Negative%20dead.jpg)
+![Unstained dead cell gate](figures/Workflow/AF_Negative_dead.jpg)
 
 Unstained dead cell gate
 
-![Unstained myeloid gate](figures/Workflow/AF%20Negative%20myeloid.jpg)
+![Unstained myeloid gate](figures/Workflow/AF_Negative_myeloid.jpg)
 
 Unstained myeloid gate
 
@@ -361,7 +459,9 @@ AutoSpectral). ![AF Removal](figures/Workflow/AF_removal_BUV805_.jpg)
 ### Calculating the Fluorophore Spectra
 
 Now we can isolate the spectra from the controls. By default, this uses
-the cleaned data if they are available.
+the cleaned data if they are available. If you want to run a comparison,
+see the help for this function and set `use.clean.expr=FALSE` when
+running it.
 
 ``` r
 spectra <- get.fluorophore.spectra(flow.control, asp)
@@ -370,24 +470,38 @@ spectra <- get.fluorophore.spectra(flow.control, asp)
 With this, we get plots of the spectra as traces and a heatmap. We also
 get a cosine similarity heatmap. You can check these, if you aren’t
 familiar with what they should look like, against the expected profiles
-in online webtools. For the Aurora, check on Cytek Cloud. As of version
-1.5.0, you should also get a pdf document showing you your fluorophore
-profiles in overlay compared to a reference standard for that
-fluorophore on the same instrument. Not all fluorophores will be
-available, particularly for the instruments I don’t have regular access
-to, so if you want to contribute, visit the database and add your
-spectral profiles. See the Discussions page for more details on this.
+in online webtools. For the Aurora, check on [Cytek
+Cloud](https://cloud.cytekbio.com/). As of version 1.5.0, you should
+also get a pdf document showing you your fluorophore profiles in overlay
+compared to a reference standard for that fluorophore on the same
+instrument. Not all fluorophores will be available, particularly for the
+instruments I don’t have regular access to, so if you want to
+contribute, visit the database and add your spectral profiles. See the
+Discussions page for more details on this.
+
+Databases:
+[Aurora](https://docs.google.com/spreadsheets/d/1ZagdBr_s_iW0Ogq9pT1Qvt1Tj0DEnapaV9xpLmiM3DY/edit?usp=sharing)
+[FACSDiscover A8 and
+S8](https://docs.google.com/spreadsheets/d/1CtmD-sRMrBZ122QNSou76eASgGOEicS2GolEYL1TSdk/edit?usp=sharing)
+[ID7000](https://docs.google.com/spreadsheets/d/1Q-t6EQMRrvEWRR2f4_rsEJaPuXN3N1gV-IOrhigEtKU/edit?usp=sharing)
+[Opteon](https://docs.google.com/spreadsheets/d/1_FSy_iS_3vNvfC_jG5LIfwWgprcanXaV72szrwWYzJU/edit?usp=sharing)
+[Mosaic](https://docs.google.com/spreadsheets/d/14eQNNMSv-JKXvxs7j7vze2KSMtBNFq1F8qba8G9DIYY/edit?usp=sharing)
+[Xenith](https://docs.google.com/spreadsheets/d/1QMVE3ztsoiIuV-JJHN8xzXgTz-jou1fLtnljGRi1wC4/edit?usp=sharing)
+[Symphony
+A5SE](https://docs.google.com/spreadsheets/d/1TQDjrfHgdbS6kn4JzgQa_P4M1q-wCWvVv_4tpVFleqA/edit?usp=sharing)
 
 ![Spectral Trace](figures/Workflow/spectral_trace.jpg)![Spectral
 Heatmap](figures/Workflow/spectral_heatmap.jpg)![Similarity
 Matrix](figures/Workflow/Clean_autospectral_similarity_matrix.jpg) You
 also get a “Hotspot” matrix, as in the paper my Peter Mage et al.
-![Hotspot Matrix](figures/Workflow/Clean_Hotspot_Matrix%20heatmap.jpg)
-As per their manuscript, we probably don’t need to worry about anything
-under 4, may want to check stuff between 4-6, and should definitely look
-into values above 6. That said, this hotspot matrix will include the
-“AF” as if you were doing OLS unmixing, and that is not really relevant
-if you proceed with AutoSpectral unmixing of per-cell autofluorescence.
+![Hotspot Matrix](figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg) As
+per their
+[manuscript](https://pmc.ncbi.nlm.nih.gov/articles/PMC12139922/), we
+probably don’t need to worry about anything under 4, may want to check
+stuff between 4-6, and should definitely look into values above 6. That
+said, this hotspot matrix will include the “AF” as if you were doing OLS
+unmixing, and that is not really relevant if you proceed with
+AutoSpectral unmixing of per-cell autofluorescence.
 
 As of version 1.5.0, you should also get a pdf quality control report.
 ![Spectral QC](figures/Workflow/Spectral_QC.jpg) The BUV395 looks quite

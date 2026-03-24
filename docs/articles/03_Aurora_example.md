@@ -1,8 +1,10 @@
 # 03 Aurora AutoSpectral Example
 
 *NOTE* This has not yet been updated to reflect changes in version
-1.5.0. See the full workflow article for more detail. This will still
-work as before, but more control over the process is now available.
+1.5.0. See the [full workflow
+article](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html)
+for more detail. This will still work as before, but more control over
+the process is now available.
 
 ``` r
 library(AutoSpectral)
@@ -24,11 +26,14 @@ control.dir <- "~/AutoSpectral_data/Aurora_example/Aurora_controls"
 ```
 
 With this information, we can create a draft of the control file. More
-detail on this will be included in a separate article.
+detail on this in the dedicated [control file
+article](https://drcytometer.github.io/AutoSpectral/articles/02_Control_File_example.html).
 
 ``` r
 create.control.file(control.dir, asp)
 ```
+
+To modify the control file…
 
 For now, we’ll use the pre-filled control file, which you can get from
 [Mendeley Data](https://data.mendeley.com/datasets/xzt3h3gnx9/1).
@@ -37,7 +42,9 @@ For now, we’ll use the pre-filled control file, which you can get from
 control.file <- "~/AutoSpectral_data/Aurora_example/aurora_fcs_control_file.csv"
 ```
 
-Now we are ready to read in the fcs files, gate the cells and organize
+This
+
+Now we are ready to read in the FCS files, gate the cells and organize
 the experiment.
 
 ``` r
@@ -55,7 +62,8 @@ will be covered in a separate article.
 
 Control cleaning is always recommended. The default option downsamples
 and sets universal negatives, provided these are specified in the
-control file. More detail on this in the Cleaning article.
+control file. More detail on this in the [Cleaning
+article](https://drcytometer.github.io/AutoSpectral/articles/05_Cleaning.html).
 
 ``` r
 flow.control <- clean.controls(flow.control, asp)

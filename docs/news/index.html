@@ -55,7 +55,7 @@
 <h3 id="improvements-1-5-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-5-0"></a></h3>
 <ul><li>New gating approach adapted from <code>flowstate</code>. This uses cellular landmarks to identify the position of key populations on forward and side-scatter. Essentially, we backgate. This means that you can use well-expressed markers on known cell populations (think CD3, CD19, CD14) to define the location of your cells. This is fast, appears to be pretty robust, and should be easy for you, the user, to change how it works. Control over this is provided via the CSV control file spreadsheet using two new columns: “gate.name” to define which controls should share the same gate, and “gate.define” (TRUE/FALSE) to specify which samples should be used to define the gate boundaries (e.g., we might use CD4 but not TIM-3 or IL-4).</li>
 <li>To assist with the new gating, there is a <code><a href="../reference/tune.gate.html">tune.gate()</a></code> function that allows you to put in a range of parameters to quickly see the impact on the gate boundary prior to running <code><a href="../reference/define.flow.control.html">define.flow.control()</a></code>.</li>
-<li>Native FCS read/write functionality adapted from <code>flowstate</code>.</li>
+<li>Native, faster FCS read/write functionality adapted from <code>flowstate</code>.</li>
 <li>FCS file concatenation via <code><a href="../reference/concatenateFCS.html">concatenateFCS()</a></code>.</li>
 <li>Faster gating by reducing <code><a href="https://rdrr.io/pkg/MASS/man/kde2d.html" class="external-link">MASS::kde2d</a></code> calls and allowing C++ kernel density estimation if <code>AutoSpectralRcpp</code> is installed.</li>
 <li>Faster plotting along the same lines.</li>
@@ -67,6 +67,7 @@
 <li>Spectral signature QC when running <code><a href="../reference/get.fluorophore.spectra.html">get.fluorophore.spectra()</a></code>.</li>
 <li>Autofluorescence profile QC when running <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code>.</li>
 <li>Faster processing in <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> through integration of <code>AutoSpectralRcpp</code>, when available.</li>
+<li>Additional checks on FCS files when setting up and unmixing: consistency in the spectral channels used for unmixing, both in the names and the voltages/gains.</li>
 </ul></div>
 </div>
     <div class="section level2">
