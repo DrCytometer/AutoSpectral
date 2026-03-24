@@ -296,12 +296,7 @@ get.fluorophore.spectra <- function(
       "\033[0m"
     )
 
-    message(
-      paste(
-        strwrap( warning.message, width = 80 ),
-        collapse = "\n"
-      )
-    )
+    message( paste( strwrap( warning.message, width = 80 ), collapse = "\n" ) )
   }
 
   # library reference QC
