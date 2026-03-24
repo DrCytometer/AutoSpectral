@@ -286,7 +286,7 @@ get.spectral.variants <- function(
   if ( is.null( names( table.fluors ) ) ) names( table.fluors ) <- table.fluors
 
   # main loop
-  if ( parallel & is.null( threads ) ) threads <- asp$worker.process.n
+  if ( is.null( threads ) ) threads <- asp$worker.process.n
 
   # construct list of arguments
   args.list <- list(

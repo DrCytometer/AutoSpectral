@@ -37,7 +37,7 @@ unmix.poisson <- function(
     threads = NULL
 ) {
 
-  if ( parallel & is.null( threads ) ) threads <- asp$worker.process.n
+  if ( is.null( threads ) ) threads <- asp$worker.process.n
 
   # initialize with WLS unmixing (approximates Poisson weighting)
   unmixed.data <- unmix.wls( raw.data, spectra, initial.weights )

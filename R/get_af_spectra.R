@@ -111,10 +111,8 @@ get.af.spectra <- function(
   if ( is.null( title ) ) title <- asp$af.file.name
 
   # set multithreading
-  if ( parallel & is.null( threads ) )
-    threads <- asp$worker.process.n
-  else if ( parallel & threads == 0 )
-    threads <- parallelly::availableCores()
+  if ( is.null( threads ) ) threads <- asp$worker.process.n
+  if ( parallel & threads == 0 ) threads <- parallelly::availableCores()
 
   # check for AF in spectra, remove if present
   if ( "AF" %in% rownames( spectra ) )
