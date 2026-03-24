@@ -9,7 +9,7 @@ define.flow.control(
   control.def.file,
   asp,
   gate = TRUE,
-  gating.system = c("landmarks", "density"),
+  gating.system = c("density", "landmarks"),
   gate.list = NULL,
   parallel = FALSE,
   verbose = TRUE,
@@ -51,9 +51,7 @@ and ensure that the \code{gate.name} column has been filled in for the
 \code{control.def.file}. Default \code{NULL} will revert to creating new gates.}
 
 \item{parallel}{Logical, default is \code{FALSE}, in which case parallel processing
-will not be used. Parallel processing will likely be faster when many small
-files are read in. If the data is larger, parallel processing may not
-accelerate the process much.}
+will not be used. Parallel processing is almost never faster now.}
 
 \item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
 

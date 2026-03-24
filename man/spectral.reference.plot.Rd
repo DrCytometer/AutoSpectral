@@ -7,12 +7,14 @@
 spectral.reference.plot(
   spectra,
   asp,
-  qc.threshold = 0.98,
+  qc.threshold.warn = 0.98,
+  qc.threshold.fail = 0.9,
   experiment.control.color = "black",
   library.reference.color = "blue",
   experiment.line.type = "solid",
   library.line.type = "dotted",
   pass.color = "darkgreen",
+  warn.color = "darkorange",
   fail.color = "red",
   linewidth = 1,
   plot.dir = "./figure_spectra",
@@ -27,8 +29,11 @@ fluorophore names. Column names will be used as the detectors (channels).}
 \item{asp}{The AutoSpectral parameter list. Used to determine which cytometer
 produced the data.}
 
-\item{qc.threshold}{Numeric, default \code{0.98}. The similarity value to trigger
-a QC failure warning.}
+\item{qc.threshold.warn}{Numeric, default \code{0.98}. The similarity value to trigger
+a QC warning.}
+
+\item{qc.threshold.fail}{Numeric, default \code{0.90}. The similarity value to trigger
+a QC failure.}
 
 \item{experiment.control.color}{Color for the line representing the user's
 fluorophore spectrum from the single-stained reference control. Default is
@@ -44,10 +49,14 @@ fluorophore spectrum from the single-stained reference control. Default is
 \item{library.line.type}{Line style for the line representing the library
 reference standard fluorophore spectrum. Default is \code{dotted}.}
 
-\item{pass.color}{Color to label similarity values above the \code{qc.threshold},
+\item{pass.color}{Color to label similarity values above the \code{qc.threshold.warn},
 i.e., fluorophores passing QC. Default is \code{darkgreen}.}
 
-\item{fail.color}{Color to label similarity values below the \code{qc.threshold},
+\item{warn.color}{Color to label similarity values above the \code{qc.threshold.fail}
+but below the \code{qc.threshold.warn}, i.e., fluorophores in a potentially
+problematic zone. Default is \code{darkorange}.}
+
+\item{fail.color}{Color to label similarity values below the \code{qc.threshold.fail},
 i.e., fluorophores failing QC. Default is \code{red}.}
 
 \item{linewidth}{Width of the line for the spectral traces. Default is \code{1}.}
