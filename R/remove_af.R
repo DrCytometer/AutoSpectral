@@ -479,12 +479,13 @@ remove.af <- function(
     }
 
     # warn if few events in negative
-    if ( length( neg.population.idx ) < asp$min.cell.warning.n ) {
+    min.neg.n <- ceiling( asp$min.cell.warning.n/2 )
+    if ( length( neg.population.idx ) < min.neg.n ) {
       warning(
         paste0(
           "\033[31m",
           "Warning! Fewer than ",
-          asp$min.cell.warning.n,
+          min.neg.n,
           " scatter-matched negative events for ",
           samp,
           "\033[0m",
