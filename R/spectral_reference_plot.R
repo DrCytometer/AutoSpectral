@@ -16,8 +16,10 @@
 #' fluorophore names. Column names will be used as the detectors (channels).
 #' @param asp The AutoSpectral parameter list. Used to determine which cytometer
 #' produced the data.
-#' @param qc.threshold Numeric, default `0.98`. The similarity value to trigger
-#' a QC failure warning.
+#' @param qc.threshold.warn Numeric, default `0.98`. The similarity value to trigger
+#' a QC warning.
+#' @param qc.threshold.fail Numeric, default `0.90`. The similarity value to trigger
+#' a QC failure.
 #' @param experiment.control.color Color for the line representing the user's
 #' fluorophore spectrum from the single-stained reference control. Default is
 #' `black`.
@@ -28,9 +30,12 @@
 #' `solid`.
 #' @param library.line.type Line style for the line representing the library
 #' reference standard fluorophore spectrum. Default is `dotted`.
-#' @param pass.color Color to label similarity values above the `qc.threshold`,
+#' @param pass.color Color to label similarity values above the `qc.threshold.warn`,
 #' i.e., fluorophores passing QC. Default is `darkgreen`.
-#' @param fail.color Color to label similarity values below the `qc.threshold`,
+#' @param warn.color Color to label similarity values above the `qc.threshold.fail`
+#' but below the `qc.threshold.warn`, i.e., fluorophores in a potentially
+#' problematic zone. Default is `darkorange`.
+#' @param fail.color Color to label similarity values below the `qc.threshold.fail`,
 #' i.e., fluorophores failing QC. Default is `red`.
 #' @param linewidth Width of the line for the spectral traces. Default is `1`.
 #' @param plot.dir Directory where the files will be saved.
@@ -44,12 +49,14 @@
 spectral.reference.plot <- function(
   spectra,
   asp,
-  qc.threshold = 0.98,
+  qc.threshold.warn = 0.98,
+  qc.threshold.fail = 0.90,
   experiment.control.color = "black",
   library.reference.color = "blue",
   experiment.line.type = "solid",
   library.line.type = "dotted",
   pass.color = "darkgreen",
+  warn.color = "darkorange",
   fail.color = "red",
   linewidth = 1,
   plot.dir = "./figure_spectra",
@@ -112,9 +119,13 @@ spectral.reference.plot <- function(
 
       summary.df$Similarity[ i ] <- round( simil.value, 4 )
 
-      if ( !is.na( simil.value ) && simil.value < qc.threshold ) {
+      if ( !is.na( simil.value ) && simil.value < qc.threshold.fail ) {
         simil.color <- fail.color
         summary.df$Status[ i ] <- "FAIL"
+      } else if ( !is.na( simil.value ) &&
+                  simil.value < qc.threshold.warn && simil.value > qc.threshold.fail ) {
+        simil.color <- warn.color
+        summary.df$Status[ i ] <- "WARNING"
       } else {
         simil.color <- pass.color
         summary.df$Status[ i ] <- "PASS"
@@ -233,6 +244,7 @@ spectral.reference.plot <- function(
       row.color <- switch(
         summary.df$Status[ row.idx ],
         "PASS" = pass.color,
+        "WARNING" = warn.color,
         "FAIL" = fail.color,
         "black"
       )
