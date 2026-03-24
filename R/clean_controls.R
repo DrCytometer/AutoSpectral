@@ -221,26 +221,33 @@ clean.controls <- function(
         report$af$msg <- "No suitable cell samples found"
 
         warning(
-          "No cell-based universal negative samples could be identified for `af.remove`."
-          )
+          "No cell-based universal negative samples could be identified for `af.remove`.",
+          call. = FALSE
+        )
+        warning.message <- paste(
+          "No cell-based universal negative samples could be identified.",
+          "To perform autofluorescence removal, you must specify a universal negative",
+          "in the fcs_control_file, and you must have single-stained cell controls",
+          "\n\n",
+          "If you only have bead-based controls, set `af.remove` to FALSE and try again,",
+          "skipping autofluorescence removal."
+        )
         message(
-          "\033[31m",
           paste(
-            "No cell-based universal negative samples could be identified.",
-            "To perform autofluorescence removal, you must specify a universal negative in the fcs_control_file,",
-            "and you must have single-stained cell controls.",
-            "If you only have bead-based controls, set `af.remove` to FALSE and try again.",
-            "Skipping autofluorescence removal.",
-            sep = "\n"
-          ),
-          "\033[0m"
+            "\033[31m", strwrap( warning.message, width = 80 ), "\033[0m",
+            collapse = "\n"
+          )
         )
       }
     } else {
+      warning.message <- paste(
+        "No cell-based universal negative samples could be identified.",
+        "To perform autofluorescence removal, you must have single-stained cells,",
+        "and specify a universal negative in the fcs_control_file."
+      )
       warning(
-      "No cell-based universal negative samples could be identified.
-      To perform autofluorescence removal, you must have single-stained cells,
-      and specify a universal negative in the fcs_control_file."
+        paste( strwrap( warning.message, width = 80 ), collapse = "\n" ),
+        call. = FALSE
       )
       message(
         paste0(

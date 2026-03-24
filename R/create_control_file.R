@@ -187,14 +187,16 @@ create.control.file <- function(
   no.match <- grepl( "No match", control.table$fluorophore )
 
   if ( any( no.match ) ) {
+    warning.message <- paste(
+      "\033[31m",
+      "One or more fluorophores could not be matched.",
+      "\n\n",
+      "Edit any 'No match' values before proceeding.",
+      "\033[0m"
+    )
     warning(
-      paste0(
-        "\033[31m",
-        "One or more fluorophores could not be matched.",
-        "\n",
-        "Edit any 'No match' values before proceeding.",
-        "\033[0m"
-      )
+      paste( strwrap( warning.message, width = 80 ), collapse = "\n" ),
+      call. = FALSE
     )
   }
 
@@ -202,17 +204,18 @@ create.control.file <- function(
   duplicate.fluorophores <- anyDuplicated( control.table$fluorophore[ !no.match ] )
 
   if ( duplicate.fluorophores != 0 ) {
+    warning.message <- paste(
+      "\033[31m",
+      "Duplicated fluorophore names appear in the control file.",
+      "\n\n",
+      "Inspect and remove any extra single color control files or edit the control",
+      "file to be accurate.",
+      "Only one control may be used per fluorophore.",
+      "\033[0m"
+    )
     warning(
-      paste0(
-        "\033[31m",
-        "Duplicated fluorophore names appear in the control file.",
-        "\n",
-        "Inspect and remove any extra single color control files ",
-        "or edit the control file to be accurate.",
-        "\n",
-        "Only one control may be used per fluorophore.",
-        "\033[0m"
-      )
+      paste( strwrap( warning.message, width = 80 ), collapse = "\n" ),
+      call. = FALSE
     )
   }
 
