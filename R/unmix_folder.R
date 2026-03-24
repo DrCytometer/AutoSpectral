@@ -211,8 +211,7 @@ unmix.folder <- function(
     }
 
     # set number of variants to test (by `speed` if `n.variants` is not provided)
-    if ( length( speed ) > 1 )
-      speed <- speed[ 1 ]
+    if ( length( speed ) > 1 ) speed <- speed[ 1 ]
 
     if ( is.null( n.variants ) || !is.numeric( n.variants ) || length( n.variants ) != 1 ) {
       n.variants <- switch(
@@ -236,13 +235,9 @@ unmix.folder <- function(
   }
 
   # set up, create output folders where FCS files will go
-  if ( is.null( output.dir ) )
-    output.dir <- asp$unmixed.fcs.dir
-  if ( !dir.exists( output.dir ) )
-    dir.create( output.dir )
-
-  if ( parallel & is.null( threads ) )
-    threads <- asp$worker.process.n
+  if ( is.null( output.dir ) ) output.dir <- asp$unmixed.fcs.dir
+  if ( !dir.exists( output.dir ) ) dir.create( output.dir )
+  if ( is.null( threads ) ) threads <- asp$worker.process.n
 
   files.to.unmix <- list.files( fcs.dir, pattern = ".fcs", full.names = TRUE )
 
@@ -272,9 +267,18 @@ unmix.folder <- function(
     chunk.size = chunk.size
   )
 
-  # Set up parallel processing
+  # set up parallel processing
   if ( parallel && ( method == "OLS" || method == "WLS" ) ) {
-    internal.functions <- c( "unmix.fcs", "unmix.ols", "unmix.wls" )
+
+    # force sequential processing within a cluster
+    args.list$parallel <- FALSE
+    args.list$threads <- 1
+    args.list$verbose <- FALSE
+
+    internal.functions <- c(
+      "unmix.fcs", "unmix.ols", "unmix.wls", "unmix.autospectral",
+      "unmix.poisson", "readFCS", "writeFCS", "define.keywords"
+    )
     exports <- c( "args.list", "files.to.unmix", internal.functions )
 
     result <- create.parallel.lapply(
@@ -290,13 +294,32 @@ unmix.folder <- function(
     result <- list( cleanup = NULL )
   }
 
-  # unmix all files in list
+  execute.unmix <- function( apply.func ) {
+    invisible(
+      apply.func( files.to.unmix, function( f ) {
+        do.call( unmix.fcs, c( list( f ), args.list ) )
+      } )
+    )
+  }
+
+  # unmix all files in list with fallback for errors in parallel processing
   tryCatch( {
-    lapply.function( files.to.unmix, function( f ) {
-      do.call( unmix.fcs, c( list( f ), args.list ) )
-    } )
+    if ( parallel && !is.null( result$cleanup ) ) {
+      # attempt parallel processing
+      tryCatch( {
+        execute.unmix( lapply.function )
+      }, error = function(e) {
+        warning( "Parallel setup failed. Falling back to sequential. Error: ", e$message )
+        execute.unmix( lapply )
+      } )
+    } else {
+      # sequential processing
+      execute.unmix( lapply )
+    }
   }, finally = {
-    # clean up cluster when done if needed
+    # Clean up cluster when done if needed
     if ( !is.null( result$cleanup ) ) result$cleanup()
   } )
+
+  return( invisible( TRUE ) )
 }
