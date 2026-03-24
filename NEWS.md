@@ -14,7 +14,7 @@ define the gate boundaries (e.g., we might use CD4 but not TIM-3 or IL-4).
 - To assist with the new gating, there is a `tune.gate()` function that allows
 you to put in a range of parameters to quickly see the impact on the gate boundary
 prior to running `define.flow.control()`.
-- Native FCS read/write functionality adapted from `flowstate`.
+- Native, faster FCS read/write functionality adapted from `flowstate`.
 - FCS file concatenation via `concatenateFCS()`.
 - Faster gating by reducing `MASS::kde2d` calls and allowing C++ kernel density
 estimation if `AutoSpectralRcpp` is installed.
@@ -29,6 +29,8 @@ both with the gate.define functions and directly in `define.flow.control()`.
 - Autofluorescence profile QC when running `get.af.spectra()`.
 - Faster processing in `get.af.spectra()` through integration of `AutoSpectralRcpp`,
 when available.
+- Additional checks on FCS files when setting up and unmixing: consistency in the
+spectral channels used for unmixing, both in the names and the voltages/gains.
 
 
 # AutoSpectral 1.0.0 (2026-02-10)
