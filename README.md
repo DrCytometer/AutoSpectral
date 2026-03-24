@@ -230,7 +230,7 @@ article.
 ### Known shortcomings
 
 - Not all unmixing errors will be fixed. Still working on this.
-- AutoSpectral currently does not permit unmixing of samples run on
+- AutoSpectral may not work well for unmixing of samples run on
   different PMT/APD voltage settings than what were used for the
   controls.
 - Data from the A5SE may be more problematic–I’m looking into this.
