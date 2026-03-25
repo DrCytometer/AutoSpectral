@@ -1,24 +1,41 @@
-# 17 Ackowledgements
+# 17 Acknowledgements
 
 Thank you to anyone who has used AutoSpectral and provided feedback. In
 no particular order, here are some people who have helped or provided
-insights that allowed me to develop this tool: + [Nathan
-Laniewski](https://github.com/nlaniewski) + [Florian
-Mair](https://fccf.ethz.ch/people1.html) + [Andrew
-Konecny](https://www.immunology.washington.edu/about/directory/konecny/) +
-[Charlotte Christie
-Petersen](https://pure.au.dk/portal/en/persons/ccp%40biomed.au.dk) + The
-[Department of Pathology Flow Core at the University of
-Cambridge](https://www.path.cam.ac.uk/research/facilities/flow-cytometry) +
-The [FACS Core at the University of Leuven
-(KUL)](https://gbiomed.kuleuven.be/english/corefacilities/facs) +
-[Jochen Lamote](https://flowcore-leuven.sites.vib.be/en) + Jaromir
-Mikes + Florens Lohrmann + Ellie Tiplady + Alyssa Fears + Claude Chew +
-Samuel Granjeaud + Vincenzo Muraca + IJsbrand Reyneveld + Luis Machado
-Crisostomo + Dominica Bondanza + Federico Rivelli + Andre Heinen +
-Maximillian Sprang + Tina Sarkar + Juliese Menschuk + Teresa Von Linde +
-Andrieu Thibault + Camille Santa-Maria + Vaclav Gergelits + Marta
-Merlo + Marina Perez Gutierrez
+insights that allowed me to develop this tool:
+
+- [Nathan Laniewski](https://github.com/nlaniewski)
+- [Florian Mair](https://fccf.ethz.ch/people1.html)
+- [Andrew
+  Konecny](https://www.immunology.washington.edu/about/directory/konecny/)
+- [Charlotte Christie
+  Petersen](https://pure.au.dk/portal/en/persons/ccp%40biomed.au.dk)
+- The [Department of Pathology Flow Core at the University of
+  Cambridge](https://www.path.cam.ac.uk/research/facilities/flow-cytometry)
+- The [FACS Core at the University of Leuven
+  (KUL)](https://gbiomed.kuleuven.be/english/corefacilities/facs)
+- [Jochen Lamote](https://flowcore-leuven.sites.vib.be/en)
+- Jaromir Mikes
+- Florens Lohrmann
+- Ellie Tiplady
+- Alyssa Fears
+- Claude Chew
+- Samuel Granjeaud
+- Vincenzo Muraca
+- IJsbrand Reyneveld
+- Luis Machado Crisostomo
+- Dominica Bondanza
+- Federico Rivelli
+- Andre Heinen
+- Maximillian Sprang
+- Tina Sarkar
+- Juliese Menschuk
+- Teresa Von Linde
+- Andrieu Thibault
+- Camille Santa-Maria
+- Vaclav Gergelits
+- Marta Merlo
+- Marina Perez Gutierrez
 
 Apologies if I’ve left you out or you would prefer not to be listed
 here–just let me know.

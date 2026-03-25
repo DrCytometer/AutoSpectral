@@ -1,4 +1,4 @@
-# 07 Controlled Gating: Landmarks and Tuning
+# 08 Controlled Gating: Landmarks and Tuning
 
 ## Tuning your gates
 

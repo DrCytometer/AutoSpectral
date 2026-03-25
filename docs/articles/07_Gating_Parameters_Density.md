@@ -1,4 +1,4 @@
-# 06 Gating parameters for density gating
+# 07 Gating parameters for density gating
 
 In this article, we’ll go into more depth on how the automated
 density-based gating in AUtoSpectral works, covering the parameters that

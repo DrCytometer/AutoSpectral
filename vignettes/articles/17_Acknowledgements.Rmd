@@ -1,5 +1,5 @@
 ---
-title: "17 Ackowledgements"
+title: "17 Acknowledgements"
 output: html_document
 date: "2026-03-21"
 ---
@@ -9,6 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 Thank you to anyone who has used AutoSpectral and provided feedback. In no particular order, here are some people who have helped or provided insights that allowed me to develop this tool:
+
 + [Nathan Laniewski](https://github.com/nlaniewski)
 + [Florian Mair](https://fccf.ethz.ch/people1.html)
 + [Andrew Konecny](https://www.immunology.washington.edu/about/directory/konecny/)

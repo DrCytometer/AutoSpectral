@@ -1,4 +1,4 @@
-# 07 Control clean-up
+# 09 Control clean-up
 
 In this article, we’ll try to cover the functions that AutoSpectral
 offers for cleaning your single-stained control data.

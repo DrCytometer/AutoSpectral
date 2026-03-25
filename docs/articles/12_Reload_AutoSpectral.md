@@ -1,4 +1,4 @@
-# 10 Re-running AutoSpectral
+# 12 Re-running AutoSpectral
 
 ## Reloading AutoSpectral to quickly return to your unmixing
 

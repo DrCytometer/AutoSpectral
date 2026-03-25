@@ -1,4 +1,4 @@
-# 08 Single Cell Autofluorescence
+# 10 Single Cell Autofluorescence
 
 The aim of this article is to show you how to use AutoSpectral’s
 per-cell autofluorescence (AF) extraction. This method selects the best

@@ -1,4 +1,4 @@
-# 12 Speed It Up (Why So Slow?)
+# 14 Speed It Up (Why So Slow?)
 
 AutoSpectral takes a lot longer to unmix files than standard OLS or WLS
 unmixing approaches. Most of that is because it’s doing way more

@@ -1,4 +1,4 @@
-# 09 Per Cell Optimization
+# 11 Per Cell Optimization
 
 The aim of this article is to explain a bit more about how we go about
 optimizing the fluorophore signatures used for unmixing on a per-cell

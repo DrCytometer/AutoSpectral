@@ -1,5 +1,5 @@
 ---
-title: "07 Controlled Gating: Landmarks and Tuning"
+title: "08 Controlled Gating: Landmarks and Tuning"
 ---
 
 ```{r, include = FALSE}

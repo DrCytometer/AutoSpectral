@@ -337,6 +337,9 @@ Lymphocyte Gate
 Myeloid Gate
 
 ![Dead Cell Gate](figures/Workflow/landmark_gate_definition_dead.jpg)
+
+Dead Cell Gate
+
 This one for the dead cells could probably do with some tuning.
 
 ![Bead Gate](figures/Workflow/density_gate_definition_beads.jpg)
@@ -358,17 +361,20 @@ tune.gate(
 )
 ```
 
-The results appear in folder figure_gate_tuning: ![Dead cell gate
-tuning](figures/Workflow/dead_gate_tuning.jpeg)
+The results appear in folder figure_gate_tuning:
+
+![Dead cell gate tuning](figures/Workflow/dead_gate_tuning.jpeg)
+
+Dead cell gate tuning
 
 Now we have some options. We want a gate that includes the dead cells,
 which are the population on the lower left. We can pick the n=500, p=80%
-one, which pretty much only includes the dead cells, same for n=2000 p =
-50%, or something like the n=5000, p=80%, which includes the live cells
-as well. Any of those will end up in basically the same place in the
-end, provided we do the control cleaning. Our original gate would also
-have been fine, to be honest. I’m going to select n=5000, p=50%. To do
-that, we re-run the gate definition call:
+one, which pretty much only includes the dead cells, same for n=2000
+p=50%, or something like the n=5000, p=80%, which includes the live
+cells as well. Any of those will end up in basically the same place in
+the end, provided we do the control cleaning. Our original gate would
+also have been fine, to be honest. I’m going to select n=5000, p=50%. To
+do that, we re-run the gate definition call:
 
 ``` r
 gate.dead <- define.gate.landmarks(
@@ -382,10 +388,10 @@ gate.dead <- define.gate.landmarks(
 )
 ```
 
-![Dead cell gate
-final](figures/Workflow/landmark_gate_definition_dead_tuned.jpg)
+![Dead Cell Gate
+Final](figures/Workflow/landmark_gate_definition_dead_tuned.jpg)
 
-Dead cell gate final
+Dead Cell Gate Final
 
 ### Loading the Data
 
@@ -416,22 +422,29 @@ intended gate applied to it. To see these, check the `figure_gate`
 folder.
 
 For instance, here is the lymphocyte gate applied to the CD45 BUV395
-sample: ![CD45 BUV395](figures/Workflow/BUV395.jpg) And we can also see
-that AutoSpectral has re-used the unstained cell sample to create
-matching negative samples with corresponding gates applied for the
-myeloid, dead cells and lymphocytes:
+sample:
 
-![Unstained lymphocyte gate](figures/Workflow/AF.jpg)
+![CD45 BUV395 gating](figures/Workflow/BUV395.jpg)
 
-Unstained lymphocyte gate
+CD45 BUV395 gating
 
-![Unstained dead cell gate](figures/Workflow/AF_Negative_dead.jpg)
+And we can also see that AutoSpectral has re-used the unstained cell
+sample to create matching negative samples with corresponding gates
+applied for the myeloid, dead cells and lymphocytes:
 
-Unstained dead cell gate
+![Unstained cells, lymphocyte gate](figures/Workflow/AF.jpg)
 
-![Unstained myeloid gate](figures/Workflow/AF_Negative_myeloid.jpg)
+Unstained cells, lymphocyte gate
 
-Unstained myeloid gate
+![Unstained cells, dead cell
+gate](figures/Workflow/AF_Negative_dead.jpg)
+
+Unstained cells, dead cell gate
+
+![Unstained cells, myeloid
+gate](figures/Workflow/AF_Negative_myeloid.jpg)
+
+Unstained cells, myeloid gate
 
 ### Control Cleaning
 
@@ -459,12 +472,21 @@ in terms of selecting cells with similar scatter profiles between the
 viability (live/dead) marker single-stained control and the unstained
 sample:
 
-![Scatter match](figures/Workflow/eFluor780_scatter_plot.jpg) And here
-we have the attempt to gate out and exclude intrusive autofluorescence
-in the CD11b BUV805 single-stained control. BUV805 will peak in UV16-A
-on the Cytek Aurora, while autofluorescence often appear in UV7-A
-(although this is determined empirically and automatically by
-AutoSpectral). ![AF Removal](figures/Workflow/AF_removal_BUV805_.jpg)
+![Scatter matching dead
+cells](figures/Workflow/eFluor780_scatter_plot.jpg)
+
+Scatter matching dead cells
+
+And here we have the attempt to gate out and exclude intrusive
+autofluorescence in the CD11b BUV805 single-stained control. BUV805 will
+peak in UV16-A on the Cytek Aurora, while autofluorescence often appear
+in UV7-A (although this is determined empirically and automatically by
+AutoSpectral).
+
+![AF exclusion for BUV805
+control](figures/Workflow/AF_removal_BUV805_.jpg)
+
+AF exclusion for BUV805 control
 
 ### Calculating the Fluorophore Spectra
 
@@ -507,12 +529,27 @@ S8](https://docs.google.com/spreadsheets/d/1CtmD-sRMrBZ122QNSou76eASgGOEicS2GolE
 [Symphony
 A5SE](https://docs.google.com/spreadsheets/d/1TQDjrfHgdbS6kn4JzgQa_P4M1q-wCWvVv_4tpVFleqA/edit?usp=sharing)
 
-![Spectral Trace](figures/Workflow/spectral_trace.jpg)![Spectral
-Heatmap](figures/Workflow/spectral_heatmap.jpg)![Similarity
-Matrix](figures/Workflow/Clean_autospectral_similarity_matrix.jpg) You
-also get a “Hotspot” matrix, as in the paper my Peter Mage et al.
-![Hotspot Matrix](figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg) As
-per their
+![Spectral Signature Traces](figures/Workflow/spectral_trace.jpg)
+
+Spectral Signature Traces
+
+![Spectral Signature Heatmap](figures/Workflow/spectral_heatmap.jpg)
+
+Spectral Signature Heatmap
+
+![Cosine Similarity
+Heatmap](figures/Workflow/Clean_autospectral_similarity_matrix.jpg)
+
+Cosine Similarity Heatmap
+
+You also get a “Hotspot” matrix, as in the paper my Peter Mage et al.
+
+![Hotspot Matrix
+Heatmap](figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg)
+
+Hotspot Matrix Heatmap
+
+As per their
 [manuscript](https://pmc.ncbi.nlm.nih.gov/articles/PMC12139922/), we
 probably don’t need to worry about anything under 4, may want to check
 stuff between 4-6, and should definitely look into values above 6. That
@@ -521,20 +558,37 @@ unmixing, and that is not really relevant if you proceed with
 AutoSpectral unmixing of per-cell autofluorescence.
 
 As of version 1.5.0, you should also get a pdf quality control report.
-![Spectral QC](figures/Workflow/Spectral_QC.jpg) The BUV395 looks quite
-good: ![BUV395 QC](figures/Workflow/BUV395_QC.jpg) The BUV805 has
-“failed” QC. Let’s have a look. This QC feature is new, so it will need
-to be adjusted and improved. In this case, it’s flagging something worth
-looking at: the BUV805 spectrum in this experiment has an extra minor
-peak in the UV. That is autofluorescence because the BUV805+ cells are
-myeloid cells such as neutrophils and macrophages, and the
-scatter-matching for this population has not worked perfectly. Something
-for me to work on.
 
-This will be fine. ![BUV805 QC](figures/Workflow/BUV805_QC2.jpg)
+![Spectral QC Report](figures/Workflow/Spectral_QC.jpg)
 
-Scatter-matching plot for BUV805 from the control cleaning: ![BUV805
-scatter matching](figures/Workflow/BUV805_scatter_match.jpg)
+Spectral QC Report
+
+The BUV395 looks quite good:
+
+![Spectral QC BUV395](figures/Workflow/BUV395_QC.jpg)
+
+Spectral QC BUV395
+
+The BUV805 has “failed” QC. Let’s have a look. This QC feature is new,
+so it will need to be adjusted and improved. In this case, it’s flagging
+something worth looking at: the BUV805 spectrum in this experiment has
+an extra minor peak in the UV. That is autofluorescence because the
+BUV805+ cells are myeloid cells such as neutrophils and macrophages, and
+the scatter-matching for this population has not worked perfectly.
+Something for me to work on.
+
+This will be fine.
+
+![Spectral QC BUV805](figures/Workflow/BUV805_QC2.jpg)
+
+Spectral QC BUV805
+
+Scatter-matching plot for BUV805 from the control cleaning:
+
+![Scatter matching for the BUV805
+control](figures/Workflow/BUV805_scatter_match.jpg)
+
+Scatter matching for the BUV805 control
 
 The spectra themselves are saved to a CSV file in the `table_spectra`
 folder. You can open CSV files as a spreadsheet in Excel and other
@@ -691,24 +745,47 @@ We get the distribution of autofluorescence spectra as a spectral trace
 and as a heatmap in `figure_autofluorescence`. The AF spectra are saved
 as a CSV file in `table_spectra`.
 
-![Spleen AF](figures/Workflow/af_spectra.jpg) We can also look at the
-distribution of autofluorescence like this, where the black line
-represents a median signature (what you might use with an automated
-single AF parameter), and the red region represents the variation:
-![Spleen AF Variation](figures/Workflow/af_variation.jpg)
+![Autofluorescence profiles in the
+spleen](figures/Workflow/af_spectra.jpg)
+
+Autofluorescence profiles in the spleen
+
+We can also look at the distribution of autofluorescence like this,
+where the black line represents a median signature (what you might use
+with an automated single AF parameter), and the red region represents
+the variation:
+
+![Autofluorescence variation in the
+spleen](figures/Workflow/af_variation.jpg)
+
+Autofluorescence variation in the spleen
 
 We also get images showing us the impact of the AF extraction on the
 unstained sample we have supplied.
 
 This is without any AF extraction, looking at what AutoSpectral has
-determined are the two most-affected fluorophore channels: ![No AF
-extraction](figures/Workflow/Spleen_No_AF_Extraction.jpg) What you get
-on the same unstained sample with per-cell AF extraction, without
-refinement (refine=FALSE): ![Per-cell AF
-extraction](figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg)
+determined are the two most-affected fluorophore channels:
+
+![Spleen: No AF
+Extraction](figures/Workflow/Spleen_No_AF_Extraction.jpg)
+
+Spleen: No AF Extraction
+
 What you get on the same unstained sample with per-cell AF extraction,
-*with* refinement (refine=TRUE): ![Per-cell AF extraction
-refined](figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg)
+without refinement (refine=FALSE):
+
+![Spleen: Per-Cell AF
+Extraction](figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg)
+
+Spleen: Per-Cell AF Extraction
+
+What you get on the same unstained sample with per-cell AF extraction,
+*with* refinement (refine=TRUE):
+
+![Spleen: Per-Cell AF Extraction
+Refined](figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg)
+
+Spleen: Per-Cell AF Extraction Refined
 
 If you want to do this with samples containing different
 autofluorescence profiles, such as we have here, we extract the AF
@@ -805,7 +882,11 @@ something like the CD11b-BUV805 in this data, the variation is largely
 changes in the autofluorescence because there are multiple cell types
 expressing CD11b. We also have variation in the long wavelength
 spillover on the violet and red laser, as should be expected from a
-tandem dye. ![BUV805](figures/Workflow/BUV805_variants.jpg)
+tandem dye.
+
+![Variation in BUV805](figures/Workflow/BUV805_variants.jpg)
+
+Variation in BUV805
 
 For PE-Cy7, we get a modest difference in the excitation between the
 blue and yellow-green lasers, which would cause spread if we had a
@@ -815,9 +896,9 @@ this case.
 If we had tandem breakdown, we would probably see variability in the
 YG1-A detector.
 
-![PE-Cy7](figures/Workflow/PECy7_variants.jpg)
+![Variation in PE-Cy7](figures/Workflow/PECy7_variants.jpg)
 
-PE-Cy7
+Variation in PE-Cy7
 
 We can now pass this to the unmixing call. For quicker results, you may
 set the `speed` to `fast`, which checks fewer pre-screened variants per
@@ -874,7 +955,15 @@ create.biplot(sf.lung, "BUV395-A", "BV421-A", asp, title = "SpectroFlo")
 create.biplot(asp.lung, "BUV395-A", "BV421-A", asp, title = "AutoSpectral")
 ```
 
-![SpectroFlo](figures/Workflow/SpectroFlo.jpg)![AutoSpectral](figures/Workflow/AutoSpectral.jpg)
+Let’s have a look at the unmixed data.
+
+![SpectroFlo Unmixed](figures/Workflow/SpectroFlo.jpg)
+
+SpectroFlo Unmixed
+
+![AutoSpectral Unmixed](figures/Workflow/AutoSpectral.jpg)
+
+AutoSpectral Unmixed
 
 Here we have CD45-BUV395 and CD4-BV421. There really shouldn’t be much
 of anything low for CD4 in the mouse. This is ungated data, so we’re

@@ -179,17 +179,23 @@ Be sure to check the gates that are generated in the `figure_gate` folder--do th
 [Gate Tuning](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html)
 
 
-![Lymphocyte Gate](figures/Workflow/landmark_gate_definition_lymphocytes.jpg)
+```{r, echo=FALSE, fig.cap="Lymphocyte Gate", fig.align="center"}
+knitr::include_graphics("figures/Workflow/landmark_gate_definition_lymphocytes.jpg")
+```
 
+```{r, echo=FALSE, fig.cap="Myeloid Gate", fig.align="center"}
+knitr::include_graphics("figures/Workflow/landmark_gate_definition_myeloid.jpg")
+```
 
-![Myeloid Gate](figures/Workflow/landmark_gate_definition_myeloid.jpg)
+```{r, echo=FALSE, fig.cap="Dead Cell Gate", fig.align="center"}
+knitr::include_graphics("figures/Workflow/landmark_gate_definition_dead.jpg")
+```
 
-
-![Dead Cell Gate](figures/Workflow/landmark_gate_definition_dead.jpg)
 This one for the dead cells could probably do with some tuning.
 
-
-![Bead Gate](figures/Workflow/density_gate_definition_beads.jpg)
+```{r, echo=FALSE, fig.cap="Bead Gate", fig.align="center"}
+knitr::include_graphics("figures/Workflow/density_gate_definition_beads.jpg")
+```
 
 Let's adjust the dead cell gate quickly.
 
@@ -207,9 +213,13 @@ tune.gate(
 ```
 
 The results appear in folder figure_gate_tuning:
-![Dead cell gate tuning](figures/Workflow/dead_gate_tuning.jpeg)
 
-Now we have some options. We want a gate that includes the dead cells, which are the population on the lower left. We can pick the n=500, p=80% one, which pretty much only includes the dead cells, same for n=2000 p = 50%, or something like the n=5000, p=80%, which includes the live cells as well. Any of those will end up in basically the same place in the end, provided we do the control cleaning. Our original gate would also have been fine, to be honest. I'm going to select n=5000, p=50%. To do that, we re-run the gate definition call:
+```{r, echo=FALSE, fig.cap="Dead cell gate tuning", fig.align="center"}
+knitr::include_graphics("figures/Workflow/dead_gate_tuning.jpeg")
+```
+
+
+Now we have some options. We want a gate that includes the dead cells, which are the population on the lower left. We can pick the n=500, p=80% one, which pretty much only includes the dead cells, same for n=2000 p=50%, or something like the n=5000, p=80%, which includes the live cells as well. Any of those will end up in basically the same place in the end, provided we do the control cleaning. Our original gate would also have been fine, to be honest. I'm going to select n=5000, p=50%. To do that, we re-run the gate definition call:
 
 
 ```{r, eval=FALSE}
@@ -224,7 +234,11 @@ gate.dead <- define.gate.landmarks(
 )
 ```
 
-![Dead cell gate final](figures/Workflow/landmark_gate_definition_dead_tuned.jpg)
+
+```{r, echo=FALSE, fig.cap="Dead Cell Gate Final", fig.align="center"}
+knitr::include_graphics("figures/Workflow/landmark_gate_definition_dead_tuned.jpg")
+```
+
 
 ## Loading the Data
 
@@ -252,14 +266,28 @@ flow.control <- define.flow.control(
 This will create a plot of each reference control sample with the intended gate applied to it. To see these, check the `figure_gate` folder.
 
 For instance, here is the lymphocyte gate applied to the CD45 BUV395 sample:
-![CD45 BUV395](figures/Workflow/BUV395.jpg)
+
+```{r, echo=FALSE, fig.cap="CD45 BUV395 gating", fig.align="center"}
+knitr::include_graphics("figures/Workflow/BUV395.jpg")
+```
+
 And we can also see that AutoSpectral has re-used the unstained cell sample to create matching negative samples with corresponding gates applied for the myeloid, dead cells and lymphocytes:
 
-![Unstained lymphocyte gate](figures/Workflow/AF.jpg)
 
-![Unstained dead cell gate](figures/Workflow/AF_Negative_dead.jpg)
+```{r, echo=FALSE, fig.cap="Unstained cells, lymphocyte gate", fig.align="center"}
+knitr::include_graphics("figures/Workflow/AF.jpg")
+```
 
-![Unstained myeloid gate](figures/Workflow/AF_negative_myeloid.jpg)
+
+```{r, echo=FALSE, fig.cap="Unstained cells, dead cell gate", fig.align="center"}
+knitr::include_graphics("figures/Workflow/AF_Negative_dead.jpg")
+```
+
+
+```{r, echo=FALSE, fig.cap="Unstained cells, myeloid gate", fig.align="center"}
+knitr::include_graphics("figures/Workflow/AF_negative_myeloid.jpg")
+```
+
 
 
 ## Control Cleaning
@@ -275,9 +303,19 @@ There are lots of plots generated with this, in `figure_clean_controls`, `figure
 
 For instance, here is a plot showing the matching that has been applied in terms of selecting cells with similar scatter profiles between the viability (live/dead) marker single-stained control and the unstained sample:
 
-![Scatter match](figures/Workflow/eFluor780_scatter_plot.jpg)
+
+```{r, echo=FALSE, fig.cap="Scatter matching dead cells", fig.align="center"}
+knitr::include_graphics("figures/Workflow/eFluor780_scatter_plot.jpg")
+```
+
 And here we have the attempt to gate out and exclude intrusive autofluorescence in the CD11b BUV805 single-stained control. BUV805 will peak in UV16-A on the Cytek Aurora, while autofluorescence often appear in UV7-A (although this is determined empirically and automatically by AutoSpectral).
-![AF Removal](figures/Workflow/AF_removal_BUV805_.jpg)
+
+
+```{r, echo=FALSE, fig.cap="AF exclusion for BUV805 control", fig.align="center"}
+knitr::include_graphics("figures/Workflow/AF_removal_BUV805_.jpg")
+```
+
+
 
 ## Calculating the Fluorophore Spectra
 
@@ -304,24 +342,53 @@ Databases:
 [Symphony A5SE](https://docs.google.com/spreadsheets/d/1TQDjrfHgdbS6kn4JzgQa_P4M1q-wCWvVv_4tpVFleqA/edit?usp=sharing)
 
 
-![Spectral Trace](figures/Workflow/spectral_trace.jpg)
-![Spectral Heatmap](figures/Workflow/spectral_heatmap.jpg)
-![Similarity Matrix](figures/Workflow/Clean_autospectral_similarity_matrix.jpg)
+```{r, echo=FALSE, fig.cap="Spectral Signature Traces", fig.align="center"}
+knitr::include_graphics("figures/Workflow/spectral_trace.jpg")
+```
+
+
+```{r, echo=FALSE, fig.cap="Spectral Signature Heatmap", fig.align="center"}
+knitr::include_graphics("figures/Workflow/spectral_heatmap.jpg")
+```
+
+
+```{r, echo=FALSE, fig.cap="Cosine Similarity Heatmap", fig.align="center"}
+knitr::include_graphics("figures/Workflow/Clean_autospectral_similarity_matrix.jpg")
+```
+
 You also get a "Hotspot" matrix, as in the paper my Peter Mage et al.
-![Hotspot Matrix](figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg)
+
+```{r, echo=FALSE, fig.cap="Hotspot Matrix Heatmap", fig.align="center"}
+knitr::include_graphics("figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg")
+```
+
 As per their [manuscript](https://pmc.ncbi.nlm.nih.gov/articles/PMC12139922/), we probably don't need to worry about anything under 4, may want to check stuff between 4-6, and should definitely look into values above 6. That said, this hotspot matrix will include the "AF" as if you were doing OLS unmixing, and that is not really relevant if you proceed with AutoSpectral unmixing of per-cell autofluorescence.
 
 As of version 1.5.0, you should also get a pdf quality control report.
-![Spectral QC](figures/Workflow/Spectral_QC.jpg)
+
+```{r, echo=FALSE, fig.cap="Spectral QC Report", fig.align="center"}
+knitr::include_graphics("figures/Workflow/Spectral_QC.jpg")
+```
+
 The BUV395 looks quite good:
-![BUV395 QC](figures/Workflow/BUV395_QC.jpg)
+
+```{r, echo=FALSE, fig.cap="Spectral QC BUV395", fig.align="center"}
+knitr::include_graphics("figures/Workflow/BUV395_QC.jpg")
+```
+
 The BUV805 has "failed" QC. Let's have a look. This QC feature is new, so it will need to be adjusted and improved. In this case, it's flagging something worth looking at: the BUV805 spectrum in this experiment has an extra minor peak in the UV. That is autofluorescence because the BUV805+ cells are myeloid cells such as neutrophils and macrophages, and the scatter-matching for this population has not worked perfectly. Something for me to work on.
 
 This will be fine.
-![BUV805 QC](figures/Workflow/BUV805_QC2.jpg)
+
+```{r, echo=FALSE, fig.cap="Spectral QC BUV805", fig.align="center"}
+knitr::include_graphics("figures/Workflow/BUV805_QC2.jpg")
+```
 
 Scatter-matching plot for BUV805 from the control cleaning:
-![BUV805 scatter matching](figures/Workflow/BUV805_scatter_match.jpg)
+
+```{r, echo=FALSE, fig.cap="Scatter matching for the BUV805 control", fig.align="center"}
+knitr::include_graphics("figures/Workflow/BUV805_scatter_match.jpg")
+```
 
 The spectra themselves are saved to a CSV file in the `table_spectra` folder. You can open CSV files as a spreadsheet in Excel and other programs.
 
@@ -428,18 +495,37 @@ Using `refine=TRUE` will take longer, both during the `get.af.spectra()` call an
 
 We get the distribution of autofluorescence spectra as a spectral trace and as a heatmap in `figure_autofluorescence`. The AF spectra are saved as a CSV file in `table_spectra`.
 
-![Spleen AF](figures/Workflow/af_spectra.jpg)
+```{r, echo=FALSE, fig.cap="Autofluorescence profiles in the spleen", fig.align="center"}
+knitr::include_graphics("figures/Workflow/af_spectra.jpg")
+```
+
 We can also look at the distribution of autofluorescence like this, where the black line represents a median signature (what you might use with an automated single AF parameter), and the red region represents the variation:
-![Spleen AF Variation](figures/Workflow/af_variation.jpg)
+
+```{r, echo=FALSE, fig.cap="Autofluorescence variation in the spleen", fig.align="center"}
+knitr::include_graphics("figures/Workflow/af_variation.jpg")
+```
+
 
 We also get images showing us the impact of the AF extraction on the unstained sample we have supplied.
 
 This is without any AF extraction, looking at what AutoSpectral has determined are the two most-affected fluorophore channels:
-![No AF extraction](figures/Workflow/Spleen_No_AF_Extraction.jpg)
+
+```{r, echo=FALSE, fig.cap="Spleen: No AF Extraction", fig.align="center"}
+knitr::include_graphics("figures/Workflow/Spleen_No_AF_Extraction.jpg")
+```
+
 What you get on the same unstained sample with per-cell AF extraction, without refinement (refine=FALSE):
-![Per-cell AF extraction](figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg)
+
+```{r, echo=FALSE, fig.cap="Spleen: Per-Cell AF Extraction", fig.align="center"}
+knitr::include_graphics("figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg")
+```
+
 What you get on the same unstained sample with per-cell AF extraction, *with* refinement (refine=TRUE):
-![Per-cell AF extraction refined](figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg)
+
+```{r, echo=FALSE, fig.cap="Spleen: Per-Cell AF Extraction Refined", fig.align="center"}
+knitr::include_graphics("figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg")
+```
+
 
 If you want to do this with samples containing different autofluorescence profiles, such as we have here, we extract the AF spectral variation from each type of unstained sample. We then provide the corresponding `af.spectra` to each unmixing call. The unmixing call can be to a single FCS file, or it can be, as above, to a folder. So, if you have a whole set of stained lung samples, you'd pull your AF spectra from the unstained lung sample, and then call `unmix.folder` on the folder containing your lung (and only lung) samples. Repeat for each type of autofluorescence sample.  Read more about how the per-cell autofluorescence extraction works in the [GitHub](https://drcytometer.github.io/AutoSpectral/articles/10_Single_Cell_AutoFluorescence.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-single-cell-autofluorescence) article.
 
@@ -497,13 +583,18 @@ variants <- get.spectral.variants(
 The output of this is saved as an RDS file in folder `figure_spectral_variants`. You can load it back in using the `readRDS()` function in base R.
 
 There are plots of the spectral variation for each fluorophore. For something like the CD11b-BUV805 in this data, the variation is largely changes in the autofluorescence because there are multiple cell types expressing CD11b. We also have variation in the long wavelength spillover on the violet and red laser, as should be expected from a tandem dye.
-![BUV805](figures/Workflow/BUV805_variants.jpg)
+
+```{r, echo=FALSE, fig.cap="Variation in BUV805", fig.align="center"}
+knitr::include_graphics("figures/Workflow/BUV805_variants.jpg")
+```
 
 For PE-Cy7, we get a modest difference in the excitation between the blue and yellow-green lasers, which would cause spread if we had a fluorophore in that range on the blue laser, such as RB780. We don't in this case.
 
 If we had tandem breakdown, we would probably see variability in the YG1-A detector.
 
-![PE-Cy7](figures/Workflow/PECy7_variants.jpg)
+```{r, echo=FALSE, fig.cap="Variation in PE-Cy7", fig.align="center"}
+knitr::include_graphics("figures/Workflow/PECy7_variants.jpg")
+```
 
 We can now pass this to the unmixing call. For quicker results, you may set the `speed` to `fast`, which checks fewer pre-screened variants per cell. This can be a bit slow if you have not installed `AutoSpectralRcpp`.
 ```{r, eval=FALSE}
@@ -543,8 +634,15 @@ create.biplot(asp.lung, "BUV395-A", "BV421-A", asp, title = "AutoSpectral")
 
 ```
 
-![SpectroFlo](figures/Workflow/SpectroFlo.jpg)
-![AutoSpectral](figures/Workflow/AutoSpectral.jpg)
+Let's have a look at the unmixed data.
+
+```{r, echo=FALSE, fig.cap="SpectroFlo Unmixed", fig.align="center"}
+knitr::include_graphics("figures/Workflow/SpectroFlo.jpg")
+```
+
+```{r, echo=FALSE, fig.cap="AutoSpectral Unmixed", fig.align="center"}
+knitr::include_graphics("figures/Workflow/AutoSpectral.jpg")
+```
 
 Here we have CD45-BUV395 and CD4-BV421. There really shouldn't be much of anything low for CD4 in the mouse. This is ungated data, so we're seeing everything, without any clean-up.
 

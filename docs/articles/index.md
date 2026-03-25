@@ -14,25 +14,25 @@
   Controls](https://drcytometer.github.io/AutoSpectral/articles/05_Preparing_Controls.md):
 - [06
   Gating](https://drcytometer.github.io/AutoSpectral/articles/06_Gating.md):
-- [06 Gating parameters for density
+- [07 Gating parameters for density
   gating](https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.md):
-- [07 Controlled Gating: Landmarks and
+- [08 Controlled Gating: Landmarks and
   Tuning](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.md):
-- [07 Control
+- [09 Control
   clean-up](https://drcytometer.github.io/AutoSpectral/articles/09_Cleaning.md):
-- [08 Single Cell
+- [10 Single Cell
   Autofluorescence](https://drcytometer.github.io/AutoSpectral/articles/10_Single_Cell_AutoFluorescence.md):
-- [09 Per Cell
+- [11 Per Cell
   Optimization](https://drcytometer.github.io/AutoSpectral/articles/11_Per_Cell_Optimization.md):
-- [10 Re-running
+- [12 Re-running
   AutoSpectral](https://drcytometer.github.io/AutoSpectral/articles/12_Reload_AutoSpectral.md):
-- [11
+- [13
   Plotting](https://drcytometer.github.io/AutoSpectral/articles/13_Plotting.md):
-- [12 Speed It Up (Why So
+- [14 Speed It Up (Why So
   Slow?)](https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.md):
-- [13 Updates and
+- [15 Updates and
   Issues](https://drcytometer.github.io/AutoSpectral/articles/15_Updates_And_Issues.md):
-- [14
+- [16
   Development](https://drcytometer.github.io/AutoSpectral/articles/16_Development.md):
 - [17
-  Ackowledgements](https://drcytometer.github.io/AutoSpectral/articles/17_Acknowledgements.md):
+  Acknowledgements](https://drcytometer.github.io/AutoSpectral/articles/17_Acknowledgements.md):

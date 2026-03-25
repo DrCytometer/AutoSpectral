@@ -1,5 +1,5 @@
 ---
-title: "06 Gating parameters for density gating"
+title: "07 Gating parameters for density gating"
 ---
 
 ```{r, include = FALSE}
