@@ -8,7 +8,7 @@ If you need to install AutoSpectral, run this bit first:
 # Install Bioconductor packages
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
-BiocManager::install(c("flowWorkspace", "flowCore", "PeacoQC", "FlowSOM"))
+BiocManager::install(c("flowWorkspace", "FlowSOM"))
 
 # You'll need devtools or remotes to install from GitHub.
 install.packages("remotes")
@@ -254,9 +254,12 @@ are saved and can be reused. See the dedicated articles on this for more
 information, including on how to use the
 [`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md)
 function.
+
 [Gating](https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html)
+
 [Density gating
 parameters](https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html)
+
 [Gate
 tuning](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html)
 
@@ -315,9 +318,12 @@ density calculations.
 Be sure to check the gates that are generated in the `figure_gate`
 folder–do they look right? If not, go to the Gating articles on
 [GitHub](https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html)
-[Colibri](https://www.colibri-cytometry.com/post/autospectral-gating)
-for tips on how fix it. [Gating
+or [Colibri](https://www.colibri-cytometry.com/post/autospectral-gating)
+for tips on how fix it.
+
+[Gating
 Parameters](https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html)
+
 [Gate
 Tuning](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html)
 
@@ -331,7 +337,7 @@ Lymphocyte Gate
 Myeloid Gate
 
 ![Dead Cell Gate](figures/Workflow/landmark_gate_definition_dead.jpg)
-This one could probably do with some tuning.
+This one for the dead cells could probably do with some tuning.
 
 ![Bead Gate](figures/Workflow/density_gate_definition_beads.jpg)
 
@@ -352,16 +358,17 @@ tune.gate(
 )
 ```
 
-There results appear in folder figure_gate_tuning: ![Dead cell gate
-tuning](figures/Workflow/dead_gate_tuning.jpeg) Now we have some
-options. We want a gate that includes the dead cells, which are the
-population on the lower left. We can pick the n=500, p=80% one, which
-pretty much only includes the dead cells, same for n=2000 p = 50%, or
-something like the n=5000, p=80%, which includes the live cells as well.
-Any of those will end up in basically the same place in the end,
-provided we do the control cleaning. Our original gate would also have
-been fine, to be honest. I’m going to select n=5000, p=50%. To do that,
-we re-run the gate definition call:
+The results appear in folder figure_gate_tuning: ![Dead cell gate
+tuning](figures/Workflow/dead_gate_tuning.jpeg)
+
+Now we have some options. We want a gate that includes the dead cells,
+which are the population on the lower left. We can pick the n=500, p=80%
+one, which pretty much only includes the dead cells, same for n=2000 p =
+50%, or something like the n=5000, p=80%, which includes the live cells
+as well. Any of those will end up in basically the same place in the
+end, provided we do the control cleaning. Our original gate would also
+have been fine, to be honest. I’m going to select n=5000, p=50%. To do
+that, we re-run the gate definition call:
 
 ``` r
 gate.dead <- define.gate.landmarks(
@@ -412,8 +419,11 @@ For instance, here is the lymphocyte gate applied to the CD45 BUV395
 sample: ![CD45 BUV395](figures/Workflow/BUV395.jpg) And we can also see
 that AutoSpectral has re-used the unstained cell sample to create
 matching negative samples with corresponding gates applied for the
-myeloid, dead cells and lymphocytes: ![Unstained lymphocyte
-gate](figures/Workflow/AF.jpg)
+myeloid, dead cells and lymphocytes:
+
+![Unstained lymphocyte gate](figures/Workflow/AF.jpg)
+
+Unstained lymphocyte gate
 
 ![Unstained dead cell gate](figures/Workflow/AF_Negative_dead.jpg)
 
@@ -480,13 +490,20 @@ contribute, visit the database and add your spectral profiles. See the
 Discussions page for more details on this.
 
 Databases:
+
 [Aurora](https://docs.google.com/spreadsheets/d/1ZagdBr_s_iW0Ogq9pT1Qvt1Tj0DEnapaV9xpLmiM3DY/edit?usp=sharing)
+
 [FACSDiscover A8 and
 S8](https://docs.google.com/spreadsheets/d/1CtmD-sRMrBZ122QNSou76eASgGOEicS2GolEYL1TSdk/edit?usp=sharing)
+
 [ID7000](https://docs.google.com/spreadsheets/d/1Q-t6EQMRrvEWRR2f4_rsEJaPuXN3N1gV-IOrhigEtKU/edit?usp=sharing)
+
 [Opteon](https://docs.google.com/spreadsheets/d/1_FSy_iS_3vNvfC_jG5LIfwWgprcanXaV72szrwWYzJU/edit?usp=sharing)
+
 [Mosaic](https://docs.google.com/spreadsheets/d/14eQNNMSv-JKXvxs7j7vze2KSMtBNFq1F8qba8G9DIYY/edit?usp=sharing)
+
 [Xenith](https://docs.google.com/spreadsheets/d/1QMVE3ztsoiIuV-JJHN8xzXgTz-jou1fLtnljGRi1wC4/edit?usp=sharing)
+
 [Symphony
 A5SE](https://docs.google.com/spreadsheets/d/1TQDjrfHgdbS6kn4JzgQa_P4M1q-wCWvVv_4tpVFleqA/edit?usp=sharing)
 
@@ -514,7 +531,9 @@ myeloid cells such as neutrophils and macrophages, and the
 scatter-matching for this population has not worked perfectly. Something
 for me to work on.
 
-This will be fine. ![BUV805 QC](figures/Workflow/BUV805_QC2.jpg)![BUV805
+This will be fine. ![BUV805 QC](figures/Workflow/BUV805_QC2.jpg)
+
+Scatter-matching plot for BUV805 from the control cleaning: ![BUV805
 scatter matching](figures/Workflow/BUV805_scatter_match.jpg)
 
 The spectra themselves are saved to a CSV file in the `table_spectra`
@@ -531,8 +550,10 @@ automatically from the unstained cell control sample that is tagged as
 “AF” in your `control.file`. We can use OLS or WLS without
 autofluorescence extraction by removing this row from the `spectra`
 matrix before we pass it to the unmixing call. Here are two easy ways to
-do that: 1) subset `spectra` 2) read in the CSV file in `table_spectra`,
-removing the AF channel
+do that:
+
+1.  subset `spectra`
+2.  read in the CSV file in `table_spectra`, removing the AF channel
 
 ``` r
 rownames(spectra)
@@ -857,4 +878,15 @@ create.biplot(asp.lung, "BUV395-A", "BV421-A", asp, title = "AutoSpectral")
 
 Here we have CD45-BUV395 and CD4-BV421. There really shouldn’t be much
 of anything low for CD4 in the mouse. This is ungated data, so we’re
-seeing everythign, without any clean-up.
+seeing everything, without any clean-up.
+
+The original unmixing only uses a single autofluorescence parameter. As
+mentioned at the beginning of this post, you can use multiple
+autofluorescence to achieve better results in SpectroFlo with this small
+panel as it has been designed to accommodate that. There is no one
+solution for that approach, though.
+
+Also, the plots shown here have hard cut-offs on the x and y axes,
+determined by arguments to create.biplot(). That can be modified, of
+course, but as stated, you’re better off doing that in dedicated flow
+analysis software.

@@ -22,6 +22,11 @@ adjust the gates to work better for your samples.
 Note below: you will need to change your working directory if you run
 this yourself.
 
+``` r
+library(AutoSpectral)
+knitr::opts_knit$set(root.dir = 'C:/Users/Oliver Burton/OneDrive - University of Cambridge/Documents/AutoSpectral_data/Gating_params')
+```
+
 Today we’re going to use a [simple PBMC
 set](https://data.mendeley.com/datasets/77wwgtmvrc/1) run on the
 FACSDiscover A8. The FACSDiscover cytometers are, I think, a nice

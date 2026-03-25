@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,7 @@
 <code class="sourceCode R"><span><span class="co"># Install Bioconductor packages</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
-<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"flowWorkspace"</span>, <span class="st">"flowCore"</span>, <span class="st">"PeacoQC"</span>, <span class="st">"FlowSOM"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"flowWorkspace"</span>, <span class="st">"FlowSOM"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># You'll need devtools or remotes to install from GitHub.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
@@ -288,9 +288,11 @@ in future version for filling in this part of the control file.</p>
 <p>You can create any number of gates and pass them in the next step.
 Gates are saved and can be reused. See the dedicated articles on this
 for more information, including on how to use the
-<code><a href="../reference/tune.gate.html">tune.gate()</a></code> function. <a href="https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html">Gating</a>
-<a href="https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html">Density
-gating parameters</a> <a href="https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html">Gate
+<code><a href="../reference/tune.gate.html">tune.gate()</a></code> function.</p>
+<p><a href="https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html">Gating</a></p>
+<p><a href="https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html">Density
+gating parameters</a></p>
+<p><a href="https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html">Gate
 tuning</a></p>
 <p>Before proceeding, run the control file check to be sure that what
 you’re doing with the gates is consistent with what AutoSpectral
@@ -340,9 +342,11 @@ density calculations.</p>
 <p>Be sure to check the gates that are generated in the
 <code>figure_gate</code> folder–do they look right? If not, go to the
 Gating articles on <a href="https://drcytometer.github.io/AutoSpectral/articles/06_Gating.html">GitHub</a>
-<a href="https://www.colibri-cytometry.com/post/autospectral-gating" class="external-link">Colibri</a>
-for tips on how fix it. <a href="https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html">Gating
-Parameters</a> <a href="https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html">Gate
+or <a href="https://www.colibri-cytometry.com/post/autospectral-gating" class="external-link">Colibri</a>
+for tips on how fix it.</p>
+<p><a href="https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html">Gating
+Parameters</a></p>
+<p><a href="https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html">Gate
 Tuning</a></p>
 <div class="float">
 <img src="figures/Workflow/landmark_gate_definition_lymphocytes.jpg" alt="Lymphocyte Gate"><div class="figcaption">Lymphocyte Gate</div>
@@ -350,7 +354,8 @@ Tuning</a></p>
 <div class="float">
 <img src="figures/Workflow/landmark_gate_definition_myeloid.jpg" alt="Myeloid Gate"><div class="figcaption">Myeloid Gate</div>
 </div>
-<p><img src="figures/Workflow/landmark_gate_definition_dead.jpg" alt="Dead Cell Gate"> This one could probably do with some tuning.</p>
+<p><img src="figures/Workflow/landmark_gate_definition_dead.jpg" alt="Dead Cell Gate"> This one for the dead cells could probably do
+with some tuning.</p>
 <div class="float">
 <img src="figures/Workflow/density_gate_definition_beads.jpg" alt="Bead Gate"><div class="figcaption">Bead Gate</div>
 </div>
@@ -366,15 +371,15 @@ Tuning</a></p>
 <span>  color.palette <span class="op">=</span> <span class="st">"mako"</span>,</span>
 <span>  boundary.color <span class="op">=</span> <span class="st">"red"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>There results appear in folder figure_gate_tuning: <img src="figures/Workflow/dead_gate_tuning.jpeg" alt="Dead cell gate tuning"> Now we have some options. We want a gate
-that includes the dead cells, which are the population on the lower
-left. We can pick the n=500, p=80% one, which pretty much only includes
-the dead cells, same for n=2000 p = 50%, or something like the n=5000,
-p=80%, which includes the live cells as well. Any of those will end up
-in basically the same place in the end, provided we do the control
-cleaning. Our original gate would also have been fine, to be honest. I’m
-going to select n=5000, p=50%. To do that, we re-run the gate definition
-call:</p>
+<p>The results appear in folder figure_gate_tuning: <img src="figures/Workflow/dead_gate_tuning.jpeg" alt="Dead cell gate tuning"></p>
+<p>Now we have some options. We want a gate that includes the dead
+cells, which are the population on the lower left. We can pick the
+n=500, p=80% one, which pretty much only includes the dead cells, same
+for n=2000 p = 50%, or something like the n=5000, p=80%, which includes
+the live cells as well. Any of those will end up in basically the same
+place in the end, provided we do the control cleaning. Our original gate
+would also have been fine, to be honest. I’m going to select n=5000,
+p=50%. To do that, we re-run the gate definition call:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gate.dead</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.gate.landmarks.html">define.gate.landmarks</a></span><span class="op">(</span></span>
 <span>  control.file <span class="op">=</span> <span class="va">control.file</span>,</span>
@@ -418,7 +423,10 @@ intended gate applied to it. To see these, check the
 sample: <img src="figures/Workflow/BUV395.jpg" alt="CD45 BUV395"> And
 we can also see that AutoSpectral has re-used the unstained cell sample
 to create matching negative samples with corresponding gates applied for
-the myeloid, dead cells and lymphocytes: <img src="figures/Workflow/AF.jpg" alt="Unstained lymphocyte gate"></p>
+the myeloid, dead cells and lymphocytes:</p>
+<div class="float">
+<img src="figures/Workflow/AF.jpg" alt="Unstained lymphocyte gate"><div class="figcaption">Unstained lymphocyte gate</div>
+</div>
 <div class="float">
 <img src="figures/Workflow/AF_Negative_dead.jpg" alt="Unstained dead cell gate"><div class="figcaption">Unstained dead cell gate</div>
 </div>
@@ -472,13 +480,15 @@ same instrument. Not all fluorophores will be available, particularly
 for the instruments I don’t have regular access to, so if you want to
 contribute, visit the database and add your spectral profiles. See the
 Discussions page for more details on this.</p>
-<p>Databases: <a href="https://docs.google.com/spreadsheets/d/1ZagdBr_s_iW0Ogq9pT1Qvt1Tj0DEnapaV9xpLmiM3DY/edit?usp=sharing" class="external-link">Aurora</a>
-<a href="https://docs.google.com/spreadsheets/d/1CtmD-sRMrBZ122QNSou76eASgGOEicS2GolEYL1TSdk/edit?usp=sharing" class="external-link">FACSDiscover
-A8 and S8</a> <a href="https://docs.google.com/spreadsheets/d/1Q-t6EQMRrvEWRR2f4_rsEJaPuXN3N1gV-IOrhigEtKU/edit?usp=sharing" class="external-link">ID7000</a>
-<a href="https://docs.google.com/spreadsheets/d/1_FSy_iS_3vNvfC_jG5LIfwWgprcanXaV72szrwWYzJU/edit?usp=sharing" class="external-link">Opteon</a>
-<a href="https://docs.google.com/spreadsheets/d/14eQNNMSv-JKXvxs7j7vze2KSMtBNFq1F8qba8G9DIYY/edit?usp=sharing" class="external-link">Mosaic</a>
-<a href="https://docs.google.com/spreadsheets/d/1QMVE3ztsoiIuV-JJHN8xzXgTz-jou1fLtnljGRi1wC4/edit?usp=sharing" class="external-link">Xenith</a>
-<a href="https://docs.google.com/spreadsheets/d/1TQDjrfHgdbS6kn4JzgQa_P4M1q-wCWvVv_4tpVFleqA/edit?usp=sharing" class="external-link">Symphony
+<p>Databases:</p>
+<p><a href="https://docs.google.com/spreadsheets/d/1ZagdBr_s_iW0Ogq9pT1Qvt1Tj0DEnapaV9xpLmiM3DY/edit?usp=sharing" class="external-link">Aurora</a></p>
+<p><a href="https://docs.google.com/spreadsheets/d/1CtmD-sRMrBZ122QNSou76eASgGOEicS2GolEYL1TSdk/edit?usp=sharing" class="external-link">FACSDiscover
+A8 and S8</a></p>
+<p><a href="https://docs.google.com/spreadsheets/d/1Q-t6EQMRrvEWRR2f4_rsEJaPuXN3N1gV-IOrhigEtKU/edit?usp=sharing" class="external-link">ID7000</a></p>
+<p><a href="https://docs.google.com/spreadsheets/d/1_FSy_iS_3vNvfC_jG5LIfwWgprcanXaV72szrwWYzJU/edit?usp=sharing" class="external-link">Opteon</a></p>
+<p><a href="https://docs.google.com/spreadsheets/d/14eQNNMSv-JKXvxs7j7vze2KSMtBNFq1F8qba8G9DIYY/edit?usp=sharing" class="external-link">Mosaic</a></p>
+<p><a href="https://docs.google.com/spreadsheets/d/1QMVE3ztsoiIuV-JJHN8xzXgTz-jou1fLtnljGRi1wC4/edit?usp=sharing" class="external-link">Xenith</a></p>
+<p><a href="https://docs.google.com/spreadsheets/d/1TQDjrfHgdbS6kn4JzgQa_P4M1q-wCWvVv_4tpVFleqA/edit?usp=sharing" class="external-link">Symphony
 A5SE</a></p>
 <p><img src="figures/Workflow/spectral_trace.jpg" alt="Spectral Trace"><img src="figures/Workflow/spectral_heatmap.jpg" alt="Spectral Heatmap"><img src="figures/Workflow/Clean_autospectral_similarity_matrix.jpg" alt="Similarity Matrix"> You also get a “Hotspot” matrix, as in the
 paper my Peter Mage et al. <img src="figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg" alt="Hotspot Matrix"> As per their <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12139922/" class="external-link">manuscript</a>,
@@ -496,7 +506,8 @@ this experiment has an extra minor peak in the UV. That is
 autofluorescence because the BUV805+ cells are myeloid cells such as
 neutrophils and macrophages, and the scatter-matching for this
 population has not worked perfectly. Something for me to work on.</p>
-<p>This will be fine. <img src="figures/Workflow/BUV805_QC2.jpg" alt="BUV805 QC"><img src="figures/Workflow/BUV805_scatter_match.jpg" alt="BUV805 scatter matching"></p>
+<p>This will be fine. <img src="figures/Workflow/BUV805_QC2.jpg" alt="BUV805 QC"></p>
+<p>Scatter-matching plot for BUV805 from the control cleaning: <img src="figures/Workflow/BUV805_scatter_match.jpg" alt="BUV805 scatter matching"></p>
 <p>The spectra themselves are saved to a CSV file in the
 <code>table_spectra</code> folder. You can open CSV files as a
 spreadsheet in Excel and other programs.</p>
@@ -513,8 +524,13 @@ generated automatically from the unstained cell control sample that is
 tagged as “AF” in your <code>control.file</code>. We can use OLS or WLS
 without autofluorescence extraction by removing this row from the
 <code>spectra</code> matrix before we pass it to the unmixing call. Here
-are two easy ways to do that: 1) subset <code>spectra</code> 2) read in
-the CSV file in <code>table_spectra</code>, removing the AF channel</p>
+are two easy ways to do that:</p>
+<ol style="list-style-type: decimal">
+<li>subset <code>spectra</code>
+</li>
+<li>read in the CSV file in <code>table_spectra</code>, removing the AF
+channel</li>
+</ol>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">spectra</span><span class="op">)</span></span>
 <span><span class="va">no.af.spectra</span> <span class="op">&lt;-</span> <span class="va">spectra</span><span class="op">[</span> <span class="op">!</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">spectra</span><span class="op">)</span> <span class="op">==</span> <span class="st">"AF"</span><span class="op">)</span>,<span class="op">]</span></span>
@@ -785,7 +801,16 @@ or <a href="https://www.colibri-cytometry.com/post/autospectral-plotting" class=
 <p><img src="figures/Workflow/SpectroFlo.jpg" alt="SpectroFlo"><img src="figures/Workflow/AutoSpectral.jpg" alt="AutoSpectral"></p>
 <p>Here we have CD45-BUV395 and CD4-BV421. There really shouldn’t be
 much of anything low for CD4 in the mouse. This is ungated data, so
-we’re seeing everythign, without any clean-up.</p>
+we’re seeing everything, without any clean-up.</p>
+<p>The original unmixing only uses a single autofluorescence parameter.
+As mentioned at the beginning of this post, you can use multiple
+autofluorescence to achieve better results in SpectroFlo with this small
+panel as it has been designed to accommodate that. There is no one
+solution for that approach, though.</p>
+<p>Also, the plots shown here have hard cut-offs on the x and y axes,
+determined by arguments to create.biplot(). That can be modified, of
+course, but as stated, you’re better off doing that in dedicated flow
+analysis software.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

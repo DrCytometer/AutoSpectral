@@ -22,7 +22,6 @@ Thank you to anyone who has used AutoSpectral and provided feedback. In no parti
 + Alyssa Fears
 + Claude Chew
 + Samuel Granjeaud
-+ Simona Tavarini
 + Vincenzo Muraca
 + IJsbrand Reyneveld
 + Luis Machado Crisostomo
@@ -35,6 +34,9 @@ Thank you to anyone who has used AutoSpectral and provided feedback. In no parti
 + Teresa Von Linde
 + Andrieu Thibault
 + Camille Santa-Maria
++ Vaclav Gergelits
++ Marta Merlo
++ Marina Perez Gutierrez
 
 Apologies if I've left you out or you would prefer not to be listed here--just let me know.
 

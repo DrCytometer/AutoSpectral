@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -183,8 +183,8 @@ testing), but the results will not be as good as if a matching one were
 used, simply because the best match won’t be present for all cells. Note
 that this means you can use pooled samples as long as you have enough
 events acquired, although you may need to increase <code>som.dim</code>
-if there are a lot of AF signatures present in each part of the
-pool.</p>
+or set <code>refine=TRUE</code> if there are a lot of AF signatures
+present in each part of the pool.</p>
 <div class="section level2">
 <h2 id="update-for-version-1-0-0">Update for Version 1.0.0<a class="anchor" aria-label="anchor" href="#update-for-version-1-0-0"></a>
 </h2>
@@ -218,16 +218,9 @@ will create an unmixed FCS file from your raw FCS file.</p>
 <span>           flow.control <span class="op">=</span> <span class="va">flow.control</span>,</span>
 <span>           method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
 <span>           af.spectra <span class="op">=</span> <span class="va">lung.af</span> <span class="op">)</span></span></code></pre></div>
-<p>This will use OLS to find the optimal AF per cell. To use WLS, set
-<code>weighted = TRUE</code>.</p>
-<p>Alternatively, we can call <code>method = "Automatic"</code>, which
-is the default. This takes care of the decision making for AF extraction
-and weighting automatically. So, if you provide <code>af.spectra</code>,
-per-cell AF extraction will be done. Weighting will be used if the data
-come from the ID7000, the FACSDiscoverS8 or the FACSDiscoverA8,
-attempting to replicate the methodology used on those systems. For
-explicit control, call <code>method = "AutoSpectral"</code> as above,
-and set the arguments.</p>
+<p>This will use OLS to find the optimal AF per cell.</p>
+<p>Alternatively, we can call method = “Automatic”, which is the
+default.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span> <span class="va">fully.stained.dir</span>, <span class="st">"C3 Lung_GFP_003_Samples.fcs"</span> <span class="op">)</span>,</span>
 <span>           <span class="va">spectra</span>,</span>
@@ -239,20 +232,21 @@ and set the arguments.</p>
 <div class="section level3">
 <h3 id="go-faster">Go Faster<a class="anchor" aria-label="anchor" href="#go-faster"></a>
 </h3>
-<p>Per-cell AF extraction involves unmixing the data once per AF
-signature provided. Since this is a lot of linear algebra, using an
-optimized library for linear algebra speeds this process up a lot. We
-suggest swapping out the default R BLAS and LAPACK dll files for the
-optimized versions in OpenBLAS (or other even better versions). This is
-relatively simple to do: <a href="https://github.com/david-cortes/R-openblas-in-windows" class="external-link uri">https://github.com/david-cortes/R-openblas-in-windows</a>
-Expect speed ups of ~5x.</p>
+<p>Per-cell AF extraction involves a lot of unmixing. Since this is a
+lot of linear algebra, using an optimized library for linear algebra
+speeds this process up a lot. We suggest swapping out the default R BLAS
+and LAPACK dll files for the optimized versions in OpenBLAS (or other
+even better versions). This is relatively simple to do: <a href="https://github.com/david-cortes/R-openblas-in-windows" class="external-link uri">https://github.com/david-cortes/R-openblas-in-windows</a></p>
+<p>Expect speed ups of ~5x.</p>
 <p>Don’t set multiple threads for the BLAS. That will interfere with the
 parallel processing used in other parts of AutoSpectral and probably
-other R packages.</p>
+other R packages. That said, this is now dealt with automatically by
+AutoSpectral, so you shouldn’t have any issues even if you do. If you
+don’t know what this means, don’t worry about it.</p>
 <p>Additionally, as of version 1.0.0, the process of assigning AF
 signatures to individual cells (and then unmixing them) has been sped up
-in C++. For this, you will need to install
-<code>AutoSpectralRcpp</code>.</p>
+in C++. Processing time is now comparable to standard unmixing. For
+this, you will need to install <code>AutoSpectralRcpp</code>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

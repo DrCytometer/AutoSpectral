@@ -14,10 +14,11 @@ The [FACS Core at the University of Leuven
 (KUL)](https://gbiomed.kuleuven.be/english/corefacilities/facs) +
 [Jochen Lamote](https://flowcore-leuven.sites.vib.be/en) + Jaromir
 Mikes + Florens Lohrmann + Ellie Tiplady + Alyssa Fears + Claude Chew +
-Samuel Granjeaud + Simona Tavarini + Vincenzo Muraca + IJsbrand
-Reyneveld + Luis Machado Crisostomo + Dominica Bondanza + Federico
-Rivelli + Andre Heinen + Maximillian Sprang + Tina Sarkar + Juliese
-Menschuk + Teresa Von Linde + Andrieu Thibault + Camille Santa-Maria
+Samuel Granjeaud + Vincenzo Muraca + IJsbrand Reyneveld + Luis Machado
+Crisostomo + Dominica Bondanza + Federico Rivelli + Andre Heinen +
+Maximillian Sprang + Tina Sarkar + Juliese Menschuk + Teresa Von Linde +
+Andrieu Thibault + Camille Santa-Maria + Vaclav Gergelits + Marta
+Merlo + Marina Perez Gutierrez
 
 Apologies if I’ve left you out or you would prefer not to be listed
 here–just let me know.

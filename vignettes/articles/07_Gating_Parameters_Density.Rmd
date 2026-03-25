@@ -17,7 +17,7 @@ That said, let's go over the various parameters that control the automated densi
 
 Note below: you will need to change your working directory if you run this yourself.
 
-```{r setup, include=FALSE}
+```{r setup, eval=FALSE}
 library(AutoSpectral)
 knitr::opts_knit$set(root.dir = 'C:/Users/Oliver Burton/OneDrive - University of Cambridge/Documents/AutoSpectral_data/Gating_params')
 ```

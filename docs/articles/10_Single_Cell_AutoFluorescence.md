@@ -124,8 +124,9 @@ won’t create problems (based on both theory and empirical testing), but
 the results will not be as good as if a matching one were used, simply
 because the best match won’t be present for all cells. Note that this
 means you can use pooled samples as long as you have enough events
-acquired, although you may need to increase `som.dim` if there are a lot
-of AF signatures present in each part of the pool.
+acquired, although you may need to increase `som.dim` or set
+`refine=TRUE` if there are a lot of AF signatures present in each part
+of the pool.
 
 ## Update for Version 1.0.0
 
@@ -163,16 +164,9 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
            af.spectra = lung.af )
 ```
 
-This will use OLS to find the optimal AF per cell. To use WLS, set
-`weighted = TRUE`.
+This will use OLS to find the optimal AF per cell.
 
-Alternatively, we can call `method = "Automatic"`, which is the default.
-This takes care of the decision making for AF extraction and weighting
-automatically. So, if you provide `af.spectra`, per-cell AF extraction
-will be done. Weighting will be used if the data come from the ID7000,
-the FACSDiscoverS8 or the FACSDiscoverA8, attempting to replicate the
-methodology used on those systems. For explicit control, call
-`method = "AutoSpectral"` as above, and set the arguments.
+Alternatively, we can call method = “Automatic”, which is the default.
 
 ``` r
 unmix.fcs( file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
@@ -186,18 +180,22 @@ Unmixed FCS files will appear in folder `./autospectral_unmixed`.
 
 ### Go Faster
 
-Per-cell AF extraction involves unmixing the data once per AF signature
-provided. Since this is a lot of linear algebra, using an optimized
-library for linear algebra speeds this process up a lot. We suggest
-swapping out the default R BLAS and LAPACK dll files for the optimized
-versions in OpenBLAS (or other even better versions). This is relatively
-simple to do: <https://github.com/david-cortes/R-openblas-in-windows>
+Per-cell AF extraction involves a lot of unmixing. Since this is a lot
+of linear algebra, using an optimized library for linear algebra speeds
+this process up a lot. We suggest swapping out the default R BLAS and
+LAPACK dll files for the optimized versions in OpenBLAS (or other even
+better versions). This is relatively simple to do:
+<https://github.com/david-cortes/R-openblas-in-windows>
+
 Expect speed ups of ~5x.
 
 Don’t set multiple threads for the BLAS. That will interfere with the
 parallel processing used in other parts of AutoSpectral and probably
-other R packages.
+other R packages. That said, this is now dealt with automatically by
+AutoSpectral, so you shouldn’t have any issues even if you do. If you
+don’t know what this means, don’t worry about it.
 
 Additionally, as of version 1.0.0, the process of assigning AF
 signatures to individual cells (and then unmixing them) has been sped up
-in C++. For this, you will need to install `AutoSpectralRcpp`.
+in C++. Processing time is now comparable to standard unmixing. For
+this, you will need to install `AutoSpectralRcpp`.

@@ -18,7 +18,7 @@ library( AutoSpectral )
 ```
 
 Let's load in some spectra, here from OMIP-102.
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 s8.fcs <- "~/AutoSpectral_data/S8_data/BP0323502_1.fcs"
 chorus.spectra <- read.bd.spectra( s8.fcs )
 chorus.spectra[ 1:6, 1:5 ]
