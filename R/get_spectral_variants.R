@@ -265,9 +265,9 @@ get.spectral.variants <- function(
   if ( nrow( unstained ) > asp$gate.downsample.n.cells ) {
     set.seed( asp$gate.downsample.seed )
     unstained.idx <- sample( nrow( unstained ), asp$gate.downsample.n.beads )
-    unstained <- unstained[ unstained.idx, spectral.channel ]
+    unstained <- unstained[ unstained.idx, spectral.channel, drop = FALSE ]
   } else {
-    unstained <- unstained[ , spectral.channel ]
+    unstained <- unstained[ , spectral.channel, drop = FALSE ]
   }
 
   raw.thresholds <- apply( unstained, 2, function( col ) stats::quantile( col, 0.995 ) )
@@ -279,7 +279,7 @@ get.spectral.variants <- function(
     verbose = FALSE
   )
   unmixed.thresholds <- apply(
-    unstained.unmixed[ , fluorophores ], 2, function( col )
+    unstained.unmixed[ , fluorophores, drop = FALSE ], 2, function( col )
       stats::quantile( col, 0.995 )
   )
 

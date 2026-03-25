@@ -61,7 +61,7 @@ do.gate <- function(
   names( p ) <- gsub( sfx, "", keys )
 
   # grab the nested default params specifically
-  p$default.gate.param <- asp[[ paste0( "default.gate.param", sfx ) ] ]
+  p$default.gate.param <- asp[[ paste0( "default.gate.param", sfx ) ]]
 
   gate.marker <- colnames( gate.data )
   gate.bound <- NULL
