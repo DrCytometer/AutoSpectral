@@ -12,9 +12,13 @@ when only a single fluorophore is being unmixed (so only one axis can be drawn).
 - Exclusion of a problematic keyword from BD FACSDiscover files. This affects
 `define.keywords()`, which updates the keywords after unmixing. Files were being
 produced, but the keyword headers were corrupted.
+- Patch for some annoying keywords issues affecting writing of FACSymphony A5SE files.
+- Patch to remove extra raw channels from unmixed Xenith files by default.
 - Rearrange the arguments for `tune.gate()`, `define.gate.landmarks()` and also
 `define.gate.density()` to put the `gate.name` argument earlier. The default value
 for `gate.name` has been removed because the user should be providing this.
+- Patch to restore the functionality of `include.raw` (include the raw spectral
+data in the unmixed FCS file) in `unmix.fcs()`.
 
 # AutoSpectral 1.5.1 (2026-03-26)
 
