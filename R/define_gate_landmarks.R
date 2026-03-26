@@ -19,6 +19,9 @@
 #' @param control.dir File path to the single-stained control FCS files.
 #' @param asp The AutoSpectral parameter list defined using
 #' `get.autospectral.param`.
+#' @param gate.name Character, name for the gate. Useful for distinguishing gates
+#' when you have multiple types. Must match one string (name) in the `gate.name`
+#' column of the `control.file`.
 #' @param gating.params Previously saved gating parameters. Load in the .rds file
 #' using `readRDS` and pass the result here if you wish to replicate a previous
 #' run. This is essentially just an updated version of `asp` containing any
@@ -54,8 +57,6 @@
 #' default `NULL` uses c`c(asp$scatter.data.min.y, asp$scatter.data.max.y)`.
 #' @param output.dir File path where you want to save the results. Default is
 #' `./figure_gate`.
-#' @param gate.name Character, name for the gate. Useful for distinguishing gates
-#' when you have multiple types. Default is `cell_gate`.
 #' @param filename Character, name for the output files. Default is `gate_definition`.
 #' @param color.palette Optional character string defining the viridis color
 #' palette to be used for the fluorophore traces. Default is `plasma`. Use `rainbow`
@@ -94,6 +95,7 @@ define.gate.landmarks <- function(
     control.file,
     control.dir,
     asp,
+    gate.name,
     gating.params = NULL,
     n.cells = 2000,
     percentile = 70,
@@ -104,7 +106,6 @@ define.gate.landmarks <- function(
     fsc.lims = NULL,
     ssc.lims = NULL,
     output.dir = "./figure_gate",
-    gate.name = "cell_gate",
     filename = "landmark_gate_definition_",
     color.palette = "plasma",
     boundary.color = "black",

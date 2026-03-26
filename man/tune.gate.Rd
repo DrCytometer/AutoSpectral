@@ -8,6 +8,7 @@ tune.gate(
   control.file,
   control.dir,
   asp,
+  gate.name,
   n.cells = c(100, 500, 2000),
   percentiles = c(30, 50, 70),
   grid.n = 100,
@@ -17,7 +18,6 @@ tune.gate(
   fsc.lims = NULL,
   ssc.lims = NULL,
   output.dir = "./figure_gate_tuning",
-  gate.name = "cell_gate",
   filename = "gate_tuning",
   color.palette = "mako",
   boundary.color = "red",
@@ -35,6 +35,10 @@ channels, and gating requirements.}
 
 \item{asp}{The AutoSpectral parameter list defined using
 \code{get.autospectral.param}.}
+
+\item{gate.name}{Character, name for the gate. Useful for distinguishing gates
+when you have multiple types. Must match one string (name) in the \code{gate.name}
+column of the \code{control.file}.}
 
 \item{n.cells}{The number of cells to use for defining the gate boundary. The
 default is \code{c(100, 500, 2000)} and will test each of those values. This many
@@ -76,9 +80,6 @@ uses c\code{c(asp$scatter.data.min.y, asp$scatter.data.max.y)}.}
 
 \item{output.dir}{File path where you want to save the results. Default is
 \code{./figure_gate_tuning}.}
-
-\item{gate.name}{Character, name for the gate. Useful for distinguishing gates
-when you have multiple types. Default is \code{cell_gate}.}
 
 \item{filename}{Character, name for the output files. Default is \code{gate_tuning}.}
 

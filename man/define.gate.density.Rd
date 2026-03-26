@@ -8,6 +8,7 @@ define.gate.density(
   control.file,
   control.dir,
   asp,
+  gate.name,
   gating.params = NULL,
   n.cells = NULL,
   grid.n = NULL,
@@ -23,7 +24,6 @@ define.gate.density(
   ssc.search.min = NULL,
   ssc.search.max = NULL,
   output.dir = "./figure_gate",
-  gate.name = "cell_gate",
   filename = "density_gate_definition_",
   color.palette = "plasma",
   boundary.color = "black",
@@ -42,6 +42,10 @@ channels, and gating requirements.}
 \item{control.dir}{File path to the single-stained control FCS files.}
 
 \item{asp}{The AutoSpectral parameter list defined using \code{get.autospectral.param}.}
+
+\item{gate.name}{Character, name for the gate. Useful for distinguishing gates
+when you have multiple types. Must match one string (name) in the \code{gate.name}
+column of the \code{control.file}.}
 
 \item{gating.params}{Previously saved gating parameters. Load in the .rds file
 using \code{readRDS} and pass the result here if you wish to replicate a previous
@@ -109,9 +113,6 @@ the SSC axis.#'}
 
 \item{output.dir}{File path where you want to save the results. Default is
 \code{./figure_gate}.}
-
-\item{gate.name}{Character, name for the gate. Useful for distinguishing gates
-when you have multiple types. Default is \code{cell_gate}.}
 
 \item{filename}{Character, name for the output files. Default is \code{gate_definition}.}
 
