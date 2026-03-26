@@ -41,6 +41,10 @@ get.autospectral.param.xenith <- function( autosp.param )
           width = -20
         )
 
+  autosp.param$time.and.scatter <- c(
+    "FSC", "SSC", "Time", "Event"
+  )
+
   autosp.param$non.spectral.channel <- c(
     "Time", "SSC", "FSC", "-H", "-W", "Comp", "Event", "Gate", "Sort"
   )
