@@ -33,13 +33,14 @@ unmix.ols <- function( raw.data, spectra, weights = NULL ) {
       message( "Columns reordered to match spectra." )
     } else {
       stop( "Column names in spectra and raw.data do not match perfectly;
-           cannot reorder by name alone." )
+           cannot reorder by name alone.", call. = FALSE )
     }
   }
 
-  sv <- svd( t( spectra ) )
   # solve unmixing matrix via singular value decomposition
   # more stable than normal equations
+  sv <- svd( t( spectra ) )
+
   # this is the Moore-Penrose pseudoinverse
   unmixing.matrix <- sv$v %*% ( t( sv$u ) / sv$d )
 
