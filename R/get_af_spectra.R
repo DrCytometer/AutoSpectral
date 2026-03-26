@@ -156,12 +156,8 @@ get.af.spectra <- function(
     silent = TRUE
   )
 
-  # flip the sign of any negatively vectored AF spectra (occurs on S8, A8)
-  af.spectra <- t(
-    apply( map$codes[ , spectral.channels ], 1, function( x ) {
-      max.x <- ifelse( max( abs( x ) ) > max( x ), min( x ), max( x ) )
-      x / max.x } )
-  )
+  # L-infinity (peak) normalization
+  af.spectra <- t( apply( map$codes[ , spectral.channels ], 1, function(x) x/max(x) ) )
 
   # unlikely, but remove any NAs
   af.spectra <- as.matrix( stats::na.omit( af.spectra ) )
@@ -180,6 +176,13 @@ get.af.spectra <- function(
   if ( figures ) {
     if ( verbose ) message( "Plotting autofluorescence spectra" )
 
+    af.spectra.plot <- af.spectra
+    # flip the sign of any negatively vectored AF spectra (occurs on S8, A8) for plotting only
+    af.spectra.plot <- t( apply( af.spectra.plot, 1, function( x ) {
+      max.x <- ifelse( max( abs( x ) ) > max( x ), min( x ), max( x ) )
+      x / max.x } )
+    )
+
     # error handling so plotting never causes the function to abort
     tryCatch(
       expr = {
@@ -194,7 +197,9 @@ get.af.spectra <- function(
         )
         # as a heatmap
         spectral.heatmap(
-          af.spectra, title, plot.dir,
+          spectra = af.spectra.plot,
+          title = title,
+          plot.dir = plot.dir,
           color.palette = heatmap.color.palette
         )
       },
@@ -335,11 +340,7 @@ get.af.spectra <- function(
 
       if ( verbose ) {
         message(
-          paste(
-            "Clustering",
-            length( problem.idx ),
-            "cells with highest spillover error"
-          )
+          paste( "Clustering", length( problem.idx ), "cells with highest spillover error" )
         )
       }
 
@@ -440,49 +441,52 @@ get.af.spectra <- function(
           }
         }
 
-        # plot the changes for the worst pair of channels
-        if ( verbose ) message( "Plotting impact of AF extraction" )
+        # we can only do biplots if we have more than one fluorophore channel
+        if ( ncol( unmixed.no.af ) > 1 ) {
+          # plot the changes for the worst pair of channels
+          if ( verbose ) message( "Plotting impact of AF extraction" )
 
-        # which channels are the worst affected by AF when we don't extract it?
-        channel.sd <- apply( unmixed.no.af, 2, stats::sd )
-        worst.channels <- order( channel.sd, decreasing = TRUE )[ 1:2 ]
-        worst.channels <- colnames( unmixed.no.af )[ worst.channels ]
+          # which channels are the worst affected by AF when we don't extract it?
+          channel.sd <- apply( unmixed.no.af, 2, stats::sd )
+          worst.channels <- order( channel.sd, decreasing = TRUE )[ 1:2 ]
+          worst.channels <- colnames( unmixed.no.af )[ worst.channels ]
 
+          # error handling so plotting never causes the function to abort
+          tryCatch(
+            expr = {
+              # plot unmixed data before and after AF extraction
+              create.biplot(
+                unmixed.no.af,
+                x.dim = worst.channels[ 1 ],
+                y.dim = worst.channels[ 2 ],
+                asp = asp,
+                title = paste( file.name, "_", title, "_No_AF_Extraction" ),
+                output.dir = plot.dir
+              )
+              create.biplot(
+                unmixed,
+                x.dim = worst.channels[ 1 ],
+                y.dim = worst.channels[ 2 ],
+                asp = asp,
+                title = paste0( file.name, "_", title, "_PerCell_AF_Extraction_First_Pass" ),
+                output.dir = plot.dir
+              )
+              create.biplot(
+                unmixed.second,
+                x.dim = worst.channels[ 1 ],
+                y.dim = worst.channels[ 2 ],
+                asp = asp,
+                title = paste0( file.name, "_", title, "_PerCell_AF_Extraction_Second_Pass" ),
+                output.dir = plot.dir
+              )
+            },
+            error = function( e ) {
+              message( "Error in plotting AF extraction: ", e$message )
+              return( NULL )
+            }
+          )
+        }
 
-        # error handling so plotting never causes the function to abort
-        tryCatch(
-          expr = {
-            # plot unmixed data before and after AF extraction
-            create.biplot(
-              unmixed.no.af,
-              x.dim = worst.channels[ 1 ],
-              y.dim = worst.channels[ 2 ],
-              asp = asp,
-              title = paste( file.name, "_", title, "_No_AF_Extraction" ),
-              output.dir = plot.dir
-            )
-            create.biplot(
-              unmixed,
-              x.dim = worst.channels[ 1 ],
-              y.dim = worst.channels[ 2 ],
-              asp = asp,
-              title = paste0( file.name, "_", title, "_PerCell_AF_Extraction_First_Pass" ),
-              output.dir = plot.dir
-            )
-            create.biplot(
-              unmixed.second,
-              x.dim = worst.channels[ 1 ],
-              y.dim = worst.channels[ 2 ],
-              asp = asp,
-              title = paste0( file.name, "_", title, "_PerCell_AF_Extraction_Second_Pass" ),
-              output.dir = plot.dir
-            )
-          },
-          error = function( e ) {
-            message( "Error in plotting AF extraction: ", e$message )
-            return( NULL )
-          }
-        )
       }
 
     } else {
