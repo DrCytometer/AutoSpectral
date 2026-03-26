@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,7 +108,7 @@
 <p>What AutoSpectral cannot do:</p>
 <ul>
 <li>Magic. Blind spectral unmixing of 50-color panels is not currently implemented.</li>
-<li>Fix bad controls. If you have two colors in your “single-color” sample, it probably won’t work (see control cleaning, though). If you have no signal, it won’t work. If your controls were run on a different machine, with different instrument settings or using a different antibody/fluorophore, it won’t work well. Note that this is likely to affect ID7000 samples, where Sony suggests running the controls on one set of voltages and the samples on another. I haven’t put any time into figuring out how that works yet.</li>
+<li>Fix bad controls. If you have two colors in your “single-color” sample, it probably won’t work (see control cleaning, though). If you have no signal, it won’t work. If your controls were run on a different machine, that won’t work. If your controls were acquired with different instrument settings or using a different antibody/fluorophore, it may not work well. Note that this is likely to affect ID7000 samples, where Sony suggests running the controls on one set of voltages and the samples on another. I haven’t put any time into figuring out how that works yet. It may well be that the unmixing with AutoSpectral works fine in this situation.</li>
 <li>Fix poor panel design. If you have unmixing spread from using BV785 and BV786 in combination, AutoSpectral won’t fix that. If you’re using BB515 and FITC, it’ll probably help quite a bit, though.</li>
 <li>Fix non-specific staining. If you’re struggling with this, check out the blocking articles on the Colibri blog.</li>
 <li>Fix instrument errors. If your laser wasn’t working, this won’t help.</li>
@@ -122,7 +122,7 @@
 <div class="section level3">
 <h3 id="latest-stable-release">Latest Stable Release<a class="anchor" aria-label="anchor" href="#latest-stable-release"></a>
 </h3>
-<p><strong>Version 1.5.1</strong></p>
+<p><strong>Version 1.5.2</strong></p>
 <p>Version 1.0+ is intended to greatly speed up the process of unmixing. This is done by pre-screening the variation in autofluorescence and fluorophores for each cell, identifying likely “best” candidates rather than using a brute force approach. If you are using <a href="https://github.com/DrCytometer/AutoSpectralRcpp" class="external-link">AutoSpectralRcpp</a>, you will need to update that for compatibility.</p>
 <p>To install the latest, hopefully stable version, install using <code>devtools</code> or <code>remotes</code>. You will need to install the Bioconductor packages separately. As of version 0.9.1, AutoSpectral relies on <code>FlowSOM</code> rather than <code>EmbedSOM</code>, so you will need to install <code>FlowSOM</code> via Bioconductor.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">

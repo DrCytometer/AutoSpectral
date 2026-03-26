@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -282,6 +282,14 @@ for the myeloid cells. We can define a third gate using our
 viability-e780 (cells) for dead cells, and we can define a fourth gate
 on all of the stained bead samples, which will all be in the same
 position since they are beads.</p>
+<p>In order for the landmark approach to work, at least one sample used
+to define the gate must be stained (a single-stained control). Otherwise
+we don’t have any landmarks to find. The density-based gating system
+does not have this limitation. However, you can create a landmark-based
+gate using one or more single-stained control files, and apply the
+resulting gate to one or more unstained samples. This is controlled
+using the <code>gate.define</code> and <code>gate.name</code> columns in
+the control file.</p>
 <p><em>Note</em>: I expect to provide a little more automated assistance
 in future version for filling in this part of the control file.</p>
 <p>Now our control file looks like this: <img src="figures/Workflow/final_control_file.jpg" alt="Final Control File"></p>

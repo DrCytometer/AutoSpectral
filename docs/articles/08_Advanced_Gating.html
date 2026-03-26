@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,6 +88,25 @@ control.</p>
 of tuning tools. This article covers how to use tune.gate(),
 define.gate.landmarks(), and define.gate.density() to pre-define your
 gates before processing your experiment with define.flow.control().</p>
+<p>The landmark gating approach has been adapted from flowstate. This
+uses cellular “landmarks” to identify the position of key populations on
+forward and side-scatter. Essentially, we backgate. This means that you
+can use well-expressed markers on known cell populations (think CD3,
+CD19, CD14) to define the location of your cells. This is fast, appears
+to be pretty robust, and should be easy for you, the user, to change how
+it works. Control over this is provided via the CSV control file
+spreadsheet using two new columns: “gate.name” to define which controls
+should share the same gate, and “gate.define” (TRUE/FALSE) to specify
+which samples should be used to define the gate boundaries (e.g., we
+might use CD4 but not TIM-3 or IL-4).</p>
+<p>In order for the landmark approach to work, at least one sample used
+to define the gate must be stained (a single-stained control). Otherwise
+we don’t have any landmarks to find. The density-based gating system
+does not have this limitation. However, you can create a landmark-based
+gate using one or more single-stained control files, and apply the
+resulting gate to one or more unstained samples. This is controlled
+using the <code>gate.define</code> and <code>gate.name</code> columns in
+the control file.</p>
 <div class="section level3">
 <h3 id="preparing-the-control-file">1. Preparing the Control File<a class="anchor" aria-label="anchor" href="#preparing-the-control-file"></a>
 </h3>

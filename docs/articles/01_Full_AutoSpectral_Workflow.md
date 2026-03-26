@@ -243,6 +243,14 @@ viability-e780 (cells) for dead cells, and we can define a fourth gate
 on all of the stained bead samples, which will all be in the same
 position since they are beads.
 
+In order for the landmark approach to work, at least one sample used to
+define the gate must be stained (a single-stained control). Otherwise we
+don’t have any landmarks to find. The density-based gating system does
+not have this limitation. However, you can create a landmark-based gate
+using one or more single-stained control files, and apply the resulting
+gate to one or more unstained samples. This is controlled using the
+`gate.define` and `gate.name` columns in the control file.
+
 *Note*: I expect to provide a little more automated assistance in future
 version for filling in this part of the control file.
 

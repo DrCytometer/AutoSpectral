@@ -110,6 +110,8 @@ Now we can choose which samples we want to use to define the gate boundaries. Th
 
 If you want to get fancier about it, you can choose which samples you use to define the gates. This can be helpful if some samples are "better" than others. It is particularly useful when using the "landmarks" gating system. This system finds the brightest positive events in the expected peak channel for the sample(s) and uses those to define the boundary. This means that you can use your anti-CD3 or anti-CD4-stained sample to define the boundary of the lymphocyte region based on where the CD3+ or CD4+ cells are. For today's example, we will use the landmark gating system. We can define one gate using our CD4-BV421 (cells) and apply it to the CD45 BUV395 (cells) as well for lymphocytes. We can define a second gate using our CD11b-BUV805 (cells) for the myeloid cells. We can define a third gate using our viability-e780 (cells) for dead cells, and we can define a fourth gate on all of the stained bead samples, which will all be in the same position since they are beads.
 
+In order for the landmark approach to work, at least one sample used to define the gate must be stained (a single-stained control). Otherwise we don't have any landmarks to find. The density-based gating system does not have this limitation. However, you can create a landmark-based gate using one or more single-stained control files, and apply the resulting gate to one or more unstained samples. This is controlled using the `gate.define` and `gate.name` columns in the control file.
+
 *Note*: I expect to provide a little more automated assistance in future version for filling in this part of the control file.
 
 Now our control file looks like this:

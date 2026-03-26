@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -199,11 +199,7 @@ gotten around to removing that dependency yet.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">asp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.autospectral.param.html">get.autospectral.param</a></span><span class="op">(</span> cytometer <span class="op">=</span> <span class="st">"s8"</span> <span class="op">)</span></span>
 <span><span class="va">omip102.file</span> <span class="op">&lt;-</span> <span class="st">"~/AutoSpectral_data/S8_data/BP0323502_1.fcs"</span></span>
-<span><span class="va">omip102.ff</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span> <span class="fu">flowCore</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/flowCore/man/read.FCS.html" class="external-link">read.FCS</a></span><span class="op">(</span> <span class="va">omip102.file</span>, </span>
-<span>                                          transformation <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>                                          truncate_max_range <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>                                          emptyValue <span class="op">=</span> <span class="cn">FALSE</span> <span class="op">)</span> <span class="op">)</span></span>
-<span><span class="va">omip102.data</span> <span class="op">&lt;-</span> <span class="fu">flowCore</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Biobase/man/exprs.html" class="external-link">exprs</a></span><span class="op">(</span> <span class="va">omip102.ff</span> <span class="op">)</span></span></code></pre></div>
+<span><span class="va">omip102.data</span> <span class="op">&lt;-</span> <span class="fu">AutoSpectral</span><span class="fu">::</span><span class="fu"><a href="../reference/readFCS.html">readFCS</a></span><span class="op">(</span> <span class="va">omip102.file</span> <span class="op">)</span></span></code></pre></div>
 <p>Now we can call the plotting function:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/create.biplot.html">create.biplot</a></span><span class="op">(</span> <span class="va">omip102.data</span>,</span>

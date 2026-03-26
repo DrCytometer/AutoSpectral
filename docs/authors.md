@@ -13,13 +13,13 @@ Source:
 [`DESCRIPTION`](https://github.com/DrCytometer/AutoSpectral/blob/HEAD/DESCRIPTION)
 
 Burton O, Liston A (2026). *AutoSpectral: Tools for Unmixing Spectral
-Flow Cytometry Data*. R package version 1.5.1,
+Flow Cytometry Data*. R package version 1.5.2,
 <https://github.com/DrCytometer/AutoSpectral>.
 
     @Manual{,
       title = {AutoSpectral: Tools for Unmixing Spectral Flow Cytometry Data},
       author = {Oliver Burton and Adrian Liston},
       year = {2026},
-      note = {R package version 1.5.1},
+      note = {R package version 1.5.2},
       url = {https://github.com/DrCytometer/AutoSpectral},
     }

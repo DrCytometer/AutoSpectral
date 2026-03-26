@@ -15,6 +15,11 @@ In previous articles, we explored the default automated density-based gating. Wh
 
 AutoSpectral 1.5.0 introduces a "Landmarks" gating system and a suite of tuning tools. This article covers how to use tune.gate(), define.gate.landmarks(), and define.gate.density() to pre-define your gates before processing your experiment with define.flow.control().
 
+The landmark gating approach has been adapted from flowstate. This uses cellular "landmarks" to identify the position of key populations on forward and side-scatter. Essentially, we backgate. This means that you can use well-expressed markers on known cell populations (think CD3, CD19, CD14) to define the location of your cells. This is fast, appears to be pretty robust, and should be easy for you, the user, to change how it works. Control over this is provided via the CSV control file spreadsheet using two new columns: "gate.name" to define which controls should share the same gate, and "gate.define" (TRUE/FALSE) to specify which samples should be used to define the gate boundaries (e.g., we might use CD4 but not TIM-3 or IL-4).
+
+In order for the landmark approach to work, at least one sample used to define the gate must be stained (a single-stained control). Otherwise we don't have any landmarks to find. The density-based gating system does not have this limitation. However, you can create a landmark-based gate using one or more single-stained control files, and apply the resulting gate to one or more unstained samples. This is controlled using the `gate.define` and `gate.name` columns in the control file.
+
+
 ## 1. Preparing the Control File
 To use these advanced functions, your control.def.file (the CSV defining your samples) needs two specific columns:
 

@@ -5,8 +5,8 @@
 Here are my recommendations for preparing the controls. These are not
 substantially different from the recommendations from [Mario
 Roederer](https://currentprotocols.onlinelibrary.wiley.com/doi/10.1002/0471142956.cy0114s22)
-over twenty years ago, or those from \[Laura
-Ferrer-Font\](<https://currentprotocols.onlinelibrary.wiley.com/doi/full/10.1002/cpz1.222>.
+over twenty years ago, or those from [Laura
+Ferrer-Font](https://currentprotocols.onlinelibrary.wiley.com/doi/full/10.1002/cpz1.222).
 One aspect that I would emphasize, is to take care in your panel design
 to avoid generating situations where it is difficult to produce good
 controls. One key area is with tandem dyes. Since tandem dyes are

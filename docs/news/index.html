@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,6 +49,23 @@
       <small>Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.2" id="autospectral-152-2026-03-26">AutoSpectral 1.5.2 (2026-03-26)<a class="anchor" aria-label="anchor" href="#autospectral-152-2026-03-26"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-1-5-2">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-5-2"></a></h3>
+<ul><li>A patch for <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> to better handle situations where a given AF spectrum is essentially inverted, with the greatest magnitude signal being negative. This occurs occasionally on the FACSDiscover S8 and A8 cytometers. The spectra will now be kept as negative, since this provides better unmixing, empirically. For the plotting, any negative spectra will be inverted to avoid issues with scaling.</li>
+<li>A patch for <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> to exclude plotting of the unmixed data on biplots when only a single fluorophore is being unmixed (so only one axis can be drawn).</li>
+<li>Exclusion of a problematic keyword from BD FACSDiscover files. This affects <code><a href="../reference/define.keywords.html">define.keywords()</a></code>, which updates the keywords after unmixing. Files were being produced, but the keyword headers were corrupted.</li>
+<li>Rearrange the arguments for <code><a href="../reference/tune.gate.html">tune.gate()</a></code>, <code><a href="../reference/define.gate.landmarks.html">define.gate.landmarks()</a></code> and also <code><a href="../reference/define.gate.density.html">define.gate.density()</a></code> to put the <code>gate.name</code> argument earlier. The default value for <code>gate.name</code> has been removed because the user should be providing this.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.1" id="autospectral-151-2026-03-26">AutoSpectral 1.5.1 (2026-03-26)<a class="anchor" aria-label="anchor" href="#autospectral-151-2026-03-26"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-1-5-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-5-1"></a></h3>
+<ul><li>A patch for <code><a href="../reference/get.spectral.variants.html">get.spectral.variants()</a></code> to resolve an issue that occurred when only a single fluorophore was being assessed.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.5.0" id="autospectral-150-2026-03-25">AutoSpectral 1.5.0 (2026-03-25)<a class="anchor" aria-label="anchor" href="#autospectral-150-2026-03-25"></a></h2>
 <div class="section level3">

@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Recommendations for controls
 
-Here are my recommendations for preparing the controls. These are not substantially different from the recommendations from [Mario Roederer](https://currentprotocols.onlinelibrary.wiley.com/doi/10.1002/0471142956.cy0114s22) over twenty years ago, or those from [Laura Ferrer-Font](https://currentprotocols.onlinelibrary.wiley.com/doi/full/10.1002/cpz1.222. One aspect that I would emphasize, is to take care in your panel design to avoid generating situations where it is difficult to produce good controls. One key area is with tandem dyes. Since tandem dyes are particularly prone to mismatch between the controls and the fully stained sample, minimize the total amount of signal from tandems in your panel to minimize the total error. By this, I mean things like not putting PE-Cy7 on CD45RA.
+Here are my recommendations for preparing the controls. These are not substantially different from the recommendations from [Mario Roederer](https://currentprotocols.onlinelibrary.wiley.com/doi/10.1002/0471142956.cy0114s22) over twenty years ago, or those from [Laura Ferrer-Font](https://currentprotocols.onlinelibrary.wiley.com/doi/full/10.1002/cpz1.222). One aspect that I would emphasize, is to take care in your panel design to avoid generating situations where it is difficult to produce good controls. One key area is with tandem dyes. Since tandem dyes are particularly prone to mismatch between the controls and the fully stained sample, minimize the total amount of signal from tandems in your panel to minimize the total error. By this, I mean things like not putting PE-Cy7 on CD45RA.
 
 * Use cells whenever it’s easy (e.g., CD4, CD14)
 * Use cells if the marker is highly expressed (bright)

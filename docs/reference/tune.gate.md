@@ -9,6 +9,7 @@ tune.gate(
   control.file,
   control.dir,
   asp,
+  gate.name,
   n.cells = c(100, 500, 2000),
   percentiles = c(30, 50, 70),
   grid.n = 100,
@@ -18,7 +19,6 @@ tune.gate(
   fsc.lims = NULL,
   ssc.lims = NULL,
   output.dir = "./figure_gate_tuning",
-  gate.name = "cell_gate",
   filename = "gate_tuning",
   color.palette = "mako",
   boundary.color = "red",
@@ -44,6 +44,12 @@ tune.gate(
 
   The AutoSpectral parameter list defined using
   `get.autospectral.param`.
+
+- gate.name:
+
+  Character, name for the gate. Useful for distinguishing gates when you
+  have multiple types. Must match one string (name) in the `gate.name`
+  column of the `control.file`.
 
 - n.cells:
 
@@ -104,11 +110,6 @@ tune.gate(
 
   File path where you want to save the results. Default is
   `./figure_gate_tuning`.
-
-- gate.name:
-
-  Character, name for the gate. Useful for distinguishing gates when you
-  have multiple types. Default is `cell_gate`.
 
 - filename:
 

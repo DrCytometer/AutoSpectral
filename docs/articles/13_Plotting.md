@@ -168,11 +168,7 @@ around to removing that dependency yet.
 ``` r
 asp <- get.autospectral.param( cytometer = "s8" )
 omip102.file <- "~/AutoSpectral_data/S8_data/BP0323502_1.fcs"
-omip102.ff <- suppressWarnings( flowCore::read.FCS( omip102.file, 
-                                          transformation = FALSE,
-                                          truncate_max_range = FALSE,
-                                          emptyValue = FALSE ) )
-omip102.data <- flowCore::exprs( omip102.ff )
+omip102.data <- AutoSpectral::readFCS( omip102.file )
 ```
 
 Now we can call the plotting function:

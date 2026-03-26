@@ -20,6 +20,7 @@ define.gate.density(
   control.file,
   control.dir,
   asp,
+  gate.name,
   gating.params = NULL,
   n.cells = NULL,
   grid.n = NULL,
@@ -35,7 +36,6 @@ define.gate.density(
   ssc.search.min = NULL,
   ssc.search.max = NULL,
   output.dir = "./figure_gate",
-  gate.name = "cell_gate",
   filename = "density_gate_definition_",
   color.palette = "plasma",
   boundary.color = "black",
@@ -63,6 +63,12 @@ define.gate.density(
 
   The AutoSpectral parameter list defined using
   `get.autospectral.param`.
+
+- gate.name:
+
+  Character, name for the gate. Useful for distinguishing gates when you
+  have multiple types. Must match one string (name) in the `gate.name`
+  column of the `control.file`.
 
 - gating.params:
 
@@ -162,11 +168,6 @@ define.gate.density(
 
   File path where you want to save the results. Default is
   `./figure_gate`.
-
-- gate.name:
-
-  Character, name for the gate. Useful for distinguishing gates when you
-  have multiple types. Default is `cell_gate`.
 
 - filename:
 
