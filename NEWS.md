@@ -1,3 +1,28 @@
+# AutoSpectral 1.5.2 (2026-03-26)
+
+## Bug fixes
+- A patch for `get.af.spectra()` to better handle situations where a given AF
+spectrum is essentially inverted, with the greatest magnitude signal being negative.
+This occurs occasionally on the FACSDiscover S8 and A8 cytometers. The spectra
+will now be kept as negative, since this provides better unmixing, empirically.
+For the plotting, any negative spectra will be inverted to avoid issues with 
+scaling.
+- A patch for `get.af.spectra()` to exclude plotting of the unmixed data on biplots
+when only a single fluorophore is being unmixed (so only one axis can be drawn).
+- Exclusion of a problematic keyword from BD FACSDiscover files. This affects
+`define.keywords()`, which updates the keywords after unmixing. Files were being
+produced, but the keyword headers were corrupted.
+- Rearrange the arguments for `tune.gate()`, `define.gate.landmarks()` and also
+`define.gate.density()` to put the `gate.name` argument earlier. The default value
+for `gate.name` has been removed because the user should be providing this.
+
+# AutoSpectral 1.5.1 (2026-03-26)
+
+## Bug fixes
+- A patch for `get.spectral.variants()` to resolve an issue that occurred when 
+only a single fluorophore was being assessed.
+
+
 # AutoSpectral 1.5.0 (2026-03-25)
 
 ## Improvements

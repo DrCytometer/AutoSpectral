@@ -1,7 +1,7 @@
 Package: AutoSpectral
 Type: Package
 Title: Tools for Unmixing Spectral Flow Cytometry Data
-Version: 1.5.1
+Version: 1.5.2
 Authors@R: c(
     person(
       "Oliver", "Burton",

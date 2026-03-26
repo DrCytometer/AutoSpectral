@@ -80,11 +80,13 @@ What AutoSpectral cannot do:
 - Fix bad controls. If you have two colors in your “single-color”
   sample, it probably won’t work (see control cleaning, though). If you
   have no signal, it won’t work. If your controls were run on a
-  different machine, with different instrument settings or using a
-  different antibody/fluorophore, it won’t work well. Note that this is
-  likely to affect ID7000 samples, where Sony suggests running the
-  controls on one set of voltages and the samples on another. I haven’t
-  put any time into figuring out how that works yet.
+  different machine, that won’t work. If your controls were acquired
+  with different instrument settings or using a different
+  antibody/fluorophore, it may not work well. Note that this is likely
+  to affect ID7000 samples, where Sony suggests running the controls on
+  one set of voltages and the samples on another. I haven’t put any time
+  into figuring out how that works yet. It may well be that the unmixing
+  with AutoSpectral works fine in this situation.
 - Fix poor panel design. If you have unmixing spread from using BV785
   and BV786 in combination, AutoSpectral won’t fix that. If you’re using
   BB515 and FITC, it’ll probably help quite a bit, though.
@@ -105,7 +107,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.5.1**
+**Version 1.5.2**
 
 Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and
