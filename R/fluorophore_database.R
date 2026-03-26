@@ -10,6 +10,7 @@
 #' - `synonym1`: Fluorophore synonym 1
 #' - `synonym2`: Fluorophore synonym 2
 #' - `synonym3`: Fluorophore synonym 3
+#' - `synonym4`: Fluorophore synonym 4
 #' - `channel.Aurora`: Peak channels for fluorophores on the 5-laser Aurora
 #' - `channel.NL`: Peak channels for fluorophores on the 3-laser Aurora
 #' - `channel.ID7000`: Peak channels for fluorophores on the 5-laser ID7000

@@ -25,7 +25,7 @@ match.fluorophores <- function( control.filenames, fluorophore.database ) {
     fluorophore <- character( 0 )
 
     # Columns to check in order of priority
-    fluor.cols <- c( "fluorophore", "synonym1", "synonym2", "synonym3" )
+    fluor.cols <- c( "fluorophore", "synonym1", "synonym2", "synonym3", "synonym4" )
 
     for ( col in fluor.cols ) {
       vals <- fluorophore.database[[ col ]]
