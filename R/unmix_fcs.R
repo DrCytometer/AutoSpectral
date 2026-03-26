@@ -296,8 +296,18 @@ unmix.fcs <- function(
     base <- sub( "-A$", "", ch )
     other.channels <- setdiff( other.channels, paste0( base, c( "-H", "-W" ) ) )
   }
-  if ( grepl("Discover", asp$cytometer ) && !include.imaging ) {
+  # retain raw spectral data if desired
+  if ( include.raw ) other.channels <- c( other.channels, spectral.channel )
+
+  # discard imaging unless otherwise specified
+  if ( grepl( "Discover", asp$cytometer ) && !include.imaging ) {
     other.channels <- intersect( other.channels, asp$time.and.scatter )
+  }
+
+  # discard FL channels from Xenith unless specified
+  if ( grepl( "Xenith", asp$cytometer ) && !include.raw ) {
+    keep.regex <- paste( asp$time.and.scatter, collapse = "|" )
+    other.channels <- other.channels[ grepl( keep.regex, other.channels, ignore.case = TRUE ) ]
   }
 
   # set multithreading
@@ -456,8 +466,8 @@ unmix.fcs <- function(
     }
 
     # store in Pre-allocated Matrix
-    final.matrix[ s.row:e.row, 1:ncol( chunk.other ) ] <- chunk.other
-    final.matrix[ s.row:e.row, ( ncol( chunk.other ) + 1 ):cols.n ] <- unmixed.chunk
+    final.matrix[ s.row:e.row, colnames(chunk.other) ] <- chunk.other
+    final.matrix[ s.row:e.row, colnames(unmixed.chunk) ] <- unmixed.chunk
 
     # cleanup memory immediately
     rm( chunk.data, chunk.spectral, chunk.other, unmixed.chunk )

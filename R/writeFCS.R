@@ -34,6 +34,7 @@ writeFCS <- function(mat, keys, file.name, output.dir) {
   keys[['$PAR']] <- as.character(ncol(mat))
   keys[['$DATATYPE']] <- 'F'
   keys[['$BYTEORD']] <- '1,2,3,4'
+  keys[['$NEXTDATA']] <- '0'
 
   # Start with 0 placeholders
   keys[['$BEGINDATA']] <- "0"

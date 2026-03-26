@@ -28,8 +28,7 @@ get.autospectral.param.a5se <- function( autosp.param )
   autosp.param$expr.data.min <- -111
 
   # This should be 262144, but the A5SE appears to record data well above this
-  # so we will extend the window to better capture positives in the controls
-  autosp.param$expr.data.max <- 2621440
+  autosp.param$expr.data.max <- 262144
 
   autosp.param$default.scatter.parameter <- c( "FSC-A", "SSC-A" )
 

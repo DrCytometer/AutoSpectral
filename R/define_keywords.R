@@ -39,13 +39,16 @@ define.keywords <- function(
     file.name,
     weights = NULL,
     spectral.channel = NULL
-  ) {
+) {
 
   # Identify non-parameter keywords
   non.param.keys <- fcs.keywords[!grepl("^\\$?P\\d+", names(fcs.keywords))]
   if (asp$cytometer == "Mosaic") {
     non.param.keys <- non.param.keys[!grepl("^\\$?CH\\d+", names(non.param.keys))]
   }
+  non.param.keys <- non.param.keys[!names(non.param.keys) %in% c(
+    "BDCHORUSDATARECORD"
+  )]
 
   # Build parameter lookup from original file
   pN.keys <- grep("^\\$?P\\d+N$", names(fcs.keywords), value = TRUE)
@@ -91,10 +94,19 @@ define.keywords <- function(
       # Existing parameters (Scatter, Time, etc.)
     } else if (p.name %in% names(param.lookup)) {
       old.entry <- param.lookup[[p.name]]
-      # Rename all keywords for this parameter to the new index 'i'
-      new.names <- gsub("^\\$?P\\d+", p.prefix, names(old.entry))
-      for (k in seq_along(old.entry)) {
-        param.keywords[[new.names[k]]] <- old.entry[[k]]
+      # whitelist keywords
+      keep.fields <- c("N", "S", "B", "E", "R", "G", "V", "DISPLAY", "TYPE" )
+
+      old.names <- names(old.entry)
+      field.types <- sub("^\\$?P\\d+", "", old.names)
+
+      keep.idx <- field.types %in% keep.fields
+
+      filtered.entry <- old.entry[keep.idx]
+      new.names <- paste0(p.prefix, field.types[keep.idx])
+
+      for (k in seq_along(filtered.entry)) {
+        param.keywords[[new.names[k]]] <- filtered.entry[[k]]
       }
 
       # New Unmixed Fluorophores
@@ -124,6 +136,15 @@ define.keywords <- function(
 
   # Combine everything
   new.keywords <- utils::modifyList(non.param.keys, param.keywords)
+
+  # if other aspects of FCS3.2 keywords prove problematic, activate this section:
+  #sanitize.value <- function(x) {
+  #  x <- as.character(x)
+  #  x <- gsub("\\|", "/", x)   # replace delimiter
+  #  x <- gsub("[\r\n]", " ", x) # remove line breaks
+  #  x
+  #}
+  #new.keywords <- lapply(new.keywords, sanitize.value)
 
   # Add package versions
   asp.ver <- as.character(utils::packageVersion("AutoSpectral"))
