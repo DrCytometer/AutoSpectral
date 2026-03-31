@@ -71,7 +71,7 @@ assign.af.fluorophores <- function(
     # adjusted fluorophore values for all cells using variant i
     adjusted.fluors <- unmixed - ( k_i %*% v_i )
 
-    # worst-case' scenario: sum of absolute fluorophore signals
+    # worst-case scenario: sum of absolute fluorophore signals
     error.matrix[ , i ] <- rowSums( abs( adjusted.fluors ) )
   }
 
