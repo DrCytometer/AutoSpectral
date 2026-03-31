@@ -58,8 +58,8 @@ qc.af.spectra <- function(
     sim.pairs[ af ] <- colnames( sim.matrix )[ most.similar ]
   }
 
-  # identify any above 0.995
-  contaminants <- which( sim.values > 0.995 ) # test this on some data sets
+  # identify any above 0.95
+  contaminants <- which( sim.values > 0.99 ) # test this on some data sets
   contaminant.n <- length( contaminants )
 
   # if any, remove
@@ -123,7 +123,7 @@ qc.af.spectra <- function(
     )
 
     # remove problematic AF spectra
-    af.spectra <- af.spectra[ which( sim.values < 0.995 ), , drop = FALSE ]
+    af.spectra <- af.spectra[ which( sim.values < 0.99 ), , drop = FALSE ]
   }
 
   # return only dissimilar af.spectra
