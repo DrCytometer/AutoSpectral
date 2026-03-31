@@ -107,7 +107,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.5.2**
+**Version 1.5.3**
 
 Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and

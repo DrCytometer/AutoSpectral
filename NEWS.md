@@ -1,3 +1,11 @@
+# AutoSpectral 1.5.2 (2026-03-31)
+
+## Bug fixes
+- A patch to allow per-cell fluorophore optimization when only a single fluorophore
+is present in the data. This was being blocked by checks on the structure of the
+spectral variants being passed.
+
+
 # AutoSpectral 1.5.2 (2026-03-26)
 
 ## Bug fixes
