@@ -9,13 +9,13 @@ match.fluorophores(control.filenames, fluorophore.database)
 \arguments{
 \item{control.filenames}{Vector of control filenames.}
 
-\item{fluorophore.database}{Data frame containing fluorophore information,
-including synonyms.}
+\item{fluorophore.database}{Data frame containing fluorophore information.}
 }
 \value{
 A named vector of matched fluorophores for each control filename.
 }
 \description{
 This function matches control filenames to fluorophores in the fluorophore
-database, including synonyms, and returns the matched fluorophores.
+database, including synonyms, and returns the matched fluorophores based on
+the longest character match to ensure specificity.
 }

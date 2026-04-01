@@ -5,6 +5,7 @@
 is present in the data. This was being blocked by checks on the structure of the
 spectral variants being passed.
 - Change to only create output folders on an as-needed basis.
+- Improve fluorophore matching to take the longest fluorophore name found
 
 
 # AutoSpectral 1.5.2 (2026-03-26)
