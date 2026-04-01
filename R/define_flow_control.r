@@ -280,8 +280,8 @@ define.flow.control <- function(
     asp$data.step
 
   # create figure and table directories
-  if ( verbose ) message( "\033[34mCreating output folders \033[0m" )
-  create.directory( asp )
+  #if ( verbose ) message( "\033[34mCreating output folders \033[0m" )
+  # create.directory( asp )
 
   # Ensure flow.file.name and other vectors match the expanded control.table
   flow.file.name <- control.table$filename
@@ -291,6 +291,9 @@ define.flow.control <- function(
 
   if ( gate ) {
     if ( verbose ) message( "\033[34mDefining gates \033[0m" )
+
+    if ( !dir.exists( asp$figure.gate.dir ) ) dir.create( asp$figure.gate.dir )
+
     unique.names <- unique( control.table$gate.name )
 
     for ( g.name in unique.names ) {

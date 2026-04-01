@@ -178,6 +178,11 @@ get.fluorophore.spectra <- function(
   if ( figures ) {
     message( paste0( "\033[32m", "Plotting figures", "\033[0m" ) )
 
+    # create output folders
+    if ( !dir.exists( asp$figure.spectra.dir ) ) dir.create( asp$figure.spectra.dir )
+    if ( !dir.exists( asp$figure.similarity.heatmap.dir ) ) dir.create( asp$figure.similarity.heatmap.dir )
+
+
     fluorophore.spectra.plot <- marker.spectra
 
     if ( !is.null( af.spectra ) )
@@ -248,15 +253,14 @@ get.fluorophore.spectra <- function(
   }
 
   # save the spectra as a CSV file
-  if ( !is.null( asp$table.spectra.dir ) ) {
-    utils::write.csv(
-      marker.spectra,
-      file = file.path(
-        asp$table.spectra.dir,
-        paste0( title, "_", asp$spectra.file.name, ".csv" )
-      )
+  if ( !dir.exists( asp$table.spectra.dir ) ) dir.create( asp$table.spectra.dir )
+  utils::write.csv(
+    marker.spectra,
+    file = file.path(
+      asp$table.spectra.dir,
+      paste0( title, "_", asp$spectra.file.name, ".csv" )
     )
-  }
+  )
 
   # cosine similarity QC for controls
   similarity.matrix <- cosine.similarity( marker.spectra )
