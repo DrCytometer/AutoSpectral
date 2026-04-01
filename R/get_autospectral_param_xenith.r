@@ -36,9 +36,9 @@ get.autospectral.param.xenith <- function( autosp.param )
   autosp.param$default.transformation.param <- list(
           length = 256,
           max.range = 100000,
-          pos = 5.00,
+          pos = 4.00,
           neg = 0,
-          width = -20
+          width = -500
         )
 
   autosp.param$time.and.scatter <- c(
