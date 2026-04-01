@@ -41,8 +41,7 @@ save.unmixing.matrix <- function(
     color.palette = "mako"
   ) {
 
-  if ( figures & !dir.exists( output.dir ) )
-    dir.create( output.dir )
+  if ( figures & !dir.exists( output.dir ) ) dir.create( output.dir )
 
   spectra <- t( spectra )
 

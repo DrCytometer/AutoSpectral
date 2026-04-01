@@ -34,8 +34,7 @@ calculate.weights <- function(
     verbose = TRUE
   ) {
 
-  if ( save & !dir.exists( output.dir ) )
-    dir.create( output.dir )
+  if ( save & !dir.exists( output.dir ) ) dir.create( output.dir )
 
   # import FCS
   if ( verbose ) message( paste( "Reading FCS file:", fcs.file ) )

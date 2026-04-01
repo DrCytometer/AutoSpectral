@@ -49,8 +49,7 @@ cosine.similarity.plot <- function(
   else
     similarity.heatmap.filename <- paste0( filename, ".jpg" )
 
-  if ( !dir.exists( output.dir ) )
-    dir.create( output.dir )
+  if ( !dir.exists( output.dir ) ) dir.create( output.dir )
 
   # calculations
   similarity.matrix <- cosine.similarity( spectra )

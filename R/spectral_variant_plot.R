@@ -91,8 +91,7 @@ spectral.variant.plot <- function(
     if ( is.null( plot.width ) )
       plot.width <- max( ( ( length( detector.names ) - 1 ) / 64 * 12 ), 3 )
 
-    if ( !dir.exists( plot.dir ) )
-      dir.create( plot.dir )
+    if ( !dir.exists( plot.dir ) ) dir.create( plot.dir )
 
     ggsave(
       file.path( plot.dir, paste0( title, ".jpg" ) ),

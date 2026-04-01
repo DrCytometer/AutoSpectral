@@ -137,10 +137,8 @@ get.spectral.variants <- function(
     )
   }
 
-  if ( is.null( output.dir ) )
-    output.dir <- asp$variant.dir
-  if ( !dir.exists( output.dir ) )
-    dir.create( output.dir )
+  if ( is.null( output.dir ) ) output.dir <- asp$variant.dir
+  if ( !dir.exists( output.dir ) ) dir.create( output.dir )
 
   if ( som.dim > 20 ) {
     n.cells <- min( 5000, n.cells )
