@@ -1,13 +1,17 @@
 # AutoSpectral 1.5.3 (2026-03-31)
 
-## Bug fixes
-- A patch to allow per-cell fluorophore optimization when only a single fluorophore
-is present in the data. This was being blocked by checks on the structure of the
-spectral variants being passed.
+## Improvements
+
 - Change to only create output folders on an as-needed basis.
 - Improve fluorophore matching to take the longest fluorophore name found.
 - Fix Xenith transformation settings.
 - Add spectral references for the Xenith.
+
+## Bug fixes
+
+- A patch to allow per-cell fluorophore optimization when only a single fluorophore
+is present in the data. This was being blocked by checks on the structure of the
+spectral variants being passed.
 
 
 # AutoSpectral 1.5.2 (2026-03-26)
