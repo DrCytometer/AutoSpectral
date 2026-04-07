@@ -71,7 +71,6 @@ spectral.ribbon.plot <- function(
     plot.height = 10
 ) {
 
-
   # for user-provided data: list of data.frames/matrices to `data.list`
   if ( !is.null( data.list ) ) {
     data.frames <- lapply( data.list, function( df ) {
@@ -89,9 +88,7 @@ spectral.ribbon.plot <- function(
     if ( length( factor.names) != length( data.frames ) )
       stop( "Length of factor.names must match number of datasets in data.list." )
 
-    if ( is.null( figure.dir ) )
-      figure.dir <- asp$figure.spectral.ribbon.dir
-
+    if ( is.null( figure.dir ) ) figure.dir <- asp$figure.spectral.ribbon.dir
     if ( is.null( title ) & is.null( fluor.name ) )
       title <- paste( factor.names, collapse = "_" )
 
@@ -118,12 +115,8 @@ spectral.ribbon.plot <- function(
 
       if ( is.null( factor.names ) )
         factor.names <- c( fluor.name, paste( "Raw", fluor.name ), "Negative" )
-
-      if ( is.null( title ) )
-        title <- "Scatter match"
-
-      if ( is.null( figure.dir ) )
-        figure.dir <- asp$figure.spectral.ribbon.dir
+      if ( is.null( title ) ) title <- "Scatter match"
+      if ( is.null( figure.dir ) ) figure.dir <- asp$figure.spectral.ribbon.dir
 
     } else {
       # intrusive AF event cleaning
@@ -133,21 +126,20 @@ spectral.ribbon.plot <- function(
         removed.data[ , spectral.channel, drop = FALSE ]
       )
 
-      if ( is.null( factor.names ) )
+      if ( is.null( factor.names ) ) {
         factor.names <- c(
           paste( "Original", fluor.name ),
           paste( "Cleaned", fluor.name ),
           "Removed events"
         )
+      }
 
-      if ( is.null( title ) )
-        title <- "AF removal"
-
-      if ( is.null( figure.dir ) )
-        figure.dir <- asp$figure.clean.control.dir
-
+      if ( is.null( title ) ) title <- "AF removal"
+      if ( is.null( figure.dir ) ) figure.dir <- asp$figure.clean.control.dir
     }
   }
+
+  if ( !dir.exists( figure.dir ) ) dir.create( figure.dir )
 
   # labels
   names( data.frames ) <- factor.names
@@ -176,7 +168,7 @@ spectral.ribbon.plot <- function(
 
   ribbon.plot.long$channel <- factor(
     ribbon.plot.long$channel,
-    levels = unique( ribbon.plot.long$channel )
+    levels = spectral.channel
   )
 
   # setting scales and transformation
@@ -196,55 +188,44 @@ spectral.ribbon.plot <- function(
   )
 
   # create plot
-  ribbon.plot <- suppressWarnings(
-    ggplot(
-      ribbon.plot.long,
-      aes(
-        channel,
-        biexp.transform( value )
-      )
+  ribbon.plot <- ggplot(
+    ribbon.plot.long,
+    aes( channel, biexp.transform( value ) )
+  ) +
+    scale_y_continuous(
+      limits = biexp.transform(ribbon.limits),
+      breaks = biexp.transform(ribbon.breaks),
+      labels = ribbon.labels
     ) +
-      scale_y_continuous(
-        limits = biexp.transform(ribbon.limits),
-        breaks = biexp.transform(ribbon.breaks),
-        labels = ribbon.labels
-      ) +
-      geom_bin2d(
-        bins = c(
-          length(
-            unique(
-              ribbon.plot.long$channel
-            )
-          ),
-          asp$ribbon.bins
-        ),
-        boundary = 0.5
-      ) +
-      facet_wrap( ~group, ncol = 1 ) +
-      xlab( "Detector" ) +
-      ylab( "Intensity" ) +
-      theme_minimal() +
-      theme(
-        axis.text.x = element_text(
-          angle = asp$ribbon.plot.axis.text.angle,
-          vjust = 1,
-          hjust = 1
-        ),
-        panel.grid.minor = element_blank(),
-        legend.position = "none",
-        strip.text = element_text(
-          size = asp$ribbon.plot.strip.text.size,
-          face = asp$ribbon.plot.strip.text.face
-        )
+    geom_bin2d(
+      bins = c( length( unique( ribbon.plot.long$channel ) ), asp$ribbon.bins ),
+      boundary = 0.5,
+      na.rm = TRUE
+    ) +
+    facet_wrap( ~group, ncol = 1 ) +
+    xlab( "Detector" ) +
+    ylab( "Intensity" ) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(
+        angle = asp$ribbon.plot.axis.text.angle,
+        vjust = 1,
+        hjust = 1
+      ),
+      panel.grid.minor = element_blank(),
+      legend.position = "none",
+      strip.text = element_text(
+        size = asp$ribbon.plot.strip.text.size,
+        face = asp$ribbon.plot.strip.text.face
       )
-  )
+    )
 
   # color options
-  virids.colors <- c(
+  viridis.colors <- c(
     "magma", "inferno", "plasma", "viridis",
     "cividis", "rocket", "mako", "turbo"
-    )
-  if ( color.palette %in% virids.colors ) {
+  )
+  if ( color.palette %in% viridis.colors ) {
     ribbon.plot <- ribbon.plot +
       scale_fill_viridis_c( option = color.palette )
   } else {
@@ -262,23 +243,20 @@ spectral.ribbon.plot <- function(
       sep = "_"
     )
 
-    suppressWarnings(
-      ggsave(
-        ribbon.plot.filename,
-        plot = ribbon.plot,
-        device = ragg::agg_jpeg,
-        path = figure.dir,
-        width = plot.width,
-        height = plot.height,
-        limitsize = FALSE,
-        create.dir = TRUE
-      )
+    ggsave(
+      ribbon.plot.filename,
+      plot = ribbon.plot,
+      device = ragg::agg_jpeg,
+      path = figure.dir,
+      width = plot.width,
+      height = plot.height,
+      limitsize = FALSE,
+      create.dir = TRUE
     )
 
-    if ( !is.null( data.list ) )
-      suppressWarnings( print( ribbon.plot ) )
+    if ( !is.null( data.list ) ) return( ribbon.plot )
 
   } else {
-    suppressWarnings( print( ribbon.plot ) )
+    return( ribbon.plot )
   }
 }
