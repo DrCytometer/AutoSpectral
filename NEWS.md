@@ -1,3 +1,16 @@
+# AutoSpectral 1.5.4 (2026-04-13)
+
+## Improvements
+
+- More fluorophores.
+- More markers.
+
+## Bug fixes
+
+- A change to `validate.control.file()` to permit duplication of the unstained
+samples in the control file. Necessary for integration with the new `AutoSpectralHelper`
+app.
+
 # AutoSpectral 1.5.3 (2026-03-31)
 
 ## Improvements
