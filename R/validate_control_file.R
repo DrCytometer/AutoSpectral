@@ -108,8 +108,7 @@ validate.control.file <- function(
     # unstained controls when multiple gate groups are needed. Any other
     # duplicated filename is still an error.
     dup.idx      <- duplicated( ct$filename ) | duplicated( ct$filename, fromLast = TRUE )
-    dup.fluor    <- ct$fluorophore[ dup.idx ]
-    is.neg.fluor <- grepl( "^AF$|negative", dup.fluor, ignore.case = TRUE )
+    is.neg.fluor <- grepl( "^AF$|negative", ct$fluorophore, ignore.case = TRUE )
     bad.dups     <- dup.idx & !is.neg.fluor
     if ( any( bad.dups, na.rm = TRUE ) ) {
       issues[[ length( issues ) + 1 ]] <-
