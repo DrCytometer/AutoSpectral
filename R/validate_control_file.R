@@ -103,11 +103,23 @@ validate.control.file <- function(
   }
 
   if ( any( duplicated( ct$filename ) ) ) {
-    issues[[ length( issues ) + 1 ]] <-
-      .new_issue( "error", "duplicate_filename",
-                  filename = ct$filename[ duplicated( ct$filename ) ],
-                  column = "filename",
-                  message = "Duplicate filenames detected" )
+    # Duplicate filenames are permitted when fluorophore is "AF" or contains
+    # "negative" (case-insensitive). assign.gates() legitimately replicates
+    # unstained controls when multiple gate groups are needed. Any other
+    # duplicated filename is still an error.
+    dup.idx      <- duplicated( ct$filename ) | duplicated( ct$filename, fromLast = TRUE )
+    dup.fluor    <- ct$fluorophore[ dup.idx ]
+    is.neg.fluor <- grepl( "^AF$|negative", dup.fluor, ignore.case = TRUE )
+    bad.dups     <- dup.idx & !is.neg.fluor
+    if ( any( bad.dups, na.rm = TRUE ) ) {
+      issues[[ length( issues ) + 1 ]] <-
+        .new_issue( "error", "duplicate_filename",
+                    filename = ct$filename[ bad.dups ],
+                    column   = "filename",
+                    message  = paste( "Duplicate filenames detected.",
+                                      "Only AF/Negative duplicates are permitted",
+                                      "(used for multi-gate universal negatives)." ) )
+    }
   }
 
   bad.ext <- !grepl( "\\.fcs$", ct$filename, ignore.case = TRUE )
