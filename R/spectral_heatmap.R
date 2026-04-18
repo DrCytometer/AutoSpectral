@@ -93,14 +93,7 @@ spectral.heatmap <- function(
     levels = col.levels
   )
 
-  heatmap.plot <- ggplot(
-    heatmap.long,
-    aes(
-      Detector,
-      Fluorophore,
-      fill = value
-      )
-    ) +
+  heatmap.plot <- ggplot( heatmap.long, aes( Detector, Fluorophore, fill = value ) ) +
     geom_tile() +
     theme_classic() +
     coord_fixed( ratio = 1 ) +
