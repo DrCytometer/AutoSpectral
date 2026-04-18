@@ -33,9 +33,7 @@ extracted.
 Reads an Experiment (.Expt) file from SpectroFlo and extracts the spillover
 matrix that was used for the unmixing. Note that the information stored in the
 SpectroFlo .Expt files for spillover is sometimes perfect for unmixing and is
-at other times very odd. I do not currently know why this is, but it may
-relate to the way the software updates the spectral profiles using the QC
-information. If so, spectra extracted using \code{read.spectroflo.expt()} are only
-likely to be accurate when the .Expt file has been last opened on the
-instrument used to acquire the sames, not an offline copy.
+at other times very odd. Unfortunately, it appears the information on spillover
+values is not always accurately encoded in the .Expt files, so this function
+may be deprecated going forward.
 }
