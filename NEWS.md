@@ -1,3 +1,16 @@
+# AutoSpectral 1.5.5 (2026-04-8)
+
+## Improvements
+
+- More fluorophores.
+- More A5SE spectral signatures.
+
+## Bug fixes
+
+- Spectral normalization to the peak channel (L-inf) when reading spectral profiles
+from BD S8/A8 FCS files.
+
+
 # AutoSpectral 1.5.4 (2026-04-13)
 
 ## Improvements
@@ -10,6 +23,7 @@
 - A change to `validate.control.file()` to permit duplication of the unstained
 samples in the control file. Necessary for integration with the new `AutoSpectralHelper`
 app.
+
 
 # AutoSpectral 1.5.3 (2026-03-31)
 
