@@ -183,7 +183,7 @@ tune.gate <- function(
 
     # set seed and sample
     if ( nrow( scatter.data ) > max.event.n ) {
-      set.seed( 42 )
+      set.seed( asp$gate.downsample.seed )
       scatter.data <- scatter.data[ sample( nrow( scatter.data ), max.event.n ), ]
     }
     return( scatter.data )

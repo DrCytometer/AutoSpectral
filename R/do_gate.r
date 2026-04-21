@@ -264,7 +264,7 @@ do.gate <- function(
   bw <- apply( gate.data[ gate.region.data.idx, ], 2, bandwidth.nrd )
   bw[ bw == 0 ] <- 0.1
 
-  if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
+  if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
        "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
        length( gate.region.data.idx ) > 10000 ) {
     # use C++ functions if available

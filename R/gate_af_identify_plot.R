@@ -52,7 +52,7 @@ gate.af.identify.plot <- function(
   # downsample (faster plotting)
   if ( nrow( gate.data ) > max.points ) {
     # random sampling
-    set.seed( 42 )
+    set.seed( asp$gate.downsample.seed )
     valid.idx <- sample( seq_len( nrow( gate.data ) ), max.points )
     gate.data <- gate.data[ valid.idx, ]
   }

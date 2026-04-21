@@ -255,7 +255,7 @@ get.fluor.variants <- function(
 
       # get background on up to 10k events
       if ( nrow( neg.data ) > asp$gate.downsample.n.beads ) {
-        set.seed( 42 )
+        set.seed( asp$gate.downsample.seed )
         neg.idx <- sample( nrow( neg.data ), asp$gate.downsample.n.beads )
         background <- apply( neg.data[ neg.idx, ], 2, stats::median )
       } else {
@@ -267,7 +267,7 @@ get.fluor.variants <- function(
 
       if ( length( neg.idx ) > asp$gate.downsample.n.beads ) {
         # downsample if lots of events
-        set.seed( 42 )
+        set.seed( asp$gate.downsample.seed )
         neg.idx <- sample( neg.idx, asp$gate.downsample.n.beads )
         background <- apply( pos.data[ neg.idx, spectral.channel ], 2, stats::median )
 
@@ -316,7 +316,7 @@ get.fluor.variants <- function(
     som.dim <- max( 2, floor( sqrt( event.n / 3 ) ) )
 
   # cluster using both unmixed and raw data as input for better discrimination
-  set.seed( 42 )
+  set.seed( asp$gate.downsample.seed )
   map <- FlowSOM::SOM(
     som.input,
     xdim = som.dim,
@@ -568,7 +568,7 @@ get.fluor.variants <- function(
     som.dim <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
 
     # cluster only the problematic data
-    set.seed( 42 )
+    set.seed( asp$gate.downsample.seed )
     map.error <- FlowSOM::SOM(
       spill.ratios,
       xdim = som.dim,

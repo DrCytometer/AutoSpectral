@@ -148,7 +148,7 @@ get.af.spectra <- function(
   }
 
   # map to SOM (no metaclustering)
-  set.seed( 42 )
+  set.seed( asp$gate.downsample.seed )
   map <- FlowSOM::SOM(
     cluster.data,
     xdim = som.dim,
@@ -348,7 +348,7 @@ get.af.spectra <- function(
       som.dim <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
 
       # cluster only the problematic data
-      set.seed( 42 )
+      set.seed( asp$gate.downsample.seed )
       map.error <- FlowSOM::SOM(
         spill.ratios,
         xdim = som.dim,
