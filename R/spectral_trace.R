@@ -62,8 +62,8 @@ spectral.trace <- function(
   fluor.spectra.plotting <- data.frame( spectral.matrix, check.names = FALSE )
   fluor.spectra.plotting$Fluorophore <- rownames( fluor.spectra.plotting )
 
-  if ( is.null( plot.dir ) )
-    plot.dir <- getwd()
+  if ( is.null( plot.dir ) ) plot.dir <- getwd()
+  if ( !dir.exists( plot.dir ) ) dir.create( plot.dir )
 
   data.path <- system.file( "extdata", "cytometer_database.csv",
                             package = "AutoSpectral" )
@@ -134,8 +134,7 @@ spectral.trace <- function(
 
   # pivot to long format
   pivot.cols <- setdiff(
-    colnames( fluor.spectra.plotting ),
-    c( "Fluorophore", "Laser" )
+    colnames( fluor.spectra.plotting ), c( "Fluorophore", "Laser" )
   )
 
   # Pivot longer manually
