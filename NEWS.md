@@ -1,4 +1,23 @@
-# AutoSpectral 1.5.5 (2026-04-8)
+# AutoSpectral 1.5.6 (2026-04-21)
+
+## Improvements
+
+- M x N and N x N plotting of unmixed data using `unmixed.mxn.plot()` and 
+`unmixed.nxn.plot()`
+- Calculate the secondary stain index per "Evaluating the performance of Slingshot 
+SpectraComp particles as universal single stain controls in flow cytometry" by 
+Oliveira et al. Call `calculate.ssi()`.
+- Plot the mismatch between two spectral profiles (e.g., beads vs. cells) as in 
+the pre-print by Konecny et al. on unmixiing-dependent spread. Call `ppectral.mismatch.plot()`.
+- Compare unmixing of the same data side-by-side with two different spectral mixing
+matrices. Call `compare.unmix()`.
+
+## Bug fixes
+
+- Now passing random seed from `asp$downsample.seed` throughout.
+
+
+# AutoSpectral 1.5.5 (2026-04-18)
 
 ## Improvements
 
