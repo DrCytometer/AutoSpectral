@@ -8,7 +8,7 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_path geom_point labs theme_minimal
 #' @importFrom ggplot2 element_text facet_wrap ggsave theme scale_color_viridis_d
-#' @importFrom ragg agg_jpeg
+#' @importFrom ragg agg_jpeg agg_tiff agg_png
 #'
 #' @param spectral.matrix Matrix or dataframe containing spectral data. This
 #' should be in format fluorophores x detectors. Row names will be used as the
@@ -34,10 +34,12 @@
 #' is `NULL`.
 #' @param plot.height Optional numeric to manually set the plot width. Default
 #' is `NULL`.
-#' @param save Logical, if `TRUE`, saves a JPEG file to the `plot.dir`.
+#' @param file.type Character string specifying the output file format. One of
+#' `"jpg"` (default), `"jpeg"`, `"tiff"`, `"png"`, or `"pdf"`.
+#' @param save Logical, if `TRUE`, saves a file to the `plot.dir`.
 #' Otherwise, the plot will simply be created in the Viewer.
 #'
-#' @return Saves the plot(s) as JPEG files in the specified directory.
+#' @return Saves the plot(s) as image files in the specified directory.
 #' @export
 
 spectral.trace <- function(
@@ -52,8 +54,21 @@ spectral.trace <- function(
     show.legend = TRUE,
     plot.width = NULL,
     plot.height = NULL,
+    file.type = "jpg",
     save = TRUE
   ) {
+
+  # resolve output device and file extension from file.type
+  file.type <- tolower( file.type )
+  if ( file.type == "jpeg" ) file.type <- "jpg"
+  file.type <- match.arg( file.type, c( "jpg", "tiff", "png", "pdf" ) )
+
+  plot.device <- switch( file.type,
+    jpg  = ragg::agg_jpeg,
+    tiff = ragg::agg_tiff,
+    png  = ragg::agg_png,
+    pdf  = grDevices::pdf
+  )
 
   # get excitation laser based on peak emission detector
   peak.detectors <- colnames( spectral.matrix )[ max.col( spectral.matrix ) ]
@@ -62,11 +77,13 @@ spectral.trace <- function(
   fluor.spectra.plotting <- data.frame( spectral.matrix, check.names = FALSE )
   fluor.spectra.plotting$Fluorophore <- rownames( fluor.spectra.plotting )
 
-  if ( is.null( plot.dir ) ) plot.dir <- getwd()
-  if ( !dir.exists( plot.dir ) ) dir.create( plot.dir )
+  if ( is.null( plot.dir ) )
+    plot.dir <- getwd()
 
-  data.path <- system.file( "extdata", "cytometer_database.csv",
-                            package = "AutoSpectral" )
+  data.path <- system.file(
+    "extdata", "cytometer_database.csv",
+    package = "AutoSpectral"
+  )
 
   # can only do splitting if we know the laser
   if ( data.path == "" ) {
@@ -134,7 +151,8 @@ spectral.trace <- function(
 
   # pivot to long format
   pivot.cols <- setdiff(
-    colnames( fluor.spectra.plotting ), c( "Fluorophore", "Laser" )
+    colnames( fluor.spectra.plotting ),
+    c( "Fluorophore", "Laser" )
   )
 
   # Pivot longer manually
@@ -182,9 +200,9 @@ spectral.trace <- function(
 
   if ( save ) {
     ggsave(
-      file.path( plot.dir, sprintf( "%s.jpg", title ) ),
+      file.path( plot.dir, sprintf( "%s.%s", title, file.type ) ),
       spectra.plot,
-      device = ragg::agg_jpeg,
+      device = plot.device,
       width = plot.width,
       height = plot.height,
       limitsize = FALSE
@@ -226,9 +244,9 @@ spectral.trace <- function(
     # save or return the plot
     if ( save ) {
       ggsave(
-        file.path( plot.dir, sprintf( "%s by laser.jpg", title ) ),
+        file.path( plot.dir, sprintf( "%s by laser.%s", title, file.type ) ),
         spectra.plot.split,
-        device = ragg::agg_jpeg,
+        device = plot.device,
         width = plot.width,
         height = plot.height,
         limitsize = FALSE

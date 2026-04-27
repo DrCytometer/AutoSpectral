@@ -18,6 +18,7 @@ create.heatmap(
   show.legend = TRUE,
   figure.width = 8,
   figure.height = 6,
+  file.type = "jpg",
   save = TRUE
 )
 }
@@ -60,11 +61,14 @@ are the viridis color options: \code{magma}, \code{inferno}, \code{plasma}, \cod
 
 \item{figure.height}{Numeric. Height of the heatmap figure. Default is \code{6}.}
 
-\item{save}{Logical, if \code{TRUE}, saves a JPEG file to the \code{output.dir}.
+\item{file.type}{Character string specifying the output file format. One of
+\code{"jpg"} (default), \code{"jpeg"}, \code{"tiff"}, \code{"png"}, or \code{"pdf"}.}
+
+\item{save}{Logical, if \code{TRUE}, saves a file to the \code{output.dir}.
 Otherwise, the plot will simply be created in the Viewer.}
 }
 \value{
-Saves the heatmap plot as a JPEG file and the SSM data as a CSV file
+Saves the heatmap plot as an image file and the SSM data as a CSV file
 in the specified directory.
 }
 \description{

@@ -11,10 +11,12 @@ Oliveira et al. Call `calculate.ssi()`.
 the pre-print by Konecny et al. on unmixiing-dependent spread. Call `ppectral.mismatch.plot()`.
 - Compare unmixing of the same data side-by-side with two different spectral mixing
 matrices. Call `compare.unmix()`.
+- Multiple file formats when creating plots: pdf, tiff, png, jpg, etc.
 
 ## Bug fixes
 
 - Now passing random seed from `asp$downsample.seed` throughout.
+- Fixed an issue where `spectral.variant.plot()` would not push the plot to the viewer.
 
 
 # AutoSpectral 1.5.5 (2026-04-18)

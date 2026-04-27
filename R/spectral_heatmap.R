@@ -8,7 +8,7 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_viridis_c theme_classic
 #' @importFrom ggplot2 coord_fixed element_text labs ggsave theme
-#' @importFrom ragg agg_jpeg
+#' @importFrom ragg agg_jpeg agg_tiff agg_png
 #'
 #' @param spectra Matrix or dataframe containing spectral data
 #' format: fluorophores x detectors.
@@ -29,8 +29,12 @@
 #' @param plot.height Height for the output plot. Default is `NULL`, in which
 #' case the height will be scaled automatically based on the number of rows in
 #' `spectra` plus a safety margin.
+#' @param file.type Character string specifying the output file format. One of
+#' `"jpg"` (default), `"jpeg"`, `"tiff"`, `"png"`, or `"pdf"`.
+#' @param save Logical, if `TRUE`, saves a file to the `plot.dir`.
+#' Otherwise, the plot will simply be created in the Viewer.
 #'
-#' @return Saves the heatmap plot as a JPEG file in the specified directory.
+#' @return Saves the heatmap plot as an image file in the specified directory.
 #'
 #' @export
 
@@ -43,17 +47,29 @@ spectral.heatmap <- function(
     save = TRUE,
     show.legend = TRUE,
     plot.width = NULL,
-    plot.height = NULL
+    plot.height = NULL,
+    file.type = "jpg"
   ) {
+
+  # resolve output device and file extension from file.type
+  file.type <- tolower( file.type )
+  if ( file.type == "jpeg" ) file.type <- "jpg"
+  file.type <- match.arg( file.type, c( "jpg", "tiff", "png", "pdf" ) )
+
+  plot.device <- switch( file.type,
+    jpg  = ragg::agg_jpeg,
+    tiff = ragg::agg_tiff,
+    png  = ragg::agg_png,
+    pdf  = grDevices::pdf
+  )
 
   # set filename and saving folder
   if ( !is.null( title ) )
-    heatmap.filename <- paste( title, "spectral_heatmap.jpg" )
+    heatmap.filename <- paste( title, paste0( "spectral_heatmap.", file.type ) )
   else
-    heatmap.filename <- "spectral_heatmap.jpg"
+    heatmap.filename <- paste0( "spectral_heatmap.", file.type )
 
-  if ( is.null( plot.dir ) )
-    plot.dir <- getwd()
+  if ( is.null( plot.dir ) ) plot.dir <- getwd()
 
   # convert to dataframe for plotting
   heatmap.df <- data.frame( spectra, check.names = FALSE )
@@ -108,7 +124,7 @@ spectral.heatmap <- function(
     ggsave(
       filename = file.path( plot.dir, heatmap.filename ),
       plot = heatmap.plot,
-      device = ragg::agg_jpeg,
+      device = plot.device,
       width = plot.width,
       height = plot.height,
       limitsize = FALSE

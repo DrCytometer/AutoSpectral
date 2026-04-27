@@ -9,7 +9,7 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_viridis_c theme_minimal
 #' @importFrom ggplot2 coord_fixed element_text labs ggsave
-#' @importFrom ragg agg_jpeg
+#' @importFrom ragg agg_jpeg agg_tiff agg_png
 #'
 #' @param spectra Data frame or matrix containing spectral data.
 #' @param filename Character string for the output file. Default is
@@ -25,10 +25,12 @@
 #' are the viridis color options: `magma`, `inferno`, `plasma`, `viridis`,
 #' `cividis`, `rocket`, `mako` and `turbo`.
 #' @param show.legend Logical. If `TRUE`, figure legend will be included.
-#' @param save Logical, if `TRUE`, saves a JPEG file to the `output.dir`.
+#' @param file.type Character string specifying the output file format. One of
+#' `"jpg"` (default), `"jpeg"`, `"tiff"`, `"png"`, or `"pdf"`.
+#' @param save Logical, if `TRUE`, saves a file to the `output.dir`.
 #' Otherwise, the plot will simply be created in the Viewer.
 #'
-#' @return Saves the heatmap plot as a JPEG file in the similarity directory.
+#' @return Saves the heatmap plot as an image file in the similarity directory.
 #'
 #' @export
 
@@ -41,13 +43,26 @@ cosine.similarity.plot <- function(
     figure.height = 6,
     color.palette = "viridis",
     show.legend = TRUE,
+    file.type = "jpg",
     save = TRUE
   ) {
 
+  # resolve output device and file extension from file.type
+  file.type <- tolower( file.type )
+  if ( file.type == "jpeg" ) file.type <- "jpg"
+  file.type <- match.arg( file.type, c( "jpg", "tiff", "png", "pdf" ) )
+
+  plot.device <- switch( file.type,
+    jpg  = ragg::agg_jpeg,
+    tiff = ragg::agg_tiff,
+    png  = ragg::agg_png,
+    pdf  = grDevices::pdf
+  )
+
   if ( !is.null( title ) )
-    similarity.heatmap.filename <- paste0( title, "_", filename, ".jpg" )
+    similarity.heatmap.filename <- paste0( title, "_", filename, ".", file.type )
   else
-    similarity.heatmap.filename <- paste0( filename, ".jpg" )
+    similarity.heatmap.filename <- paste0( filename, ".", file.type )
 
   if ( !dir.exists( output.dir ) ) dir.create( output.dir )
 
@@ -104,7 +119,7 @@ cosine.similarity.plot <- function(
     ggsave(
       filename = file.path( output.dir, similarity.heatmap.filename ),
       plot = similarity.heatmap,
-      device = ragg::agg_jpeg,
+      device = plot.device,
       width = figure.width,
       height = figure.height,
       limitsize = FALSE

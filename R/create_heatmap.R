@@ -8,7 +8,7 @@
 #'
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_viridis_c theme_minimal
 #' @importFrom ggplot2 coord_fixed element_text labs ggsave
-#' @importFrom ragg agg_jpeg
+#' @importFrom ragg agg_jpeg agg_tiff agg_png
 #'
 #' @param matrix Matrix or dataframe containing spectral data.
 #' @param number.labels Logical indicating whether to add number labels to
@@ -35,10 +35,12 @@
 #' @param show.legend Logical. If `TRUE`, figure legend will be included.
 #' @param figure.width Numeric. Width of the heatmap figure. Default is `8`.
 #' @param figure.height Numeric. Height of the heatmap figure. Default is `6`.
-#' @param save Logical, if `TRUE`, saves a JPEG file to the `output.dir`.
+#' @param file.type Character string specifying the output file format. One of
+#' `"jpg"` (default), `"jpeg"`, `"tiff"`, `"png"`, or `"pdf"`.
+#' @param save Logical, if `TRUE`, saves a file to the `output.dir`.
 #' Otherwise, the plot will simply be created in the Viewer.
 #'
-#' @return Saves the heatmap plot as a JPEG file and the SSM data as a CSV file
+#' @return Saves the heatmap plot as an image file and the SSM data as a CSV file
 #' in the specified directory.
 #'
 #' @export
@@ -57,16 +59,28 @@ create.heatmap <- function(
     show.legend = TRUE,
     figure.width = 8,
     figure.height = 6,
+    file.type = "jpg",
     save = TRUE
   ) {
 
-  if ( !is.null( title ) )
-    heatmap.filename <- paste( title, "heatmap.jpg" )
-  else
-    heatmap.filename <- "heatmap.jpg"
+  # resolve output device and file extension from file.type
+  file.type <- tolower( file.type )
+  if ( file.type == "jpeg" ) file.type <- "jpg"
+  file.type <- match.arg( file.type, c( "jpg", "tiff", "png", "pdf" ) )
 
-  if ( is.null( plot.dir ) )
-    plot.dir <- getwd()
+  plot.device <- switch( file.type,
+    jpg  = ragg::agg_jpeg,
+    tiff = ragg::agg_tiff,
+    png  = ragg::agg_png,
+    pdf  = grDevices::pdf
+  )
+
+  if ( !is.null( title ) )
+    heatmap.filename <- paste( title, paste0( "heatmap.", file.type ) )
+  else
+    heatmap.filename <- paste0( "heatmap.", file.type )
+
+  if ( is.null( plot.dir ) ) plot.dir <- getwd()
 
   # rearrange data
   heatmap.df <- as.data.frame( matrix, check.names = FALSE )
@@ -108,11 +122,7 @@ create.heatmap <- function(
   # plot and save
   heatmap.plot <- ggplot(
     heatmap.long,
-    aes(
-      Fluor1,
-      Fluor2,
-      fill = value
-      )
+    aes( Fluor1, Fluor2, fill = value )
     ) +
     geom_tile() +
     theme_classic() +
@@ -149,7 +159,7 @@ create.heatmap <- function(
     ggsave(
       filename = file.path( plot.dir, heatmap.filename ),
       plot = heatmap.plot,
-      device = ragg::agg_jpeg,
+      device = plot.device,
       width = figure.width,
       height = figure.height,
       limitsize = FALSE

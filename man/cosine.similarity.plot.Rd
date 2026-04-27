@@ -13,6 +13,7 @@ cosine.similarity.plot(
   figure.height = 6,
   color.palette = "viridis",
   show.legend = TRUE,
+  file.type = "jpg",
   save = TRUE
 )
 }
@@ -39,11 +40,14 @@ are the viridis color options: \code{magma}, \code{inferno}, \code{plasma}, \cod
 
 \item{show.legend}{Logical. If \code{TRUE}, figure legend will be included.}
 
-\item{save}{Logical, if \code{TRUE}, saves a JPEG file to the \code{output.dir}.
+\item{file.type}{Character string specifying the output file format. One of
+\code{"jpg"} (default), \code{"jpeg"}, \code{"tiff"}, \code{"png"}, or \code{"pdf"}.}
+
+\item{save}{Logical, if \code{TRUE}, saves a file to the \code{output.dir}.
 Otherwise, the plot will simply be created in the Viewer.}
 }
 \value{
-Saves the heatmap plot as a JPEG file in the similarity directory.
+Saves the heatmap plot as an image file in the similarity directory.
 }
 \description{
 This function plots the matrix of cosine similarities (AKA "Similarity Matrix")

@@ -16,6 +16,7 @@ spectral.trace(
   show.legend = TRUE,
   plot.width = NULL,
   plot.height = NULL,
+  file.type = "jpg",
   save = TRUE
 )
 }
@@ -55,11 +56,14 @@ is \code{NULL}.}
 \item{plot.height}{Optional numeric to manually set the plot width. Default
 is \code{NULL}.}
 
-\item{save}{Logical, if \code{TRUE}, saves a JPEG file to the \code{plot.dir}.
+\item{file.type}{Character string specifying the output file format. One of
+\code{"jpg"} (default), \code{"jpeg"}, \code{"tiff"}, \code{"png"}, or \code{"pdf"}.}
+
+\item{save}{Logical, if \code{TRUE}, saves a file to the \code{plot.dir}.
 Otherwise, the plot will simply be created in the Viewer.}
 }
 \value{
-Saves the plot(s) as JPEG files in the specified directory.
+Saves the plot(s) as image files in the specified directory.
 }
 \description{
 This function plots the fluorophore spectra as normalized traces, optionally

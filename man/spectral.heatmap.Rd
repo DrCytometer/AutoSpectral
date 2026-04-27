@@ -13,7 +13,8 @@ spectral.heatmap(
   save = TRUE,
   show.legend = TRUE,
   plot.width = NULL,
-  plot.height = NULL
+  plot.height = NULL,
+  file.type = "jpg"
 )
 }
 \arguments{
@@ -32,7 +33,7 @@ palette to be used for the fluorophore traces. Default is \code{viridis}. Option
 are the viridis color options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis},
 \code{cividis}, \code{rocket}, \code{mako} and \code{turbo}.}
 
-\item{save}{Logical, if \code{TRUE}, saves a JPEG file to the \code{plot.dir}.
+\item{save}{Logical, if \code{TRUE}, saves a file to the \code{plot.dir}.
 Otherwise, the plot will simply be created in the Viewer.}
 
 \item{show.legend}{Logical. If \code{TRUE}, figure legend will be included.}
@@ -44,9 +45,12 @@ the width will be scaled automatically based on the number of detectors in
 \item{plot.height}{Height for the output plot. Default is \code{NULL}, in which
 case the height will be scaled automatically based on the number of rows in
 \code{spectra} plus a safety margin.}
+
+\item{file.type}{Character string specifying the output file format. One of
+\code{"jpg"} (default), \code{"jpeg"}, \code{"tiff"}, \code{"png"}, or \code{"pdf"}.}
 }
 \value{
-Saves the heatmap plot as a JPEG file in the specified directory.
+Saves the heatmap plot as an image file in the specified directory.
 }
 \description{
 This function plots the spectral matrix as a heatmap using the specified

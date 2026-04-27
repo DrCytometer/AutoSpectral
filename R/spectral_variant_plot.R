@@ -101,6 +101,8 @@ spectral.variant.plot <- function(
       height = plot.height,
       limitsize = FALSE
     )
+  } else {
+    return( variant.plot )
   }
 
 }
