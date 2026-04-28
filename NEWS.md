@@ -8,7 +8,7 @@
 SpectraComp particles as universal single stain controls in flow cytometry" by 
 Oliveira et al. Call `calculate.ssi()`.
 - Plot the mismatch between two spectral profiles (e.g., beads vs. cells) as in 
-the pre-print by Konecny et al. on unmixiing-dependent spread. Call `ppectral.mismatch.plot()`.
+the pre-print by Konecny et al. on unmixing-dependent spread. Call `ppectral.mismatch.plot()`.
 - Compare unmixing of the same data side-by-side with two different spectral mixing
 matrices. Call `compare.unmix()`.
 - Multiple file formats when creating plots: pdf, tiff, png, jpg, etc.
