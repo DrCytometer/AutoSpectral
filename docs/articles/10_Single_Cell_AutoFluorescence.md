@@ -7,30 +7,34 @@ in the data.
 
 The first thing we need to do is discover all of the AF signatures
 present in the data. For this, the unstained control is critical. For
-good results, you need to do the following in your wet lab work: \* 1)
-Prepare a truly unstained sample. This means no added fluorophores, so
-no conjugated antibodies or live/dead stains and no fluorescent buffers
-such as the Brilliant Stain buffer. This also means no fluorescent
-reporters. If you run GFP expressing cells as your unstained, the GFP
-signal in those will be considered an AF signature, and it will be
-unmixed as autofluorescence rather than GFP. If you contaminate your
-unstained with small amounts of stained cells, single-stained controls
-or fluorescent beads, those signatures may also be considered to be AF.
-\* 2) Treat your unstained sample like your fully stained sample. Run it
-through the same protocol. If you’re fixing and permeabilizing, do that
-to the unstained, too. \* 3) Acquire lots of cells. If you only acquire
-10 thousand events, you will have very little data to work with, and
-rare populations, which are probably the problematic ones, will not show
-up well. Ideally, run as many cells as in your fully stained samples. \*
-4) Run unstained samples for each sample type in your data if you expect
-a difference in AF For example, with tissue samples, run a sample from
-spleen, lymph nodes and lung, not just spleen or lung. If you’re running
-samples from drastically different conditions (e.g., infected
-vs. healthy or infant vs. adult), I suggest running an unstained for
-each. \* 5) For smaller differences in conditions, you will probably get
-good results by creating a pooled unstained sample. For instance, when
-running PBMC from multiple donors, you could take a few cells from each
-for the unstained sample for AF.
+good results, you need to do the following in your wet lab work:
+
+- Prepare a truly unstained sample. This means no added fluorophores, so
+  no conjugated antibodies or live/dead stains and no fluorescent
+  buffers such as the Brilliant Stain buffer. This also means no
+  fluorescent reporters. If you run GFP expressing cells as your
+  unstained, the GFP signal in those will be considered an AF signature,
+  and it will be unmixed as autofluorescence rather than GFP. If you
+  contaminate your unstained with small amounts of stained cells,
+  single-stained controls or fluorescent beads, those signatures may
+  also be considered to be AF.
+- Treat your unstained sample like your fully stained sample. Run it
+  through the same protocol. If you’re fixing and permeabilizing, do
+  that to the unstained, too. \* 3) Acquire lots of cells. If you only
+  acquire 10 thousand events, you will have very little data to work
+  with, and rare populations, which are probably the problematic ones,
+  will not show up well. Ideally, run as many cells as in your fully
+  stained samples.
+- Run unstained samples for each sample type in your data if you expect
+  a difference in AF For example, with tissue samples, run a sample from
+  spleen, lymph nodes and lung, not just spleen or lung. If you’re
+  running samples from drastically different conditions (e.g., infected
+  vs. healthy or infant vs. adult), I suggest running an unstained for
+  each.
+- For smaller differences in conditions, you will probably get good
+  results by creating a pooled unstained sample. For instance, when
+  running PBMC from multiple donors, you could take a few cells from
+  each for the unstained sample for AF.
 
 You’re welcome to play around with breaking these rules to see what
 happens.
@@ -44,6 +48,7 @@ AutoSpectral, which you can access via
 [`concatenateFCS()`](https://drcytometer.github.io/AutoSpectral/reference/concatenateFCS.md).
 
 ``` r
+
 library( AutoSpectral )
 ```
 
@@ -56,6 +61,7 @@ raw and unmixed versions of the unstained sample in order to determine
 how the AF signatures present are likely to interfere with the unmixing.
 
 ``` r
+
 asp <- get.autospectral.param( cytometer = "aurora", figures = TRUE )
 control.dir <- "./SSC"
 control.file <- "fcs_control_file.csv"
@@ -71,6 +77,7 @@ the files in the `./SSC` folder, but be sure to pass the file path as
 well as the file name to the first argument of `get.af.spectra`.
 
 ``` r
+
 unstained.lung <- "G2 WT Lung_Samples.fcs"
 unstained.brain <- "G3 WT Brain_Samples.fcs"
 unstained.spleen <- "G1 WT Spleen_Samples.fcs"
@@ -154,6 +161,7 @@ expression data and so on. The better option is to just call unmix.fcs
 directly, which will create an unmixed FCS file from your raw FCS file.
 
 ``` r
+
 fully.stained.dir <- "./Fully stained"
 
 unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
@@ -169,6 +177,7 @@ This will use OLS to find the optimal AF per cell.
 Alternatively, we can call method = “Automatic”, which is the default.
 
 ``` r
+
 unmix.fcs( file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
            spectra,
            asp,

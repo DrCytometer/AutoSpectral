@@ -1,5 +1,74 @@
 # Changelog
 
+## AutoSpectral 1.5.6 (2026-04-21)
+
+### Improvements
+
+- M x N and N x N plotting of unmixed data using
+  [`unmixed.mxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.mxn.plot.md)
+  and
+  [`unmixed.nxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.nxn.plot.md)
+- Calculate the secondary stain index per “Evaluating the performance of
+  Slingshot SpectraComp particles as universal single stain controls in
+  flow cytometry” by Oliveira et al. Call
+  [`calculate.ssi()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.ssi.md).
+- Plot the mismatch between two spectral profiles (e.g., beads
+  vs. cells) as in the pre-print by Konecny et al. on unmixing-dependent
+  spread. Call `ppectral.mismatch.plot()`.
+- Compare unmixing of the same data side-by-side with two different
+  spectral mixing matrices. Call
+  [`compare.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/compare.unmix.md).
+- Multiple file formats when creating plots: pdf, tiff, png, jpg, etc.
+
+### Bug fixes
+
+- Now passing random seed from `asp$downsample.seed` throughout.
+- Fixed an issue where
+  [`spectral.variant.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.variant.plot.md)
+  would not push the plot to the viewer.
+
+## AutoSpectral 1.5.5 (2026-04-18)
+
+### Improvements
+
+- More fluorophores.
+- More A5SE spectral signatures.
+
+### Bug fixes
+
+- Spectral normalization to the peak channel (L-inf) when reading
+  spectral profiles from BD S8/A8 FCS files.
+
+## AutoSpectral 1.5.4 (2026-04-13)
+
+### Improvements
+
+- More fluorophores.
+- More markers.
+
+### Bug fixes
+
+- A change to
+  [`validate.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.md)
+  to permit duplication of the unstained samples in the control file.
+  Necessary for integration with the new `AutoSpectralHelper` app.
+
+## AutoSpectral 1.5.3 (2026-03-31)
+
+### Improvements
+
+- Change to only create output folders on an as-needed basis.
+- Improve fluorophore matching to take the longest fluorophore name
+  found.
+- Fix Xenith transformation settings.
+- Add spectral references for the Xenith.
+
+### Bug fixes
+
+- A patch to allow per-cell fluorophore optimization when only a single
+  fluorophore is present in the data. This was being blocked by checks
+  on the structure of the spectral variants being passed.
+
 ## AutoSpectral 1.5.2 (2026-03-26)
 
 ### Bug fixes
@@ -21,6 +90,10 @@
   [`define.keywords()`](https://drcytometer.github.io/AutoSpectral/reference/define.keywords.md),
   which updates the keywords after unmixing. Files were being produced,
   but the keyword headers were corrupted.
+- Patch for some annoying keywords issues affecting writing of
+  FACSymphony A5SE files.
+- Patch to remove extra raw channels from unmixed Xenith files by
+  default.
 - Rearrange the arguments for
   [`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md),
   [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md)
@@ -29,6 +102,9 @@
   to put the `gate.name` argument earlier. The default value for
   `gate.name` has been removed because the user should be providing
   this.
+- Patch to restore the functionality of `include.raw` (include the raw
+  spectral data in the unmixed FCS file) in
+  [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md).
 
 ## AutoSpectral 1.5.1 (2026-03-26)
 

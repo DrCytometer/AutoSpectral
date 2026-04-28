@@ -5,6 +5,7 @@
 If you need to install AutoSpectral, run this bit first:
 
 ``` r
+
 # Install Bioconductor packages
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
@@ -38,6 +39,7 @@ which has the advantage of also working on large panels.
 Now we can load AutoSpectral.
 
 ``` r
+
 library(AutoSpectral)
 ```
 
@@ -50,6 +52,7 @@ this without any arguments. Otherwise you need to specify the cytometer
 you’re using.
 
 ``` r
+
 asp <- get.autospectral.param(
   cytometer = "aurora",
   figures = TRUE # plot figures throughout to show what's going on
@@ -59,6 +62,7 @@ asp <- get.autospectral.param(
 Where are the controls? This must be typed correctly.
 
 ``` r
+
 control.dir <- "./Raw/Set1/Reference Group"
 ```
 
@@ -70,6 +74,7 @@ or [Colibri
 Cytometry](https://www.colibri-cytometry.com/post/autospectral-creating-the-control-file).
 
 ``` r
+
 create.control.file(control.dir, asp)
 ```
 
@@ -172,6 +177,7 @@ Once you’ve got it the way you want, write in the name of the control
 file and run the error checking function.
 
 ``` r
+
 control.file <- "fcs_control_file.csv"
 check.control.file(control.dir, control.file, asp)
 ```
@@ -276,12 +282,14 @@ you’re doing with the gates is consistent with what AutoSpectral
 expects.
 
 ``` r
+
 check.control.file(control.dir, control.file, asp)
 ```
 
 Assuming that passes with no errors, define the gates:
 
 ``` r
+
 gate.lymphocyte <- define.gate.landmarks(
   control.file = control.file,
   control.dir = control.dir,
@@ -357,6 +365,7 @@ Bead Gate
 Let’s adjust the dead cell gate quickly.
 
 ``` r
+
 tune.gate(
   control.file = control.file,
   control.dir = control.dir,
@@ -385,6 +394,7 @@ also have been fine, to be honest. I’m going to select n=5000, p=50%. To
 do that, we re-run the gate definition call:
 
 ``` r
+
 gate.dead <- define.gate.landmarks(
   control.file = control.file,
   control.dir = control.dir,
@@ -407,6 +417,7 @@ If everything looks okay with the gating, we proceed to load in all of
 the data, applying those gates to select the events we want.
 
 ``` r
+
 # Combine your gates into a list
 my.gates <- list(
   "lymphocytes" = gate.lymphocyte,
@@ -469,6 +480,7 @@ or
 There is a parallelization option, which may be faster.
 
 ``` r
+
 flow.control <- clean.controls(flow.control, asp)
 ```
 
@@ -504,6 +516,7 @@ see the help for this function and set `use.clean.expr=FALSE` when
 running it.
 
 ``` r
+
 spectra <- get.fluorophore.spectra(flow.control, asp)
 ```
 
@@ -618,6 +631,7 @@ do that:
 2.  read in the CSV file in `table_spectra`, removing the AF channel
 
 ``` r
+
 rownames(spectra)
 no.af.spectra <- spectra[ !(rownames(spectra) == "AF"),]
 rownames(no.af.spectra)
@@ -629,6 +643,7 @@ rownames(no.af.spectra.2)
 To unmix, specify the file (and path) of the FCS file you want to unmix:
 
 ``` r
+
 spleen.fcs.file <- "./Raw/Set1/Stained/D4 Spleen_Set1.fcs"
 unmix.fcs(
   spleen.fcs.file,
@@ -658,6 +673,7 @@ usage is handled via file chunking, which you can modify using the
 `chunk.size` argument, if needed.
 
 ``` r
+
 unmix.folder(
   fcs.dir = "./Raw/Set1/Stained/",
   spectra = spectra,
@@ -675,6 +691,7 @@ but you can change that by passing a path to `output.dir`.
 If we want to use weighted least-squares, we call like this:
 
 ``` r
+
 unmix.fcs(spleen.fcs.file, spectra, asp, flow.control, method = "WLS")
 ```
 
@@ -709,6 +726,7 @@ using `AutoSpectralRcpp`. On Windows, you will first need to install
 Rtools.
 
 ``` r
+
 devtools::install_github("DrCytometer/AutoSpectralRcpp")
 ```
 
@@ -722,6 +740,7 @@ To use per-cell autofluorescence extraction only, no fluorophore
 optimization, do this:
 
 ``` r
+
 spleen.unstained <- "./Raw/Set1/Unstained/D1 Spleen_Set1.fcs"
 spleen.af <- get.af.spectra(
   unstained.sample = spleen.unstained,
@@ -817,6 +836,7 @@ samples from very sick donors, you might consider collecting unstained
 sample from each donor and matching the autofluorescence more closely.
 
 ``` r
+
 lung.unstained <- "./Raw/Set1/Unstained/D2 Lung_Set1.fcs"
 lung.af <- get.af.spectra(lung.unstained, asp, spectra) # use refine=TRUE for a modest improvement, default is FALSE
 lung.fcs.file <- "./Raw/Set1/Stained/D5 Lung_Set1.fcs"
@@ -870,6 +890,7 @@ controls so that we isolate the variation in the fluorophore signatures
 independent of any AF variation.
 
 ``` r
+
 variants <- get.spectral.variants(
   control.dir = control.dir,
   control.def.file = control.file,
@@ -914,6 +935,7 @@ cell. This can be a bit slow if you have not installed
 `AutoSpectralRcpp`.
 
 ``` r
+
 unmix.fcs(
   lung.fcs.file,
   spectra,
@@ -952,6 +974,7 @@ or
 [Colibri](https://www.colibri-cytometry.com/post/autospectral-plotting).
 
 ``` r
+
 autospectral.unmixed.lung <- "AutoSpectral_unmixed/D5 Lung_Set1 AutoSpectral per-cell AF and fluorophore optimization.fcs"
 spectroflo.unmixed.lung <- "./Unmixed/Set1/Stained/D5 Lung_Set1.fcs"
 

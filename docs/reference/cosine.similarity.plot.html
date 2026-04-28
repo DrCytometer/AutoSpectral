@@ -11,7 +11,7 @@ mixing matrix condition number (AKA "Complexity Index") of the matrix.'></head><
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,6 +71,7 @@ mixing matrix condition number (AKA "Complexity Index") of the matrix.</p>
 <span>  figure.height <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>  color.palette <span class="op">=</span> <span class="st">"viridis"</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  file.type <span class="op">=</span> <span class="st">"jpg"</span>,</span>
 <span>  save <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -117,14 +118,19 @@ are the viridis color options: <code>magma</code>, <code>inferno</code>, <code>p
 <dd><p>Logical. If <code>TRUE</code>, figure legend will be included.</p></dd>
 
 
+<dt id="arg-file-type">file.type<a class="anchor" aria-label="anchor" href="#arg-file-type"></a></dt>
+<dd><p>Character string specifying the output file format. One of
+<code>"jpg"</code> (default), <code>"jpeg"</code>, <code>"tiff"</code>, <code>"png"</code>, or <code>"pdf"</code>.</p></dd>
+
+
 <dt id="arg-save">save<a class="anchor" aria-label="anchor" href="#arg-save"></a></dt>
-<dd><p>Logical, if <code>TRUE</code>, saves a JPEG file to the <code>output.dir</code>.
+<dd><p>Logical, if <code>TRUE</code>, saves a file to the <code>output.dir</code>.
 Otherwise, the plot will simply be created in the Viewer.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Saves the heatmap plot as a JPEG file in the similarity directory.</p>
+    <p>Saves the heatmap plot as an image file in the similarity directory.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

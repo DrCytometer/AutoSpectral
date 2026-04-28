@@ -100,7 +100,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.5.2**
+**Version 1.5.6**
 
 Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and
@@ -116,6 +116,7 @@ packages separately. As of version 0.9.1, AutoSpectral relies on
 via Bioconductor.
 
 ``` r
+
 # Install Bioconductor packages
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
@@ -139,6 +140,7 @@ To install a specific release, e.g., a previous one, use the version
 number:
 
 ``` r
+
 remotes::install_github("DrCytometer/AutoSpectral@v1.0.2")
 ```
 

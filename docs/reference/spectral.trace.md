@@ -19,6 +19,7 @@ spectral.trace(
   show.legend = TRUE,
   plot.width = NULL,
   plot.height = NULL,
+  file.type = "jpg",
   save = TRUE
 )
 ```
@@ -80,11 +81,16 @@ spectral.trace(
 
   Optional numeric to manually set the plot width. Default is `NULL`.
 
+- file.type:
+
+  Character string specifying the output file format. One of `"jpg"`
+  (default), `"jpeg"`, `"tiff"`, `"png"`, or `"pdf"`.
+
 - save:
 
-  Logical, if `TRUE`, saves a JPEG file to the `plot.dir`. Otherwise,
-  the plot will simply be created in the Viewer.
+  Logical, if `TRUE`, saves a file to the `plot.dir`. Otherwise, the
+  plot will simply be created in the Viewer.
 
 ## Value
 
-Saves the plot(s) as JPEG files in the specified directory.
+Saves the plot(s) as image files in the specified directory.

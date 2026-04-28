@@ -1,4 +1,4 @@
-pandoc: 3.6.3
+pandoc: 3.8.3
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
@@ -19,7 +19,7 @@ articles:
   articles/15_Updates_And_Issues: 15_Updates_And_Issues.html
   articles/16_Development: 16_Development.html
   articles/17_Acknowledgements: 17_Acknowledgements.html
-last_built: 2026-03-26T13:10Z
+last_built: 2026-04-28T11:42Z
 urls:
   reference: https://drcytometer.github.io/AutoSpectral/reference
   article: https://drcytometer.github.io/AutoSpectral/articles

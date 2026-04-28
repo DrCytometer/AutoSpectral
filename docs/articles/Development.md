@@ -133,12 +133,14 @@ appreciated.
 To install the `dev` branch:
 
 ``` r
+
 devtools::install_github("DrCytometer/AutoSpectral@dev")
 ```
 
 To replace this with the (hopefully) stable version, run this:
 
 ``` r
+
 remove.packages("AutoSpectral")
 devtools::install_github("DrCytometer/AutoSpectral")
 ```

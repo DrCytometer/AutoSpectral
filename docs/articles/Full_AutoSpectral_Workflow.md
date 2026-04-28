@@ -5,6 +5,7 @@
 If you need to install AutoSpectral, run this bit first:
 
 ``` r
+
 # Install Bioconductor packages
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
@@ -38,6 +39,7 @@ which has the advantage of also working on large panels.
 Now we can load AutoSpectral.
 
 ``` r
+
 library(AutoSpectral)
 ```
 
@@ -48,12 +50,14 @@ this without any arguments. Otherwise you need to specify the cytometer
 you’re using.
 
 ``` r
+
 asp <- get.autospectral.param()
 ```
 
 Where are the controls? This must be typed correctly.
 
 ``` r
+
 control.dir <- "./Raw/Set1/Reference Group"
 ```
 
@@ -63,6 +67,7 @@ stuff for you, but you should check this. See the article on this on
 GitHub or Colibri Cytometry.
 
 ``` r
+
 create.control.file(control.dir, asp)
 ```
 
@@ -90,6 +95,7 @@ Once you’ve got it the way you want, write in the name of the control
 file and run the error checking function.
 
 ``` r
+
 control.file <- "fcs_control_file.csv"
 check.control.file(control.dir, control.file, asp)
 ```
@@ -103,6 +109,7 @@ though, because they affect everything downstream of this, which is to
 say, everything.
 
 ``` r
+
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
 
@@ -129,6 +136,7 @@ option, which is being converted to the new parallel backend. Once that
 is in place, it should be faster.
 
 ``` r
+
 flow.control <- clean.controls(flow.control, asp)
 ```
 
@@ -139,6 +147,7 @@ Now we can isolate the spectra from the controls. By default, this uses
 the cleaned data if they are available.
 
 ``` r
+
 spectra <- get.fluorophore.spectra(flow.control, asp)
 ```
 
@@ -169,6 +178,7 @@ do that: 1) subset `spectra` 2) read in the CSV file in `table_spectra`,
 removing the AF channel
 
 ``` r
+
 rownames(spectra)
 no.af.spectra <- spectra[ !(rownames(spectra) == "AF"),]
 rownames(no.af.spectra)
@@ -180,6 +190,7 @@ rownames(no.af.spectra.2)
 To unmix, specify the file (and path) of the FCS file you want to unmix:
 
 ``` r
+
 spleen.fcs.file <- "./Raw/Set1/Stained/D4 Spleen_Set1.fcs"
 unmix.fcs(spleen.fcs.file, spectra, asp, flow.control,
           method = "OLS", file.suffix = "with AF extraction")
@@ -195,6 +206,7 @@ size of the files. So, if your FCS files are ~100MB, fine, if they’re
 multiple GB, maybe not. May not be much faster.
 
 ``` r
+
 unmix.folder("./Raw/Set1/Stained/", spectra, asp, flow.control, 
              method = "OLS", parallel = TRUE, threads = 3)
 ```
@@ -205,6 +217,7 @@ but you can change that by passing a path to `output.dir`.
 If we want to use weighted least-squares, we call like this:
 
 ``` r
+
 unmix.fcs(spleen.fcs.file, spectra, asp, flow.control, method = "WLS")
 ```
 
@@ -240,6 +253,7 @@ To use per-cell autofluorescence extraction only, no fluorophore
 optimization, do this:
 
 ``` r
+
 spleen.unstained <- "./Raw/Set1/Unstained/D1 Spleen_Set1.fcs"
 spleen.af <- get.af.spectra(spleen.unstained, asp, spectra)
 unmix.fcs(spleen.fcs.file, spectra, asp, flow.control, 
@@ -272,6 +286,7 @@ samples from very sick donors, you might consider collecting unstained
 sample from each donor and matching the autofluorescence more closely.
 
 ``` r
+
 lung.unstained <- "./Raw/Set1/Unstained/D2 Lung_Set1.fcs"
 lung.af <- get.af.spectra(lung.unstained, asp, spectra)
 lung.fcs.file <- "./Raw/Set1/Stained/D5 Lung_Set1.fcs"
@@ -294,6 +309,7 @@ supply the `af.spectra` and the `spectra.variants`, calling
 `AutoSpectralRcpp`, for which you will need Rtools.
 
 ``` r
+
 devtools::install_github("DrCytometer/AutoSpectralRcpp")
 ```
 
@@ -302,6 +318,7 @@ samples are from spleen. Provide whatever is the best fit for your
 single-stained controls.
 
 ``` r
+
 variants <- get.spectral.variants(control.dir, control.file, asp, spectra,
                                   af.spectra = spleen.af, parallel = TRUE)
 ```
@@ -327,6 +344,7 @@ you have installed `AutoSpectralRcpp`. If you are using base R only, try
 turning on the `parallel=TRUE`.
 
 ``` r
+
 unmix.fcs(lung.fcs.file, spectra, asp, flow.control,
           method = "AutoSpectral", af.spectra = lung.af,
           spectra.variants = variants,
@@ -348,6 +366,7 @@ but a dedicated flow cytometry analysis program with a graphical
 interface will be better.
 
 ``` r
+
 autospectral.unmixed.lung <- "AutoSpectral_unmixed/D5 Lung_Set1 AutoSpectral per-cell AF and fluorophore optimization.fcs"
 spectroflo.unmixed.lung <- "./Unmixed/Set1/Stained/D5 Lung_Set1.fcs"
 

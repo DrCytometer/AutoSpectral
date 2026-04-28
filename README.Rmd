@@ -78,7 +78,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.5.3**
+**Version 1.5.6**
 
 Version 1.0+ is intended to greatly speed up the process of unmixing. This is done by pre-screening the variation in autofluorescence and fluorophores for each cell, identifying likely "best" candidates rather than using a brute force approach. If you are using [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp), you will need to update that for compatibility.
 

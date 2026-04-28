@@ -52,6 +52,7 @@ After upgrading the BLAS, you probably need to re-install `Rcpp` and
 `RcppArmadillo` to have this compiled with the BLAS.
 
 ``` r
+
 install.packages( c( "Rcpp", "RcppArmadillo" ) )
 ```
 
@@ -69,6 +70,7 @@ to compile this.
 You can install AutoSpectralRcpp like so:
 
 ``` r
+
 devtools::install_github("DrCytometer/AutoSpectralRcpp")
 ```
 
@@ -93,6 +95,7 @@ threads to use, check the recommendation for your machine after running
 [`get.autospectral.param()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.md):
 
 ``` r
+
 asp$max.worker.process.n
 ```
 
@@ -106,6 +109,7 @@ AutoSpectral chugs along in the background.
 Or just check how many you have available:
 
 ``` r
+
 parallelly::availableCores()
 ```
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,13 +50,71 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.6" id="autospectral-156-2026-04-21">AutoSpectral 1.5.6 (2026-04-21)<a class="anchor" aria-label="anchor" href="#autospectral-156-2026-04-21"></a></h2>
+<div class="section level3">
+<h3 id="improvements-1-5-6">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-5-6"></a></h3>
+<ul><li>M x N and N x N plotting of unmixed data using <code><a href="../reference/unmixed.mxn.plot.html">unmixed.mxn.plot()</a></code> and <code><a href="../reference/unmixed.nxn.plot.html">unmixed.nxn.plot()</a></code>
+</li>
+<li>Calculate the secondary stain index per “Evaluating the performance of Slingshot SpectraComp particles as universal single stain controls in flow cytometry” by Oliveira et al. Call <code><a href="../reference/calculate.ssi.html">calculate.ssi()</a></code>.</li>
+<li>Plot the mismatch between two spectral profiles (e.g., beads vs. cells) as in the pre-print by Konecny et al. on unmixing-dependent spread. Call <code>ppectral.mismatch.plot()</code>.</li>
+<li>Compare unmixing of the same data side-by-side with two different spectral mixing matrices. Call <code><a href="../reference/compare.unmix.html">compare.unmix()</a></code>.</li>
+<li>Multiple file formats when creating plots: pdf, tiff, png, jpg, etc.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-5-6">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-5-6"></a></h3>
+<ul><li>Now passing random seed from <code>asp$downsample.seed</code> throughout.</li>
+<li>Fixed an issue where <code><a href="../reference/spectral.variant.plot.html">spectral.variant.plot()</a></code> would not push the plot to the viewer.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.5" id="autospectral-155-2026-04-18">AutoSpectral 1.5.5 (2026-04-18)<a class="anchor" aria-label="anchor" href="#autospectral-155-2026-04-18"></a></h2>
+<div class="section level3">
+<h3 id="improvements-1-5-5">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-5-5"></a></h3>
+<ul><li>More fluorophores.</li>
+<li>More A5SE spectral signatures.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-5-5">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-5-5"></a></h3>
+<ul><li>Spectral normalization to the peak channel (L-inf) when reading spectral profiles from BD S8/A8 FCS files.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.4" id="autospectral-154-2026-04-13">AutoSpectral 1.5.4 (2026-04-13)<a class="anchor" aria-label="anchor" href="#autospectral-154-2026-04-13"></a></h2>
+<div class="section level3">
+<h3 id="improvements-1-5-4">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-5-4"></a></h3>
+<ul><li>More fluorophores.</li>
+<li>More markers.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-5-4">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-5-4"></a></h3>
+<ul><li>A change to <code><a href="../reference/validate.control.file.html">validate.control.file()</a></code> to permit duplication of the unstained samples in the control file. Necessary for integration with the new <code>AutoSpectralHelper</code> app.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.3" id="autospectral-153-2026-03-31">AutoSpectral 1.5.3 (2026-03-31)<a class="anchor" aria-label="anchor" href="#autospectral-153-2026-03-31"></a></h2>
+<div class="section level3">
+<h3 id="improvements-1-5-3">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-5-3"></a></h3>
+<ul><li>Change to only create output folders on an as-needed basis.</li>
+<li>Improve fluorophore matching to take the longest fluorophore name found.</li>
+<li>Fix Xenith transformation settings.</li>
+<li>Add spectral references for the Xenith.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-5-3">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-5-3"></a></h3>
+<ul><li>A patch to allow per-cell fluorophore optimization when only a single fluorophore is present in the data. This was being blocked by checks on the structure of the spectral variants being passed.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.5.2" id="autospectral-152-2026-03-26">AutoSpectral 1.5.2 (2026-03-26)<a class="anchor" aria-label="anchor" href="#autospectral-152-2026-03-26"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-1-5-2">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-5-2"></a></h3>
 <ul><li>A patch for <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> to better handle situations where a given AF spectrum is essentially inverted, with the greatest magnitude signal being negative. This occurs occasionally on the FACSDiscover S8 and A8 cytometers. The spectra will now be kept as negative, since this provides better unmixing, empirically. For the plotting, any negative spectra will be inverted to avoid issues with scaling.</li>
 <li>A patch for <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> to exclude plotting of the unmixed data on biplots when only a single fluorophore is being unmixed (so only one axis can be drawn).</li>
 <li>Exclusion of a problematic keyword from BD FACSDiscover files. This affects <code><a href="../reference/define.keywords.html">define.keywords()</a></code>, which updates the keywords after unmixing. Files were being produced, but the keyword headers were corrupted.</li>
+<li>Patch for some annoying keywords issues affecting writing of FACSymphony A5SE files.</li>
+<li>Patch to remove extra raw channels from unmixed Xenith files by default.</li>
 <li>Rearrange the arguments for <code><a href="../reference/tune.gate.html">tune.gate()</a></code>, <code><a href="../reference/define.gate.landmarks.html">define.gate.landmarks()</a></code> and also <code><a href="../reference/define.gate.density.html">define.gate.density()</a></code> to put the <code>gate.name</code> argument earlier. The default value for <code>gate.name</code> has been removed because the user should be providing this.</li>
+<li>Patch to restore the functionality of <code>include.raw</code> (include the raw spectral data in the unmixed FCS file) in <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code>.</li>
 </ul></div>
 </div>
     <div class="section level2">

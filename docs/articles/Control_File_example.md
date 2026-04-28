@@ -17,6 +17,7 @@ be created manually, but in AutoSpectral there is an option to fill in a
 lot of the information automatically. Let’s see how this works.
 
 ``` r
+
 library(AutoSpectral)
 ```
 
@@ -27,6 +28,7 @@ Aurora_example article.
 <https://data.mendeley.com/datasets/xzt3h3gnx9/1>
 
 ``` r
+
 asp <- get.autospectral.param(cytometer = "aurora")
 ```
 
@@ -34,12 +36,14 @@ Create a folder containing only the single-stained control FCS files
 describe the path to that folder here.
 
 ``` r
+
 control.dir <- "~/AutoSpectral_data/Aurora_example/Aurora_controls"
 ```
 
 With this information, we can create a draft of the control file.
 
 ``` r
+
 create.control.file(control.dir, asp)
 ```
 
@@ -149,6 +153,7 @@ Whatever you’ve named your control file (the default output is
 called:
 
 ``` r
+
 control.file <- "fcs_control_file.csv"
 ```
 
@@ -166,6 +171,7 @@ cause it to abort if it finds anything it deems to be an error. So, fix
 the errors first.
 
 ``` r
+
 potential.problems <- check.control.file(control.dir, control.file, asp)
 ```
 

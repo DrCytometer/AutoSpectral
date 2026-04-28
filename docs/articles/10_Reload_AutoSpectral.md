@@ -22,6 +22,7 @@ single-stained controls and the control file spreadsheet. You should
 already have all of this.
 
 ``` r
+
 library(AutoSpectral)
 asp <- get.autospectral.param(cytometer = "id7000")
 control.dir <- "path_to_my_single_stained_controls"
@@ -32,6 +33,7 @@ Then, we create a shell of the `flow.control` list, mostly to provide us
 with the channels we’ll use for spectral unmixing.
 
 ``` r
+
 flow.control <- reload.flow.control(control.dir, control.def.file, asp)
 ```
 
@@ -44,6 +46,7 @@ your file isn’t in that folder, use the `spectra.dir` argument to define
 the location.
 
 ``` r
+
 spectra.file <- "Initial_autospectral_spectra.csv"
 spectral.matrix <- read.spectra(spectra.file)
 ```
@@ -59,6 +62,7 @@ want to unmix and tell it how we want to perform the unmixing. Here,
 we’re using weighted least squares by calling `WLS`.
 
 ``` r
+
 sample.dir <- "./Raw samples"
 unmix.folder( sample.dir, spectral.matrix, asp, flow.control, method = "WLS" )
 ```
@@ -139,6 +143,7 @@ Save the spreadsheet as a CSV file. Then you can read it into R as
 follows:
 
 ``` r
+
 spectra.file <- "FlowJo_Spectra.csv"
 flowjo.spectra <- read.spectra(spectra.file, spectra.dir = "~/AutoSpectral_data/AlternativeMatrices/")
 flowjo.spectra
@@ -159,6 +164,7 @@ copy to disk as a CSV file. Define where you’d like the CSV file to end
 up as `output.dir`.
 
 ``` r
+
 spectroflo.expt <- "~/AutoSpectral_data/AlternativeMatrices/20240620 Spectral Symposium-poor cell unmixed.Expt"
 output.dir <- "./table_spectra"
 spectral.matrix <- read.spectroflo.expt(spectroflo.expt, output.dir)
@@ -184,6 +190,7 @@ from the A8 or S8 that is not a single-stained control and where you
 have run the unmixing in Chorus.
 
 ``` r
+
 s8.fcs <- "~/AutoSpectral_data/S8_data/BP0323502_1.fcs"
 chorus.spectra <- read.bd.spectra(s8.fcs)
 chorus.spectra

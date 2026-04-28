@@ -44,6 +44,7 @@ v10 (and have not tested v11). Also, `premessa` also does not produce
 FCS files with all the information intact, so avoid that.
 
 ``` r
+
 library( AutoSpectral )
 ```
 
@@ -56,6 +57,7 @@ raw and unmixed versions of the unstained sample in order to determine
 how the AF signatures present are likely to interfere with the unmixing.
 
 ``` r
+
 asp <- get.autospectral.param( cytometer = "aurora", figures = TRUE )
 control.dir <- "./SSC"
 control.file <- "fcs_control_file.csv"
@@ -71,6 +73,7 @@ the files in the `./SSC` folder, but be sure to pass the file path as
 well as the file name to the first argument of `get.af.spectra`.
 
 ``` r
+
 unstained.lung <- "G2 WT Lung_Samples.fcs"
 unstained.brain <- "G3 WT Brain_Samples.fcs"
 unstained.spleen <- "G1 WT Spleen_Samples.fcs"
@@ -133,6 +136,7 @@ better option is to just call unmix.fcs directly, which will create an
 unmixed FCS file from your raw FCS file.
 
 ``` r
+
 fully.stained.dir <- "./Fully stained"
 
 unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
@@ -156,6 +160,7 @@ methodology used on those systems. For explicit control, call
 `method = "AutoSpectral"` as above, and set the arguments.
 
 ``` r
+
 unmix.fcs( file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
            spectra,
            asp,

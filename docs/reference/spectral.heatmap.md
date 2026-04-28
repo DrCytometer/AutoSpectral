@@ -15,7 +15,8 @@ spectral.heatmap(
   save = TRUE,
   show.legend = TRUE,
   plot.width = NULL,
-  plot.height = NULL
+  plot.height = NULL,
+  file.type = "jpg"
 )
 ```
 
@@ -48,8 +49,8 @@ spectral.heatmap(
 
 - save:
 
-  Logical, if `TRUE`, saves a JPEG file to the `plot.dir`. Otherwise,
-  the plot will simply be created in the Viewer.
+  Logical, if `TRUE`, saves a file to the `plot.dir`. Otherwise, the
+  plot will simply be created in the Viewer.
 
 - show.legend:
 
@@ -67,6 +68,11 @@ spectral.heatmap(
   height will be scaled automatically based on the number of rows in
   `spectra` plus a safety margin.
 
+- file.type:
+
+  Character string specifying the output file format. One of `"jpg"`
+  (default), `"jpeg"`, `"tiff"`, `"png"`, or `"pdf"`.
+
 ## Value
 
-Saves the heatmap plot as a JPEG file in the specified directory.
+Saves the heatmap plot as an image file in the specified directory.

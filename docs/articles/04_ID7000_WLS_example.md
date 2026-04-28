@@ -19,6 +19,7 @@ Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectr
 work as before, but more control over the process is now available.
 
 ``` r
+
 library( AutoSpectral )
 
 # Define the location of the single-stained control files.

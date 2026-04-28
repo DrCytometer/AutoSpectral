@@ -9,12 +9,14 @@ Express, but it’s essential to have some options for visualizing the
 outputs.
 
 ``` r
+
 library( AutoSpectral )
 ```
 
 Let’s load in some spectra, here from OMIP-102.
 
 ``` r
+
 s8.fcs <- "~/AutoSpectral_data/S8_data/BP0323502_1.fcs"
 chorus.spectra <- read.bd.spectra( s8.fcs )
 chorus.spectra[ 1:6, 1:5 ]
@@ -32,6 +34,7 @@ spectra for each fluorophore in the matrix, and `spectral.heatmap`,
 which gives the same information as a heatmap.
 
 ``` r
+
 spectral.heatmap( chorus.spectra, title = "OMIP102", color.palette = "mako",
                   show.legend = FALSE )
 ```
@@ -45,6 +48,7 @@ of data present.
 The other option is a set of traces for each fluorophore.
 
 ``` r
+
 spectral.trace( chorus.spectra, title = "OMIP102", split.lasers = FALSE,
                 show.legend = FALSE )
 ```
@@ -56,6 +60,7 @@ Spectral Trace without legend
 You can add the legend back:
 
 ``` r
+
 spectral.trace( chorus.spectra, title = "OMIP102", split.lasers = FALSE,
                 show.legend = FALSE )
 ```
@@ -68,6 +73,7 @@ It’s also better to split it up by laser when there are many
 fluorophores:
 
 ``` r
+
 spectral.trace( chorus.spectra, title = "OMIP102", split.lasers = TRUE )
 ```
 
@@ -80,6 +86,7 @@ unless the files have been exported by FlowJo first.
 We can create a cosine similarity matrix plot in one of two ways.
 
 ``` r
+
 cosine.similarity.plot( chorus.spectra, title = "Cosine_OMIP102", 
                         output.dir = getwd() )
 ```
@@ -103,6 +110,7 @@ fluorophores). We’ll calculate the cosine similarity matrix by calling
 aspects of your data).
 
 ``` r
+
 matrix.subset <- chorus.spectra[ 1:5, ]
 small.cosine.matrix <- cosine.similarity( matrix.subset )
 create.heatmap( small.cosine.matrix, number.labels = TRUE,
@@ -116,6 +124,7 @@ Cosine heatmap1
 Let’s change a couple of things.
 
 ``` r
+
 create.heatmap( small.cosine.matrix, 
                 number.labels = TRUE,
                 legend.label = "Cosine Similarity",
@@ -133,6 +142,7 @@ for comparing multiple sets of data on the same scale (not really
 relevant in this case, though).
 
 ``` r
+
 create.heatmap( small.cosine.matrix, 
                 number.labels = FALSE,
                 legend.label = "Cosine Similarity",
@@ -158,6 +168,7 @@ need to call up the AutoSpectral parameter list because I haven’t gotten
 around to removing that dependency yet.
 
 ``` r
+
 asp <- get.autospectral.param( cytometer = "s8" )
 omip102.file <- "~/AutoSpectral_data/S8_data/BP0323502_1.fcs"
 omip102.ff <- suppressWarnings( flowCore::read.FCS( omip102.file, 
@@ -170,6 +181,7 @@ omip102.data <- flowCore::exprs( omip102.ff )
 Now we can call the plotting function:
 
 ``` r
+
 create.biplot( omip102.data,
                x.dim = "BUV395-A", y.dim = "BUV496-A",
                asp,
@@ -188,6 +200,7 @@ We can change the plot limits, color palette, etc. I haven’t implemented
 a rainbow palette like FlowJo has yet.
 
 ``` r
+
 create.biplot( omip102.data,
                x.dim = "BUV395-A", y.dim = "BUV496-A",
                x.min = -15000, x.max = 1e6,
@@ -208,6 +221,7 @@ altering the positive log decades, the other parameter you can use in
 FlowJo.
 
 ``` r
+
 create.biplot( omip102.data,
                x.dim = "BUV395-A", y.dim = "BUV496-A",
                x.min = -15000, x.max = 1e6,
@@ -226,6 +240,7 @@ to speed up the plotting. Setting an arbitrarily big number will plot
 everything.
 
 ``` r
+
 create.biplot( omip102.data,
                x.dim = "BUV395-A", y.dim = "BUV496-A",
                x.min = -15000, x.max = 1e6,

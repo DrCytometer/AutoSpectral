@@ -23,6 +23,7 @@ Note below: you will need to change your working directory if you run
 this yourself.
 
 ``` r
+
 library(AutoSpectral)
 knitr::opts_knit$set(root.dir = 'C:/Users/Oliver Burton/OneDrive - University of Cambridge/Documents/AutoSpectral_data/Gating_params')
 ```
@@ -45,6 +46,7 @@ BD comp beads and one from BD SpectraComp beads. This will give us a
 bunch of stuff to work with.
 
 ``` r
+
 asp <- get.autospectral.param(cytometer = "a8", figures = TRUE)
 control.dir <- "~/AutoSpectral_data/Gating_params/SSC"
 create.control.file(control.dir, asp)
@@ -60,6 +62,7 @@ Here’s what the control file looks like at this point, after I’ve set
 universal negatives and filled in the markers.
 
 ``` r
+
 control.file <- "~/AutoSpectral_data/Gating_params/fcs_control_file.csv"
 read.csv(control.file)
 ```
@@ -68,6 +71,7 @@ For good practice, we’ll check that there are no mistakes in this before
 proceeding.
 
 ``` r
+
 check.control.file(
   control.dir = control.dir,
   control.def.file = control.file,
@@ -87,6 +91,7 @@ gating. Note: in AutoSpectral version 1.5.0 and higher, we need to
 specify `gating.system = "density"` for this to be the default behavior.
 
 ``` r
+
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
 
@@ -114,6 +119,7 @@ How do we fix this?
 The scatter limits are controlled by these parameters:
 
 ``` r
+
 asp$scatter.data.min.x # minimum value for Forward Scatter
 asp$scatter.data.max.x # max value for Forward Scatter
 asp$scatter.data.min.y # minimum value for Side Scatter
@@ -125,6 +131,7 @@ So, our SSC is current capped at 1.6e7, while our beads are up around
 4-5e7. We need to change the maximum value for both.
 
 ``` r
+
 asp$scatter.data.max.x <- 1e8
 asp$scatter.data.max.y <- 5e7
 ```
@@ -132,6 +139,7 @@ asp$scatter.data.max.y <- 5e7
 Now we can try again.
 
 ``` r
+
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
 
@@ -174,6 +182,7 @@ Let’s set a more reasonable value, stretching the cells out on the FSC
 while keeping the beads on screen.
 
 ``` r
+
 asp$scatter.data.max.x <- 5e7
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
@@ -192,6 +201,7 @@ debris. Because of how we’ve scaled the plot with the scatter limits,
 our cells are in the lower left corner.
 
 ``` r
+
 asp$scatter.data.max.x <- 1e8
 asp$gate.bound.density.max.exclusion.x.cells
 asp$gate.bound.density.max.exclusion.y.cells
@@ -204,6 +214,7 @@ most gating parameters for both beads and cells, allowing you more
 control.
 
 ``` r
+
 asp$gate.bound.density.max.exclusion.x.cells <- 0.02
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
@@ -222,6 +233,7 @@ scatter detector with the imaging. Can we use the other one(s)? Yes. By
 default, AutoSpectral will use these channels:
 
 ``` r
+
 asp$default.scatter.parameter
 ```
 
@@ -230,6 +242,7 @@ also need to figure out yourself what good limits are for these, which
 you can do by reading the values from a plot in FlowJo or FCS Express.
 
 ``` r
+
 asp$default.scatter.parameter <- c(
   "LightLoss (Imaging)-A",
   "SSC (Imaging)-A"
@@ -256,6 +269,7 @@ gates. There are two separate parameters for this for both beads and
 cells because there are two steps at which the density is estimated.
 
 ``` r
+
 asp$gate.bound.density.bw.factor.beads
 asp$gate.region.density.bw.factor.beads
 ```
@@ -265,6 +279,7 @@ usually has the effect of extending the gate out to include lower
 density regions.
 
 ``` r
+
 asp$gate.bound.density.bw.factor.beads <- 24
 asp$gate.region.density.bw.factor.beads <- 24
 flow.control <- define.flow.control(control.dir, control.file, asp,
@@ -288,6 +303,7 @@ Alternatively, we can adjust the number of standard deviations around
 the median that AutoSpectral looks at when defining the gate
 
 ``` r
+
 asp$gate.bound.density.max.mad.factor.beads
 ```
 
@@ -295,6 +311,7 @@ Let’s look for data farther from the median by increasing the mad.factor
 (and reset the bandwidth/smoothing):
 
 ``` r
+
 asp$gate.bound.density.bw.factor.beads <- 6
 asp$gate.region.density.bw.factor.beads <- 6
 asp$gate.bound.density.max.mad.factor.beads <- 12
@@ -312,12 +329,14 @@ to call one of the parameter sets by a different name to save your work,
 though).
 
 ``` r
+
 asp <- get.autospectral.param(cytometer = "a8", figures = TRUE)
 ```
 
 More parameters:
 
 ``` r
+
 # the number of cells used to calculate the gate
 # more may be more accurate, but will take longer
 # 1e5 is usually plenty
@@ -325,6 +344,7 @@ asp$gate.downsample.n.cells
 ```
 
 ``` r
+
 # the size of the grid for estimating the kernel density (where the cells are)
 # lower numbers = faster
 # larger numbers = more detail, much slower
@@ -350,11 +370,13 @@ Let’s make a new control file, setting `large.gate = TRUE` for the
 cells.
 
 ``` r
+
 control.file.large <- "~/AutoSpectral_data/Gating_params/fcs_control_file_large.csv"
 read.csv(control.file.large)
 ```
 
 ``` r
+
 flow.control <- define.flow.control(control.dir, control.file.large, asp)
 ```
 
@@ -367,6 +389,7 @@ amount by which it scales upwards and outwards is determined by the
 parameters below, which are defined on a cytometer-specific basis.
 
 ``` r
+
 asp$large.gate.scaling.x
 asp$large.gate.scaling.y
 ```
@@ -374,6 +397,7 @@ asp$large.gate.scaling.y
 If we want to make it even bigger, we can do this:
 
 ``` r
+
 asp$large.gate.scaling.x <- 10
 asp$large.gate.scaling.y <- 20
 flow.control <- define.flow.control(control.dir, control.file.large, asp)
@@ -394,11 +418,13 @@ Let’s pretend our CD4 stain is actually a viability marker, setting
 `is.viability` to `TRUE`.
 
 ``` r
+
 control.file.via <- "~/AutoSpectral_data/Gating_params/fcs_control_file_via.csv"
 read.csv(control.file.via)
 ```
 
 ``` r
+
 flow.control <- define.flow.control(control.dir, control.file.via, asp)
 ```
 
@@ -410,6 +436,7 @@ Viability gate
 How much to the left the gate extends is controlled by this:
 
 ``` r
+
 asp$viability.gate.scaling
 ```
 
@@ -419,6 +446,7 @@ population), and decreases the lower FSC bound proportionally, so
 cutting it to 2/3rds by default. Let’s go way down.
 
 ``` r
+
 asp$viability.gate.scaling <- 0.1
 flow.control <- define.flow.control(control.dir, control.file.via, asp)
 ```

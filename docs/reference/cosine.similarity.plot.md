@@ -17,6 +17,7 @@ cosine.similarity.plot(
   figure.height = 6,
   color.palette = "viridis",
   show.legend = TRUE,
+  file.type = "jpg",
   save = TRUE
 )
 ```
@@ -61,11 +62,16 @@ cosine.similarity.plot(
 
   Logical. If `TRUE`, figure legend will be included.
 
+- file.type:
+
+  Character string specifying the output file format. One of `"jpg"`
+  (default), `"jpeg"`, `"tiff"`, `"png"`, or `"pdf"`.
+
 - save:
 
-  Logical, if `TRUE`, saves a JPEG file to the `output.dir`. Otherwise,
-  the plot will simply be created in the Viewer.
+  Logical, if `TRUE`, saves a file to the `output.dir`. Otherwise, the
+  plot will simply be created in the Viewer.
 
 ## Value
 
-Saves the heatmap plot as a JPEG file in the similarity directory.
+Saves the heatmap plot as an image file in the similarity directory.

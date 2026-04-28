@@ -19,6 +19,7 @@ create.heatmap(
   show.legend = TRUE,
   figure.width = 8,
   figure.height = 6,
+  file.type = "jpg",
   save = TRUE
 )
 ```
@@ -89,12 +90,17 @@ create.heatmap(
 
   Numeric. Height of the heatmap figure. Default is `6`.
 
+- file.type:
+
+  Character string specifying the output file format. One of `"jpg"`
+  (default), `"jpeg"`, `"tiff"`, `"png"`, or `"pdf"`.
+
 - save:
 
-  Logical, if `TRUE`, saves a JPEG file to the `output.dir`. Otherwise,
-  the plot will simply be created in the Viewer.
+  Logical, if `TRUE`, saves a file to the `output.dir`. Otherwise, the
+  plot will simply be created in the Viewer.
 
 ## Value
 
-Saves the heatmap plot as a JPEG file and the SSM data as a CSV file in
-the specified directory.
+Saves the heatmap plot as an image file and the SSM data as a CSV file
+in the specified directory.

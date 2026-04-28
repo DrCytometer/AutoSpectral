@@ -2,7 +2,7 @@
 
 This function matches control filenames to fluorophores in the
 fluorophore database, including synonyms, and returns the matched
-fluorophores.
+fluorophores based on the longest character match to ensure specificity.
 
 ## Usage
 
@@ -18,7 +18,7 @@ match.fluorophores(control.filenames, fluorophore.database)
 
 - fluorophore.database:
 
-  Data frame containing fluorophore information, including synonyms.
+  Data frame containing fluorophore information.
 
 ## Value
 

@@ -41,6 +41,7 @@ single-color controls for each fluorophore using a self-organizing map
 (SOM).
 
 ``` r
+
 library( AutoSpectral )
 ```
 
@@ -63,6 +64,7 @@ change the name of your files as appropriate. If they aren’t in the
 argument.
 
 ``` r
+
 asp <- get.autospectral.param( cytometer = "aurora", figures = TRUE )
 control.dir <- "./SSC"
 control.file <- "fcs_control_file.csv"
@@ -77,6 +79,7 @@ single-colour control, identify the brightest non-autofluorescent events
 in the peak channel, and cluster those to get variants.
 
 ``` r
+
 variants <- get.spectral.variants(
    control.dir,
    control.file,
@@ -216,6 +219,7 @@ LAPACK installed. Please reach out if you have suggestions for faster
 implementation (I’m not a computer scientist).
 
 ``` r
+
 library( AutoSpectralRcpp )
 
 fully.stained.dir <- "./Fully stained"
@@ -245,6 +249,7 @@ below, for instance, we’ve requested to test up to 100 variants per cell
 the previous “slow” brute force approach.
 
 ``` r
+
 unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
            spectra = spectra,
            asp = asp,

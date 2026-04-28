@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,30 +83,35 @@ AF signature to use for each cell (or point of debris, noise, whatever)
 in the data.</p>
 <p>The first thing we need to do is discover all of the AF signatures
 present in the data. For this, the unstained control is critical. For
-good results, you need to do the following in your wet lab work: * 1)
-Prepare a truly unstained sample. This means no added fluorophores, so
-no conjugated antibodies or live/dead stains and no fluorescent buffers
-such as the Brilliant Stain buffer. This also means no fluorescent
-reporters. If you run GFP expressing cells as your unstained, the GFP
-signal in those will be considered an AF signature, and it will be
-unmixed as autofluorescence rather than GFP. If you contaminate your
-unstained with small amounts of stained cells, single-stained controls
-or fluorescent beads, those signatures may also be considered to be AF.
-* 2) Treat your unstained sample like your fully stained sample. Run it
+good results, you need to do the following in your wet lab work:</p>
+<ul>
+<li>Prepare a truly unstained sample. This means no added fluorophores,
+so no conjugated antibodies or live/dead stains and no fluorescent
+buffers such as the Brilliant Stain buffer. This also means no
+fluorescent reporters. If you run GFP expressing cells as your
+unstained, the GFP signal in those will be considered an AF signature,
+and it will be unmixed as autofluorescence rather than GFP. If you
+contaminate your unstained with small amounts of stained cells,
+single-stained controls or fluorescent beads, those signatures may also
+be considered to be AF.</li>
+<li>Treat your unstained sample like your fully stained sample. Run it
 through the same protocol. If you’re fixing and permeabilizing, do that
 to the unstained, too. * 3) Acquire lots of cells. If you only acquire
 10 thousand events, you will have very little data to work with, and
 rare populations, which are probably the problematic ones, will not show
-up well. Ideally, run as many cells as in your fully stained samples. *
-4) Run unstained samples for each sample type in your data if you expect
-a difference in AF For example, with tissue samples, run a sample from
-spleen, lymph nodes and lung, not just spleen or lung. If you’re running
-samples from drastically different conditions (e.g., infected
+up well. Ideally, run as many cells as in your fully stained
+samples.</li>
+<li>Run unstained samples for each sample type in your data if you
+expect a difference in AF For example, with tissue samples, run a sample
+from spleen, lymph nodes and lung, not just spleen or lung. If you’re
+running samples from drastically different conditions (e.g., infected
 vs. healthy or infant vs. adult), I suggest running an unstained for
-each. * 5) For smaller differences in conditions, you will probably get
-good results by creating a pooled unstained sample. For instance, when
+each.</li>
+<li>For smaller differences in conditions, you will probably get good
+results by creating a pooled unstained sample. For instance, when
 running PBMC from multiple donors, you could take a few cells from each
-for the unstained sample for AF.</p>
+for the unstained sample for AF.</li>
+</ul>
 <p>You’re welcome to play around with breaking these rules to see what
 happens.</p>
 <p>A note about pooling: This can be done in the wet lab by mixing the

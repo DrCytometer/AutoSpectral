@@ -60,6 +60,7 @@ the calculations a great deal. Better results, faster.
 Right, let’s go over some data as an example.
 
 ``` r
+
 library( AutoSpectral )
 ```
 
@@ -67,6 +68,7 @@ We need to set up our experiment. This is Aurora data. See the control
 file and gating articles for more info.
 
 ``` r
+
 asp <- get.autospectral.param( cytometer = "aurora", figures = TRUE )
 # optional: turn on parallel processing
 asp$parallel <- TRUE
@@ -97,6 +99,7 @@ Modelling approach (no cleaning). This is slow since it calculates over
 all the gated data.
 
 ``` r
+
 spectra.cells.rlm <- get.fluorophore.spectra( flow.control.cells, asp, 
                                               title = "Cells RLM" )
 ```
@@ -122,6 +125,7 @@ events. It still has the original “dirty” data. This means you can
 overwrite the `flow.control` if you want, which reduces memory usage.
 
 ``` r
+
 clean.control.cells.neg <- clean.controls( flow.control.cells, asp, 
                                            universal.negative = TRUE )
 # or:
@@ -159,6 +163,7 @@ We can now extract the spectra again, using the cleaned data
 (`use.clean.expr = TRUE`).
 
 ``` r
+
 spectra.cells.neg <- get.fluorophore.spectra( clean.control.cells.neg, asp, 
                                               use.clean.expr = TRUE,
                                               title = "Cells Matching Negative" )
@@ -172,6 +177,7 @@ To see what’s changed, we can subtract the cleaned spectra from the
 original RLM spectra.
 
 ``` r
+
 delta.cells.rlm.neg <- spectra.cells.rlm - spectra.cells.neg
 ```
 
@@ -179,6 +185,7 @@ We can create a heatmap (see Plotting article) to visualize this (this
 function still needs some work, sorry).
 
 ``` r
+
 create.heatmap( t( delta.cells.rlm.neg ), 
                 legend.label = "Change in spectra",
                 title = "Matched negative change cells",
@@ -195,6 +202,7 @@ spectral calculations. We’ll use the scatter-matching negatives and
 brightest event selection as well.
 
 ``` r
+
 clean.control.cells.af <- clean.controls( flow.control.cells, asp, 
                                           universal.negative = TRUE,
                                           af.remove = TRUE )
@@ -249,6 +257,7 @@ basically a bunch of macrophages getting in the way.
 We can now extract the spectra using the cleaned data without AF events.
 
 ``` r
+
 spectra.cells.af <- get.fluorophore.spectra( clean.control.cells.af, asp,
                                              use.clean.expr = TRUE,
                                              title = "Cells AF Removed" )
@@ -266,6 +275,7 @@ same controls, different result.
 What has changed with this cleaning procedure?
 
 ``` r
+
 delta.cells.rlm.af <- spectra.cells.rlm - spectra.cells.af
 create.heatmap( t( delta.cells.rlm.af ), 
                 legend.label = "Change in spectra",

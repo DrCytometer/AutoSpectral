@@ -9,7 +9,7 @@ splitting by excitation lasers, and saves the plots as JPEG files."></head><body
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,6 +71,7 @@ splitting by excitation lasers, and saves the plots as JPEG files.</p>
 <span>  show.legend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot.width <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plot.height <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  file.type <span class="op">=</span> <span class="st">"jpg"</span>,</span>
 <span>  save <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -136,14 +137,19 @@ is <code>NULL</code>.</p></dd>
 is <code>NULL</code>.</p></dd>
 
 
+<dt id="arg-file-type">file.type<a class="anchor" aria-label="anchor" href="#arg-file-type"></a></dt>
+<dd><p>Character string specifying the output file format. One of
+<code>"jpg"</code> (default), <code>"jpeg"</code>, <code>"tiff"</code>, <code>"png"</code>, or <code>"pdf"</code>.</p></dd>
+
+
 <dt id="arg-save">save<a class="anchor" aria-label="anchor" href="#arg-save"></a></dt>
-<dd><p>Logical, if <code>TRUE</code>, saves a JPEG file to the <code>plot.dir</code>.
+<dd><p>Logical, if <code>TRUE</code>, saves a file to the <code>plot.dir</code>.
 Otherwise, the plot will simply be created in the Viewer.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Saves the plot(s) as JPEG files in the specified directory.</p>
+    <p>Saves the plot(s) as image files in the specified directory.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

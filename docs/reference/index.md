@@ -18,6 +18,8 @@
   : Calculate Condition Number
 - [`calculate.hotspot.matrix()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.hotspot.matrix.md)
   : Calculate Hotspot Matrix
+- [`calculate.ssi()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.ssi.md)
+  : Calculate Secondary Stain Index and Spillover
 - [`calculate.weights()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.weights.md)
   : Calculate Weights
 - [`check.channels()`](https://drcytometer.github.io/AutoSpectral/reference/check.channels.md)
@@ -30,6 +32,8 @@
   : Check Gates For Errors
 - [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
   : Clean Controls
+- [`compare.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/compare.unmix.md)
+  : Compare Unmixing Quality Across Two Spectral References
 - [`concatenateFCS()`](https://drcytometer.github.io/AutoSpectral/reference/concatenateFCS.md)
   : Concatenate Multiple FCS Files
 - [`cosine.similarity.plot()`](https://drcytometer.github.io/AutoSpectral/reference/cosine.similarity.plot.md)
@@ -160,6 +164,8 @@
   : Plot Scatter-Matching of Universal Negative
 - [`spectral.heatmap()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.heatmap.md)
   : Spectral Heatmap
+- [`spectral.mismatch.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.mismatch.plot.md)
+  : Spectral Mismatch Plot
 - [`spectral.reference.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.reference.plot.md)
   : Spectral Reference Plot
 - [`spectral.ribbon.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.ribbon.plot.md)
@@ -188,6 +194,10 @@
   : Unmix WLS Per Cell
 - [`unmix.wls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.md)
   : Unmix Using Weighted Least Squares
+- [`unmixed.mxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.mxn.plot.md)
+  : m \\\times\\ n Unmixed Biplot Grid
+- [`unmixed.nxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.nxn.plot.md)
+  : n \\\times\\ n Unmixed Biplot Triangle
 - [`validate.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.md)
   : Validate Control File
 - [`writeFCS()`](https://drcytometer.github.io/AutoSpectral/reference/writeFCS.md)

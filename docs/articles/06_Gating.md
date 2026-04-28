@@ -23,6 +23,7 @@ Parameters](https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parame
 articles for more detail.
 
 ``` r
+
 library(AutoSpectral)
 ```
 
@@ -39,6 +40,7 @@ Today I’m including a simple set with a bead control and a cell control
 for Spark Blue 574 (anti-CD14), with corresponding unstained samples.
 
 ``` r
+
 asp <- get.autospectral.param(cytometer = "id7000", figures = TRUE)
 control.dir <- "~/AutoSpectral_data/Gating_example/SSC"
 create.control.file(control.dir, asp)
@@ -55,6 +57,7 @@ the unstained bead control `Fluorophore` to be `Negative` instead of
 Once done, we can load in the control file.
 
 ``` r
+
 control.file <- "~/AutoSpectral_data/Gating_example/fcs_control_file.csv"
 ```
 
@@ -62,6 +65,7 @@ Now we are ready to read in the fcs files, gate the cells and organize
 the experiment.
 
 ``` r
+
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
 
@@ -105,6 +109,7 @@ population 2 as the one to use for defining the gate. This is controlled
 by this parameter:
 
 ``` r
+
 asp$gate.bound.density.max.target.cells
 ```
 
@@ -113,6 +118,7 @@ The target population is one more than this number for cells.
 picks population 2. If we want it to pick population 1, we can do this:
 
 ``` r
+
 asp$gate.bound.density.max.target.cells <- 0
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
@@ -135,6 +141,7 @@ there until we change it or call `get.autospectral.param` again and
 overwrite `asp`).
 
 ``` r
+
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
 
@@ -148,6 +155,7 @@ parameters below, which are defined on a cytometer-specific basis, so in
 this case, in `get.autospectral.param.id7000`.
 
 ``` r
+
 asp$large.gate.scaling.x
 asp$large.gate.scaling.y
 ```
@@ -156,6 +164,7 @@ As we see above, the gate’s bigger than we need it to be. We could, if
 we want, make it a bit smaller, like so:
 
 ``` r
+
 asp$large.gate.scaling.x <- 2
 asp$large.gate.scaling.y <- 3
 flow.control <- define.flow.control(control.dir, control.file, asp)
@@ -173,6 +182,7 @@ this would be much faster in Python.
 The parameters that can speed up the gate are below:
 
 ``` r
+
 asp$gate.downsample.n.cells
 asp$gate.bound.density.grid.n.cells
 asp$gate.region.density.grid.n.cells
@@ -200,6 +210,7 @@ This allows us to tune the gates for each separately. For this part,
 let’s tweak the bead gate.
 
 ``` r
+
 asp$gate.bound.density.max.mad.factor.beads
 asp$gate.bound.density.max.mad.factor.cells
 ```
@@ -210,6 +221,7 @@ cleaner, so we can be less stringent. Let’s be even less strict–what
 happens?
 
 ``` r
+
 asp$gate.bound.density.max.mad.factor.beads <- 10
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
@@ -234,6 +246,7 @@ with. So, let’s look at how to change the scales.
 First, which scatter parameters are we using?
 
 ``` r
+
 asp$default.scatter.parameter
 ```
 
@@ -246,12 +259,14 @@ If this were another cytometer’s data, we could use a different scatter
 detector. I’ve commented this out below, but that’s how you’d do it.
 
 ``` r
+
 # asp$default.scatter.parameter <- c( "FSC-A", "SSC-B-A" )
 ```
 
 There are lower and upper limits for each scatter parameter.
 
 ``` r
+
 asp$scatter.data.min.x
 asp$scatter.data.max.x
 asp$scatter.data.min.y
@@ -263,6 +278,7 @@ we’ve got the cells down in the lower left. We can try restricting the
 range rather than changing the target population:
 
 ``` r
+
 asp$gate.bound.density.max.target.cells <- 1
 
 asp$scatter.data.max.x <- 3e5
@@ -295,6 +311,7 @@ be unmixed. Anyway, these are problems with FlowJo, so maybe try a
 different program. I will be implementing a fix for that at some point.
 
 ``` r
+
 flow.control <- define.flow.control(control.dir, control.file, asp, gate = FALSE)
 ```
 

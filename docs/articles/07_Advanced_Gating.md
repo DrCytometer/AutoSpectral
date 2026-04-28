@@ -33,6 +33,7 @@ multiple parameters simultaneously. It generates a grid of plots showing
 how different n.cells and percentiles affect the resulting boundary.
 
 ``` r
+
 library(AutoSpectral)
 asp <- get.autospectral.param(cytometer = "id7000")
 
@@ -72,6 +73,7 @@ brightest events in the peak channel (e.g., the CD4+ population) and
 uses only those events to find the scatter “landmark” for your gate.
 
 ``` r
+
 gate.lymph <- define.gate.landmarks(
   control.file = "fcs_control_file.csv",
   control.dir = "path/to/fcs",
@@ -89,6 +91,7 @@ region in the scatter plot. It works well with beads and may be best for
 samples where fluorescence “landmarks” aren’t available.
 
 ``` r
+
 gate.beads <- define.gate.density(
   control.file = "fcs_control_file.csv",
   control.dir = "path/to/fcs",
@@ -119,6 +122,7 @@ your CSV. In this example, the control file would need to have
 Any number of gates may be used if you pre-supply them.
 
 ``` r
+
 # Combine your gates into a list
 my.gates <- list("lymphocyte" = gate.lymph, "beads" = gate.beads)
 
