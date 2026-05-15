@@ -11,8 +11,8 @@
 #'
 #' @export
 
-get.autospectral.param.minimal <- function()
-{
+get.autospectral.param.minimal <- function() {
+
     color.pal <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
                   "#FFFF33", "#A65628", "#F781BF", "#999999")
 
@@ -231,7 +231,9 @@ get.autospectral.param.minimal <- function()
 
       # gating plot figure parameters
       gate.tesselation.color = "blue3",
-      gate.downsample.seed = 5000,
+      gate.downsample.seed = as.integer(
+        prod(which(letters %in% strsplit("hummingbird", "")[[1]]))
+      ),
 
       # parameters for main figures
       figure.width = 5.0,
