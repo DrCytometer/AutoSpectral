@@ -2,23 +2,30 @@
 #
 # Package load/unload hooks.
 #
-# .onLoad: if AutoSpectralRcpp is installed, replace AutoSpectral::readFCS
-# with AutoSpectralRcpp::readFCS in this package's own namespace.  This is
-# done once at load time so there is zero per-call overhead — callers use
-# AutoSpectral::readFCS as normal and get the fast version transparently.
+# .onLoad:  silent setup only — injects Rcpp-accelerated versions of readFCS
+#           and writeFCS into this package's own namespace if AutoSpectralRcpp
+#           is installed.
 #
-# .onUnload: reverse the injection so the namespace is clean if the package
-# is reloaded without AutoSpectralRcpp (e.g. during development).
+# .onAttach: emits the user-facing startup message
+#
+# .onUnload: restores the original pure-R implementations so the namespace is
+#            clean if the package is reloaded without AutoSpectralRcpp.
 
-# Store original R implementations so we can restore them on unload.
-# Populated by .onLoad if injection occurs.
+# Store original pure-R implementations so .onUnload can restore them.
+# Populated by .onLoad if injection occurs; NULL means no injection happened.
 .original_readFCS  <- NULL
 .original_writeFCS <- NULL
 
-# Helper: inject one function from AutoSpectralRcpp into the AutoSpectral ns.
-# Returns TRUE if injection succeeded, FALSE otherwise.
-.inject <- function(fn_name, ns) {
-  if (!exists(fn_name, envir = asNamespace("AutoSpectralRcpp"), mode = "function")) {
+# Track which functions were successfully injected so .onAttach can report.
+.injected_fns <- character(0)
+
+# Helper: inject one function from AutoSpectralRcpp into this package's ns.
+# Uses assignInMyNamespace(), no unlockBinding() needed.
+# Returns TRUE on success, FALSE if the symbol is absent from AutoSpectralRcpp.
+.inject <- function(fn_name) {
+  if (!exists(fn_name,
+              envir = asNamespace("AutoSpectralRcpp"),
+              mode  = "function")) {
     warning(
       "AutoSpectralRcpp is installed but does not export ", fn_name, ". ",
       "Falling back to the pure-R implementation.",
@@ -26,58 +33,64 @@
     )
     return(FALSE)
   }
-  # Snapshot original
-  assign(
+
+  # Snapshot the original so .onUnload can restore it
+  utils::assignInMyNamespace(
     paste0(".original_", fn_name),
-    get(fn_name, envir = ns),
-    envir = ns
+    get(fn_name, envir = asNamespace("AutoSpectral"))
   )
-  unlockBinding(fn_name, ns)
-  assign(fn_name, get(fn_name, envir = asNamespace("AutoSpectralRcpp")), envir = ns)
-  lockBinding(fn_name, ns)
+
+  # Replace with the Rcpp version
+  utils::assignInMyNamespace(
+    fn_name,
+    get(fn_name, envir = asNamespace("AutoSpectralRcpp"))
+  )
+
   TRUE
 }
 
-# Helper: restore one function in the AutoSpectral ns from its snapshot.
-.restore <- function(fn_name, ns) {
+# Helper: restore one function from its snapshot, if one exists.
+.restore <- function(fn_name) {
   snapshot_name <- paste0(".original_", fn_name)
   original <- tryCatch(
-    get(snapshot_name, envir = ns, inherits = FALSE),
+    get(snapshot_name, envir = asNamespace("AutoSpectral"), inherits = FALSE),
     error = function(e) NULL
   )
-  if (!is.null(original) && is.function(original)) {
-    unlockBinding(fn_name, ns)
-    assign(fn_name, original, envir = ns)
-    lockBinding(fn_name, ns)
+  if (is.function(original)) {
+    utils::assignInMyNamespace(fn_name, original)
+    utils::assignInMyNamespace(snapshot_name, NULL)
   }
 }
 
 .onLoad <- function(libname, pkgname) {
-  
+
   if (!requireNamespace("AutoSpectralRcpp", quietly = TRUE)) {
-    # AutoSpectralRcpp not installed - use pure-R implementations, nothing to do.
+    # AutoSpectralRcpp not installed: nothing to do.
     return(invisible(NULL))
   }
-  
-  ns        <- asNamespace("AutoSpectral")
-  injected  <- character(0)
-  
-  if (.inject("readFCS",  ns)) injected <- c(injected, "readFCS")
-  if (.inject("writeFCS", ns)) injected <- c(injected, "writeFCS")
-  
-  if (length(injected) > 0) {
-    packageStartupMessage(
-      "AutoSpectralRcpp detected: using Rcpp-accelerated ",
-      paste(injected, collapse = " and "), "."
-    )
-  }
-  
+
+  injected <- character(0)
+  if (.inject("readFCS"))  injected <- c(injected, "readFCS")
+  if (.inject("writeFCS")) injected <- c(injected, "writeFCS")
+
+  # Store for .onAttach
+  utils::assignInMyNamespace(".injected_fns", injected)
+
   invisible(NULL)
 }
 
+.onAttach <- function(libname, pkgname) {
+  fns <- .injected_fns
+  if (length(fns) > 0) {
+    packageStartupMessage(
+      "AutoSpectralRcpp detected: using Rcpp-accelerated ",
+      paste(fns, collapse = " and "), "."
+    )
+  }
+}
+
 .onUnload <- function(libpath) {
-  ns <- asNamespace("AutoSpectral")
-  .restore("readFCS",  ns)
-  .restore("writeFCS", ns)
+  .restore("readFCS")
+  .restore("writeFCS")
   invisible(NULL)
 }
