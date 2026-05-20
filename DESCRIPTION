@@ -1,7 +1,7 @@
 Package: AutoSpectral
 Type: Package
 Title: Tools for Unmixing Spectral Flow Cytometry Data
-Version: 1.5.6
+Version: 1.5.7
 Authors@R: c(
     person(
       "Oliver", "Burton",
@@ -46,6 +46,7 @@ URL: https://github.com/DrCytometer/AutoSpectral,
 BugReports: https://github.com/DrCytometer/AutoSpectral/issues
 Suggests: 
     AutoSpectralRcpp,
+    EmbedSOM,
     knitr,
     rmarkdown
 VignetteBuilder: knitr
