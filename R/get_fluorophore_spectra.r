@@ -217,6 +217,7 @@ get.fluorophore.spectra <- function(
         )
 
         hotspot.matrix <- calculate.hotspot.matrix( marker.spectra )
+        hotspot.max <- max( 4, hotspot.matrix )
 
         create.heatmap(
           hotspot.matrix,
@@ -224,6 +225,9 @@ get.fluorophore.spectra <- function(
           legend.label = expression( "Hotspot Matrix"^"TM" ),
           triangular = TRUE,
           plot.dir = asp$figure.similarity.heatmap.dir,
+          fixed.scale = TRUE,
+          scale.min = 0,
+          scale.max = hotspot.max,
           color.palette = "inferno",
           figure.width = asp$figure.similarity.width,
           figure.height = asp$figure.similarity.height
