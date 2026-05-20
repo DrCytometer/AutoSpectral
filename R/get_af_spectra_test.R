@@ -162,7 +162,7 @@ get.af.spectra.test <- function(
     som.dim <- max( 2, floor( sqrt( cell.n / 3 ) ) )
   }
 
-  set.seed( asp$gate.downsample.seed )
+  set.seed( asp$bird.seed )
   map <- FlowSOM::SOM(
     cluster.data,
     xdim   = som.dim,
@@ -349,7 +349,7 @@ get.af.spectra.test <- function(
 
       som.dim.error <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
 
-      set.seed( asp$gate.downsample.seed )
+      set.seed( asp$bird.seed )
       map.error <- FlowSOM::SOM(
         spill.ratios,
         xdim   = som.dim.error,

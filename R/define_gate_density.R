@@ -235,7 +235,7 @@ define.gate.density <- function(
 
     # set seed and sample
     if ( event.n > max.event.n ) {
-      set.seed( asp$gate.downsample.seed )
+      set.seed( asp$bird.seed )
       scatter.data <- scatter.data[ sample( event.n, max.event.n ), ]
     }
 

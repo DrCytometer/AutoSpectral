@@ -51,7 +51,7 @@ gate.define.plot <- function(
   # downsample (faster plotting)
   if ( nrow( gate.data ) > max.points ) {
     # random sampling
-    set.seed( asp$gate.downsample.seed )
+    set.seed( asp$bird.seed )
     gate.data <- gate.data[ sample( seq_len( nrow( gate.data ) ), max.points ), ]
   }
 

@@ -107,7 +107,7 @@ create.biplot <- function(
   # downsample (faster plotting)
   if ( nrow( plot.data ) > max.points ) {
     # random sampling
-    set.seed( asp$gate.downsample.seed )
+    set.seed( asp$bird.seed )
     plot.data <- plot.data[ sample( seq_len( nrow( plot.data ) ), max.points ), ]
   }
 

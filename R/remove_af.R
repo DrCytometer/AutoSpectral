@@ -72,7 +72,7 @@ remove.af <- function(
   expr.data.neg <- clean.expr[[ matching.negative ]]
 
   if ( nrow( expr.data.neg ) > asp$af.gate.downsample.n.cells ) {
-    set.seed( asp$gate.downsample.seed )
+    set.seed( asp$bird.seed )
     downsample.idx <- sample( nrow( expr.data.neg ), asp$af.gate.downsample.n.cells )
     expr.data.neg <- expr.data.neg[ downsample.idx, ]
   }
@@ -152,7 +152,7 @@ remove.af <- function(
 
   # include up to 500 non-AF cells
   if ( length( af.gate.idx ) > 500 ) {
-    set.seed( asp$gate.downsample.seed )
+    set.seed( asp$bird.seed )
     sample.idx <- sample( af.gate.idx, 500 )
     non.af.cells <- expr.data.neg[ sample.idx, ]
   } else {

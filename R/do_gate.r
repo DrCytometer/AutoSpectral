@@ -93,7 +93,7 @@ do.gate <- function(
   if ( !is.null( p$gate.downsample.n ) &&
       length( gate.bound.data.idx ) > p$gate.downsample.n ) {
 
-    set.seed( asp$gate.downsample.seed )
+    set.seed( asp$bird.seed )
     gate.bound.data.idx <- sample(
       gate.bound.data.idx,
       p$gate.downsample.n

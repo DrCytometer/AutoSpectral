@@ -47,7 +47,7 @@ handle.gating.error <- function(
   # Downsample for plotting efficiency
   plot.coords <- scatter.coords
   if (nrow(plot.coords) > 1e5) {
-    set.seed(asp$gate.downsample.seed)
+    set.seed(asp$bird.seed)
     plot.coords <- plot.coords[sample(nrow(plot.coords), 1e5), ]
   }
 

@@ -67,7 +67,7 @@ parallel.backend <- function(
 
   # Set reproducible RNG
   RNGkind( "L'Ecuyer-CMRG" )
-  parallel::clusterSetRNGStream( cl, asp$gate.downsample.seed )
+  parallel::clusterSetRNGStream( cl, asp$bird.seed )
 
   # Load packages and code on all workers
   load.result <- tryCatch( {

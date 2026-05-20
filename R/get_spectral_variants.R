@@ -261,7 +261,7 @@ get.spectral.variants <- function(
 
   # read exprs for spectral channels only
   if ( nrow( unstained ) > asp$gate.downsample.n.cells ) {
-    set.seed( asp$gate.downsample.seed )
+    set.seed( asp$bird.seed )
     unstained.idx <- sample( nrow( unstained ), asp$gate.downsample.n.beads )
     unstained <- unstained[ unstained.idx, spectral.channel, drop = FALSE ]
   } else {

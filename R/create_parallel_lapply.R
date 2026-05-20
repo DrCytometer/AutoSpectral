@@ -58,7 +58,7 @@ create.parallel.lapply <- function(
 
   if ( !parallel ) {
     message( "Parallel processing disabled. Using sequential processing." )
-    set.seed( asp$gate.downsample.seed )
+    set.seed( asp$bird.seed )
     lapply.function <- lapply
 
     return(
@@ -88,7 +88,7 @@ create.parallel.lapply <- function(
         FUN( ... )
       }
       RNGkind( "L'Ecuyer-CMRG" )
-      set.seed( asp$gate.downsample.seed )
+      set.seed( asp$bird.seed )
       parallel::mclapply( x, wrapper.FUN, mc.cores = mc.cores, mc.preschedule = FALSE, ... )
     }
   }

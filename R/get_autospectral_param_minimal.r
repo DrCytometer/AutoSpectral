@@ -231,7 +231,7 @@ get.autospectral.param.minimal <- function() {
 
       # gating plot figure parameters
       gate.tesselation.color = "blue3",
-      gate.downsample.seed = as.integer(
+      bird.seed = as.integer(
         prod(which(letters %in% strsplit("hummingbird", "")[[1]]))
       ),
 

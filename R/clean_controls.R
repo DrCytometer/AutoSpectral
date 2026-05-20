@@ -340,7 +340,7 @@ clean.controls <- function(
     af.expr <- clean.expr[[ "AF" ]]
 
     if ( "AF" %in% flow.sample & nrow( af.expr ) > negative.n ) {
-      set.seed( asp$gate.downsample.seed )
+      set.seed( asp$bird.seed )
       downsample.idx <- sample( 1:nrow( af.expr ), negative.n )
       clean.expr[[ "AF" ]] <- af.expr[ downsample.idx, ]
     }
