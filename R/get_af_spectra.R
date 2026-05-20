@@ -4,8 +4,10 @@
 #'
 #' @description
 #' Extracts autofluorescence spectra from an unstained samples. Intended for use
-#' with `unmix.autospectral`. Uses FlowSOM (EmbedSOM) clustering for rapid
-#' identification of cells with similar AF profiles.
+#' with `unmix.autospectral`. Uses FlowSOM (or EmbedSOM) clustering for rapid
+#' identification of cells with similar AF profiles. If AutoSpectralRcpp is
+#' installed, EmbedSOM::SOM is used with batch=TRUE, parallel=TRUE for faster
+#' clustering.
 #'
 #' @importFrom FlowSOM SOM
 #' @importFrom parallelly availableCores
@@ -81,6 +83,9 @@
 #' Wehrens R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
 #' 3.0.” \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
 #' \doi{10.18637/jss.v087.i07}
+#' Kratochvíl M, Koladiya A and Vondrášek J. "Generalized EmbedSOM on quadtree-
+#' structured self-organizing maps." \emph{F1000Research 2019}, \emph{8}2120.
+#' \doi{10.12688/f1000research.21642.1}
 
 get.af.spectra <- function(
     unstained.sample,
@@ -147,17 +152,31 @@ get.af.spectra <- function(
     som.dim <- max( 2, floor( sqrt( cell.n / 3 ) ) )
   }
 
-  # map to SOM (no metaclustering)
-  set.seed( asp$gate.downsample.seed )
-  map <- FlowSOM::SOM(
-    cluster.data,
-    xdim = som.dim,
-    ydim = som.dim,
-    silent = TRUE
-  )
+  # ---- SOM: use EmbedSOM (batch + parallel) if installed,
+  #           otherwise fall back to FlowSOM
+  set.seed( 42 )
+  if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
+    map <- EmbedSOM::SOM(
+      cluster.data,
+      xdim = som.dim,
+      ydim = som.dim,
+      batch = TRUE,
+      parallel = TRUE
+    )
+    # EmbedSOM::SOM returns codes as a list of matrices; extract the first layer
+    map.codes <- map$codes[[ 1 ]]
+  } else {
+    map <- FlowSOM::SOM(
+      cluster.data,
+      xdim = som.dim,
+      ydim = som.dim,
+      silent = TRUE
+    )
+    map.codes <- map$codes
+  }
 
   # L-infinity (peak) normalization
-  af.spectra <- t( apply( map$codes[ , spectral.channels ], 1, function(x) x/max(x) ) )
+  af.spectra <- t( apply( map.codes[ , spectral.channels ], 1, function(x) x/max(x) ) )
 
   # unlikely, but remove any NAs
   af.spectra <- as.matrix( stats::na.omit( af.spectra ) )
@@ -348,13 +367,23 @@ get.af.spectra <- function(
       som.dim <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
 
       # cluster only the problematic data
-      set.seed( asp$gate.downsample.seed )
-      map.error <- FlowSOM::SOM(
-        spill.ratios,
-        xdim = som.dim,
-        ydim = som.dim,
-        silent = TRUE
-      )
+      set.seed( asp$bird.seed )
+      if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
+        map.error <- EmbedSOM::SOM(
+          spill.ratios,
+          xdim = som.dim,
+          ydim = som.dim,
+          batch = TRUE,
+          parallel = TRUE
+        )
+      } else {
+        map.error <- FlowSOM::SOM(
+          spill.ratios,
+          xdim = som.dim,
+          ydim = som.dim,
+          silent = TRUE
+        )
+      }
 
       # for each cluster, we find which base AFs were present and update them
       cluster.ids <- unique( map.error$mapping[ , 1 ] )
