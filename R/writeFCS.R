@@ -82,8 +82,30 @@ writeFCS <- function(mat, keys, file.name, output.dir) {
   writeChar(header, con, eos = NULL)
   writeChar(text.segment, con, eos = NULL)
 
-  # Note: t(mat) is crucial for row-major FCS format
-  writeBin(as.vector(t(mat)), con, size = 4, endian = "little")
+  # FCS requires row-major float32: writeBin(as.vector(t(mat)), ...) would
+  # allocate a full transposed double matrix + a float32 conversion buffer,
+  # totalling ~20 bytes/value of transient memory on top of mat itself.
+  # For large high-channel-count files (e.g. 500k events x 183 channels)
+  # this can exhaust RAM.
+  #
+  # Instead, we transpose and write CHUNK_ROWS events at a time.
+  # t(mat[rows, ]) produces a chunk of size n_col * chunk_rows (doubles),
+  # and writeBin converts to float32 internally, so peak extra memory is
+  # ~CHUNK_ROWS * n_col * (8 + 4) bytes = ~12 bytes/value per chunk.
+  # At CHUNK_ROWS = 131072 and 183 channels that is ~288 MB.
+  CHUNK_ROWS     <- 131072L
+  n_row          <- nrow(mat)
+  rows_remaining <- n_row
+  row_offset     <- 0L
+
+  while (rows_remaining > 0L) {
+    rows_this_chunk <- min(CHUNK_ROWS, rows_remaining)
+    row_idx         <- seq_len(rows_this_chunk) + row_offset
+    writeBin(as.vector(t(mat[row_idx, , drop = FALSE])),
+             con, size = 4, endian = "little")
+    row_offset     <- row_offset + rows_this_chunk
+    rows_remaining <- rows_remaining - rows_this_chunk
+  }
 
   # FCS standard footer (8 zeros)
   writeChar("00000000", con, eos = NULL)
