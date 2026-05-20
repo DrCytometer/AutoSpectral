@@ -66,7 +66,7 @@ transform. Default \code{-1000}.}
 
 \item{use.hex}{Logical. When \code{TRUE} (default), panels are rendered with
 \code{\link[ggplot2:geom_hex]{ggplot2::geom_hex()}} for speed. When \code{FALSE}, reverts to
-\code{\link[scattermore:geom_scattermore]{scattermore::geom_scattermore()}} + \code{\link[ggplot2:geom_density_2d]{ggplot2::stat_density_2d()}}.}
+\code{\link[scattermore:geom_scattermore]{scattermore::geom_scattermore()}} + \code{\link[ggplot2:stat_density_2d]{ggplot2::stat_density_2d()}}.}
 
 \item{hex.bins}{Integer. Number of bins for \code{geom_hex} in each dimension.
 Ignored when \code{use.hex = FALSE}. Default \code{64}.}

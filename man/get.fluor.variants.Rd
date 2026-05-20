@@ -113,7 +113,8 @@ A matrix with the flow expression data.
 \description{
 Assesses variation in the spectral signature of a single-stained flow
 cytometry control sample. Uses SOM-based clustering on the brightest positive
-events in the file.
+events in the file. If AutoSpectralRcpp is installed, EmbedSOM::SOM is used
+with batch=TRUE, parallel=TRUE for faster clustering.
 }
 \references{
 Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
@@ -122,4 +123,7 @@ visualization and interpretation of cytometry data." \emph{Cytometry Part A},
 Wehrens R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
 3.0.” \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
 \doi{10.18637/jss.v087.i07}
+Kratochvíl M, Koladiya A and Vondrášek J. "Generalized EmbedSOM on quadtree-
+structured self-organizing maps." \emph{F1000Research 2019}, \emph{8}2120.
+\doi{10.12688/f1000research.21642.1}
 }
