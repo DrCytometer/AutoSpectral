@@ -20,13 +20,7 @@
 #' autofluorescence extraction (on a per-cell basis). To also optimize
 #' fluorophore spectra, provide `spectra.variants`. To perform other types of
 #' unmixing, select from the options: `OLS`, `WLS`, `Poisson` or `FastPoisson`.
-#' `FastPoisson` requires installation of `AutoSpectralRcpp`.There is also
-#' `Automatic`, which switches depending on the inputs provided: it uses
-#' `AutoSpectral` for AF extraction if `af.spectra` are provided, and
-#' automatically selects `OLS` or `WLS` depending on which is normal for the
-#' given cytometer in `asp$cytometer`. This means that files from the ID7000,
-#' A8 and S8 will be unmixed using `WLS` while others will be unmixed with `OLS`,
-#' if AutoSpectral unmixing is not activated.
+#' `FastPoisson` requires installation of `AutoSpectralRcpp`.
 #' @param weighted Logical, whether to use ordinary or weighted least squares
 #' unmixing as the base algorithm in AutoSpectral unmixing.
 #' Default is `FALSE` and will use OLS.
@@ -105,7 +99,7 @@ unmix.fcs <- function(
     spectra,
     asp,
     flow.control,
-    method = "AutoSpectral",
+    method = c("AutoSpectral", "OLS", "WLS", "Poisson", "FastPoisson"),
     weighted = FALSE,
     weights = NULL,
     af.spectra = NULL,
@@ -149,8 +143,17 @@ unmix.fcs <- function(
     )
   }
 
-  # logic for default unmixing with cytometer-based selection
-  if ( method == "Automatic" ) {
+  # handle deprecated "Automatic" method
+  if ( identical( method, "Automatic" ) ) {
+    lifecycle::deprecate_warn(
+      "1.5.5",
+      "unmix.fcs(method = 'Automatic')",
+      details = paste(
+        "Please specify the method explicitly.",
+        "Use `method = 'AutoSpectral'` (with `af.spectra`),",
+        "`method = 'WLS'` for ID7000/A8/S8, or `method = 'OLS'` otherwise."
+      )
+    )
     if ( !is.null( af.spectra ) ) {
       method <- "AutoSpectral"
       if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8", "ID7000" ) )
@@ -161,6 +164,8 @@ unmix.fcs <- function(
       method <- "OLS"
     }
   }
+
+  method <- match.arg( method )
 
   # include checks on inputs if AutoSpectral unmixing has been selected
   if ( method == "AutoSpectral" ) {

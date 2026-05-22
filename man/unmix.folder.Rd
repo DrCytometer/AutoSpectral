@@ -9,7 +9,7 @@ unmix.folder(
   spectra,
   asp,
   flow.control,
-  method = "AutoSpectral",
+  method = c("AutoSpectral", "OLS", "WLS", "Poisson", "FastPoisson"),
   weighted = FALSE,
   weights = NULL,
   af.spectra = NULL,
@@ -22,7 +22,7 @@ unmix.folder(
   divergence.threshold = 10000,
   divergence.handling = "Balance",
   balance.weight = 0.5,
-  speed = c("slow", "medium", "fast"),
+  speed = c("fast", "medium", "slow"),
   parallel = FALSE,
   threads = NULL,
   verbose = TRUE,
@@ -48,13 +48,7 @@ AutoSpectral unmixing, you must provide at least \code{af.spectra} to perform
 autofluorescence extraction (on a per-cell basis). To also optimize
 fluorophore spectra, provide \code{spectra.variants}. To perform other types of
 unmixing, select from the options: \code{OLS}, \code{WLS}, \code{Poisson} or \code{FastPoisson}.
-\code{FastPoisson} requires installation of \code{AutoSpectralRcpp}.There is also
-\code{Automatic}, which switches depending on the inputs provided: it uses
-\code{AutoSpectral} for AF extraction if \code{af.spectra} are provided, and
-automatically selects \code{OLS} or \code{WLS} depending on which is normal for the
-given cytometer in \code{asp$cytometer}. This means that files from the ID7000,
-A8 and S8 will be unmixed using \code{WLS} while others will be unmixed with \code{OLS},
-if AutoSpectral unmixing is not activated.}
+\code{FastPoisson} requires installation of \code{AutoSpectralRcpp}.}
 
 \item{weighted}{Logical, whether to use ordinary or weighted least squares
 unmixing as the base algorithm in AutoSpectral unmixing.
