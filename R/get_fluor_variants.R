@@ -589,6 +589,7 @@ get.fluor.variants <- function(
     # cluster only the problematic data
     set.seed( asp$bird.seed )
     if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
+      colnames( spill.ratios ) <- colnames( spectra )
       map.error <- EmbedSOM::SOM(
         spill.ratios,
         xdim = som.dim,
