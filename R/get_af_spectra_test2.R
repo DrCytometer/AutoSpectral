@@ -101,48 +101,6 @@
 #' 3.0." \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
 #' \doi{10.18637/jss.v087.i07}
 
-# ---------------------------------------------------------------------------
-# Private helper: per-event contaminant filter
-# ---------------------------------------------------------------------------
-# Uses the Rcpp version from AutoSpectralRcpp when available; falls back to a
-# vectorised pure-R implementation that is fast enough for typical FCS files.
-
-.filter.contaminant.events <- function( event.mat, spectra.mat, threshold ) {
-
-  # Use Rcpp helper if available
-  if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
-       "filter_contaminant_events_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
-    return(
-      AutoSpectralRcpp::filter_contaminant_events_cpp(
-        event_mat   = event.mat,
-        spectra_mat = spectra.mat,
-        threshold   = threshold
-      )
-    )
-  }
-
-  # Pure-R fallback: vectorised cosine similarity, spectrum by spectrum
-  # event norms (length n.events)
-  event.norms <- sqrt( rowSums( event.mat^2 ) ) + 1e-9
-
-  # start with all events kept
-  keep <- rep( TRUE, nrow( event.mat ) )
-
-  for ( f in seq_len( nrow( spectra.mat ) ) ) {
-    spec.vec  <- spectra.mat[ f, ]
-    spec.norm <- sqrt( sum( spec.vec^2 ) ) + 1e-9
-    # dot products via matrix-vector multiply
-    dots <- as.numeric( event.mat %*% spec.vec )
-    cs   <- dots / ( event.norms * spec.norm )
-    keep <- keep & ( cs < threshold )
-    # early exit if everything already flagged
-    if ( !any( keep ) ) break
-  }
-
-  keep
-}
-
-
 get.af.spectra.test2 <- function(
     unstained.sample,
     asp,
@@ -204,7 +162,7 @@ get.af.spectra.test2 <- function(
     keep.events <- .filter.contaminant.events(
       unstained.exprs,
       spectra,
-      contaminant.cosine.threshold
+      contaminant.threshold
     )
     n.removed <- sum( !keep.events )
     if ( n.removed > 0 ) {
@@ -212,7 +170,7 @@ get.af.spectra.test2 <- function(
         message(
           n.removed, " event(s) in the unstained sample were removed prior to",
           " SOM construction due to cosine similarity \u2265 ",
-          contaminant.cosine.threshold,
+          contaminant.threshold,
           " with a fluorophore spectrum (possible stained-sample contamination)."
         )
       }
@@ -704,6 +662,48 @@ deduplicate.spectra <- function( spectra, threshold = 0.99 ) {
 
   return( spectra[ kept, , drop = FALSE ] )
 
+}
+
+
+# ---------------------------------------------------------------------------
+# Private helper: per-event contaminant filter
+# ---------------------------------------------------------------------------
+# Uses the Rcpp version from AutoSpectralRcpp when available; falls back to a
+# vectorised pure-R implementation that is fast enough for typical FCS files.
+
+.filter.contaminant.events <- function( event.mat, spectra.mat, threshold ) {
+
+  # Use Rcpp helper if available
+  if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+       "filter_contaminant_events_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+    return(
+      AutoSpectralRcpp::filter_contaminant_events_cpp(
+        event_mat   = event.mat,
+        spectra_mat = spectra.mat,
+        threshold   = threshold
+      )
+    )
+  }
+
+  # Pure-R fallback: vectorised cosine similarity, spectrum by spectrum
+  # event norms (length n.events)
+  event.norms <- sqrt( rowSums( event.mat^2 ) ) + 1e-9
+
+  # start with all events kept
+  keep <- rep( TRUE, nrow( event.mat ) )
+
+  for ( f in seq_len( nrow( spectra.mat ) ) ) {
+    spec.vec  <- spectra.mat[ f, ]
+    spec.norm <- sqrt( sum( spec.vec^2 ) ) + 1e-9
+    # dot products via matrix-vector multiply
+    dots <- as.numeric( event.mat %*% spec.vec )
+    cs   <- dots / ( event.norms * spec.norm )
+    keep <- keep & ( cs < threshold )
+    # early exit if everything already flagged
+    if ( !any( keep ) ) break
+  }
+
+  keep
 }
 
 
