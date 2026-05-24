@@ -11,8 +11,8 @@
 #' @importFrom ggplot2 ggplot aes geom_line scale_x_continuous labs scale_linetype_manual
 #' @importFrom ggplot2 theme_minimal theme element_text scale_color_manual
 #'
-#' @param af.spectra Matrix or dataframe containing autofluorescence spectral 
-#' signatures. This should be in format AFn x detectors. Row names will be used 
+#' @param af.spectra Matrix or dataframe containing autofluorescence spectral
+#' signatures. This should be in format AFn x detectors. Row names will be used
 #' as the names.
 #' @param spectra Matrix or dataframe containing spectral data. This
 #' should be in format fluorophores x detectors. Row names will be used as the
@@ -21,20 +21,20 @@
 #' and the fluorophores to which they are similar. Format: columes named `AF`,
 #' `Fluorophore` and `Similarity` containing, respectively, the names of the AF
 #' spectra, the names of the similar fluorophores and the cosine similarity values.
-#' @param af.color Color for the line representing the user's autofluorescence 
+#' @param af.color Color for the line representing the user's autofluorescence
 #' spectrum from the unstained reference control. Default is `black`.
-#' @param fluor.color Color for the line representing the similar fluorophore 
+#' @param fluor.color Color for the line representing the similar fluorophore
 #' spectrum. Default is `blue`.
 #' @param af.line.type Line style for the line representing the user's
 #' AF spectrum. Default is `solid`.
-#' @param fluor.line.type Line style for the line representing thefluorophore 
+#' @param fluor.line.type Line style for the line representing thefluorophore
 #' spectrum. Default is `dotted`.
 #' @param linewidth Width of the line for the spectral traces. Default is `1`.
 #' @param plot.dir Directory where the files will be saved.
 #' Default is `./figure_autofluorescence`.
-#' @param filename Name for the output PDF file. Default is 
+#' @param filename Name for the output PDF file. Default is
 #' `autofluorescence_qc_report.pdf`.
-#' 
+#'
 #' @seealso
 #' * [qc.af.spectra()]
 #' * [get.af.spectra()]
@@ -55,30 +55,33 @@ af.qc.plot <- function(
     plot.dir = "./figure_autofluorescence",
     filename = "autofluorescence_qc_report.pdf"
   ) {
-  
+
   detector.names <- colnames( spectra )
-  
+
   af.plots <- list()
-  
+
   # for loop, generate all plots
   for ( i in seq_len( nrow( qc.table ) ) ) {
-    
+
     af <- qc.table$AF[ i ]
+    if ( is.na( af ) || af == "" || !( af %in% rownames( af.spectra ) ) ) {
+      next
+    }
     af.spectrum <- af.spectra[ af, ]
     simil.value <- qc.table$Similarity[ i ]
     fluor <- qc.table$Fluorophore[ i ]
     fluor.spectrum <- spectra[ fluor, ]
-    
+
     plot.df <- data.frame(
       detector.n = seq_len( ncol( spectra ) ),
       detector = factor( detector.names, levels = detector.names ),
       AF_Intensity = as.numeric( af.spectrum ),
       Fluorophore_Intensity = as.numeric( fluor.spectrum )
     )
-    
+
     qc.text <- paste( "Cosine Similarity:", round( simil.value, 4 ) )
     title.text <- paste( af, "vs.", fluor )
-    
+
     # create and store plot
     af.plots[[ i ]] <- ggplot( plot.df, aes( x = detector.n ) ) +
       geom_line(
@@ -122,18 +125,18 @@ af.qc.plot <- function(
         legend.position = "top"
       )
   }
-  
+
   # save to pdf
   if ( !dir.exists( plot.dir ) ) dir.create( plot.dir, recursive = TRUE )
   pdf.path <- file.path( plot.dir, filename )
-  
+
   # A4 landscape PDF for QC summary
   grDevices::pdf( pdf.path, width = 11.7, height = 8.3 )
-  
+
   # split into multiple pages if there are many plots
   n.contaminants <- nrow( qc.table )
   pages <- split( 1:n.contaminants, ceiling( seq_along( 1:n.contaminants ) / 20 ) )
-  
+
   for( idx in seq_along( pages ) ) {
     grid::grid.newpage()
     grid::grid.text(
@@ -141,7 +144,7 @@ af.qc.plot <- function(
       y = 0.95,
       gp = grid::gpar( fontsize = 16, fontface = "bold" )
     )
-    
+
     # subheader for multi-page reports
     if ( length( pages ) > 1 ) {
       grid::grid.text(
@@ -150,11 +153,11 @@ af.qc.plot <- function(
         gp = grid::gpar( fontsize = 10 )
       )
     }
-    
+
     y.pos <- seq( 0.85, by = -0.035, length.out = length( pages[[ idx ]] ) + 1 )
     cols <- c( 0.2, 0.5, 0.8 )
     headers <- colnames( qc.table )
-    
+
     # draw headers
     for ( j in 1:3 ) {
       grid::grid.text(
@@ -164,12 +167,12 @@ af.qc.plot <- function(
         gp = grid::gpar( fontface = "bold" )
       )
     }
-    
+
     # draw rows for this chunk
     for ( i in seq_along( pages[[ idx ]] ) ) {
       row.idx <- pages[[ idx ]][ i ]
       row.y <- y.pos[ i+1 ]
-      
+
       grid::grid.text(
         qc.table$AF[ row.idx ],
         x = cols[ 1 ],
@@ -190,10 +193,10 @@ af.qc.plot <- function(
       )
     }
   }
-  
+
   # add the plots
   for ( p in af.plots ) print( p )
   grDevices::dev.off()
-  
+
   message( paste( "AF QC Report saved to:", pdf.path ) )
 }
