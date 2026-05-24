@@ -10,7 +10,8 @@ check.control.file(
   asp,
   strict = FALSE,
   min.event.warning = 5000,
-  min.event.error = 1000
+  min.event.error = 1000,
+  legacy = FALSE
 )
 }
 \arguments{
@@ -30,6 +31,12 @@ trigger a warning if not met. Default is \code{5000}.}
 
 \item{min.event.error}{The number of events in the entire FCS file that will
 trigger an error if not met. Default is \code{1000}.}
+
+\item{legacy}{Logical. If \code{FALSE}, gating-related columns will not be created
+and the control file will be suitable only for the new automated spectral
+extraction pipeline using \code{get.spectra.automated()}. To use the version 1
+"legacy" pipeline for the extraction of fluorophore spectra, using gating and
+\code{define.flow.control()}, set \code{legacy=TRUE}.}
 }
 \value{
 A dataframe of errors and warnings intended to help the user fix

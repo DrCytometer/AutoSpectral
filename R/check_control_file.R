@@ -17,6 +17,11 @@
 #' trigger a warning if not met. Default is `5000`.
 #' @param min.event.error The number of events in the entire FCS file that will
 #' trigger an error if not met. Default is `1000`.
+#' @param legacy Logical. If `FALSE`, gating-related columns will not be created
+#' and the control file will be suitable only for the new automated spectral
+#' extraction pipeline using `get.spectra.automated()`. To use the version 1
+#' "legacy" pipeline for the extraction of fluorophore spectra, using gating and
+#' `define.flow.control()`, set `legacy=TRUE`.
 #'
 #' @return A dataframe of errors and warnings intended to help the user fix
 #' problems with the `control.def.file`.
@@ -29,7 +34,8 @@ check.control.file <- function(
     asp,
     strict = FALSE,
     min.event.warning = 5000,
-    min.event.error = 1000
+    min.event.error = 1000,
+    legacy = FALSE
 ) {
 
   issues <- validate.control.file(
@@ -37,7 +43,8 @@ check.control.file <- function(
     control.def.file,
     asp,
     min.event.warning,
-    min.event.error
+    min.event.error,
+    legacy = legacy
   )
 
   if ( nrow( issues ) == 0 & strict ) {
@@ -85,32 +92,21 @@ check.control.file <- function(
         "Mixing cytometers is not supported.",
         "\033[0m"
       )
-    },
-
-    reserved_gate_name = function( x ) {
-      paste0(
-        "\033[31m",
-        "Invalid gate names detected. Avoid names like 'AF' or 'UniversalNegative'.",
-        "\033[0m"
-      )
-    },
-
-    no_gate_definition = function( x ) {
-      paste0(
-        "\033[31m",
-        "Every gate group must have at least one row where gate.define is TRUE.",
-        "\033[0m"
-      )
-    },
-
-    unstained_gate_definition = function( x ) {
-      paste0(
-        "\033[33m",
-        "Warning: Gates defined without stained samples may be inaccurate.",
-        "\033[0m"
-      )
     }
   )
+
+    # gating-specific messages only register in legacy mode
+  if ( legacy ) {
+    long.messages[[ "reserved_gate_name" ]] <- function( x ) {
+      paste0( "\033[31m", "Invalid gate names detected. Avoid names like 'AF' or 'UniversalNegative'.", "\033[0m" )
+    }
+    long.messages[[ "no_gate_definition" ]] <- function( x ) {
+      paste0( "\033[31m", "Every gate group must have at least one row where gate.define is TRUE.", "\033[0m" )
+    }
+    long.messages[[ "unstained_gate_definition" ]] <- function( x ) {
+      paste0( "\033[33m", "Warning: Gates defined without stained samples may be inaccurate.", "\033[0m" )
+    }
+  }
 
   ## ---- send out warnings ----
   for ( rule in warning.rules ) {

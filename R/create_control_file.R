@@ -19,6 +19,11 @@
 #' assign gate names for the `gate.name` column if `TRUE`.
 #' @param filename Character string defining the output filename. Default is
 #' "fcs_control_file", to which .csv will be appended.
+#' @param legacy Logical. If `FALSE`, gating-related columns will not be created
+#' and the control file will be suitable only for the new automated spectral
+#' extraction pipeline using `get.spectra.automated()`. To use the version 1
+#' "legacy" pipeline for the extraction of fluorophore spectra, using gating and
+#' `define.flow.control()`, set `legacy=TRUE`.
 #'
 #' @return No returns. Outputs a csv file called fcs_control_file.csv
 #' @export
@@ -27,7 +32,8 @@ create.control.file <- function(
     control.dir,
     asp,
     fill.gate.name = TRUE,
-    filename = "fcs_control_file"
+    filename = "fcs_control_file",
+    legacy = FALSE
   ) {
 
   # check for existing control file and generate a new name if it exists

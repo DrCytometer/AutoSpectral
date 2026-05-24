@@ -9,7 +9,8 @@ validate.control.file(
   control.def.file,
   asp,
   min.event.warning,
-  min.event.error
+  min.event.error,
+  legacy = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,12 @@ trigger a warning if not met.}
 
 \item{min.event.error}{The number of events in the entire FCS file that will
 trigger an error if not met.}
+
+\item{legacy}{Logical. If \code{FALSE}, gating-related columns will not be created
+and the control file will be suitable only for the new automated spectral
+extraction pipeline using \code{get.spectra.automated()}. To use the version 1
+"legacy" pipeline for the extraction of fluorophore spectra, using gating and
+\code{define.flow.control()}, set \code{legacy=TRUE}.}
 }
 \value{
 A dataframe of errors and warnings intended to help the user fix

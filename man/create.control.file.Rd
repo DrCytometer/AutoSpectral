@@ -8,7 +8,8 @@ create.control.file(
   control.dir,
   asp,
   fill.gate.name = TRUE,
-  filename = "fcs_control_file"
+  filename = "fcs_control_file",
+  legacy = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,12 @@ assign gate names for the \code{gate.name} column if \code{TRUE}.}
 
 \item{filename}{Character string defining the output filename. Default is
 "fcs_control_file", to which .csv will be appended.}
+
+\item{legacy}{Logical. If \code{FALSE}, gating-related columns will not be created
+and the control file will be suitable only for the new automated spectral
+extraction pipeline using \code{get.spectra.automated()}. To use the version 1
+"legacy" pipeline for the extraction of fluorophore spectra, using gating and
+\code{define.flow.control()}, set \code{legacy=TRUE}.}
 }
 \value{
 No returns. Outputs a csv file called fcs_control_file.csv

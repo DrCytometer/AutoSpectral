@@ -14,6 +14,11 @@
 #' trigger a warning if not met.
 #' @param min.event.error The number of events in the entire FCS file that will
 #' trigger an error if not met.
+#' @param legacy Logical. If `FALSE`, gating-related columns will not be created
+#' and the control file will be suitable only for the new automated spectral
+#' extraction pipeline using `get.spectra.automated()`. To use the version 1
+#' "legacy" pipeline for the extraction of fluorophore spectra, using gating and
+#' `define.flow.control()`, set `legacy=TRUE`.
 #'
 #' @return A dataframe of errors and warnings intended to help the user fix
 #' problems with the `control.def.file`.
@@ -23,7 +28,8 @@ validate.control.file <- function(
     control.def.file,
     asp,
     min.event.warning,
-    min.event.error
+    min.event.error,
+    legacy = FALSE
   ) {
 
   issues <- list()
@@ -67,11 +73,16 @@ validate.control.file <- function(
     } else x
   } )
 
-  required.cols <- c(
+  required.cols.base <- c(
     "filename", "fluorophore", "marker", "channel",
-    "control.type", "universal.negative",
-    "large.gate", "is.viability"
+    "control.type", "universal.negative"
   )
+  required.cols.legacy <- c( "large.gate", "is.viability" )
+  required.cols <- if ( legacy ) {
+    c( required.cols.base, required.cols.legacy )
+  } else {
+    required.cols.base
+  }
 
   missing.cols <- setdiff( required.cols, colnames( ct ) )
   if ( length( missing.cols ) > 0 ) {
@@ -273,36 +284,38 @@ validate.control.file <- function(
   }
 
   ## ---------- logical fields ----------
-  lg <- as.logical( ct$large.gate )
-  iv <- as.logical( ct$is.viability )
+  if ( legacy ) {
+    lg <- as.logical( ct$large.gate )
+    iv <- as.logical( ct$is.viability )
 
-  if ( all( is.na( lg ) ) ) {
-    issues[[ length( issues ) + 1 ]] <-
-      .new_issue( "warning", "no_large_gate_set",
-                  message = "No large.gate set for any sample" )
-  }
+    if ( all( is.na( lg ) ) ) {
+      issues[[ length( issues ) + 1 ]] <-
+        .new_issue( "warning", "no_large_gate_set",
+                    message = "No large.gate set for any sample" )
+    }
 
-  if ( all( is.na( iv ) ) ) {
-    issues[[ length( issues ) + 1 ]] <-
-      .new_issue( "warning", "no_viability_set",
-                  column = "is.viability",
-                  message = "No is.viability set for any sample" )
-  }
+    if ( all( is.na( iv ) ) ) {
+      issues[[ length( issues ) + 1 ]] <-
+        .new_issue( "warning", "no_viability_set",
+                    column = "is.viability",
+                    message = "No is.viability set for any sample" )
+    }
 
-  if ( any( !is.na( lg ) & ct$control.type != "cells" & lg ) ) {
-    issues[[ length( issues ) + 1 ]] <-
-      .new_issue( "error", "large_gate_non_cell",
-                  filename = ct$filename[ !is.na( lg ) & lg & ct$control.type != "cells" ],
-                  column = "large.gate",
-                  message = "large.gate TRUE only allowed for cell controls" )
-  }
+    if ( any( !is.na( lg ) & ct$control.type != "cells" & lg ) ) {
+      issues[[ length( issues ) + 1 ]] <-
+        .new_issue( "error", "large_gate_non_cell",
+                    filename = ct$filename[ !is.na( lg ) & lg & ct$control.type != "cells" ],
+                    column = "large.gate",
+                    message = "large.gate TRUE only allowed for cell controls" )
+    }
 
-  if ( any( !is.na( iv ) & ct$control.type != "cells" & iv ) ) {
-    issues[[ length( issues ) + 1 ]] <-
-      .new_issue( "error", "viability_non_cell",
-                  filename = ct$filename[ !is.na( iv ) & iv & ct$control.type != "cells" ],
-                  column = "is.viability",
-                  message = "is.viability TRUE only allowed for cell controls" )
+    if ( any( !is.na( iv ) & ct$control.type != "cells" & iv ) ) {
+      issues[[ length( issues ) + 1 ]] <-
+        .new_issue( "error", "viability_non_cell",
+                    filename = ct$filename[ !is.na( iv ) & iv & ct$control.type != "cells" ],
+                    column = "is.viability",
+                    message = "is.viability TRUE only allowed for cell controls" )
+    }
   }
 
   ## ---------- FCS headers ----------
@@ -470,80 +483,82 @@ validate.control.file <- function(
   ## ---------- gating rules ----------
   # gate.name and gate.define do not have to be present ( for backward compatibility)
   # but if they are, we validate them.
-  if ( "gate.name" %in% colnames( ct ) ) {
-    gn <- ct$gate.name
-    is.blank <- is.na( gn ) | gn == ""
-    active.gn <- gn[ !is.blank ]
+  if ( legacy ) {
+    if ( "gate.name" %in% colnames( ct ) ) {
+      gn <- ct$gate.name
+      is.blank <- is.na( gn ) | gn == ""
+      active.gn <- gn[ !is.blank ]
 
-    if ( any( !is.blank ) && any( is.blank ) ) {
-      issues[[ length( issues ) + 1 ]] <-
-        .new_issue( "error", "incomplete_gate_naming",
-                    column = "gate.name",
-                    message = "gate.name must be entirely blank or entirely filled; partial naming is not allowed." )
-    }
-
-    # check for illegal characters
-    illegal.chars <- grepl( "[^[:alnum:]_. ]", gn[ !is.blank ] )
-    if ( any( illegal.chars ) ) {
-      issues[[ length( issues ) + 1 ]] <-
-        .new_issue( "error", "invalid_gate_characters",
-                    column = "gate.name",
-                    message = "gate.name contains illegal characters. Use only letters, numbers, underscores, or dots." )
-    }
-
-
-    # Reserved names check
-    reserved <- c("AF", "UniversalNegative", "Neg", "N/A")
-    if ( any( toupper( active.gn ) %in% toupper( reserved ) ) ) {
-      issues[[ length( issues ) + 1 ]] <-
-        .new_issue( "error", "reserved_gate_name", column = "gate.name",
-                    message = "gate.name cannot use reserved terms (AF, UniversalNegative, etc.)" )
-    }
-
-    # Logic for per-gate consistency and definition
-    unique.gates <- unique( active.gn )
-    for ( g in unique.gates ) {
-      g.rows <- ct[ !is.blank & gn == g, ]
-
-      # at least one gate.define must be TRUE per group
-      if ( !any( as.logical( g.rows$gate.define ), na.rm = TRUE ) ) {
+      if ( any( !is.blank ) && any( is.blank ) ) {
         issues[[ length( issues ) + 1 ]] <-
-          .new_issue( "error", "no_gate_definition",
-                      message = paste0( "Gate '", g, "' has no samples marked as gate.define = TRUE." ) )
+          .new_issue( "error", "incomplete_gate_naming",
+                      column = "gate.name",
+                      message = "gate.name must be entirely blank or entirely filled; partial naming is not allowed." )
       }
 
-      # warning if only Unstained/Negative samples are used to define the gate
-      is.stained <- !( toupper( g.rows$fluorophore ) %in% c( "AF", "NEGATIVE" ) )
-      defining.stained <- is.stained & as.logical( g.rows$gate.define )
-
-      if ( !any( defining.stained, na.rm = TRUE ) ) {
+      # check for illegal characters
+      illegal.chars <- grepl( "[^[:alnum:]_. ]", gn[ !is.blank ] )
+      if ( any( illegal.chars ) ) {
         issues[[ length( issues ) + 1 ]] <-
-          .new_issue( "warning", "unstained_gate_definition",
-                      message = paste0( "Gate '", g, "' is defined only by unstained/negative controls. ",
-                                        "This will not work with landmark gating." ) )
+          .new_issue( "error", "invalid_gate_characters",
+                      column = "gate.name",
+                      message = "gate.name contains illegal characters. Use only letters, numbers, underscores, or dots." )
       }
 
-      # Existing Consistency Checks
-      tryCatch({
-        check.consistency( g.rows$control.type, paste( "gate", g, "control.type" ) )
-        check.consistency( g.rows$large.gate, paste( "gate", g, "large.gate" ) )
-        check.consistency( g.rows$is.viability, paste( "gate", g, "is.viability" ) )
-      }, error = function( e ) {
-        issues[[ length( issues ) + 1 ]] <- .new_issue( "error", "gate_inconsistency", message = e$message )
-      })
-    }
-  }
 
-  # gate.define must be logical (TRUE/FALSE/NA)
-  if ( "gate.define" %in% colnames( ct ) ) {
-    val.gd <- ct$gate.define
-    if ( !is.logical( val.gd ) ) {
-      is.valid.logical <- all( val.gd %in% c( "TRUE", "FALSE", "T", "F", NA, "" ) )
-      if ( !is.valid.logical ) {
+      # Reserved names check
+      reserved <- c("AF", "UniversalNegative", "Neg", "N/A")
+      if ( any( toupper( active.gn ) %in% toupper( reserved ) ) ) {
         issues[[ length( issues ) + 1 ]] <-
-          .new_issue("error", "invalid_gate_define",
-                     column = "gate.define",
-                     message = "gate.define column may only contain TRUE, FALSE, or be blank.")
+          .new_issue( "error", "reserved_gate_name", column = "gate.name",
+                      message = "gate.name cannot use reserved terms (AF, UniversalNegative, etc.)" )
+      }
+
+      # Logic for per-gate consistency and definition
+      unique.gates <- unique( active.gn )
+      for ( g in unique.gates ) {
+        g.rows <- ct[ !is.blank & gn == g, ]
+
+        # at least one gate.define must be TRUE per group
+        if ( !any( as.logical( g.rows$gate.define ), na.rm = TRUE ) ) {
+          issues[[ length( issues ) + 1 ]] <-
+            .new_issue( "error", "no_gate_definition",
+                        message = paste0( "Gate '", g, "' has no samples marked as gate.define = TRUE." ) )
+        }
+
+        # warning if only Unstained/Negative samples are used to define the gate
+        is.stained <- !( toupper( g.rows$fluorophore ) %in% c( "AF", "NEGATIVE" ) )
+        defining.stained <- is.stained & as.logical( g.rows$gate.define )
+
+        if ( !any( defining.stained, na.rm = TRUE ) ) {
+          issues[[ length( issues ) + 1 ]] <-
+            .new_issue( "warning", "unstained_gate_definition",
+                        message = paste0( "Gate '", g, "' is defined only by unstained/negative controls. ",
+                                          "This will not work with landmark gating." ) )
+        }
+
+        # Existing Consistency Checks
+        tryCatch({
+          check.consistency( g.rows$control.type, paste( "gate", g, "control.type" ) )
+          check.consistency( g.rows$large.gate, paste( "gate", g, "large.gate" ) )
+          check.consistency( g.rows$is.viability, paste( "gate", g, "is.viability" ) )
+        }, error = function( e ) {
+          issues[[ length( issues ) + 1 ]] <- .new_issue( "error", "gate_inconsistency", message = e$message )
+        })
+      }
+    }
+
+    # gate.define must be logical (TRUE/FALSE/NA)
+    if ( "gate.define" %in% colnames( ct ) ) {
+      val.gd <- ct$gate.define
+      if ( !is.logical( val.gd ) ) {
+        is.valid.logical <- all( val.gd %in% c( "TRUE", "FALSE", "T", "F", NA, "" ) )
+        if ( !is.valid.logical ) {
+          issues[[ length( issues ) + 1 ]] <-
+            .new_issue("error", "invalid_gate_define",
+                       column = "gate.define",
+                       message = "gate.define column may only contain TRUE, FALSE, or be blank.")
+        }
       }
     }
   }
