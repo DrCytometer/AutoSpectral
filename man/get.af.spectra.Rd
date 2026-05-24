@@ -14,9 +14,12 @@ get.af.spectra(
   table.dir = NULL,
   title = "Autofluorescence spectra",
   verbose = TRUE,
-  refine = FALSE,
+  deduplicate = FALSE,
+  duplication.threshold = 0.99,
+  refine = TRUE,
   problem.quantile = 0.99,
   remove.contaminants = TRUE,
+  contaminant.threshold = 0.99,
   parallel = TRUE,
   threads = if (parallel) 0 else 1,
   heatmap.color.palette = "viridis",
@@ -26,14 +29,15 @@ get.af.spectra(
 )
 }
 \arguments{
-\item{unstained.sample}{Path and file name for a unstained sample FCS file.
+\item{unstained.sample}{Path and file name for an unstained sample FCS file.
 The sample type and processing (protocol) method should match the fully
 stained samples to which the AF will be applied, ideally.}
 
-\item{asp}{The AutoSpectral parameter list.}
+\item{asp}{The AutoSpectral parameter list. Prepare using
+\code{get.autospectral.param}.}
 
-\item{spectra}{Spectral signatures of fluorophores, normalized between 0
-and 1, with fluorophores in rows and detectors in columns.}
+\item{spectra}{Spectral signatures of fluorophores, normalized between 0 and
+1, with fluorophores in rows and detectors in columns.}
 
 \item{som.dim}{Number of x and y dimensions for the SOM. Default is \code{10}.}
 
@@ -47,80 +51,96 @@ the AF signatures. Default is \code{TRUE}.}
 Default is \code{NULL}, which inherits from \code{asp$table.af.dir}.}
 
 \item{title}{Title for the output spectral plots and csv file. Default is
-\verb{Autofluorescence spectra}.}
+\code{"Autofluorescence spectra"}.}
 
 \item{verbose}{Logical, controls messaging. Default is \code{TRUE}.}
 
-\item{refine}{Logical, default is \code{FALSE}. Controls whether to perform a second
-round of autofluorescence measurement on "problem cells", which are those
-with the highest spillover, as defined by \code{problem.quantile}. When \code{FALSE},
-behavior is identical to versions of AutoSpectral prior to 1.0.0. If you are
-working with samples containing complex autofluorescence, e.g., tissues or
-tumors, using \code{refine=TRUE} will improve autofluorescence extraction in the
-unmixing at the cost of an increase in unmixing time. The increase in time
-will depend on the method used to assign autofluorescence spectra per cell
-(residual based assignment is very fast) and whether you have installed
-\code{AutoSpectralRcpp}, which will speed up assignment and unmixing.}
+\item{deduplicate}{Logical, default \code{FALSE}. Whether to deduplicate AF spectra
+by cosine similarity after the base clustering stage and again after the
+refinement stage. Deduplication removes near-identical spectral profiles
+that can cause overzealous matching of near-zero events in fully stained
+samples, reducing apparent "squishing". Deduplication is slightly less
+accurate. Set to \code{TRUE} to us it.}
+
+\item{duplication.threshold}{Numeric, default \code{0.99}. The cosine similarity
+threshold used for deduplication. A spectrum is dropped if its cosine
+similarity to any already-retained spectrum meets or exceeds this value.
+Only used when \code{deduplicate = TRUE}.}
+
+\item{refine}{Logical, default \code{FALSE}. Controls whether to perform a second
+round of autofluorescence measurement on "problem cells": those with the
+highest residual fluorophore signal after the first-pass per-cell AF
+extraction, as defined by \code{problem.quantile}. When \code{FALSE}, behavior is
+identical to versions of AutoSpectral prior to 1.0.0. If you are working
+with samples containing complex autofluorescence, e.g. tissues or tumors,
+using \code{refine = TRUE} will improve autofluorescence extraction at the cost
+of an increase in unmixing time.}
 
 \item{problem.quantile}{Numeric, default \code{0.99}. The quantile for determining
-which cells will be considered "problematic" after unmixing with per-cell AF
-extraction. Cells in the \code{problem.quantile} or above with respect to total
-signal in the fluorophore (non-AF) channels after per-cell AF extraction will
-be used to determine additional autofluorescence spectra, using a second round
-of clustering and modulation of the previously selected autofluorescence
-spectra. A value of \code{0.99} means the top 1\% of cells, those farthest from zero,
-will be selected for further investigation.}
+which cells are "problematic" after first-pass per-cell AF extraction. Cells
+at or above this quantile with respect to the L2 norm of their unmixed
+fluorophore channels (i.e. still furthest from zero) are selected for the
+second-round modulation. A value of \code{0.99} means the top 1\% of cells.}
 
-\item{remove.contaminants}{Logical, default is \code{TRUE}. A QC check is performed
-to exclude any autofluorescence spectra that are nearly identical to the
-fluorophore signatures in \code{spectra}. This helps deal with low-level contamination
-of unstained samples by single-stained control samples, which happens sometimes.
-To include these AF spectra, which can mess up unmixing if they are really
-fluorophore spectra, set \code{FALSE}.}
+\item{remove.contaminants}{Logical, default \code{TRUE}. A QC check is performed
+to exclude any autofluorescence spectrum that is nearly identical to a
+fluorophore signature in \code{spectra}. This guards against low-level
+contamination of the unstained sample by single-stained controls.}
 
-\item{parallel}{Logical, default is \code{TRUE}, which enables parallel processing
-for per-cell AF identification. Used when \code{refine=TRUE}.}
+\item{contaminant.threshold}{Numeric, default \code{0.99}. When
+\code{remove.contaminants = TRUE}, events in the unstained sample whose cosine
+similarity to any fluorophore spectrum in \code{spectra} meets or exceeds this
+value are removed \strong{before} SOM construction. This per-event filter is more
+sensitive than the post-SOM centroid check because contaminating events are
+unlikely to dominate an entire SOM node. Lower values are more aggressive;
+the practical range is roughly 0.98–0.999.}
+
+\item{parallel}{Logical, default \code{TRUE}, which enables parallel processing
+for per-cell AF identification. Used when \code{refine = TRUE}.}
 
 \item{threads}{Numeric, defaults to a single thread for sequential processing
-(\code{parallel=FALSE}) or all available cores if \code{parallel=TRUE}.Used when
-\code{refine=TRUE}.}
+(\code{parallel = FALSE}) or all available cores if \code{parallel = TRUE}. Used when
+\code{refine = TRUE}.}
 
-\item{heatmap.color.palette}{Optional character string defining the viridis color
-palette to be used for the fluorophore traces. Default is \code{viridis}. Options
-are the viridis color options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis},
-\code{cividis}, \code{rocket}, \code{mako} and \code{turbo}.}
+\item{heatmap.color.palette}{Optional character string defining the viridis
+color palette for the fluorophore heatmap. Default is \code{"viridis"}. Options:
+\code{"magma"}, \code{"inferno"}, \code{"plasma"}, \code{"viridis"}, \code{"cividis"}, \code{"rocket"},
+\code{"mako"}, \code{"turbo"}.}
 
 \item{spectral.trace.color.palette}{Optional character string defining the
-color palette to be used for the AF traces. Default is \code{NULL}, in which case
-default R Brewer colors will be assigned automatically. Options are the viridis
-color options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket},
-\code{mako} and \code{turbo}.}
+color palette for the AF traces. Default is \code{NULL} (default R Brewer
+colors). Options: same as \code{heatmap.color.palette}.}
 
 \item{af.fill.color}{Color for the shaded region indicating the range of
-variation in the autofluorescence. Feeds to \code{fill} in \code{geom_ribbon}.
-Default is "red".}
+autofluorescence variation in the variant plot. Default is \code{"red"}.}
 
-\item{af.line.color}{Color for the line representing the median
-autofluorescence spectrum. Default is "black".}
+\item{af.line.color}{Color for the median autofluorescence line in the
+variant plot. Default is \code{"black"}.}
 }
 \value{
-A matrix of autofluorescence spectra.
+A matrix of autofluorescence spectra (spectra in rows, detectors in
+columns). Row 1 is the population mean of the base spectra; subsequent rows
+are the deduplicated base spectra and, if \code{refine = TRUE}, modulated spectra
+for problem cells.
 }
 \description{
-Extracts autofluorescence spectra from an unstained samples. Intended for use
-with \code{unmix.autospectral}. Uses FlowSOM (or EmbedSOM) clustering for rapid
-identification of cells with similar AF profiles. If AutoSpectralRcpp is
-installed, EmbedSOM::SOM is used with batch=TRUE, parallel=TRUE for faster
-clustering.
+Extracts autofluorescence spectra from an unstained sample. Intended for use
+with \code{unmix.autospectral}. Uses FlowSOM (EmbedSOM) clustering for rapid
+identification of cells with similar AF profiles.
+
+Optionally deduplicates the resulting spectra by cosine similarity
+(\code{deduplicate = TRUE}, default) to remove near-identical profiles that cause
+spurious over-correction of near-zero events in fully stained samples. When
+\code{refine = TRUE}, a second round of targeted modulation is performed on cells
+that remain far from zero after the first-pass correction; modulated spectra
+are screened for redundancy against each other and against the base library
+before being appended.
 }
 \references{
 Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
 visualization and interpretation of cytometry data." \emph{Cytometry Part A},
 87(7), 636-645. \doi{10.1002/cyto.a.22625}
-Wehrens R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
-3.0.” \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
+Wehrens R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen
+3.0." \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
 \doi{10.18637/jss.v087.i07}
-Kratochvíl M, Koladiya A and Vondrášek J. "Generalized EmbedSOM on quadtree-
-structured self-organizing maps." \emph{F1000Research 2019}, \emph{8}2120.
-\doi{10.12688/f1000research.21642.1}
 }
