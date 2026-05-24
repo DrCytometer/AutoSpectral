@@ -163,12 +163,22 @@ get.af.spectra.test <- function(
   }
 
   set.seed( asp$bird.seed )
-  map <- FlowSOM::SOM(
-    cluster.data,
-    xdim   = som.dim,
-    ydim   = som.dim,
-    silent = TRUE
-  )
+  if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
+    map <- EmbedSOM::SOM(
+      cluster.data,
+      xdim = som.dim,
+      ydim = som.dim,
+      batch = TRUE,
+      parallel = TRUE
+    )
+  } else {
+    map <- FlowSOM::SOM(
+      cluster.data,
+      xdim = som.dim,
+      ydim = som.dim,
+      silent = TRUE
+    )
+  }
 
   # L-infinity normalise SOM node codes
   af.spectra <- t( apply( map$codes[ , spectral.channels ], 1, function( x ) x / max( x ) ) )
@@ -228,6 +238,15 @@ get.af.spectra.test <- function(
           title                = title,
           plot.dir             = plot.dir,
           color.palette        = heatmap.color.palette
+        )
+        spectral.variant.plot.dens(
+          spectra.variants   = af.spectra.plot,
+          median.spectrum    = mean.af,
+          title              = paste0( title, "_autofluorescence_density" ),
+          save               = TRUE,
+          plot.dir           = plot.dir,
+          variant.color = af.fill.color,
+          median.line.color  = af.line.color
         )
       },
       error = function( e ) {
@@ -350,12 +369,22 @@ get.af.spectra.test <- function(
       som.dim.error <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
 
       set.seed( asp$bird.seed )
-      map.error <- FlowSOM::SOM(
-        spill.ratios,
-        xdim   = som.dim.error,
-        ydim   = som.dim.error,
-        silent = TRUE
-      )
+      if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
+        map.error <- EmbedSOM::SOM(
+          spill.ratios,
+          xdim = som.dim,
+          ydim = som.dim,
+          batch = TRUE,
+          parallel = TRUE
+        )
+      } else {
+        map.error <- FlowSOM::SOM(
+          spill.ratios,
+          xdim = som.dim,
+          ydim = som.dim,
+          silent = TRUE
+        )
+      }
 
       cluster.ids <- unique( map.error$mapping[ , 1 ] )
 
