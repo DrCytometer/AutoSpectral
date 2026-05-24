@@ -7,7 +7,6 @@
 define.keywords(
   fcs.keywords,
   final.matrix,
-  original.param,
   spectra,
   af.spectra,
   flow.control,
@@ -15,7 +14,8 @@ define.keywords(
   method,
   file.name,
   weights = NULL,
-  spectral.channel = NULL
+  spectral.channel = NULL,
+  include.imaging = FALSE
 )
 }
 \arguments{
@@ -23,9 +23,6 @@ define.keywords(
 
 \item{final.matrix}{The expression data, containing both unmixed data and any
 retained parameters such as scatter and time.}
-
-\item{original.param}{The original parameter (column) names of the input FCS
-expression data.}
 
 \item{spectra}{A matrix containing the spectral data.}
 
@@ -45,6 +42,10 @@ detector).}
 
 \item{spectral.channel}{Optional character vector of the channels used for
 unmixing. Should match \code{weights} in length (one weight per channel).}
+
+\item{include.imaging}{A logical value indicating whether to include imaging
+parameters in the written FCS file. Default is \code{FALSE} to provide smaller
+output files.}
 }
 \value{
 The updated keyword list for writing the FCS file.

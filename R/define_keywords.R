@@ -9,8 +9,6 @@
 #' @param fcs.keywords The input keywords obtained from the read FCS file.
 #' @param final.matrix The expression data, containing both unmixed data and any
 #' retained parameters such as scatter and time.
-#' @param original.param The original parameter (column) names of the input FCS
-#' expression data.
 #' @param spectra A matrix containing the spectral data.
 #' @param af.spectra Spectral signatures of autofluorescences, normalized
 #' between 0 and 1, with fluorophores in rows and detectors in columns.
@@ -22,6 +20,9 @@
 #' detector).
 #' @param spectral.channel Optional character vector of the channels used for
 #' unmixing. Should match `weights` in length (one weight per channel).
+#' @param include.imaging A logical value indicating whether to include imaging
+#' parameters in the written FCS file. Default is `FALSE` to provide smaller
+#' output files.
 #'
 #' @return The updated keyword list for writing the FCS file.
 #'
@@ -30,7 +31,6 @@
 define.keywords <- function(
     fcs.keywords,
     final.matrix,
-    original.param,
     spectra,
     af.spectra,
     flow.control,
@@ -38,7 +38,8 @@ define.keywords <- function(
     method,
     file.name,
     weights = NULL,
-    spectral.channel = NULL
+    spectral.channel = NULL,
+    include.imaging = FALSE
 ) {
 
   # Identify non-parameter keywords
@@ -58,6 +59,44 @@ define.keywords <- function(
     stats::setNames(fcs.keywords[matches], matches)
   })
   names(param.lookup) <- sapply(pN.keys, function(k) fcs.keywords[[k]])
+
+  # Whitelist: only channels genuinely carried over from the original file may
+  # match param.lookup. BD instruments (A5SE, Discover S8/A8) write pre-unmixed
+  # FCS files whose $PnN values are fluorophore names (e.g. "FITC-A", "PE-A")
+  # that are identical to AutoSpectral's unmixed output column names. Without
+  # this filter, param.lookup would match those names and inject metadata from
+  # the wrong original parameter index into the new file, scrambling channels.
+  #
+  # asp$time.and.scatter is an explicit whitelist defined for Discover cytometers.
+  # For other cytometers it is NULL, so we fall back to matching
+  # asp$non.spectral.channel against the original parameter names — those are the
+  # scatter/time channels on those instruments and are safe to carry through.
+  if (!is.null(asp$time.and.scatter)) {
+    whitelist.channels <- asp$time.and.scatter
+    if (isTRUE(include.imaging) && !is.null(asp$non.spectral.channel)) {
+      # for Discover + include.imaging, also retain imaging channels that match
+      # the non-spectral pattern, deduplicated against time.and.scatter
+      ns.pattern <- paste0(asp$non.spectral.channel, collapse = "|")
+      ns.matches <- grep(ns.pattern, names(param.lookup), value = TRUE)
+      whitelist.channels <- union(whitelist.channels, ns.matches)
+    }
+  } else if (!is.null(asp$non.spectral.channel)) {
+    # no explicit whitelist: derive it by matching non-spectral patterns against
+    # the original parameter names (covers scatter and time on Aurora, A5SE, etc.)
+    ns.pattern <- paste0(asp$non.spectral.channel, collapse = "|")
+    whitelist.channels <- grep(ns.pattern, names(param.lookup), value = TRUE)
+  } else {
+    whitelist.channels <- character(0)
+  }
+  # restrict lookup to whitelisted channel names; everything else is treated as
+  # a new unmixed fluorophore and receives freshly generated metadata.
+  # Raw spectral channels are also safe to carry through when retained
+  # (include.raw = TRUE): they exist in the original file under the same names
+  # and their voltage/range metadata is correct and worth preserving.
+  if (!is.null(spectral.channel)) {
+    whitelist.channels <- union(whitelist.channels, spectral.channel)
+  }
+  param.lookup <- param.lookup[names(param.lookup) %in% whitelist.channels]
 
   # Build new parameter keywords
   param.keywords <- list()
@@ -91,7 +130,7 @@ define.keywords <- function(
       param.keywords[[paste0(p.prefix, "DISPLAY")]] <- "LOG"
       param.keywords[[paste0(p.prefix, "TYPE")]] <- "Fluorescence"
 
-      # Existing parameters (Scatter, Time, etc.)
+      # Whitelisted carry-through parameters (Scatter, Time, and optionally imaging)
     } else if (p.name %in% names(param.lookup)) {
       old.entry <- param.lookup[[p.name]]
       # whitelist keywords

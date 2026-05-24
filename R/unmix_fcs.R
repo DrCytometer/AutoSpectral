@@ -491,17 +491,17 @@ unmix.fcs <- function(
 
   # update keywords
   new.keywords <- define.keywords(
-    fcs.keywords,
-    final.matrix,
-    original.param,
-    spectra,
-    af.spectra,
-    flow.control,
-    asp,
-    method,
-    file.name,
-    weights,
-    spectral.channel
+    fcs.keywords = fcs.keywords,
+    final.matrix = final.matrix,
+    spectra = spectra,
+    af.spectra = af.spectra,
+    flow.control = flow.control,
+    asp = asp,
+    method = method,
+    file.name = file.name,
+    weights = weights,
+    spectral.channel = spectral.channel,
+    include.imaging = include.imaging
   )
 
   # save file
