@@ -152,8 +152,7 @@ get.af.spectra <- function(
     som.dim <- max( 2, floor( sqrt( cell.n / 3 ) ) )
   }
 
-  # ---- SOM: use EmbedSOM (batch + parallel) if installed,
-  #           otherwise fall back to FlowSOM
+  # ---- SOM: use EmbedSOM (batch + parallel) if installed, fall back to FlowSOM
   set.seed( 42 )
   if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
     map <- EmbedSOM::SOM(
@@ -163,8 +162,6 @@ get.af.spectra <- function(
       batch = TRUE,
       parallel = TRUE
     )
-    # EmbedSOM::SOM returns codes as a list of matrices; extract the first layer
-    map.codes <- map$codes[[ 1 ]]
   } else {
     map <- FlowSOM::SOM(
       cluster.data,
@@ -172,11 +169,10 @@ get.af.spectra <- function(
       ydim = som.dim,
       silent = TRUE
     )
-    map.codes <- map$codes
   }
 
   # L-infinity (peak) normalization
-  af.spectra <- t( apply( map.codes[ , spectral.channels ], 1, function(x) x/max(x) ) )
+  af.spectra <- t( apply( map$codes[ , spectral.channels ], 1, function(x) x/max(x) ) )
 
   # unlikely, but remove any NAs
   af.spectra <- as.matrix( stats::na.omit( af.spectra ) )
