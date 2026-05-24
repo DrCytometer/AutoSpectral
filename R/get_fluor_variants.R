@@ -329,8 +329,6 @@ get.fluor.variants <- function(
       batch = TRUE,
       parallel = TRUE
     )
-    # EmbedSOM::SOM returns codes as a list of matrices; extract the first layer
-    map.codes <- map$codes[[ 1 ]]
   } else {
     map <- FlowSOM::SOM(
       som.input,
@@ -338,13 +336,12 @@ get.fluor.variants <- function(
       ydim = som.dim,
       silent = TRUE
     )
-    map.codes <- map$codes
   }
 
   # get spectra: SOM centroids are new profiles, normalize (L-inf)
   variant.spectra <- t(
     apply(
-      map.codes[ , spectral.channel ],
+      map$codes[ , spectral.channel, drop = FALSE ],
       1,
       function( x ) x / max( x )
     )
@@ -439,7 +436,7 @@ get.fluor.variants <- function(
     spectra.curr <- no.af.spectra
 
     # store new unmixed data, starting with original spectrum unmixing
-    unmixed.first.pass <- unmixed.input[ , fluorophores ]
+    unmixed.first.pass <- unmixed.input[ , fluorophores, drop = FALSE ]
 
     # only do this if the best variant has changed for at least one cell
     if ( ! all( best.variant.per.cell == 1 ) ) {
@@ -484,6 +481,11 @@ get.fluor.variants <- function(
 
     # which are the other channels?
     other.channels <- which( rownames( no.af.spectra ) != fluor )
+
+    if ( length( other.channels ) == 0 ) {
+      # single-fluorophore panel: no spillover channels exist, skip refinement
+      refine <- FALSE
+    }
 
     # project signal in other channels back into raw space
     spillover.spread.proj <- unmixed.first.pass[ , other.channels, drop = FALSE ] %*%
