@@ -41,6 +41,11 @@ qc.af.spectra <- function(
     pass = 1
   ) {
 
+  # ensure rownames exist so AF spectra can be identified in QC plots
+  if ( is.null( rownames( af.spectra ) ) ) {
+    rownames( af.spectra ) <- paste0( "AF", seq_len( nrow( af.spectra ) ) )
+  }
+
   fluorophore.n <- nrow( spectra )
 
   sim.values <- numeric( nrow( af.spectra ) )
