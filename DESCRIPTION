@@ -38,7 +38,8 @@ Imports:
     RhpcBLASctl,
     ragg,
     FNN,
-    cowplot
+    cowplot,
+    tictoc
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/DrCytometer/AutoSpectral,
      https://drcytometer.github.io/AutoSpectral/
