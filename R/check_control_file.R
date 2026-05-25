@@ -50,7 +50,7 @@ check.control.file <- function(
   if ( nrow( issues ) == 0 & strict ) {
     return( invisible( TRUE ) )
   } else if ( nrow( issues ) == 0 & ! strict ) {
-    message( "\033[34m No critical errors found in control file.\033[0m" )
+    message( "\033[32m  No critical errors found in control file.\033[0m" )
     return( invisible( TRUE ) )
   }
 
