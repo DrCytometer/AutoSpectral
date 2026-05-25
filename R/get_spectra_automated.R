@@ -4,14 +4,15 @@
 # Private helpers
 # ---------------------------------------------------------------------------
 
-## Cosine similarity of each row of mat against a reference vector.
-.cosine.sim.rows <- function( mat, ref.vec ) {
-  dot.prod <- mat %*% ref.vec
-  mat.norm <- sqrt( rowSums( mat^2 ) )
-  ref.norm <- sqrt( sum( ref.vec^2 ) )
-  as.numeric( dot.prod / ( mat.norm * ref.norm + 1e-9 ) )
+## Derive ordered spectral channel names from a single FCS file and asp.
+.derive.spectral.channels <- function( fcs.path, asp ) {
+  all.channels         <- colnames( readFCS( fcs.path ) )
+  non.spectral.pattern <- paste0( asp$non.spectral.channel, collapse = "|" )
+  channels             <- all.channels[ !grepl( non.spectral.pattern, all.channels ) ]
+  if ( grepl( "Discover", asp$cytometer ) )
+    channels <- channels[ grepl( asp$spectral.channel, channels ) ]
+  check.channels( channels, asp )
 }
-
 
 ## RLM fallback: regress each channel against peak.channel, return
 ## normalised [0,1] spectrum vector.
@@ -72,20 +73,18 @@
 }
 
 
-## Map db.col to the asp$cytometer string expected by spectral.reference.plot.
-.db.col.to.cytometer <- function( db.col ) {
-  switch(
-    db.col,
-    Aurora         = "Aurora",
-    NorthernLights = "Aurora",
-    ID7000         = "ID7000",
-    Discover       = "FACSDiscover A8",
-    Opteon         = "Opteon",
-    Mosaic         = "Mosaic",
-    Xenith         = "Xenith",
-    A5SE           = "Symphony",
-    "Aurora"
-  )
+## Map asp$cytometer string to the db.col key used in cytometer_database.csv
+## and the spectral reference libraries.
+.cytometer.to.db.col <- function( cytometer ) {
+  if      ( grepl( "Northern", cytometer, ignore.case = TRUE ) ) "NorthernLights"
+  else if ( grepl( "Aurora",   cytometer, ignore.case = TRUE ) ) "Aurora"
+  else if ( grepl( "ID7000",   cytometer, ignore.case = TRUE ) ) "ID7000"
+  else if ( grepl( "Discover", cytometer, ignore.case = TRUE ) ) "Discover"
+  else if ( grepl( "Opteon",   cytometer, ignore.case = TRUE ) ) "Opteon"
+  else if ( grepl( "Mosaic",   cytometer, ignore.case = TRUE ) ) "Mosaic"
+  else if ( grepl( "Xenith",   cytometer, ignore.case = TRUE ) ) "Xenith"
+  else if ( grepl( "Symphony", cytometer, ignore.case = TRUE ) ) "A5SE"
+  else "Aurora"
 }
 
 
@@ -223,6 +222,64 @@
   invisible( NULL )
 }
 
+# read FCS files, removing saturating events
+.read.fcs.clean <- function(
+    path,
+    label,
+    spectral.channels,
+    scatter.channels,
+    sat.value,
+    singlet.quantiles,
+    asp,
+    verbose = TRUE
+) {
+  fsc.a <- asp$default.scatter.parameter[ 1L ]
+  ssc.a <- asp$default.scatter.parameter[ 2L ]
+  fsc.h <- sub( "-A$", "-H", fsc.a )
+  ssc.h <- sub( "-A$", "-H", ssc.a )
+
+  height.channels <- sub( "-A$", "-H", scatter.channels )
+  cols.keep       <- c( scatter.channels, height.channels, spectral.channels )
+
+  mat     <- readFCS( path )
+  present <- intersect( cols.keep, colnames( mat ) )
+  mat     <- mat[ , present, drop = FALSE ]
+
+  # -- remove spectral-saturating events
+  spec.present <- intersect( spectral.channels, colnames( mat ) )
+  if ( length( spec.present ) > 0 ) {
+    keep <- rowSums( mat[ , spec.present, drop = FALSE ] >= sat.value ) == 0
+    mat  <- mat[ keep, , drop = FALSE ]
+  }
+
+  # -- remove scatter-saturating events--we may not actually want this
+  if ( fsc.a %in% colnames( mat ) && !is.null( asp$scatter.data.max.x ) )
+    mat <- mat[ mat[ , fsc.a ] < asp$scatter.data.max.x, , drop = FALSE ]
+  if ( ssc.a %in% colnames( mat ) && !is.null( asp$scatter.data.max.y ) )
+    mat <- mat[ mat[ , ssc.a ] < asp$scatter.data.max.y, , drop = FALSE ]
+
+  # -- remove doublets (two-pass scatter-ratio, mirrors flowstate::select_singlets)
+  if ( all( c( fsc.a, fsc.h ) %in% colnames( mat ) ) ) {
+    fsc.ratio <- mat[ , fsc.a ] / ( mat[ , fsc.h ] + 1e-9 )
+    mat       <- mat[ fsc.ratio < stats::quantile( fsc.ratio, probs = singlet.quantiles[ 1L ] ), ,
+                      drop = FALSE ]
+
+    if ( all( c( ssc.a, ssc.h ) %in% colnames( mat ) ) ) {
+      ssc.ratio <- mat[ , ssc.a ] / ( mat[ , ssc.h ] + 1e-9 )
+      mat       <- mat[ ssc.ratio < stats::quantile( ssc.ratio, probs = singlet.quantiles[ 2L ] ), ,
+                        drop = FALSE ]
+    }
+  }
+
+  # drop height channels -- not needed downstream
+  mat <- mat[ , intersect( c( scatter.channels, spectral.channels ), colnames( mat ) ),
+              drop = FALSE ]
+
+  if ( verbose )
+    message( sprintf( "\033[32m  %-40s  %d events\033[0m", label, nrow( mat ) ) )
+  mat
+}
+
 
 # ---------------------------------------------------------------------------
 # Exported function
@@ -274,6 +331,8 @@
 #'   retained after filtering for low AF cosine similarity.
 #' @param k.neighbors Integer, default `2`. Number of nearest neighbours in
 #'   scatter space used for per-event AF subtraction.
+#' @param singlet.quantiles Numeric, default `c( 0.85, 0.975 )`. Range of
+#'   quantiles to use for doublet discrimination.
 #' @param cosine.threshold Numeric, default `0.9`. Minimum cosine similarity
 #'   against the spectral reference library to accept the automated spectrum;
 #'   values below this threshold trigger RLM refinement.
@@ -294,18 +353,12 @@
 #'   for each fluorophore (unstained background, selected spectral events, and
 #'   their matched AF events). Set to `FALSE` to skip.
 #' @param verbose Logical, default `TRUE`. Print progress messages.
-#' @param print.timings Logical, default `FALSE`. When `TRUE`, prints a
-#'   `tictoc` timing log to the console at the end of the call, showing
-#'   elapsed time for each major processing stage.
 #'
 #' @return A numeric matrix with fluorophores in rows and spectral detector
 #'   channels in columns, values normalised to `[0, 1]` (L-infinity norm,
 #'   peak = 1). Compatible with all downstream AutoSpectral functions.
 #'
-#' @importFrom tictoc tic toc tic.clear tic.clearlog tic.log
-#'
 #' @seealso [get.fluorophore.spectra()] for the legacy workflow.
-#'   [get.cytometer.param()] for the cytometer auto-detection step.
 #'   [spectral.reference.plot()] for the QC report produced when `figures = TRUE`.
 #'
 #' @export
@@ -317,22 +370,22 @@ get.spectra.automated <- function(
     n.candidates            = 1000L,
     n.spectral              = 200L,
     k.neighbors             = 2L,
+    singlet.quantiles       = c( 0.85, 0.975 ),
     cosine.threshold        = 0.9,
     peak.signal.threshold   = 0.5,
     top.expressing.override = NULL,
     figures                 = TRUE,
     plot.cosine.filter      = TRUE,
     plot.scatter.match      = TRUE,
-    verbose                 = TRUE,
-    print.timings           = FALSE
+    verbose                 = TRUE
 ) {
-
-  tictoc::tic.clear()
-  tictoc::tic.clearlog()
 
   # -- 0. Validate inputs
   if ( !dir.exists( control.dir ) )
     stop( "control.dir does not exist: ", control.dir, call. = FALSE )
+
+  if ( verbose )
+    message( "\033[34m-- Checking control file --\033[0m" )
 
   check.control.file( control.dir, control.def.file, asp, legacy = FALSE )
 
@@ -402,59 +455,13 @@ get.spectra.automated <- function(
       call. = FALSE
     )
 
-  # -- 2. Detect cytometer from first FCS file
-  if ( verbose )
-    message( "\033[34m-- Detecting cytometer --\033[0m" )
-
-  first.fcs.path <- file.path( control.dir, fluor.files[ 1L ] )
-
-  db.path <- system.file(
-    "extdata", "cytometer_database.csv", package = "AutoSpectral"
-  )
-  if ( !nchar( db.path ) ) db.path <- NULL
-
-  cyt.param <- tryCatch(
-    get.cytometer.param( first.fcs.path, db.path = db.path, verbose = verbose ),
-    error = function( e ) {
-      if ( verbose )
-        message(
-          "\033[33m  Auto-detection failed: ", e$message,
-          "\n  Falling back to asp parameters for: ", asp$cytometer, "\033[0m"
-        )
-      NULL
-    }
-  )
-
-  if ( is.null( cyt.param ) ) {
-    # derive channels from the FCS file using asp filter patterns,
-    # mirroring the approach in reload.flow.control()
-    all.channels <- colnames( readFCS( first.fcs.path ) )
-    non.spectral.pattern <- paste0( asp$non.spectral.channel, collapse = "|" )
-    spec.idx <- grep( non.spectral.pattern, all.channels, invert = TRUE )
-    spectral.channels <- all.channels[ spec.idx ]
-    if ( grepl( "Discover", asp$cytometer ) ) {
-      spec.idx <- grep( asp$spectral.channel, spectral.channels )
-      spectral.channels <- spectral.channels[ spec.idx ]
-    }
-    spectral.channels <- check.channels( spectral.channels, asp )
-    scatter.channels  <- read.scatter.parameter( asp )
-    sat.value         <- if ( !is.null( asp$saturation.ceiling ) )
-                           asp$saturation.ceiling else Inf
-    db.col <- if      ( grepl( "Northern", asp$cytometer, ignore.case = TRUE ) ) "NorthernLights"
-              else if ( grepl( "Aurora",   asp$cytometer, ignore.case = TRUE ) ) "Aurora"
-              else if ( grepl( "ID7000",   asp$cytometer, ignore.case = TRUE ) ) "ID7000"
-              else if ( grepl( "Discover", asp$cytometer, ignore.case = TRUE ) ) "Discover"
-              else if ( grepl( "Opteon",   asp$cytometer, ignore.case = TRUE ) ) "Opteon"
-              else if ( grepl( "Mosaic",   asp$cytometer, ignore.case = TRUE ) ) "Mosaic"
-              else if ( grepl( "Xenith",   asp$cytometer, ignore.case = TRUE ) ) "Xenith"
-              else if ( grepl( "Symphony", asp$cytometer, ignore.case = TRUE ) ) "A5SE"
-              else "Aurora"
-  } else {
-    spectral.channels <- cyt.param$cols.detector
-    scatter.channels  <- cyt.param$scatter.param
-    sat.value         <- cyt.param$sat.value
-    db.col            <- cyt.param$db.col
-  }
+  # -- 2. Resolve channels and instrument parameters from asp
+  first.fcs.path    <- file.path( control.dir, fluor.files[ 1L ] )
+  spectral.channels <- .derive.spectral.channels( first.fcs.path, asp )
+  scatter.channels  <- read.scatter.parameter( asp )
+  sat.value         <- if ( !is.null( asp$expr.data.max ) ) asp$expr.data.max else Inf
+  db.col            <- .cytometer.to.db.col( asp$cytometer )
+  rlm.iter.max <- asp$rlm.iter.max %||% 100L
 
   if ( verbose )
     message( sprintf(
@@ -467,24 +474,9 @@ get.spectra.automated <- function(
   if ( verbose )
     message( "\033[34m-- Reading FCS files --\033[0m" )
 
-  tictoc::tic( "read FCS files" )
-
-  cols.keep <- c( scatter.channels, spectral.channels )
-
-  .read.fcs.clean <- function( path, label ) {
-    mat     <- readFCS( path )
-    present <- intersect( cols.keep, colnames( mat ) )
-    mat     <- mat[ , present, drop = FALSE ]
-    spec.present <- intersect( spectral.channels, colnames( mat ) )
-    if ( length( spec.present ) > 0 ) {
-      keep <- rowSums( mat[ , spec.present, drop = FALSE ] >= sat.value ) == 0
-      mat  <- mat[ keep, , drop = FALSE ]
-    }
-    if ( verbose )
-      message( sprintf( "\033[32m  %-40s  %d events\033[0m",
-                         label, nrow( mat ) ) )
-    mat
-  }
+  # derive height channels from the cytometer's scatter parameters
+  height.channels <- sub( "-A$", "-H", scatter.channels )
+  cols.keep       <- c( scatter.channels, height.channels, spectral.channels )
 
   # pre-load unique unstained files
   unstained.cache <- list()
@@ -494,8 +486,10 @@ get.spectra.automated <- function(
       warning( "Unstained file not found, skipping: ", uf, call. = FALSE )
       next
     }
-    unstained.cache[[ uf ]] <- .read.fcs.clean( uf.path,
-                                                  paste0( "Unstained (", uf, ")" ) )
+    unstained.cache[[ uf ]] <- .read.fcs.clean(
+      uf.path, paste0( "Unstained (", uf, ")" ),
+      spectral.channels, scatter.channels, sat.value, singlet.quantiles, asp, verbose
+    )
   }
 
   # pre-compute AF reference vectors per unique unstained file
@@ -520,16 +514,15 @@ get.spectra.automated <- function(
 
   for ( i in seq_along( fluor.rows ) ) {
     fcs.path.i        <- file.path( control.dir, fluor.files[ i ] )
-    fluor.data[[ i ]] <- .read.fcs.clean( fcs.path.i, fluor.names[ i ] )
+    fluor.data[[ i ]] <- .read.fcs.clean(
+      fcs.path.i, fluor.names[ i ],
+      spectral.channels, scatter.channels, sat.value, singlet.quantiles, asp, verbose
+    )
   }
-
-  tictoc::toc( log = TRUE, quiet = TRUE )
 
   # -- 4. Extract spectrum per fluorophore
   if ( verbose )
     message( "\033[34m-- Extracting spectra --\033[0m" )
-
-  tictoc::tic( "extract spectra" )
 
   ref.lib <- .load.ref.library( db.col, spectral.channels )
 
@@ -729,7 +722,7 @@ get.spectra.automated <- function(
       qc.log$Status[ i ] <- "RLM_REFINEMENT"
     } else {
       spectrum             <- raw.spectrum / max.val
-      spectrum[ spectrum < 0 ] <- 0
+      #spectrum[ spectrum < 0 ] <- 0
     }
 
     # -- 5. QC checks
@@ -757,19 +750,19 @@ get.spectra.automated <- function(
       qc.log$Status[ i ] == "RLM_REFINEMENT"
 
     if ( needs.refinement ) {
-      if ( verbose )
-        message( sprintf(
-          "\033[31m  QC flag [%s]: peak=%.3f, cos=%s -> RLM refinement\033[0m",
-          fluor, peak.sig,
-          if ( is.na( cs.lib ) ) "N/A" else sprintf( "%.3f", cs.lib )
-        ) )
-
       if ( expeak %in% spec.i ) {
-        n.rlm    <- min( n.spectral, nrow( spec.data ) )
-        i.rlm    <- order( spec.data[ , expeak ],
-                           decreasing = TRUE )[ seq_len( n.rlm ) ]
+        # use AF-subtracted events if available, fall back to spectral.events, then spec.data
+        rlm.pool <- if ( exists( "spectral.sub" ) && nrow( spectral.sub ) > 0 ) {
+          spectral.sub
+        } else if ( nrow( spectral.events ) > 0 ) {
+          spectral.events
+        } else {
+          spec.data
+        }
+        n.rlm    <- min( n.spectral, nrow( rlm.pool ) )
+        i.rlm    <- order( rlm.pool[ , expeak ], decreasing = TRUE )[ seq_len( n.rlm ) ]
         spectrum <- .rlm.refine.spectrum(
-          spec.data[ i.rlm, , drop = FALSE ], expeak, spec.i, asp$rlm.iter.max
+          rlm.pool[ i.rlm, , drop = FALSE ], expeak, spec.i, rlm.iter.max
         )
         qc.log$Status[ i ] <- "RLM_REFINEMENT"
       } else {
@@ -783,6 +776,7 @@ get.spectra.automated <- function(
       }
 
     } else {
+      # too much output?
       if ( verbose )
         message( sprintf(
           "\033[32m  OK [%s]: peak=%.3f, cos=%s\033[0m",
@@ -797,8 +791,6 @@ get.spectra.automated <- function(
     full.spectrum[ names( spectrum ) ] <- spectrum
     spectra.list[[ i ]] <- full.spectrum
   }
-
-  tictoc::toc( log = TRUE, quiet = TRUE )
 
   # -- 6. Assemble matrix
   if ( verbose )
@@ -844,8 +836,6 @@ get.spectra.automated <- function(
   if ( figures ) {
     if ( verbose )
       message( "\033[34m-- Generating figures --\033[0m" )
-
-    tictoc::tic( "generate figures" )
 
     if ( !dir.exists( asp$figure.spectra.dir ) )
       dir.create( asp$figure.spectra.dir, recursive = TRUE )
@@ -900,11 +890,9 @@ get.spectra.automated <- function(
           figure.height = asp$figure.similarity.height
         )
 
-        asp.qc           <- asp
-        asp.qc$cytometer <- .db.col.to.cytometer( db.col )
         spectral.reference.plot(
           marker.spectra,
-          asp.qc,
+          asp,
           plot.dir = asp$figure.spectra.dir,
           filename = "Automated_spectral_qc_report.pdf"
         )
@@ -927,8 +915,6 @@ get.spectra.automated <- function(
                    e$message, "\033[0m" )
       )
     }
-
-    tictoc::toc( log = TRUE, quiet = TRUE )
   }
 
   # -- 10. Save CSV
@@ -945,11 +931,6 @@ get.spectra.automated <- function(
 
   if ( verbose )
     message( "\033[32m-- Automated spectra extraction complete --\033[0m" )
-
-  if ( print.timings ) {
-    log <- tictoc::tic.log( format = TRUE )
-    print( unlist( log ) )
-  }
 
   return( marker.spectra )
 }

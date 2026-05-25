@@ -11,14 +11,14 @@ get.spectra.automated(
   n.candidates = 1000L,
   n.spectral = 200L,
   k.neighbors = 2L,
+  singlet.quantiles = c(0.85, 0.975),
   cosine.threshold = 0.9,
   peak.signal.threshold = 0.5,
   top.expressing.override = NULL,
   figures = TRUE,
   plot.cosine.filter = TRUE,
   plot.scatter.match = TRUE,
-  verbose = TRUE,
-  print.timings = FALSE
+  verbose = TRUE
 )
 }
 \arguments{
@@ -40,6 +40,9 @@ retained after filtering for low AF cosine similarity.}
 
 \item{k.neighbors}{Integer, default \code{2}. Number of nearest neighbours in
 scatter space used for per-event AF subtraction.}
+
+\item{singlet.quantiles}{Numeric, default \code{c( 0.85, 0.975 )}. Range of
+quantiles to use for doublet discrimination.}
 
 \item{cosine.threshold}{Numeric, default \code{0.9}. Minimum cosine similarity
 against the spectral reference library to accept the automated spectrum;
@@ -67,10 +70,6 @@ for each fluorophore (unstained background, selected spectral events, and
 their matched AF events). Set to \code{FALSE} to skip.}
 
 \item{verbose}{Logical, default \code{TRUE}. Print progress messages.}
-
-\item{print.timings}{Logical, default \code{FALSE}. When \code{TRUE}, prints a
-\code{tictoc} timing log to the console at the end of the call, showing
-elapsed time for each major processing stage.}
 }
 \value{
 A numeric matrix with fluorophores in rows and spectral detector
@@ -111,6 +110,5 @@ The legacy workflow (\code{define.flow.control} + \code{clean.controls} +
 }
 \seealso{
 \code{\link[=get.fluorophore.spectra]{get.fluorophore.spectra()}} for the legacy workflow.
-\code{\link[=get.cytometer.param]{get.cytometer.param()}} for the cytometer auto-detection step.
 \code{\link[=spectral.reference.plot]{spectral.reference.plot()}} for the QC report produced when \code{figures = TRUE}.
 }
