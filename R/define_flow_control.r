@@ -129,22 +129,8 @@ define.flow.control <- function(
   if ( !is.null( gate.list ) ) check.gates( gate.list, control.table, asp )
 
   # read channels from an FCS file
-  all.channels <- colnames(
-    readFCS( file.path( control.dir, control.table$filename[ 1 ] ) )
-  )
-
-  # remove unnecessary channels
-  non.spectral.pattern <- paste0( asp$non.spectral.channel, collapse = "|" )
-  spec.idx <- grep( non.spectral.pattern, all.channels, invert = TRUE )
-  spectral.channel <- all.channels[ spec.idx ]
-
-  if ( grepl( "Discover", asp$cytometer ) ) {
-    spec.idx <- grep( asp$spectral.channel, spectral.channel )
-    spectral.channel <- spectral.channel[ spec.idx ]
-  }
-
-  # reorganize channels if necessary
-  spectral.channel <- check.channels( spectral.channel, asp )
+  first.fcs <- file.path( control.dir, control.table$filename[ 1 ] )
+  spectral.channel <- .derive.spectral.channels( first.fcs, asp )
   spectral.channel.n <- length( spectral.channel )
 
   ## record and store voltages for checks during unmixing
