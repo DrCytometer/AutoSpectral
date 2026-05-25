@@ -727,13 +727,5 @@ deduplicate.spectra <- function( spectra, threshold = 0.99 ) {
 #' @keywords internal
 
 cosine.similarity.cross <- function( a, b ) {
-
-  norm.row <- function( m ) {
-    norms <- sqrt( rowSums( m^2 ) )
-    norms <- ifelse( norms < 1e-12, 1, norms )
-    m / norms
-  }
-
-  norm.row( a ) %*% t( norm.row( b ) )
-
+  t( apply( b, 1, function( brow ) .cosine.sim.rows( a, brow ) ) )
 }
