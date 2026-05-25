@@ -7,7 +7,6 @@
 #' expression data, selected based on scatter parameters gates.
 #'
 #' @importFrom ggplot2 ggplot aes facet_wrap after_stat
-#' @importFrom ggplot2 scale_fill_gradientn scale_fill_viridis_c stat_density_2d
 #' @importFrom ggplot2 scale_x_continuous scale_y_continuous theme_bw
 #' @importFrom ggplot2 theme element_rect element_text margin ggsave
 #' @importFrom scattermore geom_scattermore
@@ -18,12 +17,7 @@
 #' @param fluor.name A character string specifying the fluorophore name.
 #' @param scatter.param A character vector specifying the scatter parameters.
 #' @param asp The AutoSpectral parameter list.
-#' Prepare using `get.autospectral.param`
-#' @param color.palette Optional character string defining the viridis color
-#' palette to be used for the fluorophore traces. Default is `rainbow`, which will
-#' be similar to FlowJo or SpectroFlo. Other options are the viridis color
-#' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
-#' and `turbo`.
+#' Prepare using `get.autospectral.param`.
 #'
 #' @return None. The function saves the generated scatter plot to a file.
 #'
@@ -34,8 +28,7 @@ scatter.match.plot <- function(
     neg.expr.data,
     fluor.name,
     scatter.param,
-    asp,
-    color.palette = "rainbow"
+    asp
   ) {
 
   # convert to data frames for plotting
@@ -80,12 +73,6 @@ scatter.match.plot <- function(
         alpha = 1,
         na.rm = TRUE
       ) +
-      stat_density_2d(
-        aes( fill = after_stat( level ) ),
-        geom = "polygon",
-        contour = TRUE,
-        na.rm = TRUE
-      ) +
       facet_wrap( ~ group, ncol = 2 ) +
       scale_x_continuous(
         name = scatter.param[ 1 ],
@@ -121,25 +108,6 @@ scatter.match.plot <- function(
       )
   )
 
-  # color options
-  viridis.colors <- c(
-    "magma", "inferno", "plasma", "viridis",
-    "cividis", "rocket", "mako", "turbo"
-  )
-
-
-  # set the color palette on the plot
-  if ( color.palette %in% viridis.colors ) {
-    scatter.plot <- scatter.plot +
-      scale_fill_viridis_c( option = color.palette )
-  } else {
-    scatter.plot <- scatter.plot +
-      scale_fill_gradientn(
-        colours = asp$density.palette.base.color,
-        values = asp$ribbon.scale.values
-      )
-  }
-
   scatter.plot.filename <- paste(
     fluor.name,
     asp$scatter.match.plot.filename,
@@ -154,7 +122,8 @@ scatter.match.plot <- function(
       device = ragg::agg_jpeg,
       width = asp$scatter.match.plot.width,
       height = asp$scatter.match.plot.height,
-      limitsize = FALSE
+      limitsize = FALSE,
+      create.dir = TRUE
     )
   )
 
