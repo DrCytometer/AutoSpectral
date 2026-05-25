@@ -17,3 +17,12 @@ cosine.similarity <- function( spectra ) {
   similarity.matrix <- dot.product / outer( euclidean.norm, euclidean.norm )
   return( similarity.matrix )
 }
+
+## Cosine similarity of each row of mat against a single reference vector.
+## Returns a numeric vector of length nrow(mat).
+.cosine.sim.rows <- function( mat, ref.vec ) {
+  dot.prod <- mat %*% ref.vec
+  mat.norm <- sqrt( rowSums( mat^2 ) )
+  ref.norm <- sqrt( sum( ref.vec^2 ) )
+  as.numeric( dot.prod / ( mat.norm * ref.norm + 1e-9 ) )
+}
