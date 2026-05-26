@@ -19,7 +19,8 @@ spectral.ribbon.plot(
   data.list = NULL,
   af = FALSE,
   plot.width = 15,
-  plot.height = 10
+  plot.height = 10,
+  max.points = 50000
 )
 }
 \arguments{
@@ -70,6 +71,8 @@ whether autofluorescence removal is being performed. Default is \code{FALSE}.}
 \item{plot.width}{Width of the saved plot. Default is \code{15}.}
 
 \item{plot.height}{Height of the saved plot. Default is \code{10}.}
+
+\item{max.points}{Number of events per panel to plot. Default is \code{5e4}.}
 }
 \value{
 None. The function saves the generated spectral ribbon plot to

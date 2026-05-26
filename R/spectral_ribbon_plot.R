@@ -8,9 +8,11 @@
 #' use the function directly, pass data to `data.list` in the form of a named
 #' list of matrices or data.frames.
 #'
-#' @importFrom ggplot2 ggplot aes scale_y_continuous geom_bin2d facet_wrap xlab
-#' @importFrom ggplot2 ylab scale_fill_gradientn theme_minimal theme element_text
-#' @importFrom ggplot2 element_blank ggsave scale_fill_viridis_c
+#' @importFrom ggplot2 ggplot aes scale_y_continuous scale_x_continuous
+#' @importFrom ggplot2 annotation_raster annotate ggtitle xlab ylab
+#' @importFrom ggplot2 theme_minimal theme element_text element_blank
+#' @importFrom ggplot2 ggsave expansion
+#' @importFrom patchwork wrap_plots
 #' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom ragg agg_jpeg
 #'
@@ -47,6 +49,7 @@
 #' whether autofluorescence removal is being performed. Default is `FALSE`.
 #' @param plot.width Width of the saved plot. Default is `15`.
 #' @param plot.height Height of the saved plot. Default is `10`.
+#' @param max.points Number of events per panel to plot. Default is `5e4`.
 #'
 #' @return None. The function saves the generated spectral ribbon plot to
 #' a file.
@@ -68,13 +71,18 @@ spectral.ribbon.plot <- function(
     data.list = NULL,
     af = FALSE,
     plot.width = 15,
-    plot.height = 10
+    plot.height = 10,
+    max.points = 5e4
 ) {
 
-  # for user-provided data: list of data.frames/matrices to `data.list`
+  # ---------------------------------------------------------------------------
+  # 1. Assemble list of raw matrices (one per panel), spectral columns only
+  # ---------------------------------------------------------------------------
+
   if ( !is.null( data.list ) ) {
+    # user-supplied path
     data.frames <- lapply( data.list, function( df ) {
-      df[ , spectral.channel, drop = FALSE ]
+      as.matrix( df[ , spectral.channel, drop = FALSE ] )
     } )
 
     if ( is.null( factor.names ) ) {
@@ -85,7 +93,7 @@ spectral.ribbon.plot <- function(
       }
     }
 
-    if ( length( factor.names) != length( data.frames ) )
+    if ( length( factor.names ) != length( data.frames ) )
       stop( "Length of factor.names must match number of datasets in data.list." )
 
     if ( is.null( figure.dir ) ) figure.dir <- asp$figure.spectral.ribbon.dir
@@ -93,90 +101,65 @@ spectral.ribbon.plot <- function(
       title <- paste( factor.names, collapse = "_" )
 
   } else {
-    # internal AutoSpectral control-cleaning data wrangling
-    data.frames <- list()
-
+    # internal AutoSpectral paths
     if ( !af ) {
-      # scatter matching with background subtraction
+      # downsample inputs first
+      pos.ds <- if ( nrow( pos.expr.data ) > max.points ) {
+        pos.expr.data[ sample( nrow( pos.expr.data ), max.points ), , drop = FALSE ]
+      } else pos.expr.data
+
+      neg.ds <- if ( nrow( neg.expr.data ) > max.points ) {
+        neg.expr.data[ sample( nrow( neg.expr.data ), max.points ), , drop = FALSE ]
+      } else neg.expr.data
+
+      # now compute background subtraction on downsampled data
       pos.mfi <- apply(
-        neg.expr.data[ , spectral.channel, drop = FALSE ], 2, stats::median
+        neg.ds[ , spectral.channel, drop = FALSE ], 2, stats::median
       )
       pos.minus.bg <- sweep(
-        pos.expr.data[ , spectral.channel, drop = FALSE ],
-        2,
-        pos.mfi,
-        FUN = "-"
+        pos.ds[ , spectral.channel, drop = FALSE ],
+        2, pos.mfi, FUN = "-"
       )
       data.frames <- list(
         pos.minus.bg,
-        pos.expr.data[ , spectral.channel, drop = FALSE ],
-        neg.expr.data[ , spectral.channel, drop = FALSE ]
+        pos.ds[ , spectral.channel, drop = FALSE ],
+        neg.ds[ , spectral.channel, drop = FALSE ]
       )
 
       if ( is.null( factor.names ) )
         factor.names <- c( fluor.name, paste( "Raw", fluor.name ), "Negative" )
-      if ( is.null( title ) ) title <- "Scatter match"
+      if ( is.null( title ) )      title      <- "Scatter match"
       if ( is.null( figure.dir ) ) figure.dir <- asp$figure.spectral.ribbon.dir
 
     } else {
-      # intrusive AF event cleaning
+      # intrusive AF event cleaning — downsample each matrix
+      downsample <- function( m ) {
+        if ( nrow( m ) > max.points )
+          m[ sample( nrow( m ), max.points ), , drop = FALSE ]
+        else m
+      }
       data.frames <- list(
-        pos.expr.data[ , spectral.channel, drop = FALSE ],
-        neg.expr.data[ , spectral.channel, drop = FALSE ],
-        removed.data[ , spectral.channel, drop = FALSE ]
+        downsample( pos.expr.data[ , spectral.channel, drop = FALSE ] ),
+        downsample( neg.expr.data[ , spectral.channel, drop = FALSE ] ),
+        downsample( removed.data[ , spectral.channel, drop = FALSE ] )
       )
 
-      if ( is.null( factor.names ) ) {
+      if ( is.null( factor.names ) )
         factor.names <- c(
           paste( "Original", fluor.name ),
-          paste( "Cleaned", fluor.name ),
+          paste( "Cleaned",  fluor.name ),
           "Removed events"
         )
-      }
-
-      if ( is.null( title ) ) title <- "AF removal"
+      if ( is.null( title ) )      title      <- "AF removal"
       if ( is.null( figure.dir ) ) figure.dir <- asp$figure.clean.control.dir
     }
   }
 
   if ( !dir.exists( figure.dir ) ) dir.create( figure.dir )
 
-  # labels
-  names( data.frames ) <- factor.names
-  data.frames <- Map( function( df, nm ) {
-    df <- data.frame( df, check.names = FALSE )
-    df$group <- nm
-    df
-  }, data.frames, factor.names )
-
-  # rearrange
-  ribbon.plot.data <- do.call( rbind, data.frames )
-  ribbon.plot.data$group <- factor(
-    ribbon.plot.data$group,
-    levels = factor.names
-  )
-
-  # shift to long format for plotting
-  cols <- setdiff( names( ribbon.plot.data ), "group" )
-
-  ribbon.plot.long <- data.frame(
-    group   = rep( ribbon.plot.data$group, times = length( cols ) ),
-    channel = rep( cols, each = nrow( ribbon.plot.data ) ),
-    value   = unlist( ribbon.plot.data[ cols ], use.names = FALSE ),
-    row.names = NULL
-  )
-
-  ribbon.plot.long$channel <- factor(
-    ribbon.plot.long$channel,
-    levels = spectral.channel
-  )
-
-  # setting scales and transformation
-  ribbon.breaks <- asp$ribbon.breaks
-  ribbon.labels <- sapply( ribbon.breaks, function( x ) {
-    if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
-  } )
-  ribbon.limits <- c( asp$ribbon.plot.min, asp$expr.data.max )
+  # ---------------------------------------------------------------------------
+  # 3. Build biexp transform and axis parameters
+  # ---------------------------------------------------------------------------
 
   biexp.transform <- flowWorkspace::flowjo_biexp(
     channelRange = asp$default.transformation.param$length,
@@ -187,56 +170,150 @@ spectral.ribbon.plot <- function(
     inverse      = FALSE
   )
 
-  # create plot
-  ribbon.plot <- ggplot(
-    ribbon.plot.long,
-    aes( channel, biexp.transform( value ) )
-  ) +
-    scale_y_continuous(
-      limits = biexp.transform(ribbon.limits),
-      breaks = biexp.transform(ribbon.breaks),
-      labels = ribbon.labels
-    ) +
-    geom_bin2d(
-      bins = c( length( unique( ribbon.plot.long$channel ) ), asp$ribbon.bins ),
-      boundary = 0.5,
-      na.rm = TRUE
-    ) +
-    facet_wrap( ~group, ncol = 1 ) +
-    xlab( "Detector" ) +
-    ylab( "Intensity" ) +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(
-        angle = asp$ribbon.plot.axis.text.angle,
-        vjust = 1,
-        hjust = 1
-      ),
-      panel.grid.minor = element_blank(),
-      legend.position = "none",
-      strip.text = element_text(
-        size = asp$ribbon.plot.strip.text.size,
-        face = asp$ribbon.plot.strip.text.face
-      )
-    )
+  ribbon.breaks <- asp$ribbon.breaks
+  ribbon.labels <- sapply( ribbon.breaks, function( x ) {
+    if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
+  } )
+  ribbon.limits <- c( asp$ribbon.plot.min, asp$expr.data.max )
 
-  # color options
+  n_x    <- length( spectral.channel )
+  n_y    <- asp$ribbon.bins
+  y_min  <- biexp.transform( ribbon.limits[1] )
+  y_max  <- biexp.transform( ribbon.limits[2] )
+  y_breaks_r <- seq( y_min, y_max, length.out = n_y + 1 )
+
+  # ---------------------------------------------------------------------------
+  # 4. Build colour palette function
+  # ---------------------------------------------------------------------------
+
   viridis.colors <- c(
     "magma", "inferno", "plasma", "viridis",
     "cividis", "rocket", "mako", "turbo"
   )
   if ( color.palette %in% viridis.colors ) {
-    ribbon.plot <- ribbon.plot +
-      scale_fill_viridis_c( option = color.palette )
+    pal_fn <- function( n ) viridis::viridis( n, option = color.palette )
   } else {
-    ribbon.plot <- ribbon.plot +
-      scale_fill_gradientn(
-        colours = asp$density.palette.base.color,
-        values = asp$ribbon.scale.values
-      )
+    pal_fn <- grDevices::colorRampPalette( asp$density.palette.base.color )
+  }
+  # prepend NA so index 0 (empty bins) maps to transparent
+  palette.256 <- c( NA_character_, pal_fn( 256 ) )
+
+  # ---------------------------------------------------------------------------
+  # 5. make.raster: transform -> bin via C++ -> colour-map
+  # ---------------------------------------------------------------------------
+
+  make.raster <- function( m ) {
+    # apply biexp transform to the full matrix in one call
+    trans <- matrix(
+      biexp.transform( as.vector( m ) ),
+      nrow = nrow( m ),
+      ncol = n_x
+    )
+
+    # bin into count matrix via C++ (column-major, cache-friendly)
+    if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+         "bin_matrix_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+      mat <- AutoSpectralRcpp::bin_matrix_cpp( trans, y_breaks_r, n_y )
+    } else {
+      # pure-R fallback
+      mat <- matrix( 0L, nrow = n_y, ncol = n_x )
+      for ( col in seq_len( n_x ) ) {
+        yi <- findInterval( trans[ , col ], y_breaks_r, rightmost.closed = TRUE )
+        yi <- pmax( 1L, pmin( n_y, yi ) )
+        mat[ , col ] <- tabulate( yi, nbins = n_y )
+      }
+    }
+
+    # log-scale counts and map to palette
+    mat_log  <- log1p( mat )
+    mat_max  <- max( mat_log, na.rm = TRUE )
+    if ( mat_max == 0 ) return( matrix( NA_character_, nrow = n_y, ncol = n_x ) )
+    mat_norm <- mat_log / mat_max
+
+    # col_idx: 0 for empty bins, 1-256 for data; shift by +1 to index palette.256
+    col_idx <- as.integer( ceiling( mat_norm * 256 ) ) + 1L
+    col_mat <- matrix( palette.256[ col_idx ], nrow = n_y, ncol = n_x )
+
+    # flip vertically: annotation_raster row 1 is the top of the panel
+    col_mat[ n_y:1, , drop = FALSE ]
   }
 
-  # save or return
+  raster.list <- lapply( data.frames, make.raster )
+
+  # ---------------------------------------------------------------------------
+  # 6. Shared theme (matches original facet_wrap version exactly)
+  # ---------------------------------------------------------------------------
+
+  panel.theme <- theme_minimal() +
+    theme(
+      axis.text.x      = element_text(
+        angle = asp$ribbon.plot.axis.text.angle,
+        vjust = 1,
+        hjust = 1
+      ),
+      panel.grid.minor = element_blank(),
+      legend.position  = "none",
+      strip.text       = element_text(
+        size = asp$ribbon.plot.strip.text.size,
+        face = asp$ribbon.plot.strip.text.face
+      )
+    )
+
+  # ---------------------------------------------------------------------------
+  # 7. Build one ggplot panel per group, combine with patchwork
+  # ---------------------------------------------------------------------------
+
+  panels <- lapply( seq_along( factor.names ), function( i ) {
+    # suppress x-axis text on all but the bottom panel
+    x.text <- if ( i == length( factor.names ) ) {
+      element_text(
+        angle = asp$ribbon.plot.axis.text.angle,
+        vjust = 1,
+        hjust = 1
+      )
+    } else {
+      element_blank()
+    }
+
+    ggplot() +
+      # white background so NA (empty) cells show as white
+      annotate(
+        "rect",
+        xmin = 0.5, xmax = n_x + 0.5,
+        ymin = y_min, ymax = y_max,
+        fill = "white", colour = NA
+      ) +
+      annotation_raster(
+        raster.list[[ i ]],
+        xmin = 0.5,   xmax = n_x + 0.5,
+        ymin = y_min, ymax = y_max,
+        interpolate = FALSE
+      ) +
+      scale_x_continuous(
+        name   = if ( i == length( factor.names ) ) "Detector" else NULL,
+        breaks = seq_len( n_x ),
+        labels = spectral.channel,
+        limits = c( 0.5, n_x + 0.5 ),
+        expand = expansion( 0 )
+      ) +
+      scale_y_continuous(
+        name   = "Intensity",
+        limits = c( y_min, y_max ),
+        breaks = biexp.transform( ribbon.breaks ),
+        labels = ribbon.labels,
+        expand = expansion( 0 )
+      ) +
+      ggtitle( factor.names[[ i ]] ) +
+      panel.theme +
+      theme( axis.text.x = x.text )
+  } )
+
+  ribbon.plot <- patchwork::wrap_plots( panels, ncol = 1 )
+
+  # ---------------------------------------------------------------------------
+  # 8. Save or return
+  # ---------------------------------------------------------------------------
+
   if ( save ) {
     ribbon.plot.filename <- paste(
       title, fluor.name, asp$ribbon.plot.filename,
@@ -245,10 +322,10 @@ spectral.ribbon.plot <- function(
 
     ggsave(
       ribbon.plot.filename,
-      plot = ribbon.plot,
+      plot   = ribbon.plot,
       device = ragg::agg_jpeg,
-      path = figure.dir,
-      width = plot.width,
+      path   = figure.dir,
+      width  = plot.width,
       height = plot.height,
       limitsize = FALSE,
       create.dir = TRUE
