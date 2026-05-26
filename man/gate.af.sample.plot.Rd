@@ -10,7 +10,8 @@ gate.af.sample.plot(
   af.boundary.upper,
   asp,
   max.points = 50000,
-  color.palette = "viridis"
+  color.palette = "viridis",
+  raster.bins = 256L
 )
 }
 \arguments{
@@ -29,8 +30,11 @@ Prepare using \code{get.autospectral.param}}
 \item{color.palette}{Optional character string defining the viridis color
 palette to be used for the fluorophore traces. Default is \code{viridis}. Options
 are the viridis color options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis},
-\code{cividis}, \code{rocket}, \code{mako} and \code{turbo}. Use \code{rainbow}to be similar to FlowJo
+\code{cividis}, \code{rocket}, \code{mako} and \code{turbo}. Use \code{rainbow} to be similar to FlowJo
 or SpectroFlo.}
+
+\item{raster.bins}{Number of pixels on each axis of the rasterised scatter
+image. Default is \code{256L}.}
 }
 \value{
 Saves the plot as a JPEG file in the specified directory.

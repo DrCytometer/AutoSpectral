@@ -15,7 +15,8 @@ gate.sample.plot(
   color.palette = "mako",
   max.points = 50000,
   gate.color = "darkgoldenrod1",
-  switch.n = 20000
+  switch.n = 10000,
+  raster.bins = 256L
 )
 }
 \arguments{
@@ -46,8 +47,12 @@ and \code{turbo}.}
 
 \item{gate.color}{Color to plot the gate boundary line, default is \code{darkgoldenrod1}.}
 
-\item{switch.n}{Number of points to trigger the switch to using slower but
-more robust density plotting. Default is \code{1e4}.}
+\item{switch.n}{Minimum number of points required to render density contours.
+Below this threshold only the rasterised scatter layer is shown. Default is \code{1e4}.}
+
+\item{raster.bins}{Number of pixels on each axis of the rasterised scatter
+image. Higher values give finer detail at the cost of a little extra memory.
+Default is \code{256L}.}
 }
 \value{
 Saves the plot as a JPEG file in the specified directory.
