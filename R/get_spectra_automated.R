@@ -722,7 +722,7 @@ get.spectra.automated <- function(
       qc.log$Status[ i ] <- "RLM_REFINEMENT"
     } else {
       spectrum             <- raw.spectrum / max.val
-      #spectrum[ spectrum < 0 ] <- 0
+      spectrum[ spectrum < 0 ] <- 0
     }
 
     # -- 5. QC checks
