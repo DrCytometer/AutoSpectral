@@ -9,8 +9,7 @@ scatter.match.plot(
   neg.expr.data,
   fluor.name,
   scatter.param,
-  asp,
-  color.palette = "rainbow"
+  asp
 )
 }
 \arguments{
@@ -23,13 +22,7 @@ scatter.match.plot(
 \item{scatter.param}{A character vector specifying the scatter parameters.}
 
 \item{asp}{The AutoSpectral parameter list.
-Prepare using \code{get.autospectral.param}}
-
-\item{color.palette}{Optional character string defining the viridis color
-palette to be used for the fluorophore traces. Default is \code{rainbow}, which will
-be similar to FlowJo or SpectroFlo. Other options are the viridis color
-options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
-and \code{turbo}.}
+Prepare using \code{get.autospectral.param}.}
 }
 \value{
 None. The function saves the generated scatter plot to a file.
