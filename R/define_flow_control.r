@@ -218,6 +218,7 @@ define.flow.control <- function(
   flow.scatter.parameter <- read.scatter.parameter( asp )
 
   # set scatter parameters and channels
+  all.channels <- colnames(readFCS(file.path(control.dir, control.table$filename[1])))
   flow.scatter.and.channel <- c(
     asp$default.time.parameter,
     flow.scatter.parameter,
