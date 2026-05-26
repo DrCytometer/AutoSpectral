@@ -195,6 +195,7 @@ get.universal.negative.test <- function(
 
 
   if ( main.figures ) {
+    asp$ribbon.bins <- 150
     tryCatch(
       expr = {
         scatter.match.plot(
@@ -211,7 +212,8 @@ get.universal.negative.test <- function(
             neg.expr.data = neg.scatter.matched,
             spectral.channel = spectral.channel,
             asp = asp,
-            fluor.name = samp
+            fluor.name = samp,
+            max.points = 2e5
           )
         }
 

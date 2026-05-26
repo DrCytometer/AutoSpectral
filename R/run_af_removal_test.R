@@ -99,7 +99,7 @@ run.af.removal.test <- function(
   # main loop
   af.remove.expr <- tryCatch( {
     lapply.function( af.removal.sample, function( s ) {
-      do.call( remove.af, c( list( s ), args.list ) )
+      do.call( remove.af.test, c( list( s ), args.list ) )
     } )
   }, finally = {
     # clean up cluster when done

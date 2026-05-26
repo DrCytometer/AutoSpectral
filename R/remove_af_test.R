@@ -281,6 +281,7 @@ remove.af.test <- function(
     }
 
     # plot with error handling
+    asp$ribbon.bins <- 150
     tryCatch(
       expr = {
         spectral.ribbon.plot(
@@ -290,7 +291,8 @@ remove.af.test <- function(
           asp = asp, fluor.name = samp,
           title = asp$af.plot.filename,
           af = TRUE,
-          removed.data = removed.data
+          removed.data = removed.data,
+          max.points = 2e5
         )
 
         # plot AF removal gating on stained control
@@ -329,7 +331,8 @@ remove.af.test <- function(
             fluor.name = negative.label,
             title = asp$af.plot.filename,
             af = TRUE,
-            removed.data = removed.data
+            removed.data = removed.data,
+            max.points = 2e5
           )
 
           # plot AF removal gating on negative control
@@ -352,16 +355,8 @@ remove.af.test <- function(
 
   if ( scatter.match ) {
 
-    if ( verbose ) {
-      message(
-        paste0(
-          "\033[34m",
-          "Getting scatter-matched negatives for ",
-          samp,
-          "\033[0m"
-        )
-      )
-    }
+    if ( verbose )
+      message( paste0( "\033[34mScatter-matching negatives for ", samp, "\033[0m" ) )
 
     # define positive events as those above a threshold (default 99.5%) in the negative
     if ( samp == "AF" )
@@ -380,15 +375,8 @@ remove.af.test <- function(
     # warn if few events in positive
     if ( length( pos.above.threshold ) < asp$min.cell.warning.n ) {
       warning(
-        paste0(
-          "\033[31m",
-          "Warning! Fewer than ",
-          asp$min.cell.warning.n,
-          " positive events in ",
-          samp,
-          "\033[0m",
-          "\n"
-        ),
+        paste0( "\033[31mWarning! Fewer than ", asp$min.cell.warning.n,
+                " positive events in ", samp, "\033[0m", "\n" ),
         call. = FALSE
       )
     }
@@ -397,17 +385,9 @@ remove.af.test <- function(
     # stop if fewer than minimum acceptable events, returning original data
     if ( length( pos.above.threshold ) < asp$min.cell.stop.n ) {
       warning(
-        paste0(
-          "\033[31m",
-          "Warning! Fewer than ",
-          asp$min.cell.stop.n,
-          " positive events in ",
-          samp,
-          "\n",
-          "Returning original data",
-          "\033[0m",
-          "\n"
-        ),
+        paste0( "\033[31mWarning! Fewer than ", asp$min.cell.stop.n,
+                " positive events in ", samp, "\n", "Returning original data",
+                "\033[0m", "\n" ),
         call. = FALSE
       )
       return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
@@ -477,6 +457,7 @@ remove.af.test <- function(
     neg.scatter.matched <- expr.data.neg[ neg.population.idx, ]
 
     # plotting with error/exception handling
+    asp$ribbon.bins <- 150
     if ( main.figures ) {
       tryCatch( {
         scatter.match.plot(
@@ -495,7 +476,8 @@ remove.af.test <- function(
             neg.expr.data = neg.scatter.matched,
             spectral.channel = spectral.channel,
             asp = asp,
-            fluor.name = samp
+            fluor.name = samp,
+            max.points = 2e5
           )
         }, error = function( e ) return( NULL ) )
       }
