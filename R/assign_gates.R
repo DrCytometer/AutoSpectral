@@ -180,7 +180,7 @@ assign.gates <- function(
       control.table$sample[idx] <- if ( control.table$fluorophore[ idx ]  == "AF" ) {
         "AF"
       } else {
-        paste0( control.table$fluorophore[idx], "_", target.gate )
+        paste0( control.table$fluorophore[idx], "_", control.table$gate.name[idx] )
       }
 
       # Note: The gating loop later will call define.gate.density for this name

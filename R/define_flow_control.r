@@ -382,20 +382,29 @@ define.flow.control <- function(
   for ( fs.idx in 1 : flow.sample.n ) {
     flow.sample.event.number <- nrow( flow.expr.data[[ fs.idx ]]  )
 
+    # Guard: skip or warn if gating returned zero events
+    if ( is.null( flow.sample.event.number ) || flow.sample.event.number == 0 ) {
+      warning( paste0(
+        "Sample '", control.table$sample[ fs.idx ], "' (", flow.file.name[ fs.idx ],
+        ") returned 0 events after gating and will be skipped.",
+        "Check gate assignments and inspect plots in figure_gate."
+      ) )
+      next
+    }
+
+    # warn if few events
+    if ( flow.sample.event.number < 500 ) {
+      warning( paste0(
+        "\033[31m",
+        "Warning! Fewer than 500 gated events in ",
+        flow.file.name[ fs.idx ],
+        "\033[0m", "\n"
+      ) )
+    }
+
     rownames( flow.expr.data[[ fs.idx ]] ) <- paste(
       control.table$sample[ fs.idx ], seq_len( flow.sample.event.number ), sep = "_" )
 
-    if ( flow.sample.event.number < 500 ) {
-      warning(
-        paste0(
-          "\033[31m",
-          "Warning! Fewer than 500 gated events in ",
-          flow.file.name[ fs.idx ],
-          "\033[0m",
-          "\n"
-        )
-      )
-    }
 
     if ( flow.sample.event.number > flow.sample.event.number.max )
       flow.sample.event.number.max <- flow.sample.event.number
