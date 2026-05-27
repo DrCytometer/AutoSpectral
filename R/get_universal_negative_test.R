@@ -78,15 +78,8 @@ get.universal.negative.test <- function(
   # warn if few events in positive
   if ( length( pos.above.threshold ) < asp$min.cell.warning.n ) {
     warning(
-      paste0(
-        "\033[31m",
-        "Warning! Fewer than ",
-        asp$min.cell.warning.n,
-        " positive events in ",
-        samp,
-        "\033[0m",
-        "\n"
-      ),
+      paste0( "\033[31mWarning! Fewer than ", asp$min.cell.warning.n,
+              " positive events in ", samp, "\033[0m", "\n" ),
       call. = FALSE
     )
   }
@@ -94,17 +87,9 @@ get.universal.negative.test <- function(
   # stop if fewer than minimum acceptable events, returning original data
   if ( length( pos.above.threshold ) < asp$min.cell.stop.n ) {
     warning(
-      paste0(
-        "\033[31m",
-        "Warning! Fewer than ",
-        asp$min.cell.stop.n,
-        " positive events in ",
-        samp,
-        "\n",
-        "Returning original data.",
-        "\033[0m",
-        "\n"
-      ),
+      paste0( "\033[31mWarning! Fewer than ", asp$min.cell.stop.n,
+              " positive events in ", samp, "\n",
+              "Returning original data.\033[0m", "\n" ),
       call. = FALSE
     )
     return( rbind( pos.control.expr, neg.control.expr ) )
@@ -116,22 +101,17 @@ get.universal.negative.test <- function(
   else
     pos.selected <- pos.above.threshold
 
-  ## scatter-match negative
+  ## scatter-match negative -----
   # recover full data
   pos.selected.expr <- pos.control.expr[ names( pos.selected ), ]
 
   # find scatter-matched events in the universal negative
-  # if using beads, default to no matching
   sample.control.type <- control.type[[ samp ]]
 
-  if ( sample.control.type == "beads" )
-    scatter.match <- FALSE
-
   if ( scatter.match ) {
-
     # get the scatter coordinates of the brightest positive events in the stained control
     pos.scatter.coord <- pos.selected.expr[ , scatter.param ]
-    neg.scatter.coord <- neg.selected.expr[ , scatter.param ]
+    neg.scatter.coord <- neg.control.expr[ , scatter.param ]
 
     # kNN: for each positive event find its k nearest neighbors in the negative
     knn.idx <- tryCatch(
@@ -155,7 +135,6 @@ get.universal.negative.test <- function(
       neg.scatter.matched <- neg.control.expr[ neg.population.idx, ]
 
     } else {
-
       neg.population.idx <- unique( as.vector( knn.idx ) )
 
       # warn / stop checks
