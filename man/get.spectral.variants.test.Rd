@@ -17,7 +17,7 @@ get.spectral.variants.test(
   n.cells = 10000L,
   som.dim = 10L,
   k.neighbors = 3L,
-  sim.threshold = 0.99,
+  sim.threshold = 0.985,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",

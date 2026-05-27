@@ -89,7 +89,7 @@ get.spectral.variants.test <- function(
     n.cells            = 10000L,
     som.dim            = 10L,
     k.neighbors        = 3L,
-    sim.threshold      = 0.99,
+    sim.threshold      = 0.985,
     variant.fill.color = "red",
     variant.fill.alpha = 0.7,
     median.line.color  = "black",
@@ -103,7 +103,7 @@ get.spectral.variants.test <- function(
 
   dots <- list( ... )
 
-  for ( old.arg in c( "pos.quantile", "sim.threshold.arg" ) ) {
+  for ( old.arg in c( "pos.quantile" ) ) {
     if ( !is.null( dots[[ old.arg ]] ) )
       lifecycle::deprecate_warn( "0.9.0",
         paste0( "get.spectral.variants(", old.arg, ")" ),
@@ -135,7 +135,22 @@ get.spectral.variants.test <- function(
   if ( is.null( output.dir ) ) output.dir <- asp$variant.dir
   if ( !dir.exists( output.dir ) ) dir.create( output.dir )
 
+  if ( som.dim > 20 ) {
+    n.cells <- min( 5000, n.cells )
+    warning(
+      paste(
+        "Argument `som.dim` has been set to", som.dim, "which will produce",
+        som.dim^2, "spectral variants per fluorophore.", "\n",
+        "This requires proprotionally more cells in `n.cells` as input,",
+        "and may trigger failure.",
+        "`n.cells` has been automatically adjusted to a minimum of 5000."
+      ),
+      call. = FALSE
+    )
+  }
+
   fluorophores     <- rownames( spectra )[ rownames( spectra ) != "AF" ]
+  spectra <- spectra[ fluorophores, , drop = FALSE ]
   spectral.channel <- colnames( spectra )
 
   # ---------------------------------------------------------------------------
@@ -173,6 +188,8 @@ get.spectral.variants.test <- function(
   names( flow.channel ) <- table.fluors
   flow.file.name     <- control.table$filename
   names( flow.file.name ) <- table.fluors
+  control.type <- control.table$control.type
+  names( control.type ) <- table.fluors
 
   if ( !( "AF" %in% table.fluors ) )
     stop(
@@ -215,8 +232,8 @@ get.spectral.variants.test <- function(
   unstained <- readFCS( file.path( control.dir, flow.file.name[ "AF" ] ) )
 
   if ( nrow( unstained ) > asp$gate.downsample.n.cells ) {
-    set.seed( asp$gate.downsample.seed )
-    unstained.idx <- sample( nrow( unstained ), asp$gate.downsample.n.beads )
+    set.seed( asp$bird.seed )
+    unstained.idx <- sample( nrow( unstained ), asp$gate.downsample.n.cells )
     unstained     <- unstained[ unstained.idx, spectral.channel, drop = FALSE ]
   } else {
     unstained <- unstained[ , spectral.channel, drop = FALSE ]
@@ -225,13 +242,31 @@ get.spectral.variants.test <- function(
   raw.thresholds <- apply( unstained, 2, function( col )
     stats::quantile( col, 0.995 ) )
 
-  # compute unmixed thresholds for the returned object
-  # (no af.spectra available; fall back to OLS-only unmixing for threshold
-  #  estimation -- adequate since these are used only for downstream gating)
-  unstained.unmixed <- unmix.ols( unstained, spectra )
+  # get AF spectra in place
+  af.spectra <- get.af.spectra(
+    file.path( control.dir, flow.file.name[ "AF" ] ),
+    asp,
+    spectra,
+    som.dim = 10,
+    figures = FALSE,
+    save = FALSE,
+    refine = FALSE
+  )
+
+  # get PCs of AF for unmixing the controls
+  sv <- svd( unstained, nu = 0, nv = 4 )
+  af.pcs <- t( sv$v )
+
+  # find the likely positivity thresholds for determining what needs refinement
+  unstained.unmixed <- unmix.autospectral(
+    unstained,
+    spectra,
+    af.spectra,
+    verbose = FALSE
+  )
   unmixed.thresholds <- apply(
-    unstained.unmixed[ , fluorophores, drop = FALSE ], 2,
-    function( col ) stats::quantile( col, 0.995 )
+    unstained.unmixed[ , fluorophores, drop = FALSE ], 2, function( col )
+      stats::quantile( col, 0.995 )
   )
 
   if ( is.null( names( table.fluors ) ) ) names( table.fluors ) <- table.fluors
@@ -253,8 +288,11 @@ get.spectral.variants.test <- function(
     spectral.channel   = spectral.channel,
     scatter.channel    = scatter.channel,
     universal.negative = universal.negative,
+    control.type       = control.type,
     raw.thresholds     = raw.thresholds,
+    unmixed.thresholds = unmixed.thresholds,
     flow.channel       = flow.channel,
+    af.pcs             = af.pcs,
     n.cells            = n.cells,
     som.dim            = som.dim,
     k.neighbors        = k.neighbors,
@@ -269,8 +307,9 @@ get.spectral.variants.test <- function(
     internal.functions <- c(
       "get.fluor.variants.test",
       "cosine.similarity",
-      "spectral.variant.plot",
-      "unmix.ols"
+      "spectral.variant.plot.dens",
+      "unmix.ols",
+      ".cosine.sim.rows"
     )
     exports <- c( "args.list", "table.fluors", internal.functions )
 
@@ -306,7 +345,7 @@ get.spectral.variants.test <- function(
           expr = {
             if ( is.na( args.list$flow.channel[ f ] ) )
               stop( paste( "No flow channel mapped for", f ) )
-            do.call( get.fluor.variants, c( list( f ), args.list ) )
+            do.call( get.fluor.variants.test, c( list( f ), args.list ) )
           },
           error = function( e ) {
             list( is.error = TRUE, msg = conditionMessage( e ) )
