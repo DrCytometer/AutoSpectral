@@ -28,6 +28,8 @@
 #' @param som.dim Number of x and y dimensions for the SOM. Default is `10`.
 #' @param figures Logical, whether to plot the spectral traces and heatmap for
 #'   the AF signatures. Default is `TRUE`.
+#' @param save Logical, whether to save the CSV file for the AF signatures.
+#'   Default is `TRUE`.
 #' @param plot.dir Directory (folder) where the plots will be saved. Default is
 #'   `NULL`, which inherits from `asp$figure.af.dir`.
 #' @param table.dir Directory (folder) where the spectra csv file will be saved.
@@ -107,6 +109,7 @@ get.af.spectra <- function(
     spectra,
     som.dim              = 10,
     figures              = TRUE,
+    save                 = TRUE,
     plot.dir             = NULL,
     table.dir            = NULL,
     title                = "Autofluorescence spectra",
@@ -588,12 +591,14 @@ get.af.spectra <- function(
   # Save and final figures
   # ---------------------------------------------------------------------------
 
-  if ( is.null( title ) )
-    af.file.name <- paste0( file.name, "_", asp$af.file.name, ".csv" )
-  else
-    af.file.name <- paste0( file.name, "_", title, ".csv" )
+  if ( save ) {
+    if ( is.null( title ) )
+      af.file.name <- paste0( file.name, "_", asp$af.file.name, ".csv" )
+    else
+      af.file.name <- paste0( file.name, "_", title, ".csv" )
 
-  utils::write.csv( af.spectra, file = file.path( table.dir, af.file.name ) )
+    utils::write.csv( af.spectra, file = file.path( table.dir, af.file.name ) )
+  }
 
   if ( figures ) {
     if ( verbose ) message( "Plotting autofluorescence variation" )

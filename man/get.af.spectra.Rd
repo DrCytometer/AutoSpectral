@@ -10,6 +10,7 @@ get.af.spectra(
   spectra,
   som.dim = 10,
   figures = TRUE,
+  save = TRUE,
   plot.dir = NULL,
   table.dir = NULL,
   title = "Autofluorescence spectra",
@@ -43,6 +44,9 @@ stained samples to which the AF will be applied, ideally.}
 
 \item{figures}{Logical, whether to plot the spectral traces and heatmap for
 the AF signatures. Default is \code{TRUE}.}
+
+\item{save}{Logical, whether to save the CSV file for the AF signatures.
+Default is \code{TRUE}.}
 
 \item{plot.dir}{Directory (folder) where the plots will be saved. Default is
 \code{NULL}, which inherits from \code{asp$figure.af.dir}.}
