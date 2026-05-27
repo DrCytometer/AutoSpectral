@@ -15,6 +15,7 @@
 #' @importFrom patchwork wrap_plots
 #' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom ragg agg_jpeg
+#' @importFrom viridis viridis
 #'
 #' @param pos.expr.data Internal argument for `clean.controls`. A matrix
 #' containing the positive expression data. Default is `NULL`.

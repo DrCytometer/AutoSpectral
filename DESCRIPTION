@@ -39,7 +39,8 @@ Imports:
     ragg,
     FNN,
     cowplot,
-    patchwork
+    patchwork,
+    viridis
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/DrCytometer/AutoSpectral,
      https://drcytometer.github.io/AutoSpectral/
