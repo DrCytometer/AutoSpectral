@@ -45,8 +45,14 @@
 #' @param universal.negative Named character vector mapping fluorophore names
 #'   to their paired unstained FCS filename, or \code{"FALSE"} / \code{NA}
 #'   when none is available.
+#' @param control.type Character, either "beads" or "cells". Determines the type
+#' of control sample being used and the subsequent processing steps.
 #' @param raw.thresholds Named numeric vector of per-channel positivity
 #'   thresholds (typically the 99.5th percentile of the unstained sample).
+#' @param unmixed.thresholds A named vector of numerical values corresponding to
+#'   the threshold for positivity in each unmixed channel. Determined by the
+#'   99.5th percentile on the unstained sample, typically after single-cell AF
+#'   unmixing.
 #' @param flow.channel Named character vector of expected peak raw channels,
 #'   one per fluorophore.
 #' @param n.cells Integer, default \code{10000}. Maximum number of positive
@@ -58,7 +64,7 @@
 #' @param k.neighbors Integer, default \code{3}. Number of scatter-space
 #'   nearest neighbours from the unstained pool used to form the per-event
 #'   background estimate.
-#' @param sim.threshold Numeric, default \code{0.99}. Minimum cosine
+#' @param sim.threshold Numeric, default \code{0.985}. Minimum cosine
 #'   similarity between a SOM centroid and the reference spectrum for the
 #'   centroid to be retained as a variant.
 #' @param variant.fill.color Color for the shaded ribbon in the variant plot.
@@ -90,12 +96,15 @@ get.fluor.variants.test <- function(
     spectral.channel,
     scatter.channel,
     universal.negative,
+    control.type,
     raw.thresholds,
+    unmixed.thresholds,
     flow.channel,
+    af.pcs,
     n.cells            = 10000L,
     som.dim            = 10L,
     k.neighbors        = 3L,
-    sim.threshold      = 0.99,
+    sim.threshold      = 0.985,
     variant.fill.color = "red",
     variant.fill.alpha = 0.7,
     median.line.color  = "black",
@@ -105,226 +114,168 @@ get.fluor.variants.test <- function(
   if ( verbose )
     message( paste0( "\033[34m", "Getting spectral variants for ", fluor, "\033[0m" ) )
 
-  # reference spectrum for this fluorophore (1 x D)
+  # reference spectrum for this fluorophore
   original.spectrum <- spectra[ fluor, , drop = FALSE ]
-  orig.vec          <- as.numeric( original.spectrum )
+  orig.vec <- as.numeric( original.spectrum )
 
-  cols.read <- unique( c( scatter.channel, spectral.channel ) )
+  pos.data <- readFCS( file.path( control.dir, file.name[ fluor ] ) )
+  # remove saturated events
+  keep <- rowSums( pos.data[ , spectral.channel ] >= asp$expr.data.max ) == 0
+  pos.spectral <- pos.data[ keep, spectral.channel ]
+  pos.scatter <- pos.data[ keep, scatter.channel ]
 
-  # -------------------------------------------------------------------------
-  # 1. Read fluorophore FCS file (scatter + spectral channels)
-  # -------------------------------------------------------------------------
+  # get data above threshold in peak channel
+  peak.channel <- flow.channel[ fluor ]
+  pos.idx <- which( pos.spectral[ , peak.channel ] > raw.thresholds[ peak.channel ] )
+  neg.idx <- setdiff( seq_len( nrow( pos.spectral ) ), pos.idx )
 
-  pos.full    <- readFCS( file.path( control.dir, file.name[ fluor ] ) )
-  pos.present <- intersect( cols.read, colnames( pos.full ) )
-  pos.full    <- pos.full[ , pos.present, drop = FALSE ]
+  # restrict to top n events
+  if ( length( pos.idx ) > n.cells * 2 ) {
+    sorted.idx <- order(
+      pos.spectral[ pos.idx, peak.channel ],
+      decreasing = TRUE )[ 1:( n.cells * 2 ) ]
+    pos.idx <- pos.idx[ sorted.idx ]
+  }
 
-  scat.present <- intersect( scatter.channel, colnames( pos.full ) )
-  spec.present <- intersect( spectral.channel, colnames( pos.full ) )
-
-  if ( length( spec.present ) == 0 ) {
-    warning( paste0( "No spectral channels in file for ", fluor,
-                     ". Returning reference spectrum." ) )
+  if ( length( pos.idx ) < 20 ) {
+    warning(
+      paste0( "Insufficient positive events found for ",
+              fluor, ". Skipping spectral variation." )
+    )
     return( original.spectrum )
   }
 
-  spec.data <- pos.full[ , spec.present, drop = FALSE ]   # all events x D
-
-  # -------------------------------------------------------------------------
-  # 2. Derive AF reference in situ from the unstained file
-  # -------------------------------------------------------------------------
-
-  is.valid.neg <- !is.na( universal.negative[ fluor ] ) &&
-    universal.negative[ fluor ] != "FALSE"              &&
+  # if we have an unstained negative, use that for the negative events
+  # check for universal negative, if none, use internal negative
+  is.valid.file <- !is.na( universal.negative[ fluor ] ) &&
+    universal.negative[ fluor ] != "FALSE" &&
     grepl( "\\.fcs$", universal.negative[ fluor ], ignore.case = TRUE )
 
-  if ( is.valid.neg ) {
-
+  if ( is.valid.file ) {
     neg.path    <- file.path( control.dir, universal.negative[ fluor ] )
-    neg.full    <- readFCS( neg.path )
-    neg.present <- intersect( cols.read, colnames( neg.full ) )
-    neg.full    <- neg.full[ , neg.present, drop = FALSE ]
+    neg.data    <- readFCS( neg.path )
+    # remove saturated events
+    keep <- rowSums( neg.data[ , spectral.channel ] >= asp$expr.data.max ) == 0
+    neg.spectral <- neg.data[ keep, spectral.channel ]
+    neg.scatter <- neg.data[ keep, scatter.channel ]
 
-    neg.spec    <- intersect( spec.present, colnames( neg.full ) )
-    neg.scat    <- intersect( scat.present, colnames( neg.full ) )
-
-    af.spectral  <- neg.full[ , neg.spec, drop = FALSE ]   # M x D
-    af.scatter   <- neg.full[ , neg.scat, drop = FALSE ]   # M x S
-    af.mean      <- colMeans( af.spectral )
-    common.scat  <- neg.scat
-
-    if ( verbose )
-      message( paste0( "\033[32m  Universal negative: ",
-                       nrow( af.spectral ), " events\033[0m" ) )
-
-  } else {
-
-    # Internal-negative: lower 25% of events by expected (or mean) signal
-    exp.peak <- flow.channel[ fluor ]
-    ord.vals <- if ( exp.peak %in% spec.present ) spec.data[ , exp.peak ] else
-                  rowMeans( spec.data )
-
-    n.neg       <- max( 2L, floor( nrow( spec.data ) * 0.25 ) )
-    i.neg       <- order( ord.vals )[ seq_len( n.neg ) ]
-
-    af.spectral <- spec.data[ i.neg, , drop = FALSE ]
-    af.scatter  <- pos.full[  i.neg, scat.present, drop = FALSE ]
-    af.mean     <- colMeans( af.spectral )
-    common.scat <- scat.present
-
-    if ( verbose )
-      message( paste0( "\033[33m  Internal negative: lower 25% (",
-                       n.neg, " events)\033[0m" ) )
-  }
-
-  # unit-normalised AF mean vector for projection
-  af.unit <- af.mean / ( sqrt( sum( af.mean^2 ) ) + 1e-9 )
-
-  # -------------------------------------------------------------------------
-  # 3. Select positive events via AF projection + peak threshold
-  # -------------------------------------------------------------------------
-
-  # Project AF out of all events to reveal the empirical peak detector
-  # (mirrors get.spectra.automated step 4b)
-  proj.vals <- spec.data %*% af.unit
-  mat.orth  <- spec.data - proj.vals %*% t( af.unit )
-  emp.peak  <- names( which.max( colMeans( mat.orth ) ) )
-
-  exp.peak   <- flow.channel[ fluor ]
-  thresh.col <- if ( emp.peak %in% spec.present )  emp.peak  else
-                if ( exp.peak %in% spec.present )  exp.peak  else
-                spec.present[ 1L ]
-
-  thresh.val <- if ( thresh.col %in% names( raw.thresholds ) )
-    raw.thresholds[ thresh.col ] else 0
-
-  pos.idx <- which( spec.data[ , thresh.col ] > thresh.val )
-
-  if ( length( pos.idx ) < 20L ) {
-    warning( paste0( "Insufficient positive events for ", fluor,
-                     " (", length( pos.idx ), "). Returning reference spectrum." ) )
-    return( original.spectrum )
-  }
-
-  # random downsample to n.cells cap
-  if ( length( pos.idx ) > n.cells ) {
-    set.seed( 42L )
-    pos.idx <- sample( pos.idx, n.cells )
-  }
-
-  if ( verbose )
-    message( paste0( "\033[32m  ", length( pos.idx ),
-                     " positive events selected (peak: ", thresh.col, ")\033[0m" ) )
-
-  pos.spec <- spec.data[ pos.idx, spec.present, drop = FALSE ]  # N x D
-  pos.scat <- pos.full[  pos.idx, common.scat,  drop = FALSE ]  # N x S
-
-  # -------------------------------------------------------------------------
-  # 4. Per-event scatter-matched background subtraction
-  # -------------------------------------------------------------------------
-
-  has.scatter <- length( common.scat ) >= 1L && nrow( af.scatter ) > 0L
-
-  if ( has.scatter ) {
-
+    # use kNN to scatter-match, subtract background per-event
     knn.idx <- FNN::knnx.index(
-      data  = as.matrix( af.scatter[ , common.scat, drop = FALSE ] ),
-      query = as.matrix( pos.scat ),
+      data  = neg.scatter,
+      query = pos.scatter[ pos.idx, , drop = FALSE ],
       k     = k.neighbors
     )
 
     # average spectral values of the k nearest unstained neighbours per event
     n.ev       <- nrow( knn.idx )
-    bg.matched <- matrix( 0, n.ev, length( spec.present ) )
-    colnames( bg.matched ) <- spec.present
+    bg.matched <- matrix( 0, n.ev, length( spectral.channel ) )
+    colnames( bg.matched ) <- spectral.channel
 
     for ( ki in seq_len( k.neighbors ) ) {
-      bg.matched <- bg.matched +
-        af.spectral[ knn.idx[ , ki ], spec.present, drop = FALSE ]
+      bg.matched <- bg.matched + neg.spectral[ knn.idx[ , ki ], , drop = FALSE ]
     }
     bg.matched    <- bg.matched / k.neighbors
-    pos.corrected <- pos.spec - bg.matched
-
+    pos.corrected <- pos.spectral[ pos.idx, ] - bg.matched
   } else {
-
-    # Fallback: subtract global AF median when no scatter channels are present
-    af.med        <- apply( af.spectral[ , spec.present, drop = FALSE ], 2, stats::median )
-    pos.corrected <- sweep( pos.spec, 2, af.med, "-" )
-
-    if ( verbose )
-      message( paste0( "\033[33m  No scatter channels; ",
-                       "falling back to global AF median subtraction\033[0m" ) )
+    # check that we have some internal negative events
+    if ( length( neg.idx ) > 50 ) {
+      # define mean background from negative fraction
+      background <- colMeans( pos.spectral[ neg.idx, ] )
+      # subtract the global background
+      pos.corrected <- pos.spectral - background
+    } else {
+      pos.corrected <- pos.spectral
+    }
   }
 
-  # clip physical impossibilities
-  pos.corrected[ pos.corrected < 0 ] <- 0
+  # project out any remaining AF (cells only) using AF components
+  if ( control.type[ fluor ] == "cells" ) {
+    # unmix with this fluor + AF components
+    pos.unmixed <- unmix.ols( pos.corrected, rbind( af.pcs, original.spectrum ) )
+    # back-project the AF components into raw space
+    af.pc.n <- nrow( af.pcs )
+    af.projection <- pos.unmixed[ , 1:af.pc.n ] %*% af.pcs
+    # subtract the projected AF
+    pos.corrected <- pos.corrected - af.projection
+  }
 
-  # -------------------------------------------------------------------------
-  # 5. SOM clustering on background-corrected events
-  # -------------------------------------------------------------------------
+  # unmix background-corrected data in full fluorophore space
+  pos.unmixed <- unmix.ols( pos.corrected, spectra )
 
-  event.n     <- nrow( pos.corrected )
-  som.dim.use <- if ( event.n < 500L )
-    max( 2L, floor( sqrt( event.n / 3 ) ) ) else som.dim
+  # select up to n.cells that are still positive
+  keep.idx <- which( pos.unmixed[ , fluor ] > unmixed.thresholds[ fluor ] * 2 )
 
-  set.seed( 42L )
-  som.map <- FlowSOM::SOM(
-    pos.corrected,
-    xdim   = som.dim.use,
-    ydim   = som.dim.use,
-    silent = TRUE
-  )
+  # cosine screening
+  ev.max  <- apply( pos.corrected[ keep.idx, ], 1, max )
+  ev.max[ ev.max <= 0 ] <- 1
+  ev.norm <- pos.corrected[ keep.idx, ] / ev.max
+  ev.cosine <- .cosine.sim.rows( ev.norm, orig.vec )
+  cosine.keep <- which( ev.cosine >= sim.threshold )
 
-  # L-inf normalise SOM centroids -> candidate variant spectra
-  variant.spectra <- t( apply(
-    som.map$codes, 1,
-    function( x ) { mx <- max( x ); if ( mx > 0 ) x / mx else x }
-  ) )
-  colnames( variant.spectra ) <- spec.present
+  if ( length( cosine.keep ) < 20 ) {
+    warning( paste0( "Insufficient events passed pre-SOM cosine QC for ",
+                     fluor, ". Returning reference spectrum." ) )
+    return( original.spectrum )
+  }
 
-  # pad to full spectral.channel width if any channels were absent in this file
-  if ( !identical( spec.present, spectral.channel ) ) {
-    full.mat <- matrix(
-      0, nrow( variant.spectra ), length( spectral.channel ),
-      dimnames = list( NULL, spectral.channel )
+  som.input <- cbind( pos.unmixed[ keep.idx[ cosine.keep ], ],
+                      pos.corrected[ keep.idx[ cosine.keep ], ] )
+  colnames( som.input ) <- c( colnames( pos.unmixed ), spectral.channel )
+  event.n   <- length( cosine.keep )
+  if ( event.n < 500L )
+    som.dim <- max( 2L, floor( sqrt( event.n / 3 ) ) )
+
+  # cluster on the cleaned-up positive fluorophore data
+  set.seed( asp$bird.seed )
+  if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
+    map <- EmbedSOM::SOM(
+      som.input, # check with just pos.corrected
+      xdim = som.dim,
+      ydim = som.dim,
+      batch = TRUE,
+      parallel = TRUE
     )
-    full.mat[ , spec.present ] <- variant.spectra
-    variant.spectra <- full.mat
+  } else {
+    map <- FlowSOM::SOM(
+      som.input,
+      xdim = som.dim,
+      ydim = som.dim,
+      silent = TRUE
+    )
   }
 
-  # drop all-zero centroids (can arise with very sparse data)
-  variant.spectra <- variant.spectra[ rowSums( variant.spectra ) > 0, , drop = FALSE ]
+  # get spectra: SOM centroids are new profiles, normalize (L-inf)
+  variant.spectra <- t(
+    apply( map$codes[ , spectral.channel, drop = FALSE ], 1,
+           function( x ) x / max( x ) )
+  )
+  # remove anything that's NA (unlikely)
+  variant.spectra <- as.matrix( stats::na.omit( variant.spectra ) )
 
   if ( nrow( variant.spectra ) == 0 ) {
-    warning( paste0( "All SOM centroids zero for ", fluor,
+    warning( paste0( "No valid variants for ", fluor,
                      ". Returning reference spectrum." ) )
     return( original.spectrum )
   }
 
-  # -------------------------------------------------------------------------
-  # 6. Cosine similarity QC
-  # -------------------------------------------------------------------------
+  if ( FALSE ) {
+    # qc to remove dissimilar spectral variants (usually AF contamination)
+    similar <- apply( variant.spectra, 1, function( v ) {
+      sim.mat <- cosine.similarity( rbind( orig.vec, v ) )
+      sim.mat[ lower.tri( sim.mat ) ] > sim.threshold
+    } )
 
-  similar <- apply( variant.spectra, 1, function( v ) {
-    sim.mat <- cosine.similarity( rbind( orig.vec, v ) )
-    sim.mat[ lower.tri( sim.mat ) ] > sim.threshold
-  } )
+    if ( !any( similar ) ) {
+      warning( paste0(
+        "\033[31mNo SOM centroids passed cosine QC (threshold = ",
+        sim.threshold, ") for ", fluor,
+        ". Returning reference spectrum.\033[0m"
+      ) )
+      return( original.spectrum )
+    }
 
-  if ( !any( similar ) ) {
-    warning( paste0(
-      "\033[31mNo SOM centroids passed cosine QC (threshold = ",
-      sim.threshold, ") for ", fluor,
-      ". Returning reference spectrum.\033[0m"
-    ) )
-    return( original.spectrum )
+    variant.spectra <- variant.spectra[ similar, , drop = FALSE ]
   }
-
-  variant.spectra <- variant.spectra[ similar, , drop = FALSE ]
-
-  # -------------------------------------------------------------------------
-  # 7. Off-peak smoothing toward the reference spectrum
-  # -------------------------------------------------------------------------
-
   # Shrink variant values toward the reference in channels where the
   # fluorophore contributes negligible signal, to avoid inflating cross-talk.
   peak.idx <- orig.vec > 0.05
@@ -337,29 +288,15 @@ get.fluor.variants.test <- function(
 
   rownames( variant.spectra ) <- paste0( fluor, "_", seq_len( nrow( variant.spectra ) ) )
 
-  # -------------------------------------------------------------------------
-  # 8. Plot
-  # -------------------------------------------------------------------------
-
+  # Plotting
   if ( figures ) {
     if ( verbose )
       message( paste0( "\033[32m  Plotting spectral variation for ",
                        fluor, "\033[0m" ) )
-    spectral.variant.plot(
-      spectra.variants   = variant.spectra,
-      median.spectrum    = orig.vec,
-      title              = paste0( fluor, "_variants" ),
-      save               = TRUE,
-      plot.dir           = output.dir,
-      variant.fill.color = variant.fill.color,
-      variant.fill.alpha = variant.fill.alpha,
-      median.line.color  = median.line.color,
-      median.linewidth   = median.linewidth
-    )
     spectral.variant.plot.dens(
       spectra.variants   = variant.spectra,
       median.spectrum    = orig.vec,
-      title              = paste0( fluor, "_variants_density" ),
+      title              = paste0( fluor, "_variants" ),
       save               = TRUE,
       plot.dir           = output.dir,
       variant.color = variant.fill.color,

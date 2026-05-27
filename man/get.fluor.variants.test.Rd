@@ -16,12 +16,15 @@ get.fluor.variants.test(
   spectral.channel,
   scatter.channel,
   universal.negative,
+  control.type,
   raw.thresholds,
+  unmixed.thresholds,
   flow.channel,
+  af.pcs,
   n.cells = 10000L,
   som.dim = 10L,
   k.neighbors = 3L,
-  sim.threshold = 0.99,
+  sim.threshold = 0.985,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
@@ -59,8 +62,16 @@ against the unstained pool.}
 to their paired unstained FCS filename, or \code{"FALSE"} / \code{NA}
 when none is available.}
 
+\item{control.type}{Character, either "beads" or "cells". Determines the type
+of control sample being used and the subsequent processing steps.}
+
 \item{raw.thresholds}{Named numeric vector of per-channel positivity
 thresholds (typically the 99.5th percentile of the unstained sample).}
+
+\item{unmixed.thresholds}{A named vector of numerical values corresponding to
+the threshold for positivity in each unmixed channel. Determined by the
+99.5th percentile on the unstained sample, typically after single-cell AF
+unmixing.}
 
 \item{flow.channel}{Named character vector of expected peak raw channels,
 one per fluorophore.}
@@ -77,7 +88,7 @@ cosine QC.}
 nearest neighbours from the unstained pool used to form the per-event
 background estimate.}
 
-\item{sim.threshold}{Numeric, default \code{0.99}. Minimum cosine
+\item{sim.threshold}{Numeric, default \code{0.985}. Minimum cosine
 similarity between a SOM centroid and the reference spectrum for the
 centroid to be retained as a variant.}
 
