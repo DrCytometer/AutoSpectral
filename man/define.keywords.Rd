@@ -52,4 +52,13 @@ The updated keyword list for writing the FCS file.
 \description{
 Updates FCS file keywords after unmixing to define the new parameters. Tracks
 existing keywords from the input FCS file for metadata compatibility.
+
+Per \href{https://doi.org/10.1002/cyto.a.20825}{Data File Standard for Flow Cytometry, version FCS 3.1}:
+\itemize{
+\item $LAST_MODIFIED/dd-mmm-yyyy hh:mm:ss.cc
+\item $LAST_MODIFIER/string/
+\item $ORIGINALITY/string
+}
+
+are added as additional keywords to denote modification of the FCS file.
 }

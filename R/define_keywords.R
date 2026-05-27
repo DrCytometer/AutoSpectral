@@ -6,6 +6,15 @@
 #' Updates FCS file keywords after unmixing to define the new parameters. Tracks
 #' existing keywords from the input FCS file for metadata compatibility.
 #'
+#' Per [Data File Standard for Flow Cytometry, version FCS 3.1](https://doi.org/10.1002/cyto.a.20825):
+#' \itemize{
+#'   \item $LAST_MODIFIED/dd-mmm-yyyy hh:mm:ss.cc
+#'   \item $LAST_MODIFIER/string/
+#'   \item $ORIGINALITY/string
+#' }
+#'
+#' are added as additional keywords to denote modification of the FCS file.
+#'
 #' @param fcs.keywords The input keywords obtained from the read FCS file.
 #' @param final.matrix The expression data, containing both unmixed data and any
 #' retained parameters such as scatter and time.
@@ -164,7 +173,10 @@ define.keywords <- function(
     "SPECTRA" = format.matrix.string(spectra),
     "FLUOROCHROMES" = paste(rownames(spectra), collapse = ","),
     "AUTOSPECTRAL" = asp.ver,
-    "AUTOSPECTRALRCPP" = rcpp.ver
+    "AUTOSPECTRALRCPP" = rcpp.ver,
+    '$LAST_MODIFIED' = toupper(format(Sys.time(), "%d-%b-%Y %H:%M:%OS2")),
+    '$LAST_MODIFIER' = sprintf("AutoSpectral_%s", utils::packageVersion("AutoSpectral")),
+    '$ORIGINALITY' = "DataModified"
   ))
 
   # add AF spectra if used
