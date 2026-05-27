@@ -115,6 +115,15 @@ define.keywords <- function(
 
   for (i in seq_len(n.param)) {
     p.name <- p.names[i]
+    # FCS 3.1 3.2.23: commas are not allowed in $PnN values as they conflict
+    # with keywords such as $SPILLOVER and $TR. Replace any with underscores.
+    if (grepl(",", p.name, fixed = TRUE)) {
+      warning(sprintf(
+        "Parameter name '%s' contains a comma, which is invalid in $PnN (FCS 3.1 3.2.23). Replacing with '_'.",
+        p.name
+      ), call. = FALSE)
+      p.name <- gsub(",", "_", p.name, fixed = TRUE)
+    }
     p.prefix <- paste0("$P", i)
 
     # AF Index
@@ -172,6 +181,22 @@ define.keywords <- function(
       f.idx <- match(clean.name, flow.control$fluorophore)
       marker <- if (!is.na(f.idx)) as.character(flow.control$antigen[f.idx]) else p.name
       param.keywords[[paste0(p.prefix, "S")]] <- marker
+    }
+  }
+
+  # FCS 3.1 3.2.18: $PnE and $PnR are required for every parameter.
+  # 3.2.22: when $DATATYPE/F/, all parameters must have $PnE/0,0/.
+  # Carry-through parameters copied from source files may be missing either;
+  # apply safe fallbacks here
+  for (i in seq_len(n.param)) {
+    p.prefix <- paste0("$P", i)
+    e.key <- paste0(p.prefix, "E")
+    r.key <- paste0(p.prefix, "R")
+    if (is.null(param.keywords[[e.key]])) {
+      param.keywords[[e.key]] <- "0,0"
+    }
+    if (is.null(param.keywords[[r.key]])) {
+      param.keywords[[r.key]] <- as.character(asp$expr.data.max)
     }
   }
 
