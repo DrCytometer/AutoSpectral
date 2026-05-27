@@ -22,8 +22,10 @@ cosine.similarity <- function( spectra ) {
 #' @description
 #' Cosine similarity of each row of mat against a single reference vector.
 #'
-#' @param spectra The matrix (or dataframe), represented as events in rows and
+#' @param mat The matrix (or dataframe), represented as events in rows and
 #' detectors in columns.
+#' @param ref.vec The vector (numeric) of the reference spectrum to which the
+#' rows of the matrix will be compared.
 #'
 #' @return Returns a numeric vector of length nrow(mat).
 

@@ -7,8 +7,11 @@
 .cosine.sim.rows(mat, ref.vec)
 }
 \arguments{
-\item{spectra}{The matrix (or dataframe), represented as events in rows and
+\item{mat}{The matrix (or dataframe), represented as events in rows and
 detectors in columns.}
+
+\item{ref.vec}{The vector (numeric) of the reference spectrum to which the
+rows of the matrix will be compared.}
 }
 \value{
 Returns a numeric vector of length nrow(mat).
