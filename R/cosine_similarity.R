@@ -18,8 +18,15 @@ cosine.similarity <- function( spectra ) {
   return( similarity.matrix )
 }
 
-## Cosine similarity of each row of mat against a single reference vector.
-## Returns a numeric vector of length nrow(mat).
+#' @title dot Cosine Similarity Rows
+#' @description
+#' Cosine similarity of each row of mat against a single reference vector.
+#'
+#' @param spectra The matrix (or dataframe), represented as events in rows and
+#' detectors in columns.
+#'
+#' @return Returns a numeric vector of length nrow(mat).
+
 .cosine.sim.rows <- function( mat, ref.vec ) {
   dot.prod <- mat %*% ref.vec
   mat.norm <- sqrt( rowSums( mat^2 ) )
