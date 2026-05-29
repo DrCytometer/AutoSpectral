@@ -6,7 +6,9 @@
 \alias{AutoSpectral}
 \title{AutoSpectral: Tools for Unmixing Spectral Flow Cytometry Data}
 \description{
-As both a refinement and advancement of the unmixing process of full spectrum cytometry data, \code{AutoSpectral} provides a suite of functions/tools that work in concert to provide the user with optimal unmixing results.
+As both a refinement and advancement of the unmixing process of full spectrum
+cytometry data, \code{AutoSpectral} provides a suite of functions/tools that work
+in concert to provide the user with optimal unmixing results.
 
 Use \code{AutoSpectral} to:
 \itemize{
@@ -17,19 +19,41 @@ Use \code{AutoSpectral} to:
 }
 \section{\code{AutoSpectral} (v 1.5.7) Workflow}{
 
-To maximize the success of \code{AutoSpectral}, the workflow is organized into the following logical step-wise processes:
+To maximize the success of \code{AutoSpectral}, the workflow is organized into
+the following logical step-wise processes:
 \enumerate{
-\item \link{create.control.file}: Generate a .csv file that contains descriptive information about your single stained controls
+\item \link{create.control.file}: Generate a .csv file that contains descriptive
+information about your single stained controls
 \itemize{
 \item \href{https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html#creating-the-control-file}{Control File} (see article)
 }
-\item \link{define.flow.control}: uses the result of \link{create.control.file} to convert FCS files and their associated metadata into an optimized data structure for downstream workflows
+\item \link{define.flow.control}: uses the result of \link{create.control.file} to convert
+FCS files and their associated metadata into an optimized data structure
+for downstream workflows
 \itemize{
 \item \href{https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html#loading-the-data}{Flow Control} (see article)
 }
-\item ...
-\item ...
+\item \link{clean.controls}: removes autofluorescent events from cell-based controls
+via PCA-based gating, selects top-expressing positive events, matches
+universal negatives by scatter, and downsamples for speed
+\item \link{get.fluorophore.spectra}: extracts normalized \verb{[0, 1]} fluorophore
+reference spectra from the cleaned controls and performs cosine-similarity
+QC against the spectral reference library
+\item \emph{(Optional)} \link{get.af.spectra}: extracts autofluorescence reference spectra
+for use with the AutoSpectral unmixing method
+\item \emph{(Optional)} \link{get.spectral.variants}: computes per-fluorophore spectral
+variants for per-cell fluorophore optimization during AutoSpectral unmixing
+\item \link{unmix.fcs} / \link{unmix.folder}: unmixes experiment FCS files using the
+extracted spectra. Supported methods are \code{"OLS"}, \code{"WLS"}, \code{"Poisson"},
+and \code{"AutoSpectral"}
 }
+}
+
+\section{Automated alternative (steps 2–4)}{
+
+\link{get.spectra.automated} replaces the \code{define.flow.control} →
+\code{clean.controls} → \code{get.fluorophore.spectra} pipeline with a single
+function call, requiring no scatter gating or interactive input.
 }
 
 \seealso{
@@ -46,6 +70,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Oliver Burton \email{olivertburton@gmail.com} (\href{https://orcid.org/0000-0003-3884-7373}{ORCID})
   \item Adrian Liston \email{adrian.liston.com} (\href{https://orcid.org/0000-0002-6272-4085}{ORCID})
 }
 
