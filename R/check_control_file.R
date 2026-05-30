@@ -47,6 +47,13 @@ check.control.file <- function(
     legacy = legacy
   )
 
+  # In automated mode, demote missing_channel from error to warning
+  # (validate.control.file now always issues a warning; this is a safeguard
+  # in case legacy = TRUE is used and someone has empty channels)
+  if ( legacy && any( issues$rule == "missing_channel" ) ) {
+    issues$severity[ issues$rule == "missing_channel" ] <- "error"
+  }
+
   if ( nrow( issues ) == 0 & strict ) {
     return( invisible( TRUE ) )
   } else if ( nrow( issues ) == 0 & ! strict ) {

@@ -206,17 +206,30 @@ validate.control.file <- function(
   }
 
   ## ---------- channel ----------
+  # The peak channel is optional in the automated workflow (the empirical peak
+  # is derived from the data).  We issue a warning rather than an error so that
+  # users who do not know the peak channel can still proceed.
   missing.channel <- is.na( ct$channel )
   if ( any( missing.channel ) ) {
     bad <- !grepl( paste( acceptable.missing, collapse = "|" ),
-                   ct$fluorophore[missing.channel ],
+                   ct$fluorophore[ missing.channel ],
                    ignore.case = TRUE )
     if ( any( bad ) ) {
       issues[[ length( issues ) + 1 ]] <-
-        .new_issue( "error", "missing_channel",
-                    filename = ct$filename[ missing.channel ][ bad ],
-                    column = "channel",
-                    message = "Channel missing where required" )
+        .new_issue(
+          if ( legacy ) "error" else "warning",
+          "missing_channel",
+          filename = ct$filename[ missing.channel ][ bad ],
+          column   = "channel",
+          message  = paste0(
+            "Peak channel (channel column) is missing for one or more ",
+            "fluorophores. ",
+            if ( legacy )
+              "The legacy pipeline requires this column."
+            else
+              "This is acceptable for the automated workflow, which derives ",
+            "the peak empirically. The legacy pipeline requires this column."
+          ) )
     }
   }
 
