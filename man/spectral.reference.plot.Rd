@@ -11,14 +11,19 @@ spectral.reference.plot(
   qc.threshold.fail = 0.9,
   experiment.control.color = "black",
   library.reference.color = "blue",
+  comparison.color = "red",
   experiment.line.type = "solid",
   library.line.type = "dotted",
+  comparison.line.type = "dashed",
   pass.color = "darkgreen",
   warn.color = "darkorange",
   fail.color = "red",
   linewidth = 1,
   plot.dir = "./figure_spectra",
-  filename = "spectral_qc_report.pdf"
+  filename = "spectral_qc_report.pdf",
+  comparison.spectra = NULL,
+  comparison.label = "Pre-refinement",
+  highlight.fluors = character(0L)
 )
 }
 \arguments{
@@ -40,14 +45,20 @@ fluorophore spectrum from the single-stained reference control. Default is
 \code{black}.}
 
 \item{library.reference.color}{Color for the line representing the library
-reference standard fluorophore spectrum. Default is \code{blue}.}
+reference standard fluorophore spectrum. Default is \code{"blue"}.}
+
+\item{comparison.color}{Color for the optional comparison spectrum. Default
+is \code{"red"}.}
 
 \item{experiment.line.type}{Line style for the line representing the user's
 fluorophore spectrum from the single-stained reference control. Default is
-\code{solid}.}
+\code{"solid"}.}
 
 \item{library.line.type}{Line style for the line representing the library
-reference standard fluorophore spectrum. Default is \code{dotted}.}
+reference standard fluorophore spectrum. Default is \code{"dotted"}.}
+
+\item{comparison.line.type}{Line style for the line representing the optional
+comparison spectrum. Default is \code{"dashed"}.}
 
 \item{pass.color}{Color to label similarity values above the \code{qc.threshold.warn},
 i.e., fluorophores passing QC. Default is \code{darkgreen}.}
@@ -65,6 +76,15 @@ i.e., fluorophores failing QC. Default is \code{red}.}
 Default is \code{./figure_spectra}.}
 
 \item{filename}{Name for the output PDF file. Default is \code{spectral_qc_report.pdf}.}
+
+\item{comparison.spectra}{Optional matrix of additional spectral profiles to
+be plotted as comparisons. Used for \code{get.spectra.automated} for legacy fallback.}
+
+\item{comparison.label}{Optional character string, default \code{"Pre-refinement"},
+for the \code{comparison.spectra}.}
+
+\item{highlight.fluors}{Optional numeric for differentiating comparison fluors
+in the plots with the "refined" tag.}
 }
 \value{
 None. Plots are saved to a PDF in \code{plot.dir}.

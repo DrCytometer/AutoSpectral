@@ -24,12 +24,16 @@
 #' fluorophore spectrum from the single-stained reference control. Default is
 #' `black`.
 #' @param library.reference.color Color for the line representing the library
-#' reference standard fluorophore spectrum. Default is `blue`.
+#' reference standard fluorophore spectrum. Default is `"blue"`.
+#' @param comparison.color Color for the optional comparison spectrum. Default
+#' is `"red"`.
 #' @param experiment.line.type Line style for the line representing the user's
 #' fluorophore spectrum from the single-stained reference control. Default is
-#' `solid`.
+#' `"solid"`.
 #' @param library.line.type Line style for the line representing the library
-#' reference standard fluorophore spectrum. Default is `dotted`.
+#' reference standard fluorophore spectrum. Default is `"dotted"`.
+#' @param comparison.line.type Line style for the line representing the optional
+#' comparison spectrum. Default is `"dashed"`.
 #' @param pass.color Color to label similarity values above the `qc.threshold.warn`,
 #' i.e., fluorophores passing QC. Default is `darkgreen`.
 #' @param warn.color Color to label similarity values above the `qc.threshold.fail`
@@ -41,6 +45,12 @@
 #' @param plot.dir Directory where the files will be saved.
 #' Default is `./figure_spectra`.
 #' @param filename Name for the output PDF file. Default is `spectral_qc_report.pdf`.
+#' @param comparison.spectra Optional matrix of additional spectral profiles to
+#' be plotted as comparisons. Used for `get.spectra.automated` for legacy fallback.
+#' @param comparison.label Optional character string, default `"Pre-refinement"`,
+#' for the `comparison.spectra`.
+#' @param highlight.fluors Optional numeric for differentiating comparison fluors
+#' in the plots with the "refined" tag.
 #'
 #' @return None. Plots are saved to a PDF in `plot.dir`.
 #'
@@ -53,14 +63,19 @@ spectral.reference.plot <- function(
   qc.threshold.fail = 0.90,
   experiment.control.color = "black",
   library.reference.color = "blue",
+  comparison.color = "red",
   experiment.line.type = "solid",
   library.line.type = "dotted",
+  comparison.line.type = "dashed",
   pass.color = "darkgreen",
   warn.color = "darkorange",
   fail.color = "red",
   linewidth = 1,
   plot.dir = "./figure_spectra",
-  filename = "spectral_qc_report.pdf"
+  filename = "spectral_qc_report.pdf",
+  comparison.spectra = NULL,
+  comparison.label = "Pre-refinement",
+  highlight.fluors = character( 0L )
 ) {
 
   # which cytometer is being used?
@@ -132,59 +147,71 @@ spectral.reference.plot <- function(
       }
     }
 
+    # Optional: comparison (automated pre-legacy) spectrum for this fluorophore
+    has.comparison <- !is.null( comparison.spectra ) &&
+      f %in% rownames( comparison.spectra ) &&
+      f %in% highlight.fluors
+
+    comp.spec <- if ( has.comparison ) comparison.spectra[ f, ] else rep( NA_real_, ncol( spectra ) )
+
     plot.df <- data.frame(
-      detector.n = seq_len( ncol( spectra ) ),
-      detector = factor( detector.names, levels = detector.names ),
-      experiment = spectra[ f, ],
-      library = lib.spec
+      detector.n  = seq_len( ncol( spectra ) ),
+      detector    = factor( detector.names, levels = detector.names ),
+      experiment  = spectra[ f, ],
+      library     = lib.spec,
+      comparison  = comp.spec
     )
 
+    refined.tag <- if ( f %in% highlight.fluors ) " [REFINED]" else ""
     qc.text <- if ( is.na( simil.value ) ) {
-      "No Reference Available"
+      paste0( "No Reference Available", refined.tag )
     } else {
-      paste( "Cosine Similarity:", round( simil.value, 4 ) )
+      paste0( "Cosine Similarity: ", round( simil.value, 4 ), refined.tag )
     }
 
-    # create and store plot
-    ref.plots[[ f ]] <- ggplot( plot.df, aes( x = detector.n ) ) +
+    color.values    <- c( "Experiment" = experiment.control.color,
+                          "Library Reference" = library.reference.color )
+    linetype.values <- c( "Experiment" = experiment.line.type,
+                          "Library Reference" = library.line.type )
+
+    if ( has.comparison ) {
+      color.values[[ comparison.label ]]    <- comparison.color
+      linetype.values[[ comparison.label ]] <- comparison.line.type
+    }
+
+    p <- ggplot( plot.df, aes( x = detector.n ) ) +
       geom_line(
         aes( y = experiment, color = "Experiment", linetype = "Experiment" ),
-        linewidth = linewidth,
-        na.rm = TRUE
+        linewidth = linewidth, na.rm = TRUE
       ) +
       geom_line(
         aes( y = library, color = "Library Reference", linetype = "Library Reference" ),
-        linewidth = linewidth,
-        na.rm = TRUE
-      ) +
-      scale_x_continuous(
-        breaks = plot.df$detector.n,
-        labels = plot.df$detector
-      ) +
-      scale_color_manual(
-        name = f,
-        values = c(
-          "Experiment" = experiment.control.color,
-          "Library Reference" = library.reference.color
-        )
-      ) +
-      scale_linetype_manual(
-        name = f,
-        values = c(
-          "Experiment" = experiment.line.type,
-          "Library Reference" = library.line.type
-        )
-      ) +
+        linewidth = linewidth, na.rm = TRUE
+      )
+
+    if ( has.comparison )
+      p <- p + geom_line(
+        aes( y = comparison,
+             color    = comparison.label,
+             linetype = comparison.label ),
+        linewidth = linewidth, na.rm = TRUE
+      )
+
+    # create and store plot
+    ref.plots[[ f ]] <- p +
+      scale_x_continuous( breaks = plot.df$detector.n, labels = plot.df$detector ) +
+      scale_color_manual(   name = f, values = color.values    ) +
+      scale_linetype_manual( name = f, values = linetype.values ) +
       labs(
-        title = f,
+        title    = f,
         subtitle = qc.text,
-        x = "Detector",
-        y = "Intensity"
+        x        = "Detector",
+        y        = "Intensity"
       ) +
       theme_minimal() +
       theme(
-        axis.text.x = element_text( angle = 45, hjust = 1 ),
-        plot.subtitle = element_text( color = simil.color, face = "bold" ),
+        axis.text.x    = element_text( angle = 45, hjust = 1 ),
+        plot.subtitle  = element_text( color = simil.color, face = "bold" ),
         legend.position = "top"
       )
   }
