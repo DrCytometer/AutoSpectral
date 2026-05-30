@@ -9,16 +9,15 @@ get.spectral.variants(
   control.def.file,
   asp,
   spectra,
-  af.spectra,
-  n.cells = 2000,
-  som.dim = 10,
   figures = TRUE,
   output.dir = NULL,
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
-  refine = FALSE,
-  problem.quantile = 0.95,
+  n.cells = 10000L,
+  som.dim = 10L,
+  k.neighbors = 3L,
+  sim.threshold = 0.985,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
@@ -27,100 +26,91 @@ get.spectral.variants(
 )
 }
 \arguments{
-\item{control.dir}{File path to the single-stained control FCS files.}
+\item{control.dir}{Character. Path to the single-stained control FCS files.}
 
-\item{control.def.file}{CSV file defining the single-color control file names,
-fluorophores they represent, marker names, peak channels, and gating requirements.}
+\item{control.def.file}{Character. Path to the control definition CSV.
+Must pass \code{check.control.file()}.}
 
-\item{asp}{The AutoSpectral parameter list.
-Prepare using \code{get.autospectral.param}}
+\item{asp}{The AutoSpectral parameter list from \code{get.autospectral.param()}.}
 
-\item{spectra}{A matrix containing the spectral data. Fluorophores in rows,
+\item{spectra}{Numeric matrix. Reference spectra; fluorophores in rows,
 detectors in columns.}
 
-\item{af.spectra}{Spectral signatures of autofluorescences, normalized
-between 0 and 1, with fluorophores in rows and detectors in columns. Prepare
-using \code{get.af.spectra}.}
+\item{figures}{Logical, default \code{TRUE}. Whether to save variant-spectrum
+plots.}
 
-\item{n.cells}{Numeric, default \code{2000}. Number of cells to use for defining
-the variation in spectra. Up to \code{n.cells} cells will be selected as positive
-events in the peak channel for each fluorophore, above the 99.5th percentile
-level in the unstained sample.}
+\item{output.dir}{Character or \code{NULL}. Directory for figures and the
+.rds output file. Defaults to \code{asp$variant.dir}.}
 
-\item{som.dim}{Numeric, default \code{10}. Number of x and y dimensions to use in
-the SOM for clustering the spectral variation. The number of spectra returned
-for each fluorophore will increase with the quadratic of \code{som.dim}, so for 10,
-you will get up to 100 variants. Somewhere between 4 and 7 appears to be
-sufficient, but with the pruning of variants implemented in
-\code{unmix.autospectral()} in v1.0.0, this is less important.}
+\item{parallel}{Logical, default \code{FALSE}. Enable parallel processing
+across fluorophores.}
 
-\item{figures}{Logical, controls whether the variation in spectra for each
-fluorophore is plotted in \code{output.dir}. Default is \code{TRUE}.}
+\item{verbose}{Logical, default \code{TRUE}. Set to \code{FALSE} to suppress
+messages.}
 
-\item{output.dir}{File path to whether the figures and .rds data file will be
-saved. Default is \code{NULL}, in which case \code{asp$variant.dir} will be used.}
+\item{threads}{Numeric or \code{NULL}. Number of parallel workers. Defaults
+to \code{asp$worker.process.n}.}
 
-\item{parallel}{Logical, default is \code{FALSE}, in which case sequential processing
-will be used. The new parallel processing should always be faster.}
+\item{n.cells}{Integer, default \code{10000}. Maximum positive events per
+fluorophore used for SOM clustering. Files with more events above threshold
+are randomly downsampled. Passed to \code{get.fluor.variants}.}
 
-\item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
+\item{som.dim}{Integer, default \code{10}. Side length of the square SOM
+grid; up to \code{som.dim^2} candidate variants per fluorophore before
+cosine QC. Passed to \code{get.fluor.variants}.}
 
-\item{threads}{Numeric, default is \code{NULL}, in which case \code{asp$worker.process.n}
-will be used. \code{asp$worker.process.n} is set by default to be one less than the
-available cores on the machine. Multi-threading is only used if \code{parallel} is
-\code{TRUE}.}
+\item{k.neighbors}{Integer, default \code{3}. Number of scatter-space
+nearest neighbours from the unstained pool used to estimate per-event
+background. Passed to \code{get.fluor.variants}.}
 
-\item{refine}{Logical, default is \code{FALSE}. Controls whether to perform a second
-round of variation measurement on "problem cells", which are those with the
-highest spillover, as defined by \code{problem.quantile}. When \code{FALSE},
-behavior is identical to versions of AutoSpectral prior to 1.0.0. Setting to
-\code{TRUE} may help reduce spillover spread and unmixing errors. Using \code{refine=TRUE}
-does not impact subsequent unmixing calculation time in any significant way,
-unlike the same setting in \code{get.af.spectra()}.}
+\item{sim.threshold}{Numeric, default \code{0.99}. Minimum cosine similarity
+to the reference spectrum for a SOM centroid to be retained as a variant.
+Passed to \code{get.fluor.variants}.}
 
-\item{problem.quantile}{Numeric, default \code{0.95}. The quantile for determining
-which cells will be considered "problematic" after unmixing with per-cell AF
-extraction. Cells in the \code{problem.quantile} or above with respect to total
-signal in the fluorophore (non-AF) channels after per-cell AF extraction will
-be used to determine additional autofluorescence spectra, using a second round
-of clustering and modulation of the previously selected autofluroescence
-spectra. A value of \code{0.95} means the top 5\% of cells, those farthest from zero,
-will be selected for further investigation.}
+\item{variant.fill.color}{Color for the shaded ribbon in variant plots.
+Default \code{"red"}.}
 
-\item{variant.fill.color}{Color for the shaded region indicating the range of
-variation in the spectra. Feeds to \code{fill} in \code{geom_ribbon}. Default is "red".}
+\item{variant.fill.alpha}{Alpha for \code{variant.fill.color}. Default
+\code{0.7}.}
 
-\item{variant.fill.alpha}{Transparency (alpha) for the color in
-\code{variant.fill.color}. How intense the color of the variant spectra will be.
-Default is \code{0.7}}
+\item{median.line.color}{Color for the reference-spectrum line. Default
+\code{"black"}.}
 
-\item{median.line.color}{Color for the line representing the median or
-optimized single spectrum. Default is "black".}
+\item{median.linewidth}{Width of the reference-spectrum line. Default
+\code{1}.}
 
-\item{median.linewidth}{Width of the line for the single optimized spectrum.
-Default is \code{1}.}
-
-\item{...}{Ignored. Previously used for deprecated arguments such as
-\code{pos.quantile} and \code{sim.threshold}, which are now fixed internally and no
-longer user-settable.}
+\item{...}{Ignored. Catches and warns on previously used deprecated
+arguments: \code{af.spectra}, \code{refine}, \code{problem.quantile},
+\code{pos.quantile}.}
 }
 \value{
-A vector with the indexes of events inside the initial gate.
+A named list with elements:
+\describe{
+\item{\code{thresholds}}{Named numeric vector of positivity thresholds in
+the unmixed space, one per fluorophore.}
+\item{\code{variants}}{Named list of variant-spectra matrices, one per
+fluorophore. Each matrix has variants in rows and detectors in columns.}
+\item{\code{delta.list}}{Named list of delta matrices (variant minus
+reference spectrum), one per fluorophore.}
+\item{\code{delta.norms}}{Named list of Euclidean norms of the deltas,
+one numeric vector per fluorophore.}
+}
+The list is also saved as an .rds file in \code{output.dir}.
 }
 \description{
-This function cycles through all the fluorophores defined in \code{control.def.file},
-identifying variations in spectral profiles. It does this by performing SOM
-clustering on the positive events in the cleaned control data. The output is
-saved as an .rds file, and figures summarizing the variation are saved, if
-desired. Note that the .rds file contains all the needed information for
-downstream processing (per-cell unmixing), so you can just load that using
-the \code{readRDS} function) rather than re-running this process.
-}
-\references{
-Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-visualization and interpretation of cytometry data." \emph{Cytometry Part A},
-87(7), 636-645. \doi{10.1002/cyto.a.22625}
-Wehrens R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
-3.0.” \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
-\doi{10.18637/jss.v087.i07}
+Cycles through all fluorophores defined in \code{control.def.file},
+identifying variation in their spectral profiles via SOM clustering on
+scatter-matched, per-event background-corrected data.
+
+For each fluorophore the autofluorescence reference is derived \strong{in
+situ} from the paired universal-negative file (or internally from the lower
+25\\% of events when no universal negative is supplied). The AF mean vector is
+used to project out autofluorescence and identify the empirical peak
+detector. All positive events are scatter-matched to unstained events and
+their per-event background is subtracted before SOM clustering. This gives a
+comprehensive, population-level picture of true fluorophore spectral
+variability without requiring a pre-computed \code{af.spectra} matrix.
+
+The output is saved as an .rds file and per-fluorophore variant plots are
+produced if requested.
 }

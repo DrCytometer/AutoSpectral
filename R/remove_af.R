@@ -6,9 +6,8 @@
 #' This function removes autofluorescence contamination from a sample, using
 #' the specified parameters and settings.
 #'
-#' @importFrom sp point.in.polygon
+#' @importFrom FNN knnx.index
 #' @importFrom flowWorkspace flowjo_biexp
-#' @importFrom tripack tri.mesh convex.hull
 #'
 #' @param samp Sample identifier.
 #' @param clean.expr List containing cleaned expression data.
@@ -24,8 +23,9 @@
 #' @param positive.n Integer. Number of events to include in the downsampled
 #' positive population. Default is `1000`.
 #' @param scatter.match Logical, default is `TRUE`. Whether to select negative
-#' events based on scatter profiles matching the positive events. Defines a
-#' region of FSC and SSC based on the distribution of selected positive events.
+#' events based on scatter profiles matching the positive events.
+#' @param k.neighbors Numeric, number of scatter-matched unstained events to
+#' pair with every positive event for background determination. Default is `3`.
 #' @param main.figures Logical, if `TRUE` creates the main figures to show the
 #' impact of intrusive autofluorescent event removal and scatter-matching for
 #' the negatives.
@@ -49,6 +49,7 @@ remove.af <- function(
     negative.n = 500,
     positive.n = 1000,
     scatter.match = TRUE,
+    k.neighbors = 3L,
     main.figures = TRUE,
     intermediate.figures = FALSE,
     verbose = TRUE
@@ -280,6 +281,7 @@ remove.af <- function(
     }
 
     # plot with error handling
+    asp$ribbon.bins <- 150
     tryCatch(
       expr = {
         spectral.ribbon.plot(
@@ -289,7 +291,8 @@ remove.af <- function(
           asp = asp, fluor.name = samp,
           title = asp$af.plot.filename,
           af = TRUE,
-          removed.data = removed.data
+          removed.data = removed.data,
+          max.points = 2e5
         )
 
         # plot AF removal gating on stained control
@@ -328,7 +331,8 @@ remove.af <- function(
             fluor.name = negative.label,
             title = asp$af.plot.filename,
             af = TRUE,
-            removed.data = removed.data
+            removed.data = removed.data,
+            max.points = 2e5
           )
 
           # plot AF removal gating on negative control
@@ -351,16 +355,8 @@ remove.af <- function(
 
   if ( scatter.match ) {
 
-    if ( verbose ) {
-      message(
-        paste0(
-          "\033[34m",
-          "Getting scatter-matched negatives for ",
-          samp,
-          "\033[0m"
-        )
-      )
-    }
+    if ( verbose )
+      message( paste0( "\033[34mScatter-matching negatives for ", samp, "\033[0m" ) )
 
     # define positive events as those above a threshold (default 99.5%) in the negative
     if ( samp == "AF" )
@@ -379,15 +375,8 @@ remove.af <- function(
     # warn if few events in positive
     if ( length( pos.above.threshold ) < asp$min.cell.warning.n ) {
       warning(
-        paste0(
-          "\033[31m",
-          "Warning! Fewer than ",
-          asp$min.cell.warning.n,
-          " positive events in ",
-          samp,
-          "\033[0m",
-          "\n"
-        ),
+        paste0( "\033[31mWarning! Fewer than ", asp$min.cell.warning.n,
+                " positive events in ", samp, "\033[0m", "\n" ),
         call. = FALSE
       )
     }
@@ -396,17 +385,9 @@ remove.af <- function(
     # stop if fewer than minimum acceptable events, returning original data
     if ( length( pos.above.threshold ) < asp$min.cell.stop.n ) {
       warning(
-        paste0(
-          "\033[31m",
-          "Warning! Fewer than ",
-          asp$min.cell.stop.n,
-          " positive events in ",
-          samp,
-          "\n",
-          "Returning original data",
-          "\033[0m",
-          "\n"
-        ),
+        paste0( "\033[31mWarning! Fewer than ", asp$min.cell.stop.n,
+                " positive events in ", samp, "\n", "Returning original data",
+                "\033[0m", "\n" ),
         call. = FALSE
       )
       return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
@@ -422,96 +403,51 @@ remove.af <- function(
     # scatter-match based on positive scatter profile
     pos.selected.expr <- expr.data.pos[ names( pos.selected ), ]
     pos.scatter.coord <- pos.selected.expr[ , scatter.param ]
+    neg.scatter.coord <- expr.data.neg[ , scatter.param ]
 
     if ( nrow( pos.scatter.coord ) < asp$min.cell.stop.n ) {
-      warning(
-        paste( "Too few unique scatter points for", samp, "- skipping scatter match." ),
-        call. = FALSE
-      )
+      warning( paste( "Too few unique scatter points for", samp, "- skipping scatter match." ),
+               call. = FALSE )
       return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
     }
 
-    percentile <- 0.2
-    exit <- FALSE
-    while ( !exit ) {
-      # try to define the density of these points, taking only the dense region
-      # if this fails, revert to using the entire region
-      tryCatch({
-        pos.scatter.gate <- gate.scatter.match(
-          pos.scatter.coord,
-          percentile,
-          bw.factor = 5
-        )
-      }, error = function(e) {
-        # fallback to gating around all events
-        tryCatch({
-          # screen for unique points
-          unique.coords <- unique( pos.scatter.coord )
-          pos.scatter.gate <- suppressWarnings(
-            tripack::convex.hull(
-              tripack::tri.mesh( unique.coords[ , 1 ], unique.coords[ , 2 ] )
-            )
-          )
-        }, error = function(e) return( NULL ) )
-      })
-
-      if ( is.null( pos.scatter.gate ) ) {
-        warning(
-          paste( "Convex hull failed for", samp, "- returning non-matched data." ),
-          call. = FALSE
-        )
-        return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
+    knn.idx <- tryCatch(
+      FNN::knnx.index(
+        data  = neg.scatter.coord,
+        query = pos.scatter.coord,
+        k     = min( k.neighbors, nrow( neg.scatter.coord ) )
+      ),
+      error = function( e ) {
+        warning( paste( "kNN scatter match failed for", samp, "-",
+                        e$message, "- returning non-matched data." ),
+                 call. = FALSE )
+        NULL
       }
+    )
 
-      neg.scatter.matched.pip <- sp::point.in.polygon(
-        expr.data.neg[ , scatter.param[ 1 ] ],
-        expr.data.neg[ , scatter.param[ 2 ] ],
-        pos.scatter.gate$x, pos.scatter.gate$y )
+    if ( is.null( knn.idx ) )
+      return( clean.expr[[ samp ]][ gate.population.idx, , drop = FALSE ] )
 
-      neg.population.idx <- which( neg.scatter.matched.pip != 0 )
-
-      # check status
-      if ( length( neg.population.idx ) > 249 || percentile >= 1 ) {
-        exit <- TRUE
-      } else {
-        percentile <- min( 1, percentile + 0.1 )
-      }
-    }
+    neg.population.idx <- unique( as.vector( knn.idx ) )
 
     # warn if few events in negative
     min.neg.n <- ceiling( asp$min.cell.warning.n/2 )
     if ( length( neg.population.idx ) < min.neg.n ) {
       warning(
-        paste0(
-          "\033[31m",
-          "Warning! Fewer than ",
-          min.neg.n,
-          " scatter-matched negative events for ",
-          samp,
-          "\033[0m",
-          "\n"
-        ),
+        paste0( "\033[31mWarning! Fewer than ", min.neg.n,
+                " kNN-matched negative events for ", samp, "\033[0m\n" ),
         call. = FALSE
       )
     }
 
-
     # stop if fewer than minimum acceptable events, returning original negative
     if ( length( neg.population.idx ) < asp$min.cell.stop.n ) {
       warning(
-        paste0(
-          "\033[31m", "Warning! Fewer than ",
-          asp$min.cell.stop.n,
-          " scatter-matched negative events for ",
-          samp,
-          "\n",
-          "Reverting to original negative.",
-          "\n",
-          "\033[0m"
-        ),
+        paste0( "\033[31mWarning! Fewer than ", asp$min.cell.stop.n,
+                " kNN-matched negative events for ", samp,
+                "\nReverting to original negative.\n\033[0m" ),
         call. = FALSE
       )
-
       return( clean.expr[[ samp ]][ gate.population.idx, ] )
     }
 
@@ -521,6 +457,7 @@ remove.af <- function(
     neg.scatter.matched <- expr.data.neg[ neg.population.idx, ]
 
     # plotting with error/exception handling
+    asp$ribbon.bins <- 150
     if ( main.figures ) {
       tryCatch( {
         scatter.match.plot(
@@ -539,7 +476,8 @@ remove.af <- function(
             neg.expr.data = neg.scatter.matched,
             spectral.channel = spectral.channel,
             asp = asp,
-            fluor.name = samp
+            fluor.name = samp,
+            max.points = 2e5
           )
         }, error = function( e ) return( NULL ) )
       }
@@ -549,5 +487,4 @@ remove.af <- function(
   }
 
   return( clean.expr[[ samp ]][ gate.population.idx, ] )
-
 }

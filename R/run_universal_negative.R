@@ -19,9 +19,11 @@
 #' @param asp The AutoSpectral parameter list.
 #' Prepare using `get.autospectral.param`
 #' @param control.type A character string specifying the
-#' type of control: `beads` or `cells`
-#' @param scatter.match A logical value indicating whether scatter matching
-#' is performed.
+#' type of control: `beads` or `cells`.
+#' @param scatter.match Logical, default is `TRUE`. Whether to select negative
+#' events based on scatter profiles matching the positive events.
+#' @param k.neighbors Numeric, number of scatter-matched unstained events to
+#' pair with every positive event for background determination. Default is `3`.
 #' @param intermediate.figures Logical, if `TRUE` returns additional figures to
 #' show the inner workings of the cleaning, including definition of low-AF cell
 #' gates on the PCA-unmixed unstained and spectral ribbon plots of the AF
@@ -46,32 +48,32 @@ run.universal.negative <- function(
     spectral.channel,
     asp,
     control.type,
-    scatter.match,
+    scatter.match = TRUE,
+    k.neighbors = 3L,
     intermediate.figures = FALSE,
     main.figures = TRUE,
     verbose = TRUE
   ) {
 
   univ.expr <- lapply( univ.sample, function( sample.name ) {
-
     get.universal.negative(
-      clean.expr,
-      sample.name,
-      universal.negatives,
-      scatter.param,
-      peak.channels,
-      downsample,
-      negative.n,
-      positive.n,
-      spectral.channel,
-      asp,
-      control.type,
-      scatter.match,
-      intermediate.figures,
-      main.figures,
-      verbose
+      clean.expr.data = clean.expr,
+      samp = sample.name,
+      universal.negatives = universal.negatives,
+      scatter.param = scatter.param,
+      peak.channels = peak.channels,
+      downsample = downsample,
+      negative.n = negative.n,
+      positive.n = positive.n,
+      spectral.channel = spectral.channel,
+      asp = asp,
+      control.type = control.type,
+      scatter.match = scatter.match,
+      k.neighbors = k.neighbors,
+      intermediate.figures = intermediate.figures,
+      main.figures = main.figures,
+      verbose = verbose
     )
-
   } )
 
   names( univ.expr ) <- univ.sample

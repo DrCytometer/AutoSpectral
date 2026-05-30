@@ -3,139 +3,134 @@
 #' @title Get Spectral Variations for Fluorophores
 #'
 #' @description
-#' This function cycles through all the fluorophores defined in `control.def.file`,
-#' identifying variations in spectral profiles. It does this by performing SOM
-#' clustering on the positive events in the cleaned control data. The output is
-#' saved as an .rds file, and figures summarizing the variation are saved, if
-#' desired. Note that the .rds file contains all the needed information for
-#' downstream processing (per-cell unmixing), so you can just load that using
-#' the `readRDS` function) rather than re-running this process.
+#' Cycles through all fluorophores defined in \code{control.def.file},
+#' identifying variation in their spectral profiles via SOM clustering on
+#' scatter-matched, per-event background-corrected data.
+#'
+#' For each fluorophore the autofluorescence reference is derived \strong{in
+#' situ} from the paired universal-negative file (or internally from the lower
+#' 25\% of events when no universal negative is supplied). The AF mean vector is
+#' used to project out autofluorescence and identify the empirical peak
+#' detector. All positive events are scatter-matched to unstained events and
+#' their per-event background is subtracted before SOM clustering. This gives a
+#' comprehensive, population-level picture of true fluorophore spectral
+#' variability without requiring a pre-computed \code{af.spectra} matrix.
+#'
+#' The output is saved as an .rds file and per-fluorophore variant plots are
+#' produced if requested.
 #'
 #' @importFrom lifecycle deprecate_warn
 #'
-#' @param control.dir File path to the single-stained control FCS files.
-#' @param control.def.file CSV file defining the single-color control file names,
-#' fluorophores they represent, marker names, peak channels, and gating requirements.
-#' @param asp The AutoSpectral parameter list.
-#' Prepare using `get.autospectral.param`
-#' @param spectra A matrix containing the spectral data. Fluorophores in rows,
-#' detectors in columns.
-#' @param af.spectra Spectral signatures of autofluorescences, normalized
-#' between 0 and 1, with fluorophores in rows and detectors in columns. Prepare
-#' using `get.af.spectra`.
-#' @param n.cells Numeric, default `2000`. Number of cells to use for defining
-#' the variation in spectra. Up to `n.cells` cells will be selected as positive
-#' events in the peak channel for each fluorophore, above the 99.5th percentile
-#' level in the unstained sample.
-#' @param som.dim Numeric, default `10`. Number of x and y dimensions to use in
-#' the SOM for clustering the spectral variation. The number of spectra returned
-#' for each fluorophore will increase with the quadratic of `som.dim`, so for 10,
-#' you will get up to 100 variants. Somewhere between 4 and 7 appears to be
-#' sufficient, but with the pruning of variants implemented in
-#' `unmix.autospectral()` in v1.0.0, this is less important.
-#' @param figures Logical, controls whether the variation in spectra for each
-#' fluorophore is plotted in `output.dir`. Default is `TRUE`.
-#' @param output.dir File path to whether the figures and .rds data file will be
-#' saved. Default is `NULL`, in which case `asp$variant.dir` will be used.
-#' @param parallel Logical, default is `FALSE`, in which case sequential processing
-#' will be used. The new parallel processing should always be faster.
-#' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
-#' @param threads Numeric, default is `NULL`, in which case `asp$worker.process.n`
-#' will be used. `asp$worker.process.n` is set by default to be one less than the
-#' available cores on the machine. Multi-threading is only used if `parallel` is
-#' `TRUE`.
-#' @param refine Logical, default is `FALSE`. Controls whether to perform a second
-#' round of variation measurement on "problem cells", which are those with the
-#' highest spillover, as defined by `problem.quantile`. When `FALSE`,
-#' behavior is identical to versions of AutoSpectral prior to 1.0.0. Setting to
-#' `TRUE` may help reduce spillover spread and unmixing errors. Using `refine=TRUE`
-#' does not impact subsequent unmixing calculation time in any significant way,
-#' unlike the same setting in `get.af.spectra()`.
-#' @param problem.quantile Numeric, default `0.95`. The quantile for determining
-#' which cells will be considered "problematic" after unmixing with per-cell AF
-#' extraction. Cells in the `problem.quantile` or above with respect to total
-#' signal in the fluorophore (non-AF) channels after per-cell AF extraction will
-#' be used to determine additional autofluorescence spectra, using a second round
-#' of clustering and modulation of the previously selected autofluroescence
-#' spectra. A value of `0.95` means the top 5% of cells, those farthest from zero,
-#' will be selected for further investigation.
-#' @param ... Ignored. Previously used for deprecated arguments such as
-#' `pos.quantile` and `sim.threshold`, which are now fixed internally and no
-#' longer user-settable.
-#' @param variant.fill.color Color for the shaded region indicating the range of
-#' variation in the spectra. Feeds to `fill` in `geom_ribbon`. Default is "red".
-#' @param variant.fill.alpha Transparency (alpha) for the color in
-#' `variant.fill.color`. How intense the color of the variant spectra will be.
-#' Default is `0.7`
-#' @param median.line.color Color for the line representing the median or
-#' optimized single spectrum. Default is "black".
-#' @param median.linewidth Width of the line for the single optimized spectrum.
-#' Default is `1`.
+#' @param control.dir Character. Path to the single-stained control FCS files.
+#' @param control.def.file Character. Path to the control definition CSV.
+#'   Must pass \code{check.control.file()}.
+#' @param asp The AutoSpectral parameter list from \code{get.autospectral.param()}.
+#' @param spectra Numeric matrix. Reference spectra; fluorophores in rows,
+#'   detectors in columns.
+#' @param figures Logical, default \code{TRUE}. Whether to save variant-spectrum
+#'   plots.
+#' @param output.dir Character or \code{NULL}. Directory for figures and the
+#'   .rds output file. Defaults to \code{asp$variant.dir}.
+#' @param parallel Logical, default \code{FALSE}. Enable parallel processing
+#'   across fluorophores.
+#' @param verbose Logical, default \code{TRUE}. Set to \code{FALSE} to suppress
+#'   messages.
+#' @param threads Numeric or \code{NULL}. Number of parallel workers. Defaults
+#'   to \code{asp$worker.process.n}.
+#' @param n.cells Integer, default \code{10000}. Maximum positive events per
+#'   fluorophore used for SOM clustering. Files with more events above threshold
+#'   are randomly downsampled. Passed to \code{get.fluor.variants}.
+#' @param som.dim Integer, default \code{10}. Side length of the square SOM
+#'   grid; up to \code{som.dim^2} candidate variants per fluorophore before
+#'   cosine QC. Passed to \code{get.fluor.variants}.
+#' @param k.neighbors Integer, default \code{3}. Number of scatter-space
+#'   nearest neighbours from the unstained pool used to estimate per-event
+#'   background. Passed to \code{get.fluor.variants}.
+#' @param sim.threshold Numeric, default \code{0.99}. Minimum cosine similarity
+#'   to the reference spectrum for a SOM centroid to be retained as a variant.
+#'   Passed to \code{get.fluor.variants}.
+#' @param variant.fill.color Color for the shaded ribbon in variant plots.
+#'   Default \code{"red"}.
+#' @param variant.fill.alpha Alpha for \code{variant.fill.color}. Default
+#'   \code{0.7}.
+#' @param median.line.color Color for the reference-spectrum line. Default
+#'   \code{"black"}.
+#' @param median.linewidth Width of the reference-spectrum line. Default
+#'   \code{1}.
+#' @param ... Ignored. Catches and warns on previously used deprecated
+#'   arguments: \code{af.spectra}, \code{refine}, \code{problem.quantile},
+#'   \code{pos.quantile}.
 #'
-#' @return A vector with the indexes of events inside the initial gate.
+#' @return A named list with elements:
+#' \describe{
+#'   \item{\code{thresholds}}{Named numeric vector of positivity thresholds in
+#'     the unmixed space, one per fluorophore.}
+#'   \item{\code{variants}}{Named list of variant-spectra matrices, one per
+#'     fluorophore. Each matrix has variants in rows and detectors in columns.}
+#'   \item{\code{delta.list}}{Named list of delta matrices (variant minus
+#'     reference spectrum), one per fluorophore.}
+#'   \item{\code{delta.norms}}{Named list of Euclidean norms of the deltas,
+#'     one numeric vector per fluorophore.}
+#' }
+#' The list is also saved as an .rds file in \code{output.dir}.
 #'
 #' @export
-#'
-#' @references
-#' Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-#' visualization and interpretation of cytometry data." \emph{Cytometry Part A},
-#' 87(7), 636-645. \doi{10.1002/cyto.a.22625}
-#' Wehrens R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
-#' 3.0.” \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
-#' \doi{10.18637/jss.v087.i07}
 
 get.spectral.variants <- function(
     control.dir,
     control.def.file,
     asp,
     spectra,
-    af.spectra,
-    n.cells = 2000,
-    som.dim = 10,
-    figures = TRUE,
-    output.dir = NULL,
-    parallel = FALSE,
-    verbose = TRUE,
-    threads = NULL,
-    refine = FALSE,
-    problem.quantile = 0.95,
+    figures            = TRUE,
+    output.dir         = NULL,
+    parallel           = FALSE,
+    verbose            = TRUE,
+    threads            = NULL,
+    n.cells            = 10000L,
+    som.dim            = 10L,
+    k.neighbors        = 3L,
+    sim.threshold      = 0.985,
     variant.fill.color = "red",
     variant.fill.alpha = 0.7,
-    median.line.color = "black",
-    median.linewidth = 1,
+    median.line.color  = "black",
+    median.linewidth   = 1,
     ...
 ) {
 
+  # ---------------------------------------------------------------------------
+  # Deprecated argument handling
+  # ---------------------------------------------------------------------------
+
   dots <- list( ... )
 
-  if ( !is.null( dots$sim.threshold ) ) {
-    lifecycle::deprecate_warn(
-      "0.9.0",
-      "get.spectral.variants(sim.threshold)",
-      details = "no longer used"
-    )
-  }
-  if ( !is.null( dots$pos.quantile ) ) {
-    lifecycle::deprecate_warn(
-      "0.9.0",
-      "get.spectral.variants(pos.quantile)",
-      details = "no longer used"
-    )
+  for ( old.arg in c( "pos.quantile" ) ) {
+    if ( !is.null( dots[[ old.arg ]] ) )
+      lifecycle::deprecate_warn( "0.9.0",
+        paste0( "get.spectral.variants(", old.arg, ")" ),
+        details = "no longer used" )
   }
 
-  # check that af.spectra is a matrix and has rows
-  if ( is.null( af.spectra ) ) {
-    stop(
-      "Multiple AF in `af.spectra` must be provided in a matrix. See `?get.af.spectra`.",
-      call. = FALSE
-    )
+  for ( old.arg in c( "refine", "problem.quantile" ) ) {
+    if ( !is.null( dots[[ old.arg ]] ) )
+      lifecycle::deprecate_warn( "2.0.0",
+        paste0( "get.spectral.variants(", old.arg, ")" ),
+        details = paste0(
+          "The second-pass refinement is superseded by in-situ ",
+          "scatter-matched background subtraction."
+        ) )
   }
-  if ( !is.matrix( af.spectra ) || nrow( af.spectra ) < 2 ) {
-    stop(
-      "Multiple AF in `af.spectra` must be provided in a matrix. See `?get.af.spectra`.",
-      call. = FALSE
-    )
-  }
+
+  if ( !is.null( dots$af.spectra ) )
+    lifecycle::deprecate_warn( "2.0.0",
+      "get.spectral.variants(af.spectra)",
+      details = paste0(
+        "AF is now derived in situ from the universal-negative files ",
+        "listed in the control table. The af.spectra argument is ignored."
+      ) )
+
+  # ---------------------------------------------------------------------------
+  # Setup
+  # ---------------------------------------------------------------------------
 
   if ( is.null( output.dir ) ) output.dir <- asp$variant.dir
   if ( !dir.exists( output.dir ) ) dir.create( output.dir )
@@ -154,122 +149,115 @@ get.spectral.variants <- function(
     )
   }
 
-  fluorophores <- rownames( spectra )[ rownames( spectra ) != "AF" ]
+  fluorophores     <- rownames( spectra )[ rownames( spectra ) != "AF" ]
+  spectra <- spectra[ fluorophores, , drop = FALSE ]
   spectral.channel <- colnames( spectra )
 
-  # read control file
-  if ( !file.exists( control.def.file ) ) {
-    stop(
-      paste( "Unable to locate control.def.file:", control.def.file ),
-      call. = FALSE
-    )
-  }
+  # ---------------------------------------------------------------------------
+  # Read and validate control file
+  # ---------------------------------------------------------------------------
+
+  if ( !file.exists( control.def.file ) )
+    stop( paste( "Unable to locate control.def.file:", control.def.file ),
+          call. = FALSE )
 
   if ( verbose ) message( "\033[32mChecking control file for errors \033[0m" )
   check.control.file( control.dir, control.def.file, asp, strict = TRUE )
 
   control.table <- utils::read.csv(
-    control.def.file,
-    stringsAsFactors = FALSE,
-    strip.white = TRUE
+    control.def.file, stringsAsFactors = FALSE, strip.white = TRUE
   )
-
   control.table[] <- lapply( control.table, function( x ) {
-    if ( is.character( x ) ) {
-      x <- trimws( x )
-      x[ x == "" ] <- NA
-      x
-    } else x
+    if ( is.character( x ) ) { x <- trimws( x ); x[ x == "" ] <- NA; x } else x
   } )
 
-  # set channels to be used
-  spectral.channel <- colnames( spectra )
-  flow.scatter.parameter <- read.scatter.parameter( asp )
-  flow.scatter.and.channel.spectral <- c(
-    asp$default.time.parameter,
-    flow.scatter.parameter,
-    spectral.channel
-  )
+  # scatter channels (needed for KNN matching in get.fluor.variants)
+  scatter.channel          <- read.scatter.parameter( asp )
+  spectral.channel         <- colnames( spectra )
 
-  if ( grepl( "Discover", asp$cytometer ) ) {
-    spectral.channel <- spectral.channel[
-      grep( asp$spectral.channel, spectral.channel ) ]
-  }
+  if ( grepl( "Discover", asp$cytometer ) )
+    spectral.channel <- spectral.channel[ grep( asp$spectral.channel, spectral.channel ) ]
 
-  # define list of samples
-  flow.sample <- control.table$sample
-  table.fluors <- control.table$fluorophore
-  table.fluors <- table.fluors[ !is.na( table.fluors ) ]
+  # per-sample metadata
+  table.fluors       <- control.table$fluorophore
+  table.fluors       <- table.fluors[ !is.na( table.fluors ) ]
   universal.negative <- control.table$universal.negative
   universal.negative[ is.na( universal.negative ) ] <- "FALSE"
   names( universal.negative ) <- table.fluors
-  flow.channel <- control.table$channel
+  flow.channel       <- control.table$channel
   names( flow.channel ) <- table.fluors
-  flow.file.name <- control.table$filename
+  flow.file.name     <- control.table$filename
   names( flow.file.name ) <- table.fluors
   control.type <- control.table$control.type
   names( control.type ) <- table.fluors
 
-  # stop if "AF" sample is not present, fluorophore mismatch
-  if ( !( "AF" %in% table.fluors ) ) {
+  if ( !( "AF" %in% table.fluors ) )
     stop(
       "Unable to locate `AF` control in control file. An unstained cell control is required.",
       call. = FALSE
     )
-  }
 
-  # check for data/spectra column matching
+  # ensure spectra columns match channel order
   spectra.cols <- colnames( spectra )
-
   if ( !identical( spectral.channel, spectra.cols ) ) {
-
-    # ensure both actually have the same columns before reordering
     if ( all( spectra.cols %in% spectral.channel ) &&
-        length( spectra.cols ) == length( spectral.channel ) ) {
-      # reorder raw.data to match the order of spectra
+         length( spectra.cols ) == length( spectral.channel ) ) {
       spectra <- spectra[ , spectral.channel ]
       message( "Columns of spectra reordered to match data" )
     } else {
-      stop(
-        "Column names in spectra and raw.data do not match perfectly;
-        cannot reorder by name alone."
-      )
+      stop( "Column names in spectra and data do not match.", call. = FALSE )
     }
   }
 
-  if ( ! all( table.fluors %in% fluorophores ) ) {
-    # check for 'Negative', 'AF', check for match again
-    fluor.to.match <- table.fluors[ !grepl( "Negative", table.fluors ) ]
-    fluor.to.match <- fluor.to.match[ !fluor.to.match == "AF" ]
+  # reconcile fluorophores
+  if ( !all( table.fluors %in% fluorophores ) ) {
+    fluor.to.match  <- table.fluors[ !grepl( "Negative|^AF$", table.fluors ) ]
     matching.fluors <- fluor.to.match %in% fluorophores
-
-    if ( !all( matching.fluors ) ) {
-      warning( "The fluorophores in your control file don't match those in your spectra.",
+    if ( !any( matching.fluors ) )
+      stop( "No matching fluorophores between `spectra` and the control file.",
+            call. = FALSE )
+    if ( !all( matching.fluors ) )
+      warning( "Some fluorophores in the control file are absent from `spectra`.",
                call. = FALSE )
-      if ( !any( matching.fluors ) )
-        stop( "No matching fluorophores between provided `spectra` and the control file.",
-              call. = FALSE )
-    }
     table.fluors <- fluor.to.match[ matching.fluors ]
   }
 
-  # get thresholds for positivity
+  # ---------------------------------------------------------------------------
+  # Positivity thresholds from the unstained file
+  # ---------------------------------------------------------------------------
+
   if ( verbose )
     message( paste0( "\033[32m", "Calculating positivity thresholds", "\033[0m" ) )
 
   unstained <- readFCS( file.path( control.dir, flow.file.name[ "AF" ] ) )
 
-  # read exprs for spectral channels only
   if ( nrow( unstained ) > asp$gate.downsample.n.cells ) {
     set.seed( asp$bird.seed )
-    unstained.idx <- sample( nrow( unstained ), asp$gate.downsample.n.beads )
-    unstained <- unstained[ unstained.idx, spectral.channel, drop = FALSE ]
+    unstained.idx <- sample( nrow( unstained ), asp$gate.downsample.n.cells )
+    unstained     <- unstained[ unstained.idx, spectral.channel, drop = FALSE ]
   } else {
     unstained <- unstained[ , spectral.channel, drop = FALSE ]
   }
 
-  raw.thresholds <- apply( unstained, 2, function( col ) stats::quantile( col, 0.995 ) )
+  raw.thresholds <- apply( unstained, 2, function( col )
+    stats::quantile( col, 0.995 ) )
 
+  # get AF spectra in place
+  af.spectra <- get.af.spectra(
+    file.path( control.dir, flow.file.name[ "AF" ] ),
+    asp,
+    spectra,
+    som.dim = 10,
+    figures = FALSE,
+    save = FALSE,
+    refine = FALSE
+  )
+
+  # get PCs of AF for unmixing the controls
+  sv <- svd( unstained, nu = 0, nv = 4 )
+  af.pcs <- t( sv$v )
+
+  # find the likely positivity thresholds for determining what needs refinement
   unstained.unmixed <- unmix.autospectral(
     unstained,
     spectra,
@@ -283,115 +271,108 @@ get.spectral.variants <- function(
 
   if ( is.null( names( table.fluors ) ) ) names( table.fluors ) <- table.fluors
 
-  # main loop
+  # ---------------------------------------------------------------------------
+  # Parallel setup
+  # ---------------------------------------------------------------------------
+
   if ( is.null( threads ) ) threads <- asp$worker.process.n
 
-  # construct list of arguments
   args.list <- list(
-    file.name = flow.file.name,
-    control.dir = control.dir,
-    asp = asp,
-    spectra = spectra,
-    af.spectra = af.spectra,
-    n.cells = n.cells,
-    som.dim = som.dim,
-    figures = figures,
-    output.dir = output.dir,
-    verbose = verbose,
-    spectral.channel = spectral.channel,
+    file.name          = flow.file.name,
+    control.dir        = control.dir,
+    asp                = asp,
+    spectra            = spectra,
+    figures            = figures,
+    output.dir         = output.dir,
+    verbose            = verbose,
+    spectral.channel   = spectral.channel,
+    scatter.channel    = scatter.channel,
     universal.negative = universal.negative,
-    control.type = control.type,
-    raw.thresholds = raw.thresholds,
+    control.type       = control.type,
+    raw.thresholds     = raw.thresholds,
     unmixed.thresholds = unmixed.thresholds,
-    flow.channel = flow.channel,
-    refine = refine,
-    problem.quantile = problem.quantile,
+    flow.channel       = flow.channel,
+    af.pcs             = af.pcs,
+    n.cells            = n.cells,
+    som.dim            = som.dim,
+    k.neighbors        = k.neighbors,
+    sim.threshold      = sim.threshold,
     variant.fill.color = variant.fill.color,
     variant.fill.alpha = variant.fill.alpha,
-    median.line.color = median.line.color,
-    median.linewidth = median.linewidth
+    median.line.color  = median.line.color,
+    median.linewidth   = median.linewidth
   )
 
-  # Set up parallel processing
   if ( parallel ) {
     internal.functions <- c(
       "get.fluor.variants",
       "cosine.similarity",
-      "spectral.variant.plot",
+      "spectral.variant.plot.dens",
       "unmix.ols",
-      "assign.af.residuals"
+      ".cosine.sim.rows"
     )
     exports <- c( "args.list", "table.fluors", internal.functions )
 
     result <- create.parallel.lapply(
       asp,
       exports,
-      parallel = parallel,
-      threads = threads,
+      parallel   = parallel,
+      threads    = threads,
       export.env = environment()
     )
     lapply.function <- result$lapply
-
   } else {
     lapply.function <- lapply
     result <- list( cleanup = NULL )
   }
 
+  # ---------------------------------------------------------------------------
+  # Main loop
+  # ---------------------------------------------------------------------------
+
   if ( verbose )
     message( paste0( "\033[34m", "Identifying spectral variation", "\033[0m" ) )
 
-  # initialize with base spectra for safety
-  spectral.variants <- lapply( table.fluors, function( fl ) {
-    spectra[ fl, , drop = FALSE ]
-  } )
+  # initialise with base spectra as safe fallback
+  spectral.variants <- lapply( table.fluors, function( fl )
+    spectra[ fl, , drop = FALSE ] )
   names( spectral.variants ) <- table.fluors
 
-  # update with real variants where possible
   updated.variants <- tryCatch(
     expr = {
       lapply.function( table.fluors, function( f ) {
         tryCatch(
           expr = {
-            # check that channels are mapped
-            if ( is.na( args.list$flow.channel[ f ] ) ) {
+            if ( is.na( args.list$flow.channel[ f ] ) )
               stop( paste( "No flow channel mapped for", f ) )
-            }
-
-            # get the variants
             do.call( get.fluor.variants, c( list( f ), args.list ) )
           },
           error = function( e ) {
-            # return a flagged list so post-processing knows it of errors
-            return( list( is.error = TRUE, msg = conditionMessage( e ) ) )
+            list( is.error = TRUE, msg = conditionMessage( e ) )
           }
         )
       } )
     },
     finally = {
-      # shut down clusters
-      if ( !is.null( result$cleanup ) ) {
-        result$cleanup()
-      }
+      if ( !is.null( result$cleanup ) ) result$cleanup()
     }
   )
 
-  # store actual variants into the fallback list where we got data
   names( updated.variants ) <- table.fluors
 
   for ( f in table.fluors ) {
     res <- updated.variants[[ f ]]
-
     if ( is.list( res ) && isTRUE( res$is.error ) ) {
-      warning( paste( "Calculation failed for:", f, "| Error:", res$msg ) )
-      # note: spectral.variants[[f]] remains the base spectrum (no update)
+      warning( paste( "Variant calculation failed for:", f, "| Error:", res$msg ) )
     } else if ( !is.null( res ) ) {
       spectral.variants[[ f ]] <- res
     }
   }
 
-  ### calculate deltas, delta.norms ###
+  # ---------------------------------------------------------------------------
+  # Deltas
+  # ---------------------------------------------------------------------------
 
-  # calculate deltas for each fluorophore's variants
   delta.list <- lapply( names( spectral.variants ), function( fl ) {
     spectral.variants[[ fl ]] - matrix(
       spectra[ fl, ],
@@ -402,24 +383,20 @@ get.spectral.variants <- function(
   } )
   names( delta.list ) <- names( spectral.variants )
 
-  # precompute delta norms
-  delta.norms <- lapply( delta.list, function( d ) {
-    sqrt( rowSums( d^2 ) )
-  } )
+  delta.norms <- lapply( delta.list, function( d ) sqrt( rowSums( d^2 ) ) )
   names( delta.norms ) <- names( spectral.variants )
 
   if ( verbose )
     message( paste0( "\033[34m", "Spectral variation computed!", "\033[0m" ) )
 
   variants <- list(
-    thresholds = unmixed.thresholds,
-    variants = spectral.variants,
-    delta.list = delta.list,
+    thresholds  = unmixed.thresholds,
+    variants    = spectral.variants,
+    delta.list  = delta.list,
     delta.norms = delta.norms
   )
 
   saveRDS( variants, file = file.path( output.dir, asp$variant.filename ) )
 
   return( variants )
-
 }

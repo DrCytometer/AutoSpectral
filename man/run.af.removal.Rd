@@ -15,6 +15,7 @@ run.af.removal(
   negative.n = 500,
   positive.n = 1000,
   scatter.match = TRUE,
+  k.neighbors = 3L,
   intermediate.figures = FALSE,
   main.figures = TRUE,
   parallel = FALSE,
@@ -46,8 +47,10 @@ negative population. Default is \code{500}.}
 positive population. Default is \code{1000}.}
 
 \item{scatter.match}{Logical, default is \code{TRUE}. Whether to select negative
-events based on scatter profiles matching the positive events. Defines a
-region of FSC and SSC based on the distribution of selected positive events.}
+events based on scatter profiles matching the positive events.}
+
+\item{k.neighbors}{Numeric, number of scatter-matched unstained events to
+pair with every positive event for background determination. Default is \code{3}.}
 
 \item{intermediate.figures}{Logical, if \code{TRUE} returns additional figures to
 show the inner workings of the cleaning, including definition of low-AF cell

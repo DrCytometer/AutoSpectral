@@ -10,20 +10,21 @@ get.fluor.variants(
   control.dir,
   asp,
   spectra,
-  af.spectra,
-  n.cells,
-  som.dim,
   figures,
   output.dir,
   verbose,
   spectral.channel,
+  scatter.channel,
   universal.negative,
   control.type,
   raw.thresholds,
   unmixed.thresholds,
   flow.channel,
-  refine = TRUE,
-  problem.quantile = 0.95,
+  af.pcs,
+  n.cells = 10000L,
+  som.dim = 10L,
+  k.neighbors = 3L,
+  sim.threshold = 0.985,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
@@ -31,99 +32,107 @@ get.fluor.variants(
 )
 }
 \arguments{
-\item{fluor}{The name of the fluorophore.}
+\item{fluor}{Character. Name of the fluorophore.}
 
-\item{file.name}{A named vector of file names for the samples.}
+\item{file.name}{Named character vector of control FCS filenames, named by
+fluorophore.}
 
-\item{control.dir}{The directory containing the control files.}
+\item{control.dir}{Character. Directory containing the control FCS files.}
 
-\item{asp}{The AutoSpectral parameter list.}
+\item{asp}{The AutoSpectral parameter list from \code{get.autospectral.param()}.}
 
-\item{spectra}{A matrix containing the spectral data. Fluorophores in rows,
+\item{spectra}{Numeric matrix. Reference spectra; fluorophores in rows,
 detectors in columns.}
 
-\item{af.spectra}{Spectral signatures of autofluorescences, normalized
-between 0 and 1, with fluorophores in rows and detectors in columns. Prepare
-using \code{get.af.spectra}.}
+\item{figures}{Logical. Whether to save a spectral-variant plot. Default
+\code{TRUE}.}
 
-\item{n.cells}{Numeric. Number of cells to use for defining the variation in
-spectra. Up to \code{n.cells} cells will be selected as positive events in the peak
-channel for each fluorophore, above the 99.5th percentile level in the
-unstained sample.}
+\item{output.dir}{Character. Directory for figures.}
 
-\item{som.dim}{Numeric. Number of x and y dimensions to use in the SOM for
-clustering the spectral variation.}
+\item{verbose}{Logical. Whether to print progress messages. Default
+\code{TRUE}.}
 
-\item{figures}{Logical, controls whether the variation in spectra for each
-fluorophore is plotted in \code{output.dir}. Default is \code{TRUE}.}
+\item{spectral.channel}{Character vector of spectral detector channel names.}
 
-\item{output.dir}{File path to whether the figures and .rds data file will be
-saved. Default is \code{NULL}, in which case \code{asp$variant.dir} will be used.}
+\item{scatter.channel}{Character vector of scatter parameter names
+(e.g. \code{"FSC-A"}, \code{"SSC-A"}) used for KNN scatter matching
+against the unstained pool.}
 
-\item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
-
-\item{spectral.channel}{A vector of spectral channels.}
-
-\item{universal.negative}{A named vector of unstained negative samples, with
-names corresponding to the fluorophores.}
+\item{universal.negative}{Named character vector mapping fluorophore names
+to their paired unstained FCS filename, or \code{"FALSE"} / \code{NA}
+when none is available.}
 
 \item{control.type}{Character, either "beads" or "cells". Determines the type
 of control sample being used and the subsequent processing steps.}
 
-\item{raw.thresholds}{A named vector of numerical values corresponding to
-the threshold for positivity in each raw detector channel. Determined by the
-99.5th percentile on the unstained sample, typically.}
+\item{raw.thresholds}{Named numeric vector of per-channel positivity
+thresholds (typically the 99.5th percentile of the unstained sample).}
 
 \item{unmixed.thresholds}{A named vector of numerical values corresponding to
 the threshold for positivity in each unmixed channel. Determined by the
 99.5th percentile on the unstained sample, typically after single-cell AF
 unmixing.}
 
-\item{flow.channel}{A named vector of peak raw channels, one per fluorophore.}
+\item{flow.channel}{Named character vector of expected peak raw channels,
+one per fluorophore.}
 
-\item{refine}{Logical, default is \code{TRUE}. Controls whether to perform a second
-round of variation measurement on "problem cells", which are those with the
-highest spillover, as defined by \code{problem.quantile}.}
+\item{af.pcs}{Matrix of autofluorescence-defining principal components.}
 
-\item{problem.quantile}{Numeric, default \code{0.95}. The quantile for determining
-which cells will be considered "problematic" after unmixing with per-cell AF
-extraction. Cells in the \code{problem.quantile} or above with respect to total
-signal in the fluorophore (non-AF) channels after per-cell AF extraction will
-be used to determine additional autofluorescence spectra, using a second round
-of clustering and modulation of the previously selected autofluorescence
-spectra. A value of \code{0.95} means the top 5\% of cells, those farthest from zero,
-will be selected for further investigation.}
+\item{n.cells}{Integer, default \code{10000}. Maximum number of positive
+events used for SOM clustering. Files with more events above threshold
+are randomly downsampled to this number.}
 
-\item{variant.fill.color}{Color for the shaded region indicating the range of
-variation in the spectra. Feeds to \code{fill} in \code{geom_ribbon}. Default is "red".}
+\item{som.dim}{Integer, default \code{10}. Side length of the square SOM
+grid. Produces up to \code{som.dim^2} candidate variant spectra before
+cosine QC.}
 
-\item{variant.fill.alpha}{Transparency (alpha) for the color in
-\code{variant.fill.color}. How intense the color of the variant spectra will be.
-Default is \code{0.7}}
+\item{k.neighbors}{Integer, default \code{3}. Number of scatter-space
+nearest neighbours from the unstained pool used to form the per-event
+background estimate.}
 
-\item{median.line.color}{Color for the line representing the median or
-optimized single spectrum. Default is "black".}
+\item{sim.threshold}{Numeric, default \code{0.985}. Minimum cosine
+similarity between a SOM centroid and the reference spectrum for the
+centroid to be retained as a variant.}
 
-\item{median.linewidth}{Width of the line for the single optimized spectrum.
-Default is \code{1}.}
+\item{variant.fill.color}{Color for the shaded ribbon in the variant plot.
+Default \code{"red"}.}
+
+\item{variant.fill.alpha}{Alpha for \code{variant.fill.color}. Default
+\code{0.7}.}
+
+\item{median.line.color}{Color for the reference-spectrum line. Default
+\code{"black"}.}
+
+\item{median.linewidth}{Width of the reference-spectrum line. Default
+\code{1}.}
 }
 \value{
-A matrix with the flow expression data.
+A numeric matrix; variants in rows, detectors in columns, values
+normalised to \eqn{[0, 1]}. When no centroids survive cosine QC the
+single reference spectrum is returned (one row).
 }
 \description{
 Assesses variation in the spectral signature of a single-stained flow
-cytometry control sample. Uses SOM-based clustering on the brightest positive
-events in the file. If AutoSpectralRcpp is installed, EmbedSOM::SOM is used
-with batch=TRUE, parallel=TRUE for faster clustering.
+cytometry control sample using SOM clustering on scatter-matched,
+background-corrected positive events.
+
+Autofluorescence is characterised \strong{in situ} from the paired
+universal-negative file specified in the control table (or from the lower
+25\\% of events within the control file itself when no universal negative is
+available). The AF mean vector is unit-normalised and projected out of each
+event to identify the empirical peak detector, mirroring the approach in
+\code{get.spectra.automated}. All positive events above the raw threshold
+in the (empirical) peak channel are selected, up to \code{n.cells}
+(randomly downsampled when more are present). For each selected event,
+\eqn{k} scatter-space nearest neighbours are found in the unstained pool
+and their spectral values are averaged to form a per-event background
+estimate, which is then subtracted. SOM clustering on the resulting
+background-corrected matrix recovers the population-level distribution of
+spectral shapes. A cosine-similarity QC step retains only SOM centroids
+sufficiently similar to the reference spectrum, followed by off-peak
+smoothing.
 }
 \references{
-Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-visualization and interpretation of cytometry data." \emph{Cytometry Part A},
-87(7), 636-645. \doi{10.1002/cyto.a.22625}
-Wehrens R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
-3.0.” \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
-\doi{10.18637/jss.v087.i07}
-Kratochvíl M, Koladiya A and Vondrášek J. "Generalized EmbedSOM on quadtree-
-structured self-organizing maps." \emph{F1000Research 2019}, \emph{8}2120.
-\doi{10.12688/f1000research.21642.1}
+Van Gassen S et al. (2015). FlowSOM. \emph{Cytometry Part A}, 87(7),
+636-645. \doi{10.1002/cyto.a.22625}
 }

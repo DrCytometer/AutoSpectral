@@ -4,78 +4,86 @@
 #'
 #' @description
 #' Assesses variation in the spectral signature of a single-stained flow
-#' cytometry control sample. Uses SOM-based clustering on the brightest positive
-#' events in the file. If AutoSpectralRcpp is installed, EmbedSOM::SOM is used
-#' with batch=TRUE, parallel=TRUE for faster clustering.
+#' cytometry control sample using SOM clustering on scatter-matched,
+#' background-corrected positive events.
+#'
+#' Autofluorescence is characterised \strong{in situ} from the paired
+#' universal-negative file specified in the control table (or from the lower
+#' 25\% of events within the control file itself when no universal negative is
+#' available). The AF mean vector is unit-normalised and projected out of each
+#' event to identify the empirical peak detector, mirroring the approach in
+#' \code{get.spectra.automated}. All positive events above the raw threshold
+#' in the (empirical) peak channel are selected, up to \code{n.cells}
+#' (randomly downsampled when more are present). For each selected event,
+#' \eqn{k} scatter-space nearest neighbours are found in the unstained pool
+#' and their spectral values are averaged to form a per-event background
+#' estimate, which is then subtracted. SOM clustering on the resulting
+#' background-corrected matrix recovers the population-level distribution of
+#' spectral shapes. A cosine-similarity QC step retains only SOM centroids
+#' sufficiently similar to the reference spectrum, followed by off-peak
+#' smoothing.
 #'
 #' @importFrom FlowSOM SOM
+#' @importFrom FNN knnx.index
 #'
-#' @param fluor The name of the fluorophore.
-#' @param file.name A named vector of file names for the samples.
-#' @param control.dir The directory containing the control files.
-#' @param asp The AutoSpectral parameter list.
-#' @param spectra A matrix containing the spectral data. Fluorophores in rows,
-#' detectors in columns.
-#' @param af.spectra Spectral signatures of autofluorescences, normalized
-#' between 0 and 1, with fluorophores in rows and detectors in columns. Prepare
-#' using `get.af.spectra`.
-#' @param n.cells Numeric. Number of cells to use for defining the variation in
-#' spectra. Up to `n.cells` cells will be selected as positive events in the peak
-#' channel for each fluorophore, above the 99.5th percentile level in the
-#' unstained sample.
-#' @param som.dim Numeric. Number of x and y dimensions to use in the SOM for
-#' clustering the spectral variation.
-#' @param figures Logical, controls whether the variation in spectra for each
-#' fluorophore is plotted in `output.dir`. Default is `TRUE`.
-#' @param output.dir File path to whether the figures and .rds data file will be
-#' saved. Default is `NULL`, in which case `asp$variant.dir` will be used.
-#' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
-#' @param spectral.channel A vector of spectral channels.
-#' @param universal.negative A named vector of unstained negative samples, with
-#' names corresponding to the fluorophores.
+#' @param fluor Character. Name of the fluorophore.
+#' @param file.name Named character vector of control FCS filenames, named by
+#'   fluorophore.
+#' @param control.dir Character. Directory containing the control FCS files.
+#' @param asp The AutoSpectral parameter list from \code{get.autospectral.param()}.
+#' @param spectra Numeric matrix. Reference spectra; fluorophores in rows,
+#'   detectors in columns.
+#' @param figures Logical. Whether to save a spectral-variant plot. Default
+#'   \code{TRUE}.
+#' @param output.dir Character. Directory for figures.
+#' @param verbose Logical. Whether to print progress messages. Default
+#'   \code{TRUE}.
+#' @param spectral.channel Character vector of spectral detector channel names.
+#' @param scatter.channel Character vector of scatter parameter names
+#'   (e.g. \code{"FSC-A"}, \code{"SSC-A"}) used for KNN scatter matching
+#'   against the unstained pool.
+#' @param universal.negative Named character vector mapping fluorophore names
+#'   to their paired unstained FCS filename, or \code{"FALSE"} / \code{NA}
+#'   when none is available.
 #' @param control.type Character, either "beads" or "cells". Determines the type
 #' of control sample being used and the subsequent processing steps.
-#' @param raw.thresholds A named vector of numerical values corresponding to
-#' the threshold for positivity in each raw detector channel. Determined by the
-#' 99.5th percentile on the unstained sample, typically.
+#' @param raw.thresholds Named numeric vector of per-channel positivity
+#'   thresholds (typically the 99.5th percentile of the unstained sample).
 #' @param unmixed.thresholds A named vector of numerical values corresponding to
-#' the threshold for positivity in each unmixed channel. Determined by the
-#' 99.5th percentile on the unstained sample, typically after single-cell AF
-#' unmixing.
-#' @param flow.channel A named vector of peak raw channels, one per fluorophore.
-#' @param refine Logical, default is `TRUE`. Controls whether to perform a second
-#' round of variation measurement on "problem cells", which are those with the
-#' highest spillover, as defined by `problem.quantile`.
-#' @param problem.quantile Numeric, default `0.95`. The quantile for determining
-#' which cells will be considered "problematic" after unmixing with per-cell AF
-#' extraction. Cells in the `problem.quantile` or above with respect to total
-#' signal in the fluorophore (non-AF) channels after per-cell AF extraction will
-#' be used to determine additional autofluorescence spectra, using a second round
-#' of clustering and modulation of the previously selected autofluorescence
-#' spectra. A value of `0.95` means the top 5% of cells, those farthest from zero,
-#' will be selected for further investigation.
-#' @param variant.fill.color Color for the shaded region indicating the range of
-#' variation in the spectra. Feeds to `fill` in `geom_ribbon`. Default is "red".
-#' @param variant.fill.alpha Transparency (alpha) for the color in
-#' `variant.fill.color`. How intense the color of the variant spectra will be.
-#' Default is `0.7`
-#' @param median.line.color Color for the line representing the median or
-#' optimized single spectrum. Default is "black".
-#' @param median.linewidth Width of the line for the single optimized spectrum.
-#' Default is `1`.
+#'   the threshold for positivity in each unmixed channel. Determined by the
+#'   99.5th percentile on the unstained sample, typically after single-cell AF
+#'   unmixing.
+#' @param flow.channel Named character vector of expected peak raw channels,
+#'   one per fluorophore.
+#' @param af.pcs Matrix of autofluorescence-defining principal components.
+#' @param n.cells Integer, default \code{10000}. Maximum number of positive
+#'   events used for SOM clustering. Files with more events above threshold
+#'   are randomly downsampled to this number.
+#' @param som.dim Integer, default \code{10}. Side length of the square SOM
+#'   grid. Produces up to \code{som.dim^2} candidate variant spectra before
+#'   cosine QC.
+#' @param k.neighbors Integer, default \code{3}. Number of scatter-space
+#'   nearest neighbours from the unstained pool used to form the per-event
+#'   background estimate.
+#' @param sim.threshold Numeric, default \code{0.985}. Minimum cosine
+#'   similarity between a SOM centroid and the reference spectrum for the
+#'   centroid to be retained as a variant.
+#' @param variant.fill.color Color for the shaded ribbon in the variant plot.
+#'   Default \code{"red"}.
+#' @param variant.fill.alpha Alpha for \code{variant.fill.color}. Default
+#'   \code{0.7}.
+#' @param median.line.color Color for the reference-spectrum line. Default
+#'   \code{"black"}.
+#' @param median.linewidth Width of the reference-spectrum line. Default
+#'   \code{1}.
 #'
-#' @return A matrix with the flow expression data.
+#' @return A numeric matrix; variants in rows, detectors in columns, values
+#'   normalised to \eqn{[0, 1]}. When no centroids survive cosine QC the
+#'   single reference spectrum is returned (one row).
 #'
 #' @references
-#' Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-#' visualization and interpretation of cytometry data." \emph{Cytometry Part A},
-#' 87(7), 636-645. \doi{10.1002/cyto.a.22625}
-#' Wehrens R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
-#' 3.0.” \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
-#' \doi{10.18637/jss.v087.i07}
-#' Kratochvíl M, Koladiya A and Vondrášek J. "Generalized EmbedSOM on quadtree-
-#' structured self-organizing maps." \emph{F1000Research 2019}, \emph{8}2120.
-#' \doi{10.12688/f1000research.21642.1}
+#' Van Gassen S et al. (2015). FlowSOM. \emph{Cytometry Part A}, 87(7),
+#' 636-645. \doi{10.1002/cyto.a.22625}
 
 get.fluor.variants <- function(
     fluor,
@@ -83,247 +91,146 @@ get.fluor.variants <- function(
     control.dir,
     asp,
     spectra,
-    af.spectra,
-    n.cells,
-    som.dim,
     figures,
     output.dir,
     verbose,
     spectral.channel,
+    scatter.channel,
     universal.negative,
     control.type,
     raw.thresholds,
     unmixed.thresholds,
     flow.channel,
-    refine = TRUE,
-    problem.quantile = 0.95,
+    af.pcs,
+    n.cells            = 10000L,
+    som.dim            = 10L,
+    k.neighbors        = 3L,
+    sim.threshold      = 0.985,
     variant.fill.color = "red",
     variant.fill.alpha = 0.7,
-    median.line.color = "black",
-    median.linewidth = 1
+    median.line.color  = "black",
+    median.linewidth   = 1
 ) {
 
   if ( verbose )
     message( paste0( "\033[34m", "Getting spectral variants for ", fluor, "\033[0m" ) )
 
-  # get the original "best" spectrum for this fluorophore
+  # reference spectrum for this fluorophore
   original.spectrum <- spectra[ fluor, , drop = FALSE ]
+  orig.vec <- as.numeric( original.spectrum )
 
-  # read in the FCS data, spectral channels only
-  pos.data <- readFCS( file.path( control.dir, file.name[ fluor ] ) )[ , spectral.channel ]
-
-  # how many detectors do we have?
-  detector.n <- ncol( spectra )
+  pos.data <- readFCS( file.path( control.dir, file.name[ fluor ] ) )
+  # remove saturated events
+  keep <- rowSums( pos.data[ , spectral.channel ] >= asp$expr.data.max ) == 0
+  pos.spectral <- pos.data[ keep, spectral.channel ]
+  pos.scatter <- pos.data[ keep, scatter.channel ]
 
   # get data above threshold in peak channel
   peak.channel <- flow.channel[ fluor ]
-  raw.idx <- which( pos.data[ , peak.channel ] > raw.thresholds[ peak.channel ] )
-  neg.idx <- setdiff( seq_len( nrow( pos.data ) ), raw.idx )
+  pos.idx <- which( pos.spectral[ , peak.channel ] > raw.thresholds[ peak.channel ] )
+  neg.idx <- setdiff( seq_len( nrow( pos.spectral ) ), pos.idx )
 
   # restrict to top n events
-  if ( length( raw.idx ) > n.cells * 2 ) {
+  if ( length( pos.idx ) > n.cells * 2 ) {
     sorted.idx <- order(
-      pos.data[ raw.idx, peak.channel ],
+      pos.spectral[ pos.idx, peak.channel ],
       decreasing = TRUE )[ 1:( n.cells * 2 ) ]
-    raw.idx <- raw.idx[ sorted.idx ]
+    pos.idx <- pos.idx[ sorted.idx ]
   }
 
-  if ( length( raw.idx ) < 20 ) {
+  if ( length( pos.idx ) < 20 ) {
     warning(
-      paste0(
-        "Insufficient positive events found for ",
-        fluor,
-        ". Skipping spectral variation."
-      )
+      paste0( "Insufficient positive events found for ",
+              fluor, ". Skipping spectral variation." )
     )
     return( original.spectrum )
   }
 
-  # remove the AF channel in spectra if present
-  if ( "AF" %in% rownames( spectra ) )
-    no.af.spectra <- spectra[ rownames( spectra ) != "AF", , drop = FALSE ]
-  else
-    no.af.spectra <- spectra
+  # if we have an unstained negative, use that for the negative events
+  # check for universal negative, if none, use internal negative
+  is.valid.file <- !is.na( universal.negative[ fluor ] ) &&
+    universal.negative[ fluor ] != "FALSE" &&
+    grepl( "\\.fcs$", universal.negative[ fluor ], ignore.case = TRUE )
 
-  fluorophores <- rownames( no.af.spectra )
-  fluorophore.n <- nrow( no.af.spectra )
+  if ( is.valid.file ) {
+    neg.path    <- file.path( control.dir, universal.negative[ fluor ] )
+    neg.data    <- readFCS( neg.path )
+    # remove saturated events
+    keep <- rowSums( neg.data[ , spectral.channel ] >= asp$expr.data.max ) == 0
+    neg.spectral <- neg.data[ keep, spectral.channel ]
+    neg.scatter <- neg.data[ keep, scatter.channel ]
 
-  ### Processing method depends on whether we use cells or beads ###
-
-  if ( control.type[ fluor ] == "cells" ) {
-    #################################################
-    ### Identify spectral variation: cell control ###
-    #################################################
-
-    ### Cells: per-cell AF extraction is required ###
-
-    # score the AF spectra per cell
-    # use residual alignment in the context of the only fluorophore as the metric
-    af.assignments <- assign.af.residuals(
-      pos.data[ raw.idx, ],
-      original.spectrum,
-      af.spectra
+    # use kNN to scatter-match, subtract background per-event
+    knn.idx <- FNN::knnx.index(
+      data  = neg.scatter,
+      query = pos.scatter[ pos.idx, , drop = FALSE ],
+      k     = k.neighbors
     )
 
-    # set up for per-cell AF extraction
-    af.n <- nrow( af.spectra )
-    af.idx <- fluorophore.n + 1
-    combined.spectra <- matrix(
-      0,
-      nrow = af.idx,
-      ncol = detector.n
-    )
-    colnames( combined.spectra ) <- colnames( no.af.spectra )
-    fluors.af <- c( fluorophores, "AF" )
-    rownames( combined.spectra ) <- fluors.af
-    combined.spectra[ 1:fluorophore.n, ] <- no.af.spectra
-    fitted.af <- matrix(
-      0,
-      nrow = length( raw.idx ),
-      ncol = detector.n
-    )
+    # average spectral values of the k nearest unstained neighbours per event
+    n.ev       <- nrow( knn.idx )
+    bg.matched <- matrix( 0, n.ev, length( spectral.channel ) )
+    colnames( bg.matched ) <- spectral.channel
 
-    # create empty matrix for collection of unmixed data (fluor channel + AF)
-    pos.unmixed <- matrix(
-      0,
-      nrow = length( raw.idx ),
-      ncol = af.idx
-    )
-    colnames( pos.unmixed ) <- fluors.af
-
-    # unmix cells using assigned AF spectra
-    for ( af in seq_len( af.n ) ) {
-      # set this AF as the spectrum to use
-      combined.spectra[ af.idx, ] <- af.spectra[ af, ]
-
-      # get the cells using this AF
-      cell.idx <- which( af.assignments == af )
-      if( length( cell.idx ) == 0 ) next
-
-      if ( length( cell.idx ) > 0 ) {
-        # unmix with this AF
-        pos.unmixed[ cell.idx, ] <- unmix.ols(
-          pos.data[ raw.idx[ cell.idx ], , drop = FALSE ],
-          combined.spectra
-        )
-        # track AF component
-        fitted.af[ cell.idx, ] <- pos.unmixed[ cell.idx, af.idx, drop = FALSE ] %*%
-          af.spectra[ af, , drop = FALSE ]
-      }
+    for ( ki in seq_len( k.neighbors ) ) {
+      bg.matched <- bg.matched + neg.spectral[ knn.idx[ , ki ], , drop = FALSE ]
     }
-
-    # check for data above threshold in unmixed fluor channel
-    pos.idx <- which( pos.unmixed[ , fluor ] > unmixed.thresholds[ fluor ]*2 )
-    event.n <- length( pos.idx )
-
-    # check that we still have data; if not, return original spectrum
-    if ( event.n < 20 ) {
-      warning(
-        paste0(
-          "Insufficient positive events found for ",
-          fluor,
-          ". Skipping spectral variation."
-        )
-      )
-
-      return( spectra[ fluor, , drop = FALSE ] )
-    }
-
-    # subtract fitted af component from raw data
-    raw.input <- pos.data[ raw.idx[ pos.idx ], ] - fitted.af[ pos.idx, ]
-
-    # corresponding unmixed data
-    unmixed.input <- pos.unmixed[ pos.idx, ]
-
-    # prepare for clustering
-    som.input <- cbind( unmixed.input, raw.input )
-
-    # at this point, we can merge the cell and bead pipelines
-
+    bg.matched    <- bg.matched / k.neighbors
+    pos.corrected <- pos.spectral[ pos.idx, ] - bg.matched
   } else {
-    #################################################
-    ### Identify spectral variation: bead control ###
-    #################################################
-
-    ### Beads: we just need to subtract the background, no AF ###
-
-    # check for universal negative, if none, use internal negative
-    is.valid.file <- !is.na( universal.negative[ fluor ] ) &&
-      universal.negative[ fluor ] != "FALSE" &&
-      grepl( "\\.fcs$", universal.negative[ fluor ], ignore.case = TRUE )
-
-    if ( is.valid.file ) {
-      neg.data <- readFCS(
-        file.path( control.dir, universal.negative[ fluor ] )
-      )[ , spectral.channel ]
-
-      # get background on up to 10k events
-      if ( nrow( neg.data ) > asp$gate.downsample.n.beads ) {
-        set.seed( asp$bird.seed )
-        neg.idx <- sample( nrow( neg.data ), asp$gate.downsample.n.beads )
-        background <- apply( neg.data[ neg.idx, ], 2, stats::median )
-      } else {
-        background <- apply( neg.data, 2, stats::median )
-      }
-
+    # check that we have some internal negative events
+    if ( length( neg.idx ) > 50 ) {
+      # define mean background from negative fraction
+      background <- colMeans( pos.spectral[ neg.idx, ] )
+      # subtract the global background
+      pos.corrected <- pos.spectral - background
     } else {
-      # select events below unstained raw threshold
-
-      if ( length( neg.idx ) > asp$gate.downsample.n.beads ) {
-        # downsample if lots of events
-        set.seed( asp$bird.seed )
-        neg.idx <- sample( neg.idx, asp$gate.downsample.n.beads )
-        background <- apply( pos.data[ neg.idx, spectral.channel ], 2, stats::median )
-
-      } else if ( length( neg.idx ) > asp$min.cell.warning.n ) {
-        # use selected data below threshold if moderate numbers of events
-        background <- apply( pos.data[ neg.idx, spectral.channel ], 2, stats::median )
-      } else if ( nrow( pos.data ) < asp$min.cell.stop.n ) {
-        warning(
-          paste0(
-            "Minimal data present in sample: ",
-            fluor,
-            ". Variation assessment not possible for this fluorophore."
-          ),
-          call. = FALSE
-        )
-        # return the original spectrum only
-        return( spectra[ fluor, , drop = FALSE ] )
-
-      } else {
-        # low event sample--take lower half of distribution
-        idx.low <- order(
-          pos.data[ , peak.channel ], decreasing = FALSE
-          )[ 1:( nrow( pos.data ) / 2 ) ]
-        neg.selected <- pos.data[ idx.low, spectral.channel, drop = FALSE ]
-        background <- apply( neg.selected, 2, stats::median )
-      }
+      pos.corrected <- pos.spectral
     }
-
-    # unmix without AF extraction because these are beads
-    pos.unmixed <- unmix.ols( pos.data[ raw.idx, ], no.af.spectra )
-
-    # prepare for clustering
-    unmixed.input <- pos.unmixed
-    raw.input <- pos.data[ raw.idx, ]
-    som.input <- cbind( unmixed.input, raw.input )
   }
 
+  # project out any remaining AF (cells only) using AF components
+  if ( control.type[ fluor ] == "cells" ) {
+    # unmix with this fluor + AF components
+    pos.unmixed <- unmix.ols( pos.corrected, rbind( af.pcs, original.spectrum ) )
+    # back-project the AF components into raw space
+    af.pc.n <- nrow( af.pcs )
+    af.projection <- pos.unmixed[ , 1:af.pc.n ] %*% af.pcs
+    # subtract the projected AF
+    pos.corrected <- pos.corrected - af.projection
+  }
 
-  #############################################
-  ### Initial clustering on positive events ###
-  #############################################
+  # unmix background-corrected data in full fluorophore space
+  pos.unmixed <- unmix.ols( pos.corrected, spectra )
 
-  # safeguard SOM dimensions based on number of events
-  event.n <- nrow( raw.input )
-  if ( event.n < 500 )
-    som.dim <- max( 2, floor( sqrt( event.n / 3 ) ) )
+  # select up to n.cells that are still positive
+  keep.idx <- which( pos.unmixed[ , fluor ] > unmixed.thresholds[ fluor ] * 2 )
 
-  # cluster using both unmixed and raw data as input for better discrimination
+  # cosine screening
+  ev.max  <- apply( pos.corrected[ keep.idx, ], 1, max )
+  ev.max[ ev.max <= 0 ] <- 1
+  ev.norm <- pos.corrected[ keep.idx, ] / ev.max
+  ev.cosine <- .cosine.sim.rows( ev.norm, orig.vec )
+  cosine.keep <- which( ev.cosine >= sim.threshold )
+
+  if ( length( cosine.keep ) < 20 ) {
+    warning( paste0( "Insufficient events passed pre-SOM cosine QC for ",
+                     fluor, ". Returning reference spectrum." ) )
+    return( original.spectrum )
+  }
+
+  som.input <- cbind( pos.unmixed[ keep.idx[ cosine.keep ], ],
+                      pos.corrected[ keep.idx[ cosine.keep ], ] )
+  colnames( som.input ) <- c( colnames( pos.unmixed ), spectral.channel )
+  event.n   <- length( cosine.keep )
+  if ( event.n < 500L )
+    som.dim <- max( 2L, floor( sqrt( event.n / 3 ) ) )
+
+  # cluster on the cleaned-up positive fluorophore data
   set.seed( asp$bird.seed )
   if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
     map <- EmbedSOM::SOM(
-      som.input,
+      som.input, # check with just pos.corrected
       xdim = som.dim,
       ydim = som.dim,
       batch = TRUE,
@@ -340,369 +247,65 @@ get.fluor.variants <- function(
 
   # get spectra: SOM centroids are new profiles, normalize (L-inf)
   variant.spectra <- t(
-    apply(
-      map$codes[ , spectral.channel, drop = FALSE ],
-      1,
-      function( x ) x / max( x )
-    )
+    apply( map$codes[ , spectral.channel, drop = FALSE ], 1,
+           function( x ) x / max( x ) )
   )
   # remove anything that's NA (unlikely)
   variant.spectra <- as.matrix( stats::na.omit( variant.spectra ) )
 
-  # qc to remove dissimilar spectral variants (usually AF contamination)
-  similar <- sapply( seq_len( nrow( variant.spectra ) ), function( sp ) {
-    sim <- cosine.similarity( rbind( original.spectrum, variant.spectra[ sp, ] ) )
-    sim <- sim[ lower.tri( sim ) ]
-    sim > asp$sim.threshold
-  } )
-
-  # revert to the original spectrum only if all the variants look odd
-  if ( ! any( similar ) ) {
-    warning(
-      paste0(
-        "\033[31m",
-        "No similar spectral variants found for ",
-        fluor,
-        "\033[0m"
-      )
-    )
+  if ( nrow( variant.spectra ) == 0 ) {
+    warning( paste0( "No valid variants for ", fluor,
+                     ". Returning reference spectrum." ) )
     return( original.spectrum )
-  } else {
-    # otherwise restrict to the similar variants only
+  }
+
+  if ( FALSE ) {
+    # qc to remove dissimilar spectral variants (usually AF contamination)
+    similar <- apply( variant.spectra, 1, function( v ) {
+      sim.mat <- cosine.similarity( rbind( orig.vec, v ) )
+      sim.mat[ lower.tri( sim.mat ) ] > sim.threshold
+    } )
+
+    if ( !any( similar ) ) {
+      warning( paste0(
+        "\033[31mNo SOM centroids passed cosine QC (threshold = ",
+        sim.threshold, ") for ", fluor,
+        ". Returning reference spectrum.\033[0m"
+      ) )
+      return( original.spectrum )
+    }
+
     variant.spectra <- variant.spectra[ similar, , drop = FALSE ]
   }
+  # Shrink variant values toward the reference in channels where the
+  # fluorophore contributes negligible signal, to avoid inflating cross-talk.
+  peak.idx <- orig.vec > 0.05
 
-  # identify true signature areas in original spectrum
-  peak.idx <- original.spectrum > 0.05
+  variant.spectra <- t( apply( variant.spectra, 1, function( x ) {
+    y              <- x
+    y[ !peak.idx ] <- 0.5 * x[ !peak.idx ] + 0.5 * orig.vec[ !peak.idx ]
+    y
+  } ) )
 
-  # smooth variation towards original outside original spectrum peaks
-  variant.spectra <- t(
-    apply( variant.spectra, 1, function( x ) {
-      y <- x
-      # shrink only off-peak channels
-      y[ !peak.idx ] <- 0.5 * x[ !peak.idx ] + 0.5 * original.spectrum[ !peak.idx ]
-      y
-    } )
-  )
+  rownames( variant.spectra ) <- paste0( fluor, "_", seq_len( nrow( variant.spectra ) ) )
 
-  # add names for tracking
-  rownames( variant.spectra ) <- paste0( fluor, "_", 1:nrow( variant.spectra ) )
-
-  if ( refine ) {
-    ##########################################################
-    ### Refine spectral variation: identify problem events ###
-    ##########################################################
-
-    # To perform the refinement, we first need to run one pass of AutoSpectral's
-    # per-cell fluorophore optimization for this fluorophore. This will tell us
-    # which cells are still problematic (creating spillover into other channels)
-    # when only this first batch of variants is used. We can then focus on these
-    # cells to perform a second round of variant selection.
-
-    # Note: At some point, this should probably include plotting of the changes as
-    # in the updated get.af.spectra.
-
-    # since this is a single-color control, we know only the single color is present
-    unmixed.fl <- unmix.ols( raw.input, original.spectrum )
-    resid <- raw.input - ( unmixed.fl %*% original.spectrum )
-    initial.error <- rowSums( abs( resid ) )
-
-    # now we pick which of the first batch of variants best aligns with the residual per cell
-    # calculate deltas (change and normalized distance)
-    delta.fl <- variant.spectra - matrix(
-      original.spectrum,
-      nrow = nrow( variant.spectra ),
-      ncol = detector.n,
-      byrow = TRUE
-    )
-    delta.norm <- sqrt( rowSums( delta.fl^2 ) )
-
-    # delta.fl %*% t(resid) calculates the dot product for every row of resid
-    dot.products <- delta.fl %*% t( resid )
-
-    numerator <- sweep( dot.products, 2, unmixed.fl, "*" )
-    # row-wise norms
-    resid.norms <- sqrt( rowSums( resid^2 ) )
-    denom.matrix <- outer( delta.norm, resid.norms, "*" )
-
-    # score for alignment
-    joint.score.matrix <- numerator / denom.matrix
-    # find which factor (column) is the "winner" for each cell
-    best.variant.per.cell <- max.col( t( joint.score.matrix ), ties.method = "first" )
-    # track actual assignments (starting with 1 for all cells--original spectrum)
-    var.assignments <- rep( 0, nrow( raw.input ) )
-
-    # set up a spectral matrix for testing variants
-    spectra.curr <- no.af.spectra
-
-    # store new unmixed data, starting with original spectrum unmixing
-    unmixed.first.pass <- unmixed.input[ , fluorophores, drop = FALSE ]
-
-    # only do this if the best variant has changed for at least one cell
-    if ( ! all( best.variant.per.cell == 1 ) ) {
-      # unmix in full space, cycling through variants and assigning cells
-      for ( var in 1:nrow( variant.spectra ) ) {
-        # which cells have been assigned this variant?
-        cell.idx <- which( best.variant.per.cell == var )
-
-        if ( length( cell.idx ) > 0 ) {
-          # supplant the base spectrum with this variant
-          spectra.curr[ fluor, ] <- variant.spectra[ var, ]
-
-          # re-unmix with this variant
-          trial.unmix <- unmix.ols( raw.input[ cell.idx, , drop = FALSE ], spectra.curr )
-
-          # assess the residual error with this variant
-          trial.resid <- raw.input[ cell.idx, , drop = FALSE ] -
-            ( trial.unmix %*% spectra.curr )
-          trial.error <- rowSums( abs( trial.resid ) )
-
-          # assess which cells are actually better (lower residual)
-          improved <- which( trial.error < initial.error[ cell.idx ] )
-
-          # update any improved cells
-          if ( length( improved ) > 0 ) {
-            unmixed.first.pass[ cell.idx[ improved ], ] <- trial.unmix[ improved, ]
-            var.assignments[ cell.idx[ improved ] ] <- var
-          }
-        }
-      }
-    }
-
-    # We can define the error (spillover spread) as the signal in other fluorophore
-    # channels. Technically, this might be better as the signal above the unstained
-    # (say 99.5th percentile), but we can just pick the most problematic events
-    # (those farthest from zero in other channels) as the error, which avoids any
-    # need for thresholds. Thresholds can be problematic for various reasons.
-
-    # we want to assess this error on the cells after they have undergone one round
-    # of unmixing improvement using the variant spectral optimization above, so we
-    # use unmixed.first.pass
-
-    # which are the other channels?
-    other.channels <- which( rownames( no.af.spectra ) != fluor )
-
-    if ( length( other.channels ) == 0 ) {
-      # single-fluorophore panel: no spillover channels exist, skip refinement
-      refine <- FALSE
-    }
-
-    # project signal in other channels back into raw space
-    spillover.spread.proj <- unmixed.first.pass[ , other.channels, drop = FALSE ] %*%
-      no.af.spectra[ other.channels, , drop = FALSE ]
-
-    ### run a second round of clustering on cells that are far from zero ###
-    if ( verbose )
-      message(
-        paste0(
-          "\033[32m",
-          "Calculating target spectra for problematic cells",
-          "\033[0m"
-        )
-      )
-
-    # in a single-stained sample, any other fluorophore signal is error.
-    if ( fluorophore.n > 2 ) {
-      error.magnitude <- sqrt( rowSums( unmixed.first.pass[, other.channels ]^2 ) )
-    } else {
-      error.magnitude <- abs( unmixed.first.pass[ , other.channels ] )
-    }
-
-    # filter for problematic cells
-    threshold <- stats::quantile( error.magnitude, problem.quantile )
-    problem.idx <- which( error.magnitude > threshold )
-    # with an initial input of 2000 cells, we can expect no more than 100 in the top 5%
-    problem.cell.n <- length( problem.idx )
-
-    # if we have fewer than 100 cells, adjust problem threshold until we have more
-    while ( problem.cell.n < 100 ) {
-      problem.quantile <- problem.quantile - 0.05
-
-      # if we hit 50%, adjust SOM dimensions and exit
-      if ( problem.quantile < 0.5 ) break
-
-      # update for the next iteration check
-      threshold <- stats::quantile( error.magnitude, problem.quantile )
-      problem.idx <- which( error.magnitude > threshold )
-      problem.cell.n <- length( problem.idx )
-    }
-
-    if ( problem.cell.n < 100 ) {
-      if ( verbose ) {
-        message(
-          paste0(
-            "\033[33m",
-            "Insufficient error-prone events found. Skipping modulation.",
-            "\033[0m"
-          )
-        )
-      }
-
-      if ( figures ) {
-        if ( verbose )
-          message(
-            paste0(
-              "\033[32m",
-              "Plotting spectral variation for ",
-              fluor,
-              "\033[0m"
-            )
-          )
-        spectral.variant.plot(
-          spectra.variants = variant.spectra,
-          median.spectrum = as.numeric( original.spectrum ),
-          title = paste0( fluor, "_variants" ),
-          save = TRUE,
-          plot.dir = output.dir,
-          variant.fill.color = variant.fill.color,
-          variant.fill.alpha = variant.fill.alpha,
-          median.line.color = median.line.color,
-          median.linewidth = median.linewidth
-        )
-      }
-
-      return( variant.spectra )
-    }
-
-    # current fluorophore estimate
-    fl.abundance <- unmixed.first.pass[ problem.idx, fluor ]
-    fl.abundance[ fl.abundance == 0 ] <- 1 # safeguard 0 division
-
-    # what are the error signatures?
-    spill.ratios <- spillover.spread.proj[ problem.idx, ] / fl.abundance
-
-    if ( verbose ) {
-      message(
-        paste0(
-          "\033[32m",
-          "Clustering ",
-          length( problem.idx ),
-          " events with highest spillover error",
-          "\033[0m"
-        )
-      )
-    }
-
-    # use a minimum of 2 dimensions, or around 3 cells per node
-    som.dim <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
-
-    # cluster only the problematic data
-    set.seed( asp$bird.seed )
-    if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
-      colnames( spill.ratios ) <- colnames( spectra )
-      map.error <- EmbedSOM::SOM(
-        spill.ratios,
-        xdim = som.dim,
-        ydim = som.dim,
-        batch = TRUE,
-        parallel = TRUE
-      )
-    } else {
-      map.error <- FlowSOM::SOM(
-        spill.ratios,
-        xdim = som.dim,
-        ydim = som.dim,
-        silent = TRUE
-      )
-    }
-
-    # for each cluster, we find which base variants were assigned and update them
-    cluster.ids <- unique( map.error$mapping[ , 1 ] )
-
-    modulated.list <- lapply( cluster.ids, function( cl ) {
-      cl.sub.idx <- which( map.error$mapping[ , 1 ] == cl )
-      global.idx <- problem.idx[ cl.sub.idx ]
-
-      # get the median correction pattern for this cluster
-      median.ratio <- apply(
-        spill.ratios[ cl.sub.idx, , drop = FALSE ],
-        2,
-        stats::median
-      )
-
-      # identify all unique base fluor spectra that fell into this error cluster
-      contributing.var.ids <- unique( var.assignments[ global.idx ] )
-
-      # create a new version of each contributing AF using this cluster's ratio
-      new.specs <- lapply( contributing.var.ids, function( id ) {
-        if ( id == 0 )
-          base.spec <- original.spectrum
-        else
-          base.spec <- variant.spectra[ id, ]
-        updated <- base.spec * ( 1 + median.ratio )
-        return( updated / max( updated ) ) # Re-normalize
-      } )
-
-      return( do.call( rbind, new.specs ) )
-    } )
-
-    modulated.var.spectra <- do.call( rbind, modulated.list )
-    variant.spectra <- rbind( variant.spectra, modulated.var.spectra )
-
-    # unlikely, but check for NAs
-    variant.spectra <- as.matrix( stats::na.omit( variant.spectra ) )
-
-    # add names
-    rownames( variant.spectra ) <- paste0( fluor, "_", 1:nrow( variant.spectra ) )
-
-    #####################
-    ### Similarity QC ###
-    #####################
-
-    # qc to remove dissimilar spectral variants (usually AF contamination)
-    similar <- sapply( seq_len( nrow( variant.spectra ) ), function( sp ) {
-      sim <- cosine.similarity( rbind( original.spectrum, variant.spectra[ sp, ] ) )
-      sim <- sim[ lower.tri( sim ) ]
-      sim > 0.99
-    } )
-
-    # revert to the original spectrum only if all the variants look odd
-    # otherwise restrict to the similar variants only
-    if ( ! any( similar ) )
-      variant.spectra <- spectra[ fluor, , drop = FALSE ]
-    else
-      variant.spectra <- variant.spectra[ similar, , drop = FALSE ]
-
-    # smooth variation towards original outside original spectrum peaks
-    variant.spectra <- t(
-      apply( variant.spectra, 1, function( x ) {
-        y <- x
-        # shrink only off-peak channels
-        y[ !peak.idx ] <- 0.5 * x[ !peak.idx ] + 0.5 * original.spectrum[ !peak.idx ]
-        y
-      } )
-    )
-  }
-
-
-  ################
-  ### Plotting ###
-  ################
-
-  # plot the variation in the spectrum for this fluorophore
+  # Plotting
   if ( figures ) {
     if ( verbose )
-      message(
-        paste0(
-          "\033[32m",
-          "Plotting spectral variation for ",
-          fluor,
-          "\033[0m"
-        )
-      )
-    spectral.variant.plot(
-      spectra.variants = variant.spectra,
-      median.spectrum = as.numeric( original.spectrum ),
-      title = paste0( fluor, "_variants" ),
-      save = TRUE,
-      plot.dir = output.dir,
-      variant.fill.color = variant.fill.color,
-      variant.fill.alpha = variant.fill.alpha,
-      median.line.color = median.line.color,
-      median.linewidth = median.linewidth
+      message( paste0( "\033[32m  Plotting spectral variation for ",
+                       fluor, "\033[0m" ) )
+    spectral.variant.plot.dens(
+      spectra.variants   = variant.spectra,
+      median.spectrum    = orig.vec,
+      title              = paste0( fluor, "_variants" ),
+      save               = TRUE,
+      plot.dir           = output.dir,
+      variant.color = variant.fill.color,
+      variant.alpha = variant.fill.alpha,
+      median.line.color  = median.line.color,
+      median.linewidth   = median.linewidth
     )
   }
 
   return( variant.spectra )
 }
-

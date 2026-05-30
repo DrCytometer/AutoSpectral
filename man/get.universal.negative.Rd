@@ -17,6 +17,7 @@ get.universal.negative(
   asp,
   control.type,
   scatter.match = TRUE,
+  k.neighbors = 3L,
   intermediate.figures = FALSE,
   main.figures = TRUE,
   verbose = TRUE
@@ -49,6 +50,9 @@ Prepare using \code{get.autospectral.param}}
 
 \item{scatter.match}{Logical indicating whether to perform scatter matching.
 Default is \code{TRUE}.}
+
+\item{k.neighbors}{Numeric, number of scatter-matched unstained events to
+pair with every positive event for background determination. Default is \code{3}.}
 
 \item{intermediate.figures}{Logical, if \code{TRUE} returns additional figures to
 show the inner workings of the cleaning, including definition of low-AF cell

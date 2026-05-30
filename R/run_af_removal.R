@@ -20,8 +20,9 @@
 #' @param positive.n Integer. Number of events to include in the downsampled
 #' positive population. Default is `1000`.
 #' @param scatter.match Logical, default is `TRUE`. Whether to select negative
-#' events based on scatter profiles matching the positive events. Defines a
-#' region of FSC and SSC based on the distribution of selected positive events.
+#' events based on scatter profiles matching the positive events.
+#' @param k.neighbors Numeric, number of scatter-matched unstained events to
+#' pair with every positive event for background determination. Default is `3`.
 #' @param intermediate.figures Logical, if `TRUE` returns additional figures to
 #' show the inner workings of the cleaning, including definition of low-AF cell
 #' gates on the PCA-unmixed unstained and spectral ribbon plots of the AF
@@ -48,6 +49,7 @@ run.af.removal <- function(
     negative.n = 500,
     positive.n = 1000,
     scatter.match = TRUE,
+    k.neighbors = 3L,
     intermediate.figures = FALSE,
     main.figures = TRUE,
     parallel = FALSE,
@@ -66,6 +68,7 @@ run.af.removal <- function(
     negative.n = negative.n,
     positive.n = positive.n,
     scatter.match = scatter.match,
+    k.neighbors = k.neighbors,
     main.figures = main.figures,
     intermediate.figures = intermediate.figures,
     verbose = verbose

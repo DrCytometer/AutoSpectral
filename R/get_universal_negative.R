@@ -6,9 +6,7 @@
 #' This function identifies and processes the universal negative
 #' control for a given sample, including scatter matching and plotting.
 #'
-#' @importFrom sp point.in.polygon
-#' @importFrom tripack tri.mesh convex.hull
-#' @importFrom MASS kde2d bandwidth.nrd
+#' @importFrom FNN knnx.index
 #'
 #' @param clean.expr.data List containing cleaned expression data.
 #' @param samp Sample identifier.
@@ -25,6 +23,8 @@
 #' @param control.type Named vector mapping samples to their control types.
 #' @param scatter.match Logical indicating whether to perform scatter matching.
 #' Default is `TRUE`.
+#' @param k.neighbors Numeric, number of scatter-matched unstained events to
+#' pair with every positive event for background determination. Default is `3`.
 #' @param intermediate.figures Logical, if `TRUE` returns additional figures to
 #' show the inner workings of the cleaning, including definition of low-AF cell
 #' gates on the PCA-unmixed unstained and spectral ribbon plots of the AF
@@ -38,14 +38,19 @@
 #' negative events.
 
 get.universal.negative <- function(
-    clean.expr.data, samp,
+    clean.expr.data,
+    samp,
     universal.negatives,
     scatter.param,
-    peak.channels, downsample,
-    negative.n, positive.n,
-    spectral.channel, asp,
+    peak.channels,
+    downsample,
+    negative.n,
+    positive.n,
+    spectral.channel,
+    asp,
     control.type,
     scatter.match = TRUE,
+    k.neighbors = 3L,
     intermediate.figures = FALSE,
     main.figures = TRUE,
     verbose = TRUE
@@ -73,15 +78,8 @@ get.universal.negative <- function(
   # warn if few events in positive
   if ( length( pos.above.threshold ) < asp$min.cell.warning.n ) {
     warning(
-      paste0(
-        "\033[31m",
-        "Warning! Fewer than ",
-        asp$min.cell.warning.n,
-        " positive events in ",
-        samp,
-        "\033[0m",
-        "\n"
-      ),
+      paste0( "\033[31mWarning! Fewer than ", asp$min.cell.warning.n,
+              " positive events in ", samp, "\033[0m", "\n" ),
       call. = FALSE
     )
   }
@@ -89,17 +87,9 @@ get.universal.negative <- function(
   # stop if fewer than minimum acceptable events, returning original data
   if ( length( pos.above.threshold ) < asp$min.cell.stop.n ) {
     warning(
-      paste0(
-        "\033[31m",
-        "Warning! Fewer than ",
-        asp$min.cell.stop.n,
-        " positive events in ",
-        samp,
-        "\n",
-        "Returning original data.",
-        "\033[0m",
-        "\n"
-      ),
+      paste0( "\033[31mWarning! Fewer than ", asp$min.cell.stop.n,
+              " positive events in ", samp, "\n",
+              "Returning original data.\033[0m", "\n" ),
       call. = FALSE
     )
     return( rbind( pos.control.expr, neg.control.expr ) )
@@ -111,96 +101,71 @@ get.universal.negative <- function(
   else
     pos.selected <- pos.above.threshold
 
-  ## scatter-match negative
+  ## scatter-match negative -----
   # recover full data
   pos.selected.expr <- pos.control.expr[ names( pos.selected ), ]
 
   # find scatter-matched events in the universal negative
-  # if using beads, default to no matching
   sample.control.type <- control.type[[ samp ]]
 
-  if ( sample.control.type == "beads" )
-    scatter.match <- FALSE
-
   if ( scatter.match ) {
-
     # get the scatter coordinates of the brightest positive events in the stained control
     pos.scatter.coord <- pos.selected.expr[ , scatter.param ]
+    neg.scatter.coord <- neg.control.expr[ , scatter.param ]
 
-    # try to define the density of these points, taking only the dense region
-    # if this fails, revert to using the entire
-    tryCatch({
-      # calculate bandwidth for kernel density estimation
-      pos.scatter.gate <- gate.scatter.match( pos.scatter.coord )
-    }, error = function(e) {
-      # fallback to gating around all events
-      # screen for unique points
-      pos.scatter.coord <- unique( pos.scatter.coord )
-      pos.scatter.gate <- suppressWarnings(
-        tripack::convex.hull(
-          tripack::tri.mesh( pos.scatter.coord[ , 1 ], pos.scatter.coord[ , 2 ] )
+    # kNN: for each positive event find its k nearest neighbors in the negative
+    knn.idx <- tryCatch(
+      FNN::knnx.index(
+        data  = neg.scatter.coord,
+        query = pos.scatter.coord,
+        k     = min( k.neighbors, nrow( neg.scatter.coord ) )
+      ),
+      error = function( e ) {
+        warning( paste( "kNN scatter match failed for", samp, "-",
+                        e$message, "- reverting to random sample." ),
+                 call. = FALSE )
+        NULL
+      }
+    )
+
+    if ( is.null( knn.idx ) ) {
+      # fallback: random subsample of negative
+      neg.population.idx <- sample( nrow( neg.control.expr ),
+                                    min( negative.n, nrow( neg.control.expr ) ) )
+      neg.scatter.matched <- neg.control.expr[ neg.population.idx, ]
+
+    } else {
+      neg.population.idx <- unique( as.vector( knn.idx ) )
+
+      # warn / stop checks
+      min.neg.n <- ceiling( asp$min.cell.warning.n / 2 )
+      if ( length( neg.population.idx ) < min.neg.n ) {
+        warning(
+          paste0( "\033[31mWarning! Fewer than ", min.neg.n,
+                  " kNN-matched negative events for ", samp, "\033[0m\n" ),
+          call. = FALSE
         )
-      )
-    })
-
-    neg.scatter.matched.pip <- sp::point.in.polygon(
-      neg.control.expr[ , scatter.param[ 1 ] ],
-      neg.control.expr[ , scatter.param[ 2 ] ],
-      pos.scatter.gate$x, pos.scatter.gate$y )
-
-    neg.population.idx <- which( neg.scatter.matched.pip != 0 )
-
-    # warn if few events in negative
-    min.neg.n <- ceiling( asp$min.cell.warning.n/2 )
-    if ( length( neg.population.idx ) < min.neg.n ) {
-      warning(
-        paste0(
-          "\033[31m",
-          "Warning! Fewer than ",
-          min.neg.n,
-          " scatter-matched negative events for ",
-          samp,
-          "\033[0m",
-          "\n"
-        ),
-        call. = FALSE
-      )
-    }
-
-    # stop if fewer than minimum acceptable events, returning original negative
-    if ( length( neg.population.idx ) < asp$min.cell.stop.n ) {
-      warning(
-        paste0(
-          "\033[31m",
-          "Warning! Fewer than ",
-          asp$min.cell.stop.n,
-          " scatter-matched negative events for ",
-          samp,
-          "\n",
-          "Reverting to original negative.",
-          "\n",
-          "\033[0m"
-        ),
-        call. = FALSE
-      )
-
-      # downsample original negative
-      if ( nrow( neg.control.expr ) > negative.n ) {
-        neg.population.idx <- sample( nrow( neg.control.expr ), negative.n )
-        neg.control.expr <- neg.control.expr[ neg.population.idx, ]
       }
 
-      return( rbind( pos.selected.expr, neg.control.expr ) )
+      if ( length( neg.population.idx ) < asp$min.cell.stop.n ) {
+        warning(
+          paste0( "\033[31mWarning! Fewer than ", asp$min.cell.stop.n,
+                  " kNN-matched negative events for ", samp,
+                  "\nReverting to original negative.\n\033[0m" ),
+          call. = FALSE
+        )
+        if ( nrow( neg.control.expr ) > negative.n )
+          neg.control.expr <- neg.control.expr[
+            sample( nrow( neg.control.expr ), negative.n ), ]
+        return( rbind( pos.selected.expr, neg.control.expr ) )
+      }
+
+      neg.scatter.matched <- neg.control.expr[ neg.population.idx, ]
     }
-
-    if ( length( neg.population.idx ) > negative.n )
-      neg.population.idx <- sample( neg.population.idx, negative.n )
-
-    neg.scatter.matched <- neg.control.expr[ neg.population.idx, ]
 
   } else {
     if ( nrow( neg.control.expr ) > negative.n ) {
-      neg.population.idx <- sample( 1:nrow( neg.control.expr ), negative.n )
+      neg.population.idx  <- sample( nrow( neg.control.expr ), negative.n )
       neg.scatter.matched <- neg.control.expr[ neg.population.idx, ]
     } else {
       neg.scatter.matched <- neg.control.expr
@@ -209,6 +174,7 @@ get.universal.negative <- function(
 
 
   if ( main.figures ) {
+    asp$ribbon.bins <- 150
     tryCatch(
       expr = {
         scatter.match.plot(
@@ -225,7 +191,8 @@ get.universal.negative <- function(
             neg.expr.data = neg.scatter.matched,
             spectral.channel = spectral.channel,
             asp = asp,
-            fluor.name = samp
+            fluor.name = samp,
+            max.points = 2e5
           )
         }
 
