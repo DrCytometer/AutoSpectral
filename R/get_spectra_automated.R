@@ -14,35 +14,6 @@
   check.channels( channels, asp )
 }
 
-## RLM fallback: regress each channel against peak.channel, return
-## normalised [0,1] spectrum vector.
-.rlm.refine.spectrum <- function(
-    spectral.events,
-    peak.channel,
-    spectral.channels,
-    rlm.iter.max
-) {
-  spec.vec <- stats::setNames( rep( 0, length( spectral.channels ) ), spectral.channels )
-  peak.expr <- spectral.events[ , peak.channel ]
-
-  for ( ch in spectral.channels ) {
-    if ( ch == peak.channel ) {
-      spec.vec[ ch ] <- 1.0
-    } else {
-      ch.expr <- spectral.events[ , ch ]
-      coef <- fit.robust.linear.model(
-        peak.expr, ch.expr, peak.channel, ch, rlm.iter.max
-      )
-      spec.vec[ ch ] <- coef[ 2 ]
-    }
-  }
-
-  max.val <- max( spec.vec )
-  if ( max.val > 0 ) spec.vec <- spec.vec / max.val
-  spec.vec
-}
-
-
 ## Load the spectral reference library for a cytometer (identified by db.col).
 ## Returns a matrix (fluorophores x spectral.channels) normalised to [0,1],
 ## or NULL when no library file exists.
@@ -309,10 +280,9 @@
 #' 4. Performs projection-based AF orthogonalisation to identify the empirical
 #'    peak detector; selects top-expressing events filtered by lowest cosine
 #'    similarity to the AF vector; performs KNN scatter-matched AF subtraction.
-#' 5. Applies QC: if the normalised signal in the expected peak detector is
-#'    below `peak.signal.threshold` **or** the cosine similarity against the
+#' 5. Applies QC: if the normalised signal cosine similarity against the
 #'    spectral reference library is below `cosine.threshold`, the spectrum is
-#'    refined using the RLM approach along the expected peak channel.
+#'    refined using the legacy gating and cleaning approach.
 #' 6. Returns the spectra matrix in AutoSpectral format (fluorophores x detectors).
 #'
 #' The legacy workflow (`define.flow.control` + `clean.controls` +
@@ -335,10 +305,11 @@
 #'   quantiles to use for doublet discrimination.
 #' @param cosine.threshold Numeric, default `0.9`. Minimum cosine similarity
 #'   against the spectral reference library to accept the automated spectrum;
-#'   values below this threshold trigger RLM refinement.
+#'   values below this threshold trigger legacy pipeline refinement.
 #' @param peak.signal.threshold Numeric, default `0.5`. Minimum normalised
-#'   signal in the expected peak detector to accept the automated spectrum;
-#'   values below this threshold trigger RLM refinement.
+#'   signal in the expected peak detector. Used only for informational QC.
+#' @param legacy.refinement Logical, default `TRUE`. Whether to run legacy
+#'   pipeline on controls where the signature does not match the reference well.
 #' @param top.expressing.override Named numeric vector or `NULL` (default).
 #'   Override the event count for specific samples. Names should match the FCS
 #'   filename (without extension) or the fluorophore name from the control file.
@@ -373,6 +344,7 @@ get.spectra.automated <- function(
     singlet.quantiles       = c( 0.85, 0.975 ),
     cosine.threshold        = 0.9,
     peak.signal.threshold   = 0.5,
+    legacy.refinement.      = TRUE,
     top.expressing.override = NULL,
     figures                 = TRUE,
     plot.cosine.filter      = TRUE,
@@ -461,7 +433,6 @@ get.spectra.automated <- function(
   scatter.channels  <- read.scatter.parameter( asp )
   sat.value         <- if ( !is.null( asp$expr.data.max ) ) asp$expr.data.max else Inf
   db.col            <- .cytometer.to.db.col( asp$cytometer )
-  rlm.iter.max <- asp$rlm.iter.max %||% 100L
 
   if ( verbose )
     message( sprintf(
@@ -715,11 +686,11 @@ get.spectra.automated <- function(
     if ( !is.finite( max.val ) || max.val <= 0 ) {
       if ( verbose )
         message( sprintf(
-          "\033[31m  Non-positive maximum for %s; triggering RLM refinement\033[0m",
+          "\033[31m  Non-positive maximum for %s; triggering legacy pipeline refinement\033[0m",
           fluor
         ) )
       spectrum           <- stats::setNames( rep( 0, length( spec.i ) ), spec.i )
-      qc.log$Status[ i ] <- "RLM_REFINEMENT"
+      qc.log$Status[ i ] <- "LEGACY_REFINEMENT"
     } else {
       spectrum             <- raw.spectrum / max.val
       spectrum[ spectrum < 0 ] <- 0
@@ -744,39 +715,18 @@ get.spectra.automated <- function(
     }
     qc.log$CosineSim[ i ] <- if ( !is.na( cs.lib ) ) round( cs.lib, 4 ) else NA
 
-    needs.refinement <-
-      ( is.finite( peak.sig ) && peak.sig < peak.signal.threshold ) ||
-      ( !is.na( cs.lib )      && cs.lib   < cosine.threshold       ) ||
-      qc.log$Status[ i ] == "RLM_REFINEMENT"
+    needs.legacy.refinement <-
+      ( !is.na( cs.lib ) && cs.lib < cosine.threshold ) ||
+      qc.log$Status[ i ] == "LEGACY_REFINEMENT"
 
-    if ( needs.refinement ) {
-      if ( expeak %in% spec.i ) {
-        # use AF-subtracted events if available, fall back to spectral.events, then spec.data
-        rlm.pool <- if ( exists( "spectral.sub" ) && nrow( spectral.sub ) > 0 ) {
-          spectral.sub
-        } else if ( nrow( spectral.events ) > 0 ) {
-          spectral.events
-        } else {
-          spec.data
-        }
-        n.rlm    <- min( n.spectral, nrow( rlm.pool ) )
-        i.rlm    <- order( rlm.pool[ , expeak ], decreasing = TRUE )[ seq_len( n.rlm ) ]
-        spectrum <- .rlm.refine.spectrum(
-          rlm.pool[ i.rlm, , drop = FALSE ], expeak, spec.i, rlm.iter.max
-        )
-        qc.log$Status[ i ] <- "RLM_REFINEMENT"
-      } else {
-        if ( verbose )
-          message( sprintf(
-            "\033[31m  Expected peak '%s' absent in file for %s; ",
-            "retaining automated spectrum\033[0m",
-            expeak, fluor
-          ) )
-        qc.log$Status[ i ] <- "QC_FAIL"
-      }
-
+    if ( needs.legacy.refinement ) {
+      qc.log$Status[ i ] <- "LEGACY_REFINEMENT"
+      if ( verbose )
+        message( sprintf(
+          "\033[33m  Flagged for legacy refinement [%s]: cos=%.3f\033[0m",
+          fluor, if ( is.na( cs.lib ) ) NaN else cs.lib
+        ) )
     } else {
-      # too much output?
       if ( verbose )
         message( sprintf(
           "\033[32m  OK [%s]: peak=%.3f, cos=%s\033[0m",
@@ -792,14 +742,151 @@ get.spectra.automated <- function(
     spectra.list[[ i ]] <- full.spectrum
   }
 
-  # -- 6. Assemble matrix
+  # -- 6. Legacy pipeline refinement for flagged fluorophores
+  #   For fluorophores where the automated cosine similarity is below threshold,
+  #   run define.flow.control -> clean.controls -> get.fluorophore.spectra on
+  #   the subset of control rows.  Compare automated vs legacy cosine similarity
+  #   to the reference library and keep whichever is higher.
+
+  automated.spectra.list <- spectra.list  # preserve originals before any replacement
+
+  legacy.rows <- which( qc.log$Status == "LEGACY_REFINEMENT" )
+
+  if ( legacy.refinement && length( legacy.rows ) > 0 ) {
+    if ( verbose )
+      message( sprintf(
+        "\033[34m-- Running legacy pipeline for %d fluorophore(s): %s --\033[0m",
+        length( legacy.rows ),
+        paste( fluor.names[ legacy.rows ], collapse = ", " )
+      ) )
+
+    # Build a filtered control table containing only the rows that need refinement,
+    # plus any universal-negative rows they depend on.
+    legacy.fluor.files <- fluor.files[ legacy.rows ]
+    needed.uneg.files  <- unique( vapply(
+      unstained.sources[ legacy.rows ],
+      function( s ) if ( s$type == "file" ) s$file else NA_character_,
+      character( 1L )
+    ) )
+    needed.uneg.files <- needed.uneg.files[ !is.na( needed.uneg.files ) ]
+
+    uneg.rows.idx <- which( ctrl.tbl$filename %in% needed.uneg.files )
+    fluor.rows.idx <- fluor.rows[ legacy.rows ]
+    legacy.ctrl.rows <- sort( unique( c( uneg.rows.idx, fluor.rows.idx ) ) )
+    legacy.ctrl.tbl <- ctrl.tbl[ legacy.ctrl.rows, ]
+
+    # Write a temporary control file for the legacy pipeline
+    legacy.ctrl.path <- tempfile( fileext = ".csv" )
+    utils::write.csv( legacy.ctrl.tbl, legacy.ctrl.path, row.names = FALSE )
+
+    legacy.spectra.mat <- tryCatch(
+      {
+        fc.legacy <- define.flow.control(
+          control.dir      = control.dir,
+          control.def.file = legacy.ctrl.path,
+          asp              = asp
+        )
+        fc.legacy  <- clean.controls( fc.legacy, asp )
+        get.fluorophore.spectra( fc.legacy, asp )
+      },
+      error = function( e ) {
+        message( "\033[31m  Legacy pipeline failed: ", e$message, "\033[0m" )
+        NULL
+      }
+    )
+
+    unlink( legacy.ctrl.path )
+
+    if ( !is.null( legacy.spectra.mat ) ) {
+      for ( ii in legacy.rows ) {
+        fluor.ii <- fluor.names[ ii ]
+        if ( !( fluor.ii %in% rownames( legacy.spectra.mat ) ) ) next
+
+        legacy.spec.ii <- legacy.spectra.mat[ fluor.ii, ]
+
+        # Expand to full spectral.channels vector
+        full.legacy <- stats::setNames( rep( 0, length( spectral.channels ) ),
+                                        spectral.channels )
+        common.lg   <- intersect( names( legacy.spec.ii ), spectral.channels )
+        full.legacy[ common.lg ] <- legacy.spec.ii[ common.lg ]
+
+        # Cosine similarity of legacy vs reference
+        cs.legacy <- NA_real_
+        if ( !is.null( ref.lib ) && fluor.ii %in% rownames( ref.lib ) ) {
+          common.ref.lg <- intersect( spectral.channels, colnames( ref.lib ) )
+          if ( length( common.ref.lg ) > 0L ) {
+            lib.spec.lg <- ref.lib[ fluor.ii, common.ref.lg ]
+            lib.spec.lg[ is.na( lib.spec.lg ) ] <- 0
+            cs.legacy <- cosine.similarity(
+              rbind( full.legacy[ common.ref.lg ], lib.spec.lg )
+            )[ 1L, 2L ]
+          }
+        }
+
+        cs.auto <- qc.log$CosineSim[ ii ]
+
+        if ( verbose )
+          message( sprintf(
+            "\033[34m  %s: automated cos=%.4f, legacy cos=%s\033[0m",
+            fluor.ii, if ( is.na( cs.auto ) ) NaN else cs.auto,
+            if ( is.na( cs.legacy ) ) "N/A" else sprintf( "%.4f", cs.legacy )
+          ) )
+
+        # Keep whichever spectrum has higher cosine similarity to reference
+        use.legacy <- !is.na( cs.legacy ) &&
+          ( is.na( cs.auto ) || cs.legacy > cs.auto )
+
+        if ( use.legacy ) {
+          spectra.list[[ ii ]] <- full.legacy
+          qc.log$Status[ ii ]  <- "LEGACY_USED"
+          qc.log$CosineSim[ ii ] <- round( cs.legacy, 4 )
+          if ( verbose )
+            message( sprintf( "\033[32m  -> Legacy spectrum adopted for %s\033[0m",
+                              fluor.ii ) )
+        } else {
+          qc.log$Status[ ii ] <- "LEGACY_REJECTED"
+          if ( verbose )
+            message( sprintf( "\033[33m  -> Automated spectrum retained for %s\033[0m",
+                              fluor.ii ) )
+        }
+
+        # Warn the user regardless
+        warning(
+          sprintf(
+            paste0(
+              "Fluorophore '%s' had low cosine similarity (automated: %.4f). ",
+              "Legacy pipeline was run and %s spectrum was used. ",
+              "Please inspect the QC plots."
+            ),
+            fluor.ii,
+            if ( is.na( cs.auto ) ) NaN else cs.auto,
+            if ( use.legacy ) "the LEGACY" else "the AUTOMATED"
+          ),
+          call. = FALSE
+        )
+      }
+    } else {
+      # Legacy pipeline completely failed; mark as QC_FAIL
+      for ( ii in legacy.rows ) {
+        qc.log$Status[ ii ] <- "QC_FAIL"
+      }
+    }
+
+  }
+
+  # -- 7. Assemble matrix
   if ( verbose )
     message( "\033[34m-- Assembling spectra matrix --\033[0m" )
 
+  # Final (best-choice) matrix — may contain legacy spectra for some fluorophores
   marker.spectra <- do.call( rbind, spectra.list )
   rownames( marker.spectra ) <- make.unique( fluor.names )
 
-  # -- 7. Pairwise cosine similarity warning
+  # Original automated matrix (always all-automated, preserved for CSV output)
+  automated.spectra <- do.call( rbind, automated.spectra.list )
+  rownames( automated.spectra ) <- make.unique( fluor.names )
+
+  # -- 8. Pairwise cosine similarity warning
   sim.mat  <- cosine.similarity( marker.spectra )
   uniq.sim <- sim.mat * lower.tri( sim.mat )
   sim.idx  <- which( uniq.sim > asp$similarity.warning.n, arr.ind = TRUE )
@@ -815,24 +902,29 @@ get.spectra.automated <- function(
     )
   }
 
-  # -- 8. QC summary
+  # -- 9. QC summary
   if ( verbose ) {
-    ok.n    <- sum( qc.log$Status == "OK" )
-    rlm.n   <- sum( qc.log$Status == "RLM_REFINEMENT" )
-    fail.n  <- sum( qc.log$Status == "QC_FAIL" )
-    nodat.n <- sum( qc.log$Status == "NO_DATA" )
+    ok.n          <- sum( qc.log$Status == "OK" )
+    leg.used.n    <- sum( qc.log$Status == "LEGACY_USED" )
+    leg.rej.n     <- sum( qc.log$Status == "LEGACY_REJECTED" )
+    fail.n        <- sum( qc.log$Status == "QC_FAIL" )
+    nodat.n       <- sum( qc.log$Status == "NO_DATA" )
     message(
       "\n\033[34m-- QC Summary --\033[0m\n",
       sprintf(
-        "  \033[32mOK: %d  \033[33mRLM refined: %d  \033[31mFailed: %d  No data: %d\033[0m",
-        ok.n, rlm.n, fail.n, nodat.n
+        paste0(
+          "  \033[32mOK: %d  ",
+          "\033[33mLegacy adopted: %d  Legacy rejected (auto kept): %d  ",
+          "\033[31mFailed: %d  No data: %d\033[0m"
+        ),
+        ok.n, leg.used.n, leg.rej.n, fail.n, nodat.n
       )
     )
     print( qc.log[ , c( "Fluorophore", "EmpiricalPeak", "ExpectedPeak",
                          "PeakSignal", "CosineSim", "Status" ) ] )
   }
 
-  # -- 9. Figures
+  # -- 10. Figures
   if ( figures ) {
     if ( verbose )
       message( "\033[34m-- Generating figures --\033[0m" )
@@ -890,11 +982,19 @@ get.spectra.automated <- function(
           figure.height = asp$figure.similarity.height
         )
 
+        # Identify which fluorophores had legacy refinement run
+        legacy.used.fluors <- fluor.names[ qc.log$Status == "LEGACY_USED" ]
+        legacy.rej.fluors  <- fluor.names[ qc.log$Status == "LEGACY_REJECTED" ]
+        refined.fluors     <- union( legacy.used.fluors, legacy.rej.fluors )
+
         spectral.reference.plot(
-          marker.spectra,
-          asp,
-          plot.dir = asp$figure.spectra.dir,
-          filename = "Automated_spectral_qc_report.pdf"
+          spectra           = marker.spectra,
+          asp               = asp,
+          plot.dir          = asp$figure.spectra.dir,
+          filename          = "Automated_spectral_qc_report.pdf",
+          comparison.spectra = if ( length( refined.fluors ) > 0 ) automated.spectra else NULL,
+          comparison.label  = "Automated (pre-legacy)",
+          highlight.fluors  = refined.fluors
         )
       },
       error = function( e ) {
@@ -917,10 +1017,11 @@ get.spectra.automated <- function(
     }
   }
 
-  # -- 10. Save CSV
+  # -- 11. Save CSV
   if ( !dir.exists( asp$table.spectra.dir ) )
     dir.create( asp$table.spectra.dir, recursive = TRUE )
 
+  # Primary output: best-choice spectra (legacy adopted where it wins)
   utils::write.csv(
     marker.spectra,
     file = file.path(
@@ -928,6 +1029,23 @@ get.spectra.automated <- function(
       paste0( "Automated_", asp$spectra.file.name, ".csv" )
     )
   )
+
+  # Secondary output: all-automated spectra (always written)
+  utils::write.csv(
+    automated.spectra,
+    file = file.path(
+      asp$table.spectra.dir,
+      paste0( "Automated_original_", asp$spectra.file.name, ".csv" )
+    )
+  )
+
+  if ( length( legacy.rows ) > 0 && legacy.refinement && verbose )
+    message(
+      "\033[33mNote: Legacy refinement was run for ",
+      paste( fluor.names[ legacy.rows ], collapse = ", " ),
+      ".\n  Primary CSV contains best-choice spectra; ",
+      "'Automated_original_...' CSV contains all-automated spectra.\033[0m"
+    )
 
   if ( verbose )
     message( "\033[32m-- Automated spectra extraction complete --\033[0m" )
