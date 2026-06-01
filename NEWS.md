@@ -1,3 +1,58 @@
+# AutoSpectral 1.6.0 (2026-06-01)
+
+## New Features
+
+- Automated spectral profile extraction using approaches developed by Nathan
+  Laniewski in `flowState`. This simplifies the workflow considerably, and
+  eliminates the need for gating, which was a key cause of stress. The new 
+  automated approach employs projection orthogonalization to determine the peak
+  channel (which way is the control going that isn't like the autofluorescence?),
+  and uses cosine filtering (which events are least contaminated by AF?) to find
+  the clean spectral signatures.
+- A merging of the approaches for per-cell autofluorescence assignment using the
+  covariance structure: `assign.af.joint.cov()` to assess how autofluorescence
+  variation impact fluorophore values, with joint scoring of residuals. This 
+  improves on the existing residual- and projection-based AF assignment methods.
+- Extension of the variance-covariance error propagation plus residuals scoring
+  metric to per-cell fluorophore optimization. This avoids the previous need to
+  optimize in the reduced space of only positive fluorophores in each cell, which
+  was responsible for discontinuities appearing in several data sets around zero.
+- Legacy mode support. All pre-existing workflows remain intact, but some must
+  be accessed via a `legacy` argument in the function calls.
+- AutoSpectral landing page. Type `?AutoSpectral` in your IDE to open a workflow
+  overview with links to key functions and articles.
+- FCS 3.1 compliance. Modified FCS files now carry the `$ORIGINALITY`,
+  `$LAST_MODIFIER`, and `$LAST_MODIFIED` keywords per the FCS 3.1 standard.
+
+## Improvements
+
+- C++ accelerated FCS reading and writing via `AutoSpectralRcpp`. Adapted from
+  work by Samuel Granjeaud.
+- Much faster plotting throughout, using a combination of point downsampling,
+  raster rendering (`ragg`/`scattermore`), and C++ acceleration when
+  `AutoSpectralRcpp` is available.
+- Faster variant and AF spectra determination via `EmbedSOM` when
+  `AutoSpectralRcpp` is installed.
+- `viridis` added as a dependency for improved colour scaling in density plots.
+- Support for `patchwork` to allow manual faceting and combination of plots.
+- Spectral reference library updated with additional entries.
+- Scatter-matching via k-nearest neighbours for higher precision.
+- Cosine filtering of unstained samples against the fluorophore spectral profiles
+  to reduce potential errors when the "unstained" isn't actually completely 
+  unstained.
+- Cosine filtering and kNN background matching for `get.spectra.variants()` to
+  reduce undesireable influence of autofluorescence.
+- Non-negative clamping of spectral profiles to prevent artefactual negative
+  spectral values propagating into unmixing.
+- General function and code cleanup throughout.
+
+## Bug fixes
+
+- Keywords issue causing files from BD instruments to occasionally emit scrambled
+  data should now be fixed. Only whitelisted channels are preserved from the
+  input raw FCS files.
+
+
 # AutoSpectral 1.5.6 (2026-04-21)
 
 ## Improvements
