@@ -2,6 +2,7 @@
 
 export(af.qc.plot)
 export(assign.af.fluorophores)
+export(assign.af.joint.cov)
 export(assign.af.residuals)
 export(assign.gates)
 export(assign.variants)
