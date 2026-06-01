@@ -4,13 +4,23 @@ Updates FCS file keywords after unmixing to define the new parameters.
 Tracks existing keywords from the input FCS file for metadata
 compatibility.
 
+Per [Data File Standard for Flow Cytometry, version FCS
+3.1](https://doi.org/10.1002/cyto.a.20825):
+
+- \$LAST_MODIFIED/dd-mmm-yyyy hh:mm:ss.cc
+
+- \$LAST_MODIFIER/string/
+
+- \$ORIGINALITY/string
+
+are added as additional keywords to denote modification of the FCS file.
+
 ## Usage
 
 ``` r
 define.keywords(
   fcs.keywords,
   final.matrix,
-  original.param,
   spectra,
   af.spectra,
   flow.control,
@@ -18,7 +28,8 @@ define.keywords(
   method,
   file.name,
   weights = NULL,
-  spectral.channel = NULL
+  spectral.channel = NULL,
+  include.imaging = FALSE
 )
 ```
 
@@ -32,11 +43,6 @@ define.keywords(
 
   The expression data, containing both unmixed data and any retained
   parameters such as scatter and time.
-
-- original.param:
-
-  The original parameter (column) names of the input FCS expression
-  data.
 
 - spectra:
 
@@ -71,6 +77,12 @@ define.keywords(
 
   Optional character vector of the channels used for unmixing. Should
   match `weights` in length (one weight per channel).
+
+- include.imaging:
+
+  A logical value indicating whether to include imaging parameters in
+  the written FCS file. Default is `FALSE` to provide smaller output
+  files.
 
 ## Value
 

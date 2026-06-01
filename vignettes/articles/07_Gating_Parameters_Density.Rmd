@@ -9,9 +9,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-In this article, we'll go into more depth on how the automated density-based gating in AUtoSpectral works, covering the parameters that modify it. For this, we are focusing on the original gating system copied from AutoSpill. This article is most relevant if you are using a version of AutoSpectral prior to 1.5.0 or if you are using `gating.system = "density"` without supplying any pre-defined gates to `define.flow.control()`.
+In this article, we'll go into more depth on how the automated density-based gating in AutoSpectral works, covering the parameters that modify it. For this, we are focusing on the original gating system copied from AutoSpill. This article is most relevant if you are using a version of AutoSpectral prior to 1.5.0 or if you are using `gating.system = "density"` without supplying any pre-defined gates to `define.flow.control()`. All of this gating is only relevant if you are using the gating-based legacy pipeline, as gating is no longer required in the [Automated pipeline](https://drcytometer.github.io/AutoSpectral/articles/01_Automated_Spectral_Workflow.html)
 
-For better control of the gating, update to AutoSpectral version 1.5.0, and use the `tune.gates()` function to get the gates looking the way you want before calling `define.flow.control()`. For this, see article [Advanced Gating](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html).
+For better control of the gating, update to AutoSpectral version 1.5.0, and use the `tune.gate()` function to get the gates looking the way you want before calling `define.flow.control()`. For this, see article [Advanced Gating](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html).
 
 That said, let's go over the various parameters that control the automated density-based gating in AutoSpectral, which can help you adjust the gates to work better for your samples.
 
@@ -58,7 +58,7 @@ Let's start by just loading in the data using `define.flow.control()`, which wil
 flow.control <- define.flow.control(control.dir, control.file, asp)
 ```
 
-Immediately we have a failure, at least with this version of AutoSpectral. You may have run into this sort of issue, with incomprehensible error messages, which is really frustrating. The new approach (see [article](https://drcytometer.github.io/AutoSpectral/articles/07_Advanced_Gating.html)) should make this a lot more manageable, but let's work through it here as well.
+Immediately we have a failure, at least with this version of AutoSpectral. You may have run into this sort of issue, with incomprehensible error messages, which is really frustrating. The new approach (see [article](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html)) should make this a lot more manageable, but let's work through it here as well.
 
 We have a diagnostic plot generated in folder "figure_gate". Let's look at that:
 ![Diagnostic plot](figures/Gating_params/FAILURE_beads_nonViability_smallGate.jpg)

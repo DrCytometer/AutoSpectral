@@ -12,7 +12,8 @@ validate.control.file(
   control.def.file,
   asp,
   min.event.warning,
-  min.event.error
+  min.event.error,
+  legacy = FALSE
 )
 ```
 
@@ -40,6 +41,17 @@ validate.control.file(
 
   The number of events in the entire FCS file that will trigger an error
   if not met.
+
+- legacy:
+
+  Logical. If `FALSE`, gating-related columns will not be created and
+  the control file will be suitable only for the new automated spectral
+  extraction pipeline using
+  [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md).
+  To use the version 1 "legacy" pipeline for the extraction of
+  fluorophore spectra, using gating and
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md),
+  set `legacy=TRUE`.
 
 ## Value
 

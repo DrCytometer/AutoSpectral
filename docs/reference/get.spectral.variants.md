@@ -1,13 +1,20 @@
 # Get Spectral Variations for Fluorophores
 
-This function cycles through all the fluorophores defined in
-`control.def.file`, identifying variations in spectral profiles. It does
-this by performing SOM clustering on the positive events in the cleaned
-control data. The output is saved as an .rds file, and figures
-summarizing the variation are saved, if desired. Note that the .rds file
-contains all the needed information for downstream processing (per-cell
-unmixing), so you can just load that using the `readRDS` function)
-rather than re-running this process.
+Cycles through all fluorophores defined in `control.def.file`,
+identifying variation in their spectral profiles via SOM clustering on
+scatter-matched, per-event background-corrected data.
+
+For each fluorophore the autofluorescence reference is derived **in
+situ** from the paired universal-negative file (or internally from the
+lower 25\\ used to project out autofluorescence and identify the
+empirical peak detector. All positive events are scatter-matched to
+unstained events and their per-event background is subtracted before SOM
+clustering. This gives a comprehensive, population-level picture of true
+fluorophore spectral variability without requiring a pre-computed
+`af.spectra` matrix.
+
+The output is saved as an .rds file and per-fluorophore variant plots
+are produced if requested.
 
 ## Usage
 
@@ -17,16 +24,15 @@ get.spectral.variants(
   control.def.file,
   asp,
   spectra,
-  af.spectra,
-  n.cells = 2000,
-  som.dim = 10,
   figures = TRUE,
   output.dir = NULL,
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
-  refine = FALSE,
-  problem.quantile = 0.95,
+  n.cells = 10000L,
+  som.dim = 10L,
+  k.neighbors = 3L,
+  sim.threshold = 0.985,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
@@ -39,131 +45,113 @@ get.spectral.variants(
 
 - control.dir:
 
-  File path to the single-stained control FCS files.
+  Character. Path to the single-stained control FCS files.
 
 - control.def.file:
 
-  CSV file defining the single-color control file names, fluorophores
-  they represent, marker names, peak channels, and gating requirements.
+  Character. Path to the control definition CSV. Must pass
+  [`check.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/check.control.file.md).
 
 - asp:
 
-  The AutoSpectral parameter list. Prepare using
-  `get.autospectral.param`
+  The AutoSpectral parameter list from
+  [`get.autospectral.param()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.md).
 
 - spectra:
 
-  A matrix containing the spectral data. Fluorophores in rows, detectors
-  in columns.
-
-- af.spectra:
-
-  Spectral signatures of autofluorescences, normalized between 0 and 1,
-  with fluorophores in rows and detectors in columns. Prepare using
-  `get.af.spectra`.
-
-- n.cells:
-
-  Numeric, default `2000`. Number of cells to use for defining the
-  variation in spectra. Up to `n.cells` cells will be selected as
-  positive events in the peak channel for each fluorophore, above the
-  99.5th percentile level in the unstained sample.
-
-- som.dim:
-
-  Numeric, default `10`. Number of x and y dimensions to use in the SOM
-  for clustering the spectral variation. The number of spectra returned
-  for each fluorophore will increase with the quadratic of `som.dim`, so
-  for 10, you will get up to 100 variants. Somewhere between 4 and 7
-  appears to be sufficient, but with the pruning of variants implemented
-  in
-  [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
-  in v1.0.0, this is less important.
+  Numeric matrix. Reference spectra; fluorophores in rows, detectors in
+  columns.
 
 - figures:
 
-  Logical, controls whether the variation in spectra for each
-  fluorophore is plotted in `output.dir`. Default is `TRUE`.
+  Logical, default `TRUE`. Whether to save variant-spectrum plots.
 
 - output.dir:
 
-  File path to whether the figures and .rds data file will be saved.
-  Default is `NULL`, in which case `asp$variant.dir` will be used.
+  Character or `NULL`. Directory for figures and the .rds output file.
+  Defaults to `asp$variant.dir`.
 
 - parallel:
 
-  Logical, default is `FALSE`, in which case sequential processing will
-  be used. The new parallel processing should always be faster.
+  Logical, default `FALSE`. Enable parallel processing across
+  fluorophores.
 
 - verbose:
 
-  Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+  Logical, default `TRUE`. Set to `FALSE` to suppress messages.
 
 - threads:
 
-  Numeric, default is `NULL`, in which case `asp$worker.process.n` will
-  be used. `asp$worker.process.n` is set by default to be one less than
-  the available cores on the machine. Multi-threading is only used if
-  `parallel` is `TRUE`.
+  Numeric or `NULL`. Number of parallel workers. Defaults to
+  `asp$worker.process.n`.
 
-- refine:
+- n.cells:
 
-  Logical, default is `FALSE`. Controls whether to perform a second
-  round of variation measurement on "problem cells", which are those
-  with the highest spillover, as defined by `problem.quantile`. When
-  `FALSE`, behavior is identical to versions of AutoSpectral prior to
-  1.0.0. Setting to `TRUE` may help reduce spillover spread and unmixing
-  errors. Using `refine=TRUE` does not impact subsequent unmixing
-  calculation time in any significant way, unlike the same setting in
-  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md).
+  Integer, default `10000`. Maximum positive events per fluorophore used
+  for SOM clustering. Files with more events above threshold are
+  randomly downsampled. Passed to `get.fluor.variants`.
 
-- problem.quantile:
+- som.dim:
 
-  Numeric, default `0.95`. The quantile for determining which cells will
-  be considered "problematic" after unmixing with per-cell AF
-  extraction. Cells in the `problem.quantile` or above with respect to
-  total signal in the fluorophore (non-AF) channels after per-cell AF
-  extraction will be used to determine additional autofluorescence
-  spectra, using a second round of clustering and modulation of the
-  previously selected autofluroescence spectra. A value of `0.95` means
-  the top 5% of cells, those farthest from zero, will be selected for
-  further investigation.
+  Integer, default `10`. Side length of the square SOM grid; up to
+  `som.dim^2` candidate variants per fluorophore before cosine QC.
+  Passed to `get.fluor.variants`.
+
+- k.neighbors:
+
+  Integer, default `3`. Number of scatter-space nearest neighbours from
+  the unstained pool used to estimate per-event background. Passed to
+  `get.fluor.variants`.
+
+- sim.threshold:
+
+  Numeric, default `0.99`. Minimum cosine similarity to the reference
+  spectrum for a SOM centroid to be retained as a variant. Passed to
+  `get.fluor.variants`.
 
 - variant.fill.color:
 
-  Color for the shaded region indicating the range of variation in the
-  spectra. Feeds to `fill` in `geom_ribbon`. Default is "red".
+  Color for the shaded ribbon in variant plots. Default `"red"`.
 
 - variant.fill.alpha:
 
-  Transparency (alpha) for the color in `variant.fill.color`. How
-  intense the color of the variant spectra will be. Default is `0.7`
+  Alpha for `variant.fill.color`. Default `0.7`.
 
 - median.line.color:
 
-  Color for the line representing the median or optimized single
-  spectrum. Default is "black".
+  Color for the reference-spectrum line. Default `"black"`.
 
 - median.linewidth:
 
-  Width of the line for the single optimized spectrum. Default is `1`.
+  Width of the reference-spectrum line. Default `1`.
 
 - ...:
 
-  Ignored. Previously used for deprecated arguments such as
-  `pos.quantile` and `sim.threshold`, which are now fixed internally and
-  no longer user-settable.
+  Ignored. Catches and warns on previously used deprecated arguments:
+  `af.spectra`, `refine`, `problem.quantile`, `pos.quantile`.
 
 ## Value
 
-A vector with the indexes of events inside the initial gate.
+A named list with elements:
 
-## References
+- `thresholds`:
 
-Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-visualization and interpretation of cytometry data." *Cytometry Part A*,
-87(7), 636-645.
-[doi:10.1002/cyto.a.22625](https://doi.org/10.1002/cyto.a.22625) Wehrens
-R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
-3.0.” *Journal of Statistical Software*, *87*(7), 1-18.
-[doi:10.18637/jss.v087.i07](https://doi.org/10.18637/jss.v087.i07)
+  Named numeric vector of positivity thresholds in the unmixed space,
+  one per fluorophore.
+
+- `variants`:
+
+  Named list of variant-spectra matrices, one per fluorophore. Each
+  matrix has variants in rows and detectors in columns.
+
+- `delta.list`:
+
+  Named list of delta matrices (variant minus reference spectrum), one
+  per fluorophore.
+
+- `delta.norms`:
+
+  Named list of Euclidean norms of the deltas, one numeric vector per
+  fluorophore.
+
+The list is also saved as an .rds file in `output.dir`.

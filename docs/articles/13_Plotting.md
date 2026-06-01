@@ -70,7 +70,7 @@ You can add the legend back:
 ``` r
 
 spectral.trace( chorus.spectra, title = "OMIP102", split.lasers = FALSE,
-                show.legend = FALSE )
+                show.legend = TRUE )
 ```
 
 ![Spectral Trace](figures/OMIP102.jpg)

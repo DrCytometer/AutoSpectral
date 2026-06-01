@@ -85,24 +85,25 @@ variants <- get.spectral.variants(
    control.file,
    asp,
    spectra,
-   af.spectra,
    parallel = TRUE,
    verbose = TRUE 
 )
 ```
 
-Set `parallel` to `TRUE` for faster processing. This should take a
-couple of minutes or less.
+Set `parallel` to `TRUE` for possibly faster processing. This should
+take a couple of minutes or less. Note that as of version 1.6.0, you no
+longer need to provide `af.spectra`. This was confusing people, and it’s
+now just generated appropriately on the fly.
 
 This outputs a list containing: 1) The thresholds for positivity in each
 unmixed channel, as determined by the 99.5th percentile on the `AF`
-sample in `flow.control`. If you refer back to your `control.file`, this
-will be whichever sample contains “AF” as the fluorophore. This should
-be an unstained cell control matching the single-colour controls in
-`control.file` and hence `flow.control`. 2) A named list of matrices,
-one per fluorophore in `flow.control`. Each matrix contains up to 100
-spectra per fluorophore. This number can be adjusted by argument
-`som.dim` to
+sample (unstained cell control) in your control file. If you refer back
+to your `control.file`, this will be whichever sample contains “AF” as
+the fluorophore. This should be an unstained cell control matching the
+single-colour controls in `control.file` and hence `flow.control`. 2) A
+named list of matrices, one per fluorophore in `flow.control`. Each
+matrix contains up to 100 spectra per fluorophore. This number can be
+adjusted by argument `som.dim` to
 [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md),
 which is by default `10`.
 
@@ -216,11 +217,12 @@ implementation is in C++ and requires installation of
 `AutoSpectralRcpp`. I strongly encourage you to install that prior to
 running unmixing as below. Also, be sure that you have the fast BLAS and
 LAPACK installed. Please reach out if you have suggestions for faster
-implementation (I’m not a computer scientist).
+implementation (I’m not a computer scientist). See the article on
+[Computing
+Speed](https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.html)
+for full tips.
 
 ``` r
-
-library( AutoSpectralRcpp )
 
 fully.stained.dir <- "./Fully stained"
 
@@ -243,10 +245,10 @@ improvement. If you are using more modern fluorophores, you may find
 minimal difference now when using “fast”.
 
 If you want to set the number of variants yourself, you can do this by
-providing the “k” argument. This will override “speed”. In the call
-below, for instance, we’ve requested to test up to 100 variants per cell
-(depending on what’s actually available). This would be comparable to
-the previous “slow” brute force approach.
+providing the `n.variants` argument. This will override “speed”. In the
+call below, for instance, we’ve requested to test up to 100 variants per
+cell (depending on what’s actually available). This would be comparable
+to the previous “slow” brute force approach.
 
 ``` r
 
@@ -257,7 +259,7 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
            method = "AutoSpectral",
            af.spectra = lung.af,
            spectra.variants = variants,
-           k = 100 )
+           n.variants = 100 )
 ```
 
 Note that the “fast” approach in version 1.0.0 is very different from

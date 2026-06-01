@@ -2,10 +2,14 @@
 
 ### All vignettes
 
-- [01 Full Workflow
+- [01 Automated Spectral
+  Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Automated_Spectral_Workflow.md):
+- [01 Full Legacy Workflow
   Example](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.md):
-- [02 Creating the control
-  file](https://drcytometer.github.io/AutoSpectral/articles/02_Control_File_example.md):
+- [02 Creating the Control
+  File](https://drcytometer.github.io/AutoSpectral/articles/02_Control_File_example.md):
+- [02b Control File — Complex
+  Panels](https://drcytometer.github.io/AutoSpectral/articles/02b_Control_File_Complex_Example.md):
 - [03 Aurora AutoSpectral
   Example](https://drcytometer.github.io/AutoSpectral/articles/03_Aurora_example.md):
 - [04 ID7000 WLS
@@ -36,3 +40,5 @@
   Development](https://drcytometer.github.io/AutoSpectral/articles/16_Development.md):
 - [17
   Acknowledgements](https://drcytometer.github.io/AutoSpectral/articles/17_Acknowledgements.md):
+- [18 Weighted Least Squares
+  Unmixing](https://drcytometer.github.io/AutoSpectral/articles/18_Weighted_Least_Squares.md):

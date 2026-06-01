@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>14 Speed It Up (Why So Slow?) • AutoSpectral</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="14 Speed It Up (Why So Slow?)">
 </head>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,8 +33,10 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/01_Full_AutoSpectral_Workflow.html">01 Full Workflow Example</a></li>
-    <li><a class="dropdown-item" href="../articles/02_Control_File_example.html">02 Creating the control file</a></li>
+<li><a class="dropdown-item" href="../articles/01_Automated_Spectral_Workflow.html">01 Automated Spectral Workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/01_Full_AutoSpectral_Workflow.html">01 Full Legacy Workflow Example</a></li>
+    <li><a class="dropdown-item" href="../articles/02_Control_File_example.html">02 Creating the Control File</a></li>
+    <li><a class="dropdown-item" href="../articles/02b_Control_File_Complex_Example.html">02b Control File — Complex Panels</a></li>
     <li><a class="dropdown-item" href="../articles/03_Aurora_example.html">03 Aurora AutoSpectral Example</a></li>
     <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
     <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
@@ -50,6 +52,7 @@
     <li><a class="dropdown-item" href="../articles/15_Updates_And_Issues.html">15 Updates and Issues</a></li>
     <li><a class="dropdown-item" href="../articles/16_Development.html">16 Development</a></li>
     <li><a class="dropdown-item" href="../articles/17_Acknowledgements.html">17 Acknowledgements</a></li>
+    <li><a class="dropdown-item" href="../articles/18_Weighted_Least_Squares.html">18 Weighted Least Squares Unmixing</a></li>
   </ul>
 </li>
       </ul>
@@ -70,7 +73,7 @@
 
       <h1>14 Speed It Up (Why So Slow?)</h1>
             
-            <h4 data-toc-skip class="date">2026-02-10</h4>
+            <h4 data-toc-skip class="date">2026-06-01</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/vignettes/articles/14_Speed_It_Up.Rmd" class="external-link"><code>vignettes/articles/14_Speed_It_Up.Rmd</code></a></small>
       <div class="d-none name"><code>14_Speed_It_Up.Rmd</code></div>
@@ -91,7 +94,7 @@ of a million cells in 40 color space, as much as 100 x 40 x 1000000 =
 it’s slow is that I am not a computational person.</p>
 <p>There are some things that can be done to improve this. Release
 v1.0.0 implements an approach to reduce the search space, somewhere
-between 10 and 100x, which will help. <code>AutoSpectralRcp</code> now
+between 10 and 100x, which will help. <code>AutoSpectralRcpp</code> now
 integrates the full unmixing pipeline in C++, which also helps.</p>
 <div class="section level2">
 <h2 id="go-faster">Go Faster<a class="anchor" aria-label="anchor" href="#go-faster"></a>
@@ -107,32 +110,56 @@ can give speed ups of 5x. <a href="https://github.com/david-cortes/R-openblas-in
 OpenBLAS</a> All this involves is downloading the files from the
 internet, placing them in the right folder and doing a quick
 restart.</p>
-<p>On Mac, you can use the vecLib library BLAS that ships with Mac OS as
-this should be optimized for your system. The following articles may be
-helpful in setting this as the default BLAS for use in R: <a href="https://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html#Which-BLAS-is-used-and-how-can-it-be-changed_003f" class="external-link">BLAS
+<p>On MacOS Sonoma/Sequoia (most modern Macs), you don’t need to do
+anything about the BLAS. The Accelerate BLAS that you already have is
+optimized for your system.</p>
+<p>For older MacOS, the following articles may be helpful: <a href="https://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html#Which-BLAS-is-used-and-how-can-it-be-changed_003f" class="external-link">BLAS
 for Mac in R</a> <a href="https://csantill.github.io/RPerformanceWBLAS/" class="external-link">Performance
 BLAS</a> Feedback from users on Mac who successfully upgrade their BLAS
 would be appreciated.</p>
 <p>Do not set multiple threads for the BLAS as this will conflict with
-higher level parallelization, either in AutoSpectral or other That said,
-AutoSpectral checks for this internally, overriding anything you do in
-that regard.</p>
-<p>After upgrading the BLAS, you probably need to re-install
-<code>Rcpp</code> and <code>RcppArmadillo</code> to have this compiled
-with the BLAS.</p>
+higher level parallelization, either in AutoSpectral or in other
+multithreaded libraries. That said, AutoSpectral checks for this
+internally, overriding anything you do in that regard.</p>
+<p>After upgrading the BLAS on Windows or Linux, you probably need to
+re-install <code>Rcpp</code> and <code>RcppArmadillo</code> to have
+these compiled against the new BLAS. On Mac with Accelerate this is not
+necessary as Accelerate is a system framework linked at build time.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span> <span class="st">"Rcpp"</span>, <span class="st">"RcppArmadillo"</span> <span class="op">)</span> <span class="op">)</span></span></code></pre></div>
 <p>Now, install AutoSpectralRcpp. This is fully accessible from R and
 integrates with AutoSpectral. But, when it gets to the slow bits in the
-unmixing, it switches over to calculating in C++, so it can be 10-100x
-faster. Do this after upgrading the BLAS because the C++ gets compiled
-with whatever BLAS you’ve got installed.</p>
+unmixing and several other aspects of the processing, it switches over
+to calculating in C++, so it can be 10-100x faster. Do this after
+upgrading the BLAS because the C++ gets compiled with whatever BLAS
+you’ve got installed.</p>
 <p><a href="https://github.com/DrCytometer/AutoSpectralRcpp" class="external-link">AutoSpectralRcpp</a></p>
-<p>You will need <a href="https://cran.r-project.org/bin/windows/Rtools/" class="external-link">Rtools</a> to
-compile this.</p>
+<p><code>AutoSpectralRcpp</code> requires a C++ compiler. What you need
+depends on your platform:</p>
+<ul>
+<li>
+<strong>Windows</strong>: Install <a href="https://cran.r-project.org/bin/windows/Rtools/" class="external-link">Rtools</a>. This
+provides the compiler and takes around 10 minutes to download and
+install. OpenMP support is included and enabled automatically.</li>
+<li>
+<strong>macOS</strong>: Install the Xcode Command Line Tools by
+running <code>xcode-select --install</code> in Terminal. Apple’s
+compiler does not include OpenMP, but <code>AutoSpectralRcpp</code> will
+detect whether <a href="https://brew.sh" class="external-link">Homebrew</a> and
+<code>libomp</code> are installed and enable OpenMP automatically if
+found. If not, it will build without OpenMP (single-threaded C++ only)
+and print instructions telling you what to run. To enable OpenMP
+manually, run <code>brew install libomp</code> in Terminal and then
+reinstall the package. Note: keep the number of OpenMP threads
+conservative on Mac, as high thread counts can conflict with the
+Accelerate BLAS.</li>
+<li>
+<strong>Linux</strong>: GCC is typically already present. OpenMP is
+enabled automatically.</li>
+</ul>
 <p>You can install AutoSpectralRcpp like so:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/install-deprecated.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectralRcpp"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectralRcpp"</span><span class="op">)</span></span></code></pre></div>
 <p>Third, turn on parallel processing in AutoSpectral. <em>Update</em>:
 This is now supported via a <code>parallel</code> backend. Importantly,
 this moves away from <code>future</code> and <code>future_lapply</code>,
@@ -143,9 +170,10 @@ faster. Perhaps most usefully, this appears to allow parallelization of
 the native R per-cell fluorophore optimization in
 <code>unmix.autospectral</code>, so you should see a nice speed up
 there.</p>
-<p>The parallel processing in AutoSpectralRcpp operates via OpenMP and
-works well. It is always activated, but the number of threads can be
-configured.</p>
+<p>The parallel processing in AutoSpectralRcpp operates via OpenMP. On
+Windows and Linux, OpenMP is always enabled. On macOS, it is enabled if
+<code>libomp</code> was present at install time (see above). The number
+of threads can be configured regardless of platform.</p>
 <p>To activate parallel processing, check the function arguments for a
 <code>parallel</code> option and set it to <code>TRUE</code>.
 Additionally, there is control over the number of threads used, which
@@ -154,8 +182,8 @@ argument. If you don’t know how many threads to use, check the
 recommendation for your machine after running
 <code><a href="../reference/get.autospectral.param.html">get.autospectral.param()</a></code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">asp</span><span class="op">$</span><span class="va">max.worker.process.n</span></span></code></pre></div>
-<p>Multithreading will always default to this number if you do not
+<code class="sourceCode R"><span><span class="va">asp</span><span class="op">$</span><span class="va">worker.process.n</span></span></code></pre></div>
+<p>Multi-threading will always default to this number if you do not
 explicitly set a number of threads and set <code>parallel=TRUE</code>.
 This is one less than <code><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">parallelly::availableCores()</a></code>, so it
 is designed to allow you to keep working on minor stuff while
@@ -170,22 +198,21 @@ more CPUs. Version 1.0.0 brings faster processing for the unmixing.</p>
 <h2 id="installation-and-runtime">Installation and Runtime<a class="anchor" aria-label="anchor" href="#installation-and-runtime"></a>
 </h2>
 <p>Installation via GitHub should take only a minute or so. It takes
-less than that on my Dell i7 core laptop, but that may also be because I
-have already installed the dependencies.</p>
+less than that on my Dell i7 8-core Windows laptop, but that may also be
+because I have already installed the dependencies.</p>
 <p>Occasionally, the help gets corrupted. Just re-install if that
 happens. If you know why this happens, let me know.</p>
 <p>Installation of <code>AutoSpectralRcpp</code> will take a couple of
-minutes because the code needs to compile. You will also first have to
-install Rtools to have a compiler, and that will take longer, probably
-10 minutes or so. Upgrading the BLAS and LAPACK (see below) also takes
-several minutes if you’re taking the time to read the instructions
-carefully.</p>
+minutes because the code needs to compile. A C++ compiler is required —
+see the platform-specific instructions above. Upgrading the BLAS and
+LAPACK (see above) also takes several minutes if you’re taking the time
+to read the instructions carefully.</p>
 <p>Run-time will vary considerably depending on the size and quantity of
 files you’re processing. For the benchmark 42-color Aurora dataset using
 single-stained cell controls with plenty of data, the slow steps in the
 pre-processing pipeline are <code><a href="../reference/define.flow.control.html">define.flow.control()</a></code> and
-<code><a href="../reference/clean.controls.html">clean.controls()</a></code>. For the same Aurora dataset on the
-aforementioned i7 Windows laptop, I get:</p>
+<code><a href="../reference/clean.controls.html">clean.controls()</a></code>. For the same Aurora dataset on the i7
+Windows laptop:</p>
 <ul>
 <li>
 <code><a href="../reference/define.flow.control.html">define.flow.control()</a></code> v0.8.7: 12min sequential, 9min
@@ -263,6 +290,10 @@ sequential, interrupted parallel</p></li>
 <li><p><code><a href="../reference/unmix.folder.html">unmix.folder()</a></code> WLS or OLS, 6 files, v0.9.0: 62sec
 sequential, 31sec parallel</p></li>
 </ul>
+<p>If I have not updated the benchmarks, it is because I do not expect
+much improvement since last check. That said, since v1.0.2, native FCS
+read/write via C++ has been added, so things should be a bit faster,
+particularly for large files.</p>
 <p>I do not expect more major gains, but I will look into GPU
 acceleration.</p>
 </div>

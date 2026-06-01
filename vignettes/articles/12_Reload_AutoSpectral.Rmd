@@ -28,7 +28,7 @@ the channels we'll use for spectral unmixing.
 flow.control <- reload.flow.control(control.dir, control.def.file, asp)
 ```
 
-We also need to load in our spectra. If we've run AutoSpectral already, these will be in `./table_spectra` and will, by default, be called something like "Initial_autospectral_spectra.csv". We need to read this into R. For this, there's a very simple helper function that reads the named CSV file and sets the structure back as it was when written. If your file isn't in that folder, use the `spectra.dir` argument to define the location.
+We also need to load in our spectra. If we've run AutoSpectral already, these will be in `./table_spectra` and will, by default, be called something like "Automated_autospectral_spectra.csv". Run `list.files("table_spectra/")` to see what you've got. We need to read this into R. For this, there's a very simple helper function that reads the named CSV file and sets the structure back as it was when written. If your file isn't in that folder, use the `spectra.dir` argument to define the location.
 
 ```{r, eval=FALSE}
 spectra.file <- "Initial_autospectral_spectra.csv"

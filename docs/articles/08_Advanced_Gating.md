@@ -120,6 +120,9 @@ gate.beads <- define.gate.density(
 )
 ```
 
+For more on density-based gate tuning, see the [dedicated
+article](https://drcytometer.github.io/AutoSpectral/articles/07_Gating_Parameters_Density.html).
+
 With both of these methods and the updated define.flow.control(), you
 now get .rds files that save the gates. One of these saves the gate
 boundary (called gate_definition, plus whatever you’ve named it), and if
@@ -129,7 +132,8 @@ experiments, if appropriate. You also get an .rds file that saves the
 gating parameters. So, if you’ve gone to a bunch of work using
 tune.gate(), but your next experiment may be slightly different, you can
 start by loading in the gating parameters rather than the gate itself.
-Hope that helps!
+Hope that helps! By default, the gates are saved to `figure_gate/` and
+the file naming convention follows `gate_definition_<gate.name>.rds`.
 
 ### 4. Passing Gates to define.flow.control()
 

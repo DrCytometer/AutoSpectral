@@ -12,7 +12,8 @@ gate.af.sample.plot(
   af.boundary.upper,
   asp,
   max.points = 50000,
-  color.palette = "viridis"
+  color.palette = "viridis",
+  raster.bins = 256L
 )
 ```
 
@@ -44,8 +45,13 @@ gate.af.sample.plot(
   Optional character string defining the viridis color palette to be
   used for the fluorophore traces. Default is `viridis`. Options are the
   viridis color options: `magma`, `inferno`, `plasma`, `viridis`,
-  `cividis`, `rocket`, `mako` and `turbo`. Use `rainbow`to be similar to
-  FlowJo or SpectroFlo.
+  `cividis`, `rocket`, `mako` and `turbo`. Use `rainbow` to be similar
+  to FlowJo or SpectroFlo.
+
+- raster.bins:
+
+  Number of pixels on each axis of the rasterised scatter image. Default
+  is `256L`.
 
 ## Value
 

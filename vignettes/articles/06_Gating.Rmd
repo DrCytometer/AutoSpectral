@@ -110,7 +110,7 @@ With a medium-sized gate set:
 ![Medium gate](figures/Gating_example_Target0_mediumGate.jpg)
 
 
-As you've probably noticed, the gating is pretty slow. This is mostly down to the calculations to determine the density. There are some other ways of doing this that are faster, but less reliable. Happy for any suggestions here. Happy for any suggestions here. From what I've seen, this would be much faster in Python.
+As you've probably noticed, the gating is pretty slow. This is mostly down to the calculations to determine the density. There are some other ways of doing this that are faster, but less reliable. Happy for any suggestions here. From what I've seen, this would be much faster in Python.
 
 The parameters that can speed up the gate are below:
 ```{r, eval=FALSE}
@@ -199,6 +199,6 @@ And, finally, we can just skip gating all together. For this, you'll probably wa
 flow.control <- define.flow.control(control.dir, control.file, asp, gate = FALSE)
 ```
 
-So much faster! We don't get plots because we aren't changing anything and you should have already looked at the data before you did this.
+So much faster! We don't get plots because we aren't changing anything and you should have already looked at the data before you did this. The new automated pipeline does not use gating, instead selecting cells based on stuff that isn't autofluorescence directly.
 
 

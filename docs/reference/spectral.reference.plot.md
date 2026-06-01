@@ -15,14 +15,19 @@ spectral.reference.plot(
   qc.threshold.fail = 0.9,
   experiment.control.color = "black",
   library.reference.color = "blue",
+  comparison.color = "red",
   experiment.line.type = "solid",
   library.line.type = "dotted",
+  comparison.line.type = "dashed",
   pass.color = "darkgreen",
   warn.color = "darkorange",
   fail.color = "red",
   linewidth = 1,
   plot.dir = "./figure_spectra",
-  filename = "spectral_qc_report.pdf"
+  filename = "spectral_qc_report.pdf",
+  comparison.spectra = NULL,
+  comparison.label = "Pre-refinement",
+  highlight.fluors = character(0L)
 )
 ```
 
@@ -55,17 +60,26 @@ spectral.reference.plot(
 - library.reference.color:
 
   Color for the line representing the library reference standard
-  fluorophore spectrum. Default is `blue`.
+  fluorophore spectrum. Default is `"blue"`.
+
+- comparison.color:
+
+  Color for the optional comparison spectrum. Default is `"red"`.
 
 - experiment.line.type:
 
   Line style for the line representing the user's fluorophore spectrum
-  from the single-stained reference control. Default is `solid`.
+  from the single-stained reference control. Default is `"solid"`.
 
 - library.line.type:
 
   Line style for the line representing the library reference standard
-  fluorophore spectrum. Default is `dotted`.
+  fluorophore spectrum. Default is `"dotted"`.
+
+- comparison.line.type:
+
+  Line style for the line representing the optional comparison spectrum.
+  Default is `"dashed"`.
 
 - pass.color:
 
@@ -95,6 +109,21 @@ spectral.reference.plot(
 - filename:
 
   Name for the output PDF file. Default is `spectral_qc_report.pdf`.
+
+- comparison.spectra:
+
+  Optional matrix of additional spectral profiles to be plotted as
+  comparisons. Used for `get.spectra.automated` for legacy fallback.
+
+- comparison.label:
+
+  Optional character string, default `"Pre-refinement"`, for the
+  `comparison.spectra`.
+
+- highlight.fluors:
+
+  Optional numeric for differentiating comparison fluors in the plots
+  with the "refined" tag.
 
 ## Value
 

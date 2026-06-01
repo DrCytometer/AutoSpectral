@@ -15,7 +15,7 @@ not a computational person.
 
 There are some things that can be done to improve this. Release v1.0.0
 implements an approach to reduce the search space, somewhere between 10
-and 100x, which will help. `AutoSpectralRcp` now integrates the full
+and 100x, which will help. `AutoSpectralRcpp` now integrates the full
 unmixing pipeline in C++, which also helps.
 
 ## Go Faster
@@ -34,22 +34,25 @@ OpenBLAS](https://github.com/david-cortes/R-openblas-in-windows) All
 this involves is downloading the files from the internet, placing them
 in the right folder and doing a quick restart.
 
-On Mac, you can use the vecLib library BLAS that ships with Mac OS as
-this should be optimized for your system. The following articles may be
-helpful in setting this as the default BLAS for use in R: [BLAS for Mac
-in
+On MacOS Sonoma/Sequoia (most modern Macs), you don’t need to do
+anything about the BLAS. The Accelerate BLAS that you already have is
+optimized for your system.
+
+For older MacOS, the following articles may be helpful: [BLAS for Mac in
 R](https://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html#Which-BLAS-is-used-and-how-can-it-be-changed_003f)
 [Performance BLAS](https://csantill.github.io/RPerformanceWBLAS/)
 Feedback from users on Mac who successfully upgrade their BLAS would be
 appreciated.
 
 Do not set multiple threads for the BLAS as this will conflict with
-higher level parallelization, either in AutoSpectral or other That said,
-AutoSpectral checks for this internally, overriding anything you do in
-that regard.
+higher level parallelization, either in AutoSpectral or in other
+multithreaded libraries. That said, AutoSpectral checks for this
+internally, overriding anything you do in that regard.
 
-After upgrading the BLAS, you probably need to re-install `Rcpp` and
-`RcppArmadillo` to have this compiled with the BLAS.
+After upgrading the BLAS on Windows or Linux, you probably need to
+re-install `Rcpp` and `RcppArmadillo` to have these compiled against the
+new BLAS. On Mac with Accelerate this is not necessary as Accelerate is
+a system framework linked at build time.
 
 ``` r
 
@@ -58,20 +61,38 @@ install.packages( c( "Rcpp", "RcppArmadillo" ) )
 
 Now, install AutoSpectralRcpp. This is fully accessible from R and
 integrates with AutoSpectral. But, when it gets to the slow bits in the
-unmixing, it switches over to calculating in C++, so it can be 10-100x
-faster. Do this after upgrading the BLAS because the C++ gets compiled
-with whatever BLAS you’ve got installed.
+unmixing and several other aspects of the processing, it switches over
+to calculating in C++, so it can be 10-100x faster. Do this after
+upgrading the BLAS because the C++ gets compiled with whatever BLAS
+you’ve got installed.
 
 [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp)
 
-You will need [Rtools](https://cran.r-project.org/bin/windows/Rtools/)
-to compile this.
+`AutoSpectralRcpp` requires a C++ compiler. What you need depends on
+your platform:
+
+- **Windows**: Install
+  [Rtools](https://cran.r-project.org/bin/windows/Rtools/). This
+  provides the compiler and takes around 10 minutes to download and
+  install. OpenMP support is included and enabled automatically.
+- **macOS**: Install the Xcode Command Line Tools by running
+  `xcode-select --install` in Terminal. Apple’s compiler does not
+  include OpenMP, but `AutoSpectralRcpp` will detect whether
+  [Homebrew](https://brew.sh) and `libomp` are installed and enable
+  OpenMP automatically if found. If not, it will build without OpenMP
+  (single-threaded C++ only) and print instructions telling you what to
+  run. To enable OpenMP manually, run `brew install libomp` in Terminal
+  and then reinstall the package. Note: keep the number of OpenMP
+  threads conservative on Mac, as high thread counts can conflict with
+  the Accelerate BLAS.
+- **Linux**: GCC is typically already present. OpenMP is enabled
+  automatically.
 
 You can install AutoSpectralRcpp like so:
 
 ``` r
 
-devtools::install_github("DrCytometer/AutoSpectralRcpp")
+remotes::install_github("DrCytometer/AutoSpectralRcpp")
 ```
 
 Third, turn on parallel processing in AutoSpectral. *Update*: This is
@@ -83,9 +104,10 @@ much faster. Perhaps most usefully, this appears to allow
 parallelization of the native R per-cell fluorophore optimization in
 `unmix.autospectral`, so you should see a nice speed up there.
 
-The parallel processing in AutoSpectralRcpp operates via OpenMP and
-works well. It is always activated, but the number of threads can be
-configured.
+The parallel processing in AutoSpectralRcpp operates via OpenMP. On
+Windows and Linux, OpenMP is always enabled. On macOS, it is enabled if
+`libomp` was present at install time (see above). The number of threads
+can be configured regardless of platform.
 
 To activate parallel processing, check the function arguments for a
 `parallel` option and set it to `TRUE`. Additionally, there is control
@@ -96,10 +118,10 @@ threads to use, check the recommendation for your machine after running
 
 ``` r
 
-asp$max.worker.process.n
+asp$worker.process.n
 ```
 
-Multithreading will always default to this number if you do not
+Multi-threading will always default to this number if you do not
 explicitly set a number of threads and set `parallel=TRUE`. This is one
 less than
 [`parallelly::availableCores()`](https://parallelly.futureverse.org/reference/availableCores.html),
@@ -119,17 +141,17 @@ more CPUs. Version 1.0.0 brings faster processing for the unmixing.
 ## Installation and Runtime
 
 Installation via GitHub should take only a minute or so. It takes less
-than that on my Dell i7 core laptop, but that may also be because I have
-already installed the dependencies.
+than that on my Dell i7 8-core Windows laptop, but that may also be
+because I have already installed the dependencies.
 
 Occasionally, the help gets corrupted. Just re-install if that happens.
 If you know why this happens, let me know.
 
 Installation of `AutoSpectralRcpp` will take a couple of minutes because
-the code needs to compile. You will also first have to install Rtools to
-have a compiler, and that will take longer, probably 10 minutes or so.
-Upgrading the BLAS and LAPACK (see below) also takes several minutes if
-you’re taking the time to read the instructions carefully.
+the code needs to compile. A C++ compiler is required — see the
+platform-specific instructions above. Upgrading the BLAS and LAPACK (see
+above) also takes several minutes if you’re taking the time to read the
+instructions carefully.
 
 Run-time will vary considerably depending on the size and quantity of
 files you’re processing. For the benchmark 42-color Aurora dataset using
@@ -138,8 +160,7 @@ pre-processing pipeline are
 [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
 and
 [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md).
-For the same Aurora dataset on the aforementioned i7 Windows laptop, I
-get:
+For the same Aurora dataset on the i7 Windows laptop:
 
 - [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
   v0.8.7: 12min sequential, 9min parallel
@@ -233,5 +254,10 @@ laptop, using OpenBLAS and AutoSpectralRcpp, where applicable:
 
 - [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
   WLS or OLS, 6 files, v0.9.0: 62sec sequential, 31sec parallel
+
+If I have not updated the benchmarks, it is because I do not expect much
+improvement since last check. That said, since v1.0.2, native FCS
+read/write via C++ has been added, so things should be a bit faster,
+particularly for large files.
 
 I do not expect more major gains, but I will look into GPU acceleration.

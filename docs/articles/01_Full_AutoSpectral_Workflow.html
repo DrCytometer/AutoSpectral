@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>01 Full Workflow Example • AutoSpectral</title>
+<title>01 Full Legacy Workflow Example • AutoSpectral</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="01 Full Workflow Example">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="01 Full Legacy Workflow Example">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,8 +33,10 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/01_Full_AutoSpectral_Workflow.html">01 Full Workflow Example</a></li>
-    <li><a class="dropdown-item" href="../articles/02_Control_File_example.html">02 Creating the control file</a></li>
+<li><a class="dropdown-item" href="../articles/01_Automated_Spectral_Workflow.html">01 Automated Spectral Workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/01_Full_AutoSpectral_Workflow.html">01 Full Legacy Workflow Example</a></li>
+    <li><a class="dropdown-item" href="../articles/02_Control_File_example.html">02 Creating the Control File</a></li>
+    <li><a class="dropdown-item" href="../articles/02b_Control_File_Complex_Example.html">02b Control File — Complex Panels</a></li>
     <li><a class="dropdown-item" href="../articles/03_Aurora_example.html">03 Aurora AutoSpectral Example</a></li>
     <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
     <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
@@ -50,6 +52,7 @@
     <li><a class="dropdown-item" href="../articles/15_Updates_And_Issues.html">15 Updates and Issues</a></li>
     <li><a class="dropdown-item" href="../articles/16_Development.html">16 Development</a></li>
     <li><a class="dropdown-item" href="../articles/17_Acknowledgements.html">17 Acknowledgements</a></li>
+    <li><a class="dropdown-item" href="../articles/18_Weighted_Least_Squares.html">18 Weighted Least Squares Unmixing</a></li>
   </ul>
 </li>
       </ul>
@@ -68,7 +71,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>01 Full Workflow Example</h1>
+      <h1>01 Full Legacy Workflow Example</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/vignettes/articles/01_Full_AutoSpectral_Workflow.Rmd" class="external-link"><code>vignettes/articles/01_Full_AutoSpectral_Workflow.Rmd</code></a></small>
@@ -77,6 +80,9 @@
 
     
     
+<p>This is the legacy workflow using gating and requiring more user
+input. For the newer, less complicated workflow, see <a href="https://drcytometer.github.io/AutoSpectral/articles/01_Automated_Spectral_Workflow.html">Automated
+Workflow</a></p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -96,7 +102,7 @@
 </h2>
 <p>Download the data for today’s example from <a href="https://data.mendeley.com/datasets/ch5dnspd79/1" class="external-link">Mendeley
 Data</a>.</p>
-<p>These data are a 9-colour panel run on a 5-laser Cytek Aurora. The
+<p>These data are a 7-colour panel run on a 5-laser Cytek Aurora. The
 samples are from spleen, lung and liver. This is a pretty simple
 experiment, which is nice since it will run quickly. The different
 tissues allow us to look at how to handle diverse autofluorescence
@@ -357,23 +363,23 @@ Parameters</a></p>
 <p><a href="https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html">Gate
 Tuning</a></p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/landmark_gate_definition_lymphocytes.jpg" class="r-plt" alt="Lymphocyte Gate" width="750"><p class="caption">
+<img src="figures/Workflow/landmark_gate_definition_lymphocytes.jpg" class="r-plt" alt="Lymphocyte Gate"><p class="caption">
 Lymphocyte Gate
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/landmark_gate_definition_myeloid.jpg" class="r-plt" alt="Myeloid Gate" width="750"><p class="caption">
+<img src="figures/Workflow/landmark_gate_definition_myeloid.jpg" class="r-plt" alt="Myeloid Gate"><p class="caption">
 Myeloid Gate
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/landmark_gate_definition_dead.jpg" class="r-plt" alt="Dead Cell Gate" width="750"><p class="caption">
+<img src="figures/Workflow/landmark_gate_definition_dead.jpg" class="r-plt" alt="Dead Cell Gate"><p class="caption">
 Dead Cell Gate
 </p>
 </div>
 <p>This one for the dead cells could probably do with some tuning.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/density_gate_definition_beads.jpg" class="r-plt" alt="Bead Gate" width="750"><p class="caption">
+<img src="figures/Workflow/density_gate_definition_beads.jpg" class="r-plt" alt="Bead Gate"><p class="caption">
 Bead Gate
 </p>
 </div>
@@ -391,7 +397,7 @@ Bead Gate
 <span><span class="op">)</span></span></code></pre></div>
 <p>The results appear in folder figure_gate_tuning:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/dead_gate_tuning.jpeg" class="r-plt" alt="Dead cell gate tuning" width="320"><p class="caption">
+<img src="figures/Workflow/dead_gate_tuning.jpeg" class="r-plt" alt="Dead cell gate tuning"><p class="caption">
 Dead cell gate tuning
 </p>
 </div>
@@ -414,7 +420,7 @@ p=50%. To do that, we re-run the gate definition call:</p>
 <span>  color.palette <span class="op">=</span> <span class="st">"rainbow"</span> <span class="co"># FlowJo-like colours</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/landmark_gate_definition_dead_tuned.jpg" class="r-plt" alt="Dead Cell Gate Final" width="750"><p class="caption">
+<img src="figures/Workflow/landmark_gate_definition_dead_tuned.jpg" class="r-plt" alt="Dead Cell Gate Final"><p class="caption">
 Dead Cell Gate Final
 </p>
 </div>
@@ -447,7 +453,7 @@ intended gate applied to it. To see these, check the
 <p>For instance, here is the lymphocyte gate applied to the CD45 BUV395
 sample:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/BUV395.jpg" class="r-plt" alt="CD45 BUV395 gating" width="750"><p class="caption">
+<img src="figures/Workflow/BUV395.jpg" class="r-plt" alt="CD45 BUV395 gating"><p class="caption">
 CD45 BUV395 gating
 </p>
 </div>
@@ -455,17 +461,17 @@ CD45 BUV395 gating
 sample to create matching negative samples with corresponding gates
 applied for the myeloid, dead cells and lymphocytes:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/AF.jpg" class="r-plt" alt="Unstained cells, lymphocyte gate" width="750"><p class="caption">
+<img src="figures/Workflow/AF.jpg" class="r-plt" alt="Unstained cells, lymphocyte gate"><p class="caption">
 Unstained cells, lymphocyte gate
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/AF_Negative_dead.jpg" class="r-plt" alt="Unstained cells, dead cell gate" width="750"><p class="caption">
+<img src="figures/Workflow/AF_Negative_dead.jpg" class="r-plt" alt="Unstained cells, dead cell gate"><p class="caption">
 Unstained cells, dead cell gate
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/AF_Negative_myeloid.jpg" class="r-plt" alt="Unstained cells, myeloid gate" width="750"><p class="caption">
+<img src="figures/Workflow/AF_Negative_myeloid.jpg" class="r-plt" alt="Unstained cells, myeloid gate"><p class="caption">
 Unstained cells, myeloid gate
 </p>
 </div>
@@ -492,7 +498,7 @@ applied in terms of selecting cells with similar scatter profiles
 between the viability (live/dead) marker single-stained control and the
 unstained sample:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/eFluor780_scatter_plot.jpg" class="r-plt" alt="Scatter matching dead cells" width="1800"><p class="caption">
+<img src="figures/Workflow/eFluor780_scatter_plot.jpg" class="r-plt" alt="Scatter matching dead cells"><p class="caption">
 Scatter matching dead cells
 </p>
 </div>
@@ -502,7 +508,7 @@ peak in UV16-A on the Cytek Aurora, while autofluorescence often appear
 in UV7-A (although this is determined empirically and automatically by
 AutoSpectral).</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/AF_removal_BUV805_.jpg" class="r-plt" alt="AF exclusion for BUV805 control" width="750"><p class="caption">
+<img src="figures/Workflow/AF_removal_BUV805_.jpg" class="r-plt" alt="AF exclusion for BUV805 control"><p class="caption">
 AF exclusion for BUV805 control
 </p>
 </div>
@@ -537,24 +543,24 @@ A8 and S8</a></p>
 <p><a href="https://docs.google.com/spreadsheets/d/1TQDjrfHgdbS6kn4JzgQa_P4M1q-wCWvVv_4tpVFleqA/edit?usp=sharing" class="external-link">Symphony
 A5SE</a></p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/spectral_trace.jpg" class="r-plt" alt="Spectral Signature Traces" width="1828"><p class="caption">
+<img src="figures/Workflow/spectral_trace.jpg" class="r-plt" alt="Spectral Signature Traces"><p class="caption">
 Spectral Signature Traces
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/spectral_heatmap.jpg" class="r-plt" alt="Spectral Signature Heatmap" width="1772"><p class="caption">
+<img src="figures/Workflow/spectral_heatmap.jpg" class="r-plt" alt="Spectral Signature Heatmap"><p class="caption">
 Spectral Signature Heatmap
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Clean_autospectral_similarity_matrix.jpg" class="r-plt" alt="Cosine Similarity Heatmap" width="1200"><p class="caption">
+<img src="figures/Workflow/Clean_autospectral_similarity_matrix.jpg" class="r-plt" alt="Cosine Similarity Heatmap"><p class="caption">
 Cosine Similarity Heatmap
 </p>
 </div>
-<p>You also get a “Hotspot” matrix, as in the paper my Peter Mage et
+<p>You also get a “Hotspot” matrix, as in the paper by Peter Mage et
 al.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg" class="r-plt" alt="Hotspot Matrix Heatmap" width="1200"><p class="caption">
+<img src="figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg" class="r-plt" alt="Hotspot Matrix Heatmap"><p class="caption">
 Hotspot Matrix Heatmap
 </p>
 </div>
@@ -567,13 +573,13 @@ AutoSpectral unmixing of per-cell autofluorescence.</p>
 <p>As of version 1.5.0, you should also get a pdf quality control
 report.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Spectral_QC.jpg" class="r-plt" alt="Spectral QC Report" width="421"><p class="caption">
+<img src="figures/Workflow/Spectral_QC.jpg" class="r-plt" alt="Spectral QC Report"><p class="caption">
 Spectral QC Report
 </p>
 </div>
 <p>The BUV395 looks quite good:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/BUV395_QC.jpg" class="r-plt" alt="Spectral QC BUV395" width="561"><p class="caption">
+<img src="figures/Workflow/BUV395_QC.jpg" class="r-plt" alt="Spectral QC BUV395"><p class="caption">
 Spectral QC BUV395
 </p>
 </div>
@@ -586,13 +592,13 @@ macrophages, and the scatter-matching for this population has not worked
 perfectly. Something for me to work on.</p>
 <p>This will be fine.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/BUV805_QC2.jpg" class="r-plt" alt="Spectral QC BUV805" width="560"><p class="caption">
+<img src="figures/Workflow/BUV805_QC2.jpg" class="r-plt" alt="Spectral QC BUV805"><p class="caption">
 Spectral QC BUV805
 </p>
 </div>
 <p>Scatter-matching plot for BUV805 from the control cleaning:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/BUV805_scatter_match.jpg" class="r-plt" alt="Scatter matching for the BUV805 control" width="1800"><p class="caption">
+<img src="figures/Workflow/BUV805_scatter_match.jpg" class="r-plt" alt="Scatter matching for the BUV805 control"><p class="caption">
 Scatter matching for the BUV805 control
 </p>
 </div>
@@ -673,9 +679,9 @@ path to <code>output.dir</code>.</p>
 <p>The <code>method</code> is automatically appended to the output file
 name. If you wish to add something else to the file name, use the
 <code>file.suffix</code> argument.</p>
-<p>More details on WLS unmmixing, including calculating and re-using
-weights will be detailed in a separate article later. Reach out if this
-is important to you now.</p>
+<p>More details on WLS unmixing, including calculating and re-using
+weights are detailed in <a href="https://drcytometer.github.io/AutoSpectral/articles/18_Weighted_Least_Squares.html">dedicated
+article</a></p>
 <p>Okay, that’s basic unmixing. And, I think you should see a bit of
 improvement using AutoSpectral even with the same unmixing algorithms
 due to the improvements in single-colour control handling. We do.</p>
@@ -735,7 +741,7 @@ the future.</p>
 trace and as a heatmap in <code>figure_autofluorescence</code>. The AF
 spectra are saved as a CSV file in <code>table_spectra</code>.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/af_spectra.jpg" class="r-plt" alt="Autofluorescence profiles in the spleen" width="1828"><p class="caption">
+<img src="figures/Workflow/af_spectra.jpg" class="r-plt" alt="Autofluorescence profiles in the spleen"><p class="caption">
 Autofluorescence profiles in the spleen
 </p>
 </div>
@@ -744,7 +750,7 @@ where the black line represents a median signature (what you might use
 with an automated single AF parameter), and the red region represents
 the variation:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/af_variation.jpg" class="r-plt" alt="Autofluorescence variation in the spleen" width="1772"><p class="caption">
+<img src="figures/Workflow/af_variation.jpg" class="r-plt" alt="Autofluorescence variation in the spleen"><p class="caption">
 Autofluorescence variation in the spleen
 </p>
 </div>
@@ -753,21 +759,21 @@ unstained sample we have supplied.</p>
 <p>This is without any AF extraction, looking at what AutoSpectral has
 determined are the two most-affected fluorophore channels:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Spleen_No_AF_Extraction.jpg" class="r-plt" alt="Spleen: No AF Extraction" width="750"><p class="caption">
+<img src="figures/Workflow/Spleen_No_AF_Extraction.jpg" class="r-plt" alt="Spleen: No AF Extraction"><p class="caption">
 Spleen: No AF Extraction
 </p>
 </div>
 <p>What you get on the same unstained sample with per-cell AF
 extraction, without refinement (refine=FALSE):</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction" width="750"><p class="caption">
+<img src="figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction"><p class="caption">
 Spleen: Per-Cell AF Extraction
 </p>
 </div>
 <p>What you get on the same unstained sample with per-cell AF
 extraction, <em>with</em> refinement (refine=TRUE):</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction Refined" width="750"><p class="caption">
+<img src="figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction Refined"><p class="caption">
 Spleen: Per-Cell AF Extraction Refined
 </p>
 </div>
@@ -856,7 +862,7 @@ expressing CD11b. We also have variation in the long wavelength
 spillover on the violet and red laser, as should be expected from a
 tandem dye.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/BUV805_variants.jpg" class="r-plt" alt="Variation in BUV805" width="1772"><p class="caption">
+<img src="figures/Workflow/BUV805_variants.jpg" class="r-plt" alt="Variation in BUV805"><p class="caption">
 Variation in BUV805
 </p>
 </div>
@@ -867,7 +873,7 @@ this case.</p>
 <p>If we had tandem breakdown, we would probably see variability in the
 YG1-A detector.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/PECy7_variants.jpg" class="r-plt" alt="Variation in PE-Cy7" width="1772"><p class="caption">
+<img src="figures/Workflow/PECy7_variants.jpg" class="r-plt" alt="Variation in PE-Cy7"><p class="caption">
 Variation in PE-Cy7
 </p>
 </div>
@@ -920,12 +926,12 @@ or <a href="https://www.colibri-cytometry.com/post/autospectral-plotting" class=
 <span><span class="fu"><a href="../reference/create.biplot.html">create.biplot</a></span><span class="op">(</span><span class="va">asp.lung</span>, <span class="st">"BUV395-A"</span>, <span class="st">"BV421-A"</span>, <span class="va">asp</span>, title <span class="op">=</span> <span class="st">"AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
 <p>Let’s have a look at the unmixed data.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/SpectroFlo.jpg" class="r-plt" alt="SpectroFlo Unmixed" width="750"><p class="caption">
+<img src="figures/Workflow/SpectroFlo.jpg" class="r-plt" alt="SpectroFlo Unmixed"><p class="caption">
 SpectroFlo Unmixed
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/AutoSpectral.jpg" class="r-plt" alt="AutoSpectral Unmixed" width="750"><p class="caption">
+<img src="figures/Workflow/AutoSpectral.jpg" class="r-plt" alt="AutoSpectral Unmixed"><p class="caption">
 AutoSpectral Unmixed
 </p>
 </div>

@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>03 Aurora AutoSpectral Example • AutoSpectral</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="03 Aurora AutoSpectral Example">
 </head>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,8 +33,10 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/01_Full_AutoSpectral_Workflow.html">01 Full Workflow Example</a></li>
-    <li><a class="dropdown-item" href="../articles/02_Control_File_example.html">02 Creating the control file</a></li>
+<li><a class="dropdown-item" href="../articles/01_Automated_Spectral_Workflow.html">01 Automated Spectral Workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/01_Full_AutoSpectral_Workflow.html">01 Full Legacy Workflow Example</a></li>
+    <li><a class="dropdown-item" href="../articles/02_Control_File_example.html">02 Creating the Control File</a></li>
+    <li><a class="dropdown-item" href="../articles/02b_Control_File_Complex_Example.html">02b Control File — Complex Panels</a></li>
     <li><a class="dropdown-item" href="../articles/03_Aurora_example.html">03 Aurora AutoSpectral Example</a></li>
     <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
     <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
@@ -50,6 +52,7 @@
     <li><a class="dropdown-item" href="../articles/15_Updates_And_Issues.html">15 Updates and Issues</a></li>
     <li><a class="dropdown-item" href="../articles/16_Development.html">16 Development</a></li>
     <li><a class="dropdown-item" href="../articles/17_Acknowledgements.html">17 Acknowledgements</a></li>
+    <li><a class="dropdown-item" href="../articles/18_Weighted_Least_Squares.html">18 Weighted Least Squares Unmixing</a></li>
   </ul>
 </li>
       </ul>
@@ -78,7 +81,7 @@
     
     
 <p><em>NOTE</em> This has not yet been updated to reflect changes in
-version 1.5.0. See the <a href="https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html">full
+version 1.5.0. See the <a href="https://drcytometer.github.io/AutoSpectral/articles/01_Automated_Spectral_Workflow.html">full
 workflow article</a> for more detail. This will still work as before,
 but more control over the process is now available.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -97,13 +100,13 @@ More detail on this in the dedicated <a href="https://drcytometer.github.io/Auto
 file article</a>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/create.control.file.html">create.control.file</a></span><span class="op">(</span><span class="va">control.dir</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
-<p>To modify the control file…</p>
+<p>To modify the control file open it in your favorite spreadsheet
+viewing program.</p>
 <p>For now, we’ll use the pre-filled control file, which you can get
 from <a href="https://data.mendeley.com/datasets/xzt3h3gnx9/1" class="external-link">Mendeley
 Data</a>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">control.file</span> <span class="op">&lt;-</span> <span class="st">"~/AutoSpectral_data/Aurora_example/aurora_fcs_control_file.csv"</span></span></code></pre></div>
-<p>This</p>
 <p>Now we are ready to read in the FCS files, gate the cells and
 organize the experiment.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -124,10 +127,11 @@ positive events and events from the universal negative in the same
 region.</p>
 <p>CD8 scatter-matching plot: <img src="figures/SparkUV387_scatter_plot.jpg" alt="CD8 scatter match plot"></p>
 <p>CD14 scatter-matching plot: <img src="figures/BV510_scatter_plot.jpg" alt="CD14 scatter match plot"></p>
-<p>Spectra can now be isolated from the controls. To use the cleaned
-data, set <code>use.clean.expr</code> to <code>TRUE</code>.</p>
+<p>Spectra can now be isolated from the controls. By default, we use the
+cleaned data. If you want to see the spectra without cleaning, set
+<code>use.clean.expr</code> to <code>FALSE</code>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">spectra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.fluorophore.spectra.html">get.fluorophore.spectra</a></span><span class="op">(</span><span class="va">flow.control</span>, <span class="va">asp</span>, use.clean.expr <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">spectra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.fluorophore.spectra.html">get.fluorophore.spectra</a></span><span class="op">(</span><span class="va">flow.control</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
 <p>Check the spectral traces and heatmaps–do they look right?</p>
 <p>Normalized fluorophore signatures: <img src="figures/UniversalNegativeSpectra.jpg" alt="Spectral Trace">
 Spectral heatmap: <img src="figures/Viridis_spectral_heatmap.jpg" alt="Spectral heatmap"></p>

@@ -2,17 +2,22 @@
 
 ## All functions
 
+- [`AutoSpectral-package`](https://drcytometer.github.io/AutoSpectral/reference/AutoSpectral.md)
+  [`AutoSpectral`](https://drcytometer.github.io/AutoSpectral/reference/AutoSpectral.md)
+  : AutoSpectral: Tools for Unmixing Spectral Flow Cytometry Data
 - [`af.qc.plot()`](https://drcytometer.github.io/AutoSpectral/reference/af.qc.plot.md)
   : Autofluorescence QC Plot
 - [`assign.af.fluorophores()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.fluorophores.md)
   : Assign AF Spectrum By Fluorophore Projection
+- [`assign.af.joint.cov()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.joint.cov.md)
+  : Assign AF Spectrum By Joint Covariance-Weighted Error
 - [`assign.af.residuals()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.residuals.md)
   : Assign AF Spectrum By Residual Alignment
 - [`assign.gates()`](https://drcytometer.github.io/AutoSpectral/reference/assign.gates.md)
   : Assign Gates
-- [`assign.variants.cosine()`](https://drcytometer.github.io/AutoSpectral/reference/assign.variants.cosine.md)
-  : Assign Variant Spectrum By Fluorophore Projection
 - [`assign.variants()`](https://drcytometer.github.io/AutoSpectral/reference/assign.variants.md)
+  : Assign Variant Spectrum By Fluorophore Projection
+- [`assign.variants.cosine()`](https://drcytometer.github.io/AutoSpectral/reference/assign.variants.cosine.md)
   : Assign Variant Spectrum By Fluorophore Projection
 - [`calculate.condition.number()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.condition.number.md)
   : Calculate Condition Number
@@ -36,10 +41,10 @@
   : Compare Unmixing Quality Across Two Spectral References
 - [`concatenateFCS()`](https://drcytometer.github.io/AutoSpectral/reference/concatenateFCS.md)
   : Concatenate Multiple FCS Files
-- [`cosine.similarity.plot()`](https://drcytometer.github.io/AutoSpectral/reference/cosine.similarity.plot.md)
-  : Cosine Similarity Plot
 - [`cosine.similarity()`](https://drcytometer.github.io/AutoSpectral/reference/cosine.similarity.md)
   : Calculate Cosine Similarity
+- [`cosine.similarity.plot()`](https://drcytometer.github.io/AutoSpectral/reference/cosine.similarity.plot.md)
+  : Cosine Similarity Plot
 - [`create.biplot()`](https://drcytometer.github.io/AutoSpectral/reference/create.biplot.md)
   : Create Biplot
 - [`create.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/create.control.file.md)
@@ -58,10 +63,12 @@
   : Define Gate by Landmarks
 - [`define.keywords()`](https://drcytometer.github.io/AutoSpectral/reference/define.keywords.md)
   : Define Keywords
-- [`do.gate.af()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.af.md)
-  : Perform Gating on Autofluorescence Parameters
 - [`do.gate()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.md)
   : Do Gate
+- [`do.gate.af()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.af.md)
+  : Perform Gating on Autofluorescence Parameters
+- [`.cosine.sim.rows()`](https://drcytometer.github.io/AutoSpectral/reference/dot-cosine.sim.rows.md)
+  : dot Cosine Similarity Rows
 - [`.new_issue()`](https://drcytometer.github.io/AutoSpectral/reference/dot-new_issue.md)
   : New Issue
 - [`downsample.control()`](https://drcytometer.github.io/AutoSpectral/reference/downsample.control.md)
@@ -82,6 +89,8 @@
   : Gate Matching Scatter
 - [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
   : Get Autofluorescence Spectra
+- [`get.autospectral.param()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.md)
+  : Get AutoSpectral Parameters
 - [`get.autospectral.param.a5se()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.a5se.md)
   : Get AutoSpectral Parameters for the FACSymphony A5SE Cytometer
 - [`get.autospectral.param.a8()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.a8.md)
@@ -98,8 +107,6 @@
   : Get Autospectral Parameters for Mosaic Cytometer
 - [`get.autospectral.param.opteon()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.opteon.md)
   : Get Autospectral Parameters for Opteon Cytometer
-- [`get.autospectral.param()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.md)
-  : Get AutoSpectral Parameters
 - [`get.autospectral.param.s8()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.s8.md)
   : Get Autospectral Parameters for DiscoverS8 Cytometer
 - [`get.autospectral.param.xenith()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.xenith.md)
@@ -112,6 +119,8 @@
   : Get Fluorophore Spectra
 - [`get.gated.flow.expression.data()`](https://drcytometer.github.io/AutoSpectral/reference/get.gated.flow.expression.data.md)
   : Get Gated Flow Expression Data
+- [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md)
+  : Get Fluorophore Spectra - Automated Workflow
 - [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
   : Get Spectral Variations for Fluorophores
 - [`get.top.events()`](https://drcytometer.github.io/AutoSpectral/reference/get.top.events.md)
@@ -174,6 +183,8 @@
   : Plot Fluorophore Spectra Traces
 - [`spectral.variant.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.variant.plot.md)
   : Spectral Variant Plot
+- [`spectral.variant.plot.dens()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.variant.plot.dens.md)
+  : Spectral Variant Density Plot
 - [`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md)
   : Define Gate by Density
 - [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
@@ -182,18 +193,18 @@
   : Unmix FCS Data
 - [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
   : Unmix All FCS Files in a Directory
-- [`unmix.ols.fast()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.ols.fast.md)
-  : Unmix OLS Fast
 - [`unmix.ols()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.ols.md)
   : Unmix OLS
+- [`unmix.ols.fast()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.ols.fast.md)
+  : Unmix OLS Fast
 - [`unmix.poisson()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.poisson.md)
   : Unmix Using Poisson Regression
+- [`unmix.wls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.md)
+  : Unmix Using Weighted Least Squares
 - [`unmix.wls.fast()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.fast.md)
   : Unmix WLS Fast
 - [`unmix.wls.per.cell()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.per.cell.md)
   : Unmix WLS Per Cell
-- [`unmix.wls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.md)
-  : Unmix Using Weighted Least Squares
 - [`unmixed.mxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.mxn.plot.md)
   : m \\\times\\ n Unmixed Biplot Grid
 - [`unmixed.nxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.nxn.plot.md)

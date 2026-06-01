@@ -1,7 +1,12 @@
 # 09 Control clean-up
 
-In this article, we’ll try to cover the functions that AutoSpectral
-offers for cleaning your single-stained control data.
+This article pertains to the control cleaning workflow in the legacy
+AutoSpectral pipeline. The [new automated
+pipeline](https://drcytometer.github.io/AutoSpectral/articles/01_Automated_Spectral_Workflow.html)
+for spectral profile extraction does everything automatically.
+
+Here, we’ll try to cover the functions that AutoSpectral offers for
+cleaning your single-stained control data.
 
 If you want to follow along with this, you can download the data for
 this set from Mendeley Data. Alternatively, adapt it to your own
@@ -117,7 +122,8 @@ trouble you’ll have unmixing the data (lower is better).
 It’s recommended to at least do the first cleaning step: setting
 universal negatives. This restricts the calculations to the brightest
 events plus scatter-matched negative events from the universal negative.
-This speeds things up considerably.
+This speeds things up considerably. You can control the number of event
+used with the parameters `negative.n` and `positive.n`.
 
 Note that when you call `clean.controls`, it outputs a copy of your
 `flow.control` structure with a new set of data that is just the “clean”

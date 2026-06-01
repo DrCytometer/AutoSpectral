@@ -22,6 +22,7 @@ clean.controls(
   negative.n = asp$negative.n,
   positive.n = asp$positive.n,
   scatter.match = TRUE,
+  k.neighbors = 3L,
   intermediate.figures = FALSE,
   main.figures = TRUE,
   parallel = FALSE,
@@ -74,8 +75,12 @@ clean.controls(
 - scatter.match:
 
   Logical, default is `TRUE`. Whether to select negative events based on
-  scatter profiles matching the positive events. Defines a region of FSC
-  and SSC based on the distribution of selected positive events.
+  scatter profiles matching the positive events.
+
+- k.neighbors:
+
+  Numeric, number of scatter-matched unstained events to pair with every
+  positive event for background determination. Default is `3`.
 
 - intermediate.figures:
 

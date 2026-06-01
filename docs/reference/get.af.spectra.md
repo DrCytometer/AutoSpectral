@@ -1,8 +1,16 @@
 # Get Autofluorescence Spectra
 
-Extracts autofluorescence spectra from an unstained samples. Intended
-for use with `unmix.autospectral`. Uses FlowSOM (EmbedSOM) clustering
-for rapid identification of cells with similar AF profiles.
+Extracts autofluorescence spectra from an unstained sample. Intended for
+use with `unmix.autospectral`. Uses FlowSOM (EmbedSOM) clustering for
+rapid identification of cells with similar AF profiles.
+
+Optionally deduplicates the resulting spectra by cosine similarity
+(`deduplicate = TRUE`, default) to remove near-identical profiles that
+cause spurious over-correction of near-zero events in fully stained
+samples. When `refine = TRUE`, a second round of targeted modulation is
+performed on cells that remain far from zero after the first-pass
+correction; modulated spectra are screened for redundancy against each
+other and against the base library before being appended.
 
 ## Usage
 
@@ -13,13 +21,17 @@ get.af.spectra(
   spectra,
   som.dim = 10,
   figures = TRUE,
+  save = TRUE,
   plot.dir = NULL,
   table.dir = NULL,
   title = "Autofluorescence spectra",
   verbose = TRUE,
-  refine = FALSE,
+  deduplicate = FALSE,
+  duplication.threshold = 0.99,
+  refine = TRUE,
   problem.quantile = 0.99,
   remove.contaminants = TRUE,
+  contaminant.threshold = 0.99,
   parallel = TRUE,
   threads = if (parallel) 0 else 1,
   heatmap.color.palette = "viridis",
@@ -33,13 +45,14 @@ get.af.spectra(
 
 - unstained.sample:
 
-  Path and file name for a unstained sample FCS file. The sample type
+  Path and file name for an unstained sample FCS file. The sample type
   and processing (protocol) method should match the fully stained
   samples to which the AF will be applied, ideally.
 
 - asp:
 
-  The AutoSpectral parameter list.
+  The AutoSpectral parameter list. Prepare using
+  `get.autospectral.param`.
 
 - spectra:
 
@@ -55,6 +68,11 @@ get.af.spectra(
   Logical, whether to plot the spectral traces and heatmap for the AF
   signatures. Default is `TRUE`.
 
+- save:
+
+  Logical, whether to save the CSV file for the AF signatures. Default
+  is `TRUE`.
+
 - plot.dir:
 
   Directory (folder) where the plots will be saved. Default is `NULL`,
@@ -68,86 +86,105 @@ get.af.spectra(
 - title:
 
   Title for the output spectral plots and csv file. Default is
-  `Autofluorescence spectra`.
+  `"Autofluorescence spectra"`.
 
 - verbose:
 
   Logical, controls messaging. Default is `TRUE`.
 
+- deduplicate:
+
+  Logical, default `FALSE`. Whether to deduplicate AF spectra by cosine
+  similarity after the base clustering stage and again after the
+  refinement stage. Deduplication removes near-identical spectral
+  profiles that can cause overzealous matching of near-zero events in
+  fully stained samples, reducing apparent "squishing". Deduplication is
+  slightly less accurate. Set to `TRUE` to us it.
+
+- duplication.threshold:
+
+  Numeric, default `0.99`. The cosine similarity threshold used for
+  deduplication. A spectrum is dropped if its cosine similarity to any
+  already-retained spectrum meets or exceeds this value. Only used when
+  `deduplicate = TRUE`.
+
 - refine:
 
-  Logical, default is `FALSE`. Controls whether to perform a second
-  round of autofluorescence measurement on "problem cells", which are
-  those with the highest spillover, as defined by `problem.quantile`.
-  When `FALSE`, behavior is identical to versions of AutoSpectral prior
-  to 1.0.0. If you are working with samples containing complex
-  autofluorescence, e.g., tissues or tumors, using `refine=TRUE` will
-  improve autofluorescence extraction in the unmixing at the cost of an
-  increase in unmixing time. The increase in time will depend on the
-  method used to assign autofluorescence spectra per cell (residual
-  based assignment is very fast) and whether you have installed
-  `AutoSpectralRcpp`, which will speed up assignment and unmixing.
+  Logical, default `FALSE`. Controls whether to perform a second round
+  of autofluorescence measurement on "problem cells": those with the
+  highest residual fluorophore signal after the first-pass per-cell AF
+  extraction, as defined by `problem.quantile`. When `FALSE`, behavior
+  is identical to versions of AutoSpectral prior to 1.0.0. If you are
+  working with samples containing complex autofluorescence, e.g. tissues
+  or tumors, using `refine = TRUE` will improve autofluorescence
+  extraction at the cost of an increase in unmixing time.
 
 - problem.quantile:
 
-  Numeric, default `0.99`. The quantile for determining which cells will
-  be considered "problematic" after unmixing with per-cell AF
-  extraction. Cells in the `problem.quantile` or above with respect to
-  total signal in the fluorophore (non-AF) channels after per-cell AF
-  extraction will be used to determine additional autofluorescence
-  spectra, using a second round of clustering and modulation of the
-  previously selected autofluorescence spectra. A value of `0.99` means
-  the top 1% of cells, those farthest from zero, will be selected for
-  further investigation.
+  Numeric, default `0.99`. The quantile for determining which cells are
+  "problematic" after first-pass per-cell AF extraction. Cells at or
+  above this quantile with respect to the L2 norm of their unmixed
+  fluorophore channels (i.e. still furthest from zero) are selected for
+  the second-round modulation. A value of `0.99` means the top 1% of
+  cells.
 
 - remove.contaminants:
 
-  Logical, default is `TRUE`. A QC check is performed to exclude any
-  autofluorescence spectra that are nearly identical to the fluorophore
-  signatures in `spectra`. This helps deal with low-level contamination
-  of unstained samples by single-stained control samples, which happens
-  sometimes. To include these AF spectra, which can mess up unmixing if
-  they are really fluorophore spectra, set `FALSE`.
+  Logical, default `TRUE`. A QC check is performed to exclude any
+  autofluorescence spectrum that is nearly identical to a fluorophore
+  signature in `spectra`. This guards against low-level contamination of
+  the unstained sample by single-stained controls.
+
+- contaminant.threshold:
+
+  Numeric, default `0.99`. When `remove.contaminants = TRUE`, events in
+  the unstained sample whose cosine similarity to any fluorophore
+  spectrum in `spectra` meets or exceeds this value are removed
+  **before** SOM construction. This per-event filter is more sensitive
+  than the post-SOM centroid check because contaminating events are
+  unlikely to dominate an entire SOM node. Lower values are more
+  aggressive; the practical range is roughly 0.98–0.999.
 
 - parallel:
 
-  Logical, default is `TRUE`, which enables parallel processing for
-  per-cell AF identification. Used when `refine=TRUE`.
+  Logical, default `TRUE`, which enables parallel processing for
+  per-cell AF identification. Used when `refine = TRUE`.
 
 - threads:
 
   Numeric, defaults to a single thread for sequential processing
-  (`parallel=FALSE`) or all available cores if `parallel=TRUE`.Used when
-  `refine=TRUE`.
+  (`parallel = FALSE`) or all available cores if `parallel = TRUE`. Used
+  when `refine = TRUE`.
 
 - heatmap.color.palette:
 
-  Optional character string defining the viridis color palette to be
-  used for the fluorophore traces. Default is `viridis`. Options are the
-  viridis color options: `magma`, `inferno`, `plasma`, `viridis`,
-  `cividis`, `rocket`, `mako` and `turbo`.
+  Optional character string defining the viridis color palette for the
+  fluorophore heatmap. Default is `"viridis"`. Options: `"magma"`,
+  `"inferno"`, `"plasma"`, `"viridis"`, `"cividis"`, `"rocket"`,
+  `"mako"`, `"turbo"`.
 
 - spectral.trace.color.palette:
 
-  Optional character string defining the color palette to be used for
-  the AF traces. Default is `NULL`, in which case default R Brewer
-  colors will be assigned automatically. Options are the viridis color
-  options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`,
-  `mako` and `turbo`.
+  Optional character string defining the color palette for the AF
+  traces. Default is `NULL` (default R Brewer colors). Options: same as
+  `heatmap.color.palette`.
 
 - af.fill.color:
 
-  Color for the shaded region indicating the range of variation in the
-  autofluorescence. Feeds to `fill` in `geom_ribbon`. Default is "red".
+  Color for the shaded region indicating the range of autofluorescence
+  variation in the variant plot. Default is `"red"`.
 
 - af.line.color:
 
-  Color for the line representing the median autofluorescence spectrum.
-  Default is "black".
+  Color for the median autofluorescence line in the variant plot.
+  Default is `"black"`.
 
 ## Value
 
-A matrix of autofluorescence spectra.
+A matrix of autofluorescence spectra (spectra in rows, detectors in
+columns). Row 1 is the population mean of the base spectra; subsequent
+rows are the deduplicated base spectra and, if `refine = TRUE`,
+modulated spectra for problem cells.
 
 ## References
 
@@ -155,6 +192,6 @@ Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
 visualization and interpretation of cytometry data." *Cytometry Part A*,
 87(7), 636-645.
 [doi:10.1002/cyto.a.22625](https://doi.org/10.1002/cyto.a.22625) Wehrens
-R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
-3.0.” *Journal of Statistical Software*, *87*(7), 1-18.
+R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen
+3.0." *Journal of Statistical Software*, *87*(7), 1-18.
 [doi:10.18637/jss.v087.i07](https://doi.org/10.18637/jss.v087.i07)

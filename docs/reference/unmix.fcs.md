@@ -11,7 +11,7 @@ unmix.fcs(
   spectra,
   asp,
   flow.control,
-  method = "AutoSpectral",
+  method = c("AutoSpectral", "OLS", "WLS", "Poisson", "FastPoisson"),
   weighted = FALSE,
   weights = NULL,
   af.spectra = NULL,
@@ -63,13 +63,7 @@ unmix.fcs(
   optimize fluorophore spectra, provide `spectra.variants`. To perform
   other types of unmixing, select from the options: `OLS`, `WLS`,
   `Poisson` or `FastPoisson`. `FastPoisson` requires installation of
-  `AutoSpectralRcpp`.There is also `Automatic`, which switches depending
-  on the inputs provided: it uses `AutoSpectral` for AF extraction if
-  `af.spectra` are provided, and automatically selects `OLS` or `WLS`
-  depending on which is normal for the given cytometer in
-  `asp$cytometer`. This means that files from the ID7000, A8 and S8 will
-  be unmixed using `WLS` while others will be unmixed with `OLS`, if
-  AutoSpectral unmixing is not activated.
+  `AutoSpectralRcpp`.
 
 - weighted:
 

@@ -19,6 +19,7 @@ get.universal.negative(
   asp,
   control.type,
   scatter.match = TRUE,
+  k.neighbors = 3L,
   intermediate.figures = FALSE,
   main.figures = TRUE,
   verbose = TRUE
@@ -76,6 +77,11 @@ get.universal.negative(
 
   Logical indicating whether to perform scatter matching. Default is
   `TRUE`.
+
+- k.neighbors:
+
+  Numeric, number of scatter-matched unstained events to pair with every
+  positive event for background determination. Default is `3`.
 
 - intermediate.figures:
 

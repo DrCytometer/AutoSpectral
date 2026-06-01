@@ -1,4 +1,8 @@
-# 01 Full Workflow Example
+# 01 Full Legacy Workflow Example
+
+This is the legacy workflow using gating and requiring more user input.
+For the newer, less complicated workflow, see [Automated
+Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Automated_Spectral_Workflow.html)
 
 ## Installation
 
@@ -21,7 +25,7 @@ remotes::install_github("DrCytometer/AutoSpectral")
 Download the data for today’s example from [Mendeley
 Data](https://data.mendeley.com/datasets/ch5dnspd79/1).
 
-These data are a 9-colour panel run on a 5-laser Cytek Aurora. The
+These data are a 7-colour panel run on a 5-laser Cytek Aurora. The
 samples are from spleen, lung and liver. This is a pretty simple
 experiment, which is nice since it will run quickly. The different
 tissues allow us to look at how to handle diverse autofluorescence
@@ -563,7 +567,7 @@ Heatmap](figures/Workflow/Clean_autospectral_similarity_matrix.jpg)
 
 Cosine Similarity Heatmap
 
-You also get a “Hotspot” matrix, as in the paper my Peter Mage et al.
+You also get a “Hotspot” matrix, as in the paper by Peter Mage et al.
 
 ![Hotspot Matrix
 Heatmap](figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg)
@@ -699,9 +703,9 @@ The `method` is automatically appended to the output file name. If you
 wish to add something else to the file name, use the `file.suffix`
 argument.
 
-More details on WLS unmmixing, including calculating and re-using
-weights will be detailed in a separate article later. Reach out if this
-is important to you now.
+More details on WLS unmixing, including calculating and re-using weights
+are detailed in [dedicated
+article](https://drcytometer.github.io/AutoSpectral/articles/18_Weighted_Least_Squares.html)
 
 Okay, that’s basic unmixing. And, I think you should see a bit of
 improvement using AutoSpectral even with the same unmixing algorithms

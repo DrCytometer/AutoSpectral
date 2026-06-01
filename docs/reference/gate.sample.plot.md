@@ -17,7 +17,8 @@ gate.sample.plot(
   color.palette = "mako",
   max.points = 50000,
   gate.color = "darkgoldenrod1",
-  switch.n = 20000
+  switch.n = 10000,
+  raster.bins = 256L
 )
 ```
 
@@ -70,8 +71,15 @@ gate.sample.plot(
 
 - switch.n:
 
-  Number of points to trigger the switch to using slower but more robust
-  density plotting. Default is `1e4`.
+  Minimum number of points required to render density contours. Below
+  this threshold only the rasterised scatter layer is shown. Default is
+  `1e4`.
+
+- raster.bins:
+
+  Number of pixels on each axis of the rasterised scatter image. Higher
+  values give finer detail at the cost of a little extra memory. Default
+  is `256L`.
 
 ## Value
 

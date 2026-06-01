@@ -18,7 +18,8 @@ run.universal.negative(
   spectral.channel,
   asp,
   control.type,
-  scatter.match,
+  scatter.match = TRUE,
+  k.neighbors = 3L,
   intermediate.figures = FALSE,
   main.figures = TRUE,
   verbose = TRUE
@@ -70,11 +71,17 @@ run.universal.negative(
 
 - control.type:
 
-  A character string specifying the type of control: `beads` or `cells`
+  A character string specifying the type of control: `beads` or `cells`.
 
 - scatter.match:
 
-  A logical value indicating whether scatter matching is performed.
+  Logical, default is `TRUE`. Whether to select negative events based on
+  scatter profiles matching the positive events.
+
+- k.neighbors:
+
+  Numeric, number of scatter-matched unstained events to pair with every
+  positive event for background determination. Default is `3`.
 
 - intermediate.figures:
 

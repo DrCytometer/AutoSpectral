@@ -17,7 +17,8 @@ create.control.file(
   control.dir,
   asp,
   fill.gate.name = TRUE,
-  filename = "fcs_control_file"
+  filename = "fcs_control_file",
+  legacy = FALSE
 )
 ```
 
@@ -41,6 +42,17 @@ create.control.file(
 
   Character string defining the output filename. Default is
   "fcs_control_file", to which .csv will be appended.
+
+- legacy:
+
+  Logical. If `FALSE`, gating-related columns will not be created and
+  the control file will be suitable only for the new automated spectral
+  extraction pipeline using
+  [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md).
+  To use the version 1 "legacy" pipeline for the extraction of
+  fluorophore spectra, using gating and
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md),
+  set `legacy=TRUE`.
 
 ## Value
 

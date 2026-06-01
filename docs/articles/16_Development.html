@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>16 Development • AutoSpectral</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="16 Development">
 </head>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,8 +33,10 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/01_Full_AutoSpectral_Workflow.html">01 Full Workflow Example</a></li>
-    <li><a class="dropdown-item" href="../articles/02_Control_File_example.html">02 Creating the control file</a></li>
+<li><a class="dropdown-item" href="../articles/01_Automated_Spectral_Workflow.html">01 Automated Spectral Workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/01_Full_AutoSpectral_Workflow.html">01 Full Legacy Workflow Example</a></li>
+    <li><a class="dropdown-item" href="../articles/02_Control_File_example.html">02 Creating the Control File</a></li>
+    <li><a class="dropdown-item" href="../articles/02b_Control_File_Complex_Example.html">02b Control File — Complex Panels</a></li>
     <li><a class="dropdown-item" href="../articles/03_Aurora_example.html">03 Aurora AutoSpectral Example</a></li>
     <li><a class="dropdown-item" href="../articles/04_ID7000_WLS_example.html">04 ID7000 WLS Example</a></li>
     <li><a class="dropdown-item" href="../articles/05_Preparing_Controls.html">05 Preparing Controls</a></li>
@@ -50,6 +52,7 @@
     <li><a class="dropdown-item" href="../articles/15_Updates_And_Issues.html">15 Updates and Issues</a></li>
     <li><a class="dropdown-item" href="../articles/16_Development.html">16 Development</a></li>
     <li><a class="dropdown-item" href="../articles/17_Acknowledgements.html">17 Acknowledgements</a></li>
+    <li><a class="dropdown-item" href="../articles/18_Weighted_Least_Squares.html">18 Weighted Least Squares Unmixing</a></li>
   </ul>
 </li>
       </ul>
@@ -98,77 +101,8 @@ initial linearity response curve for the APDs. For FACSDiscover systems,
 this is likely the QSPE values, which are in the FCS files.</p></li>
 <li><p>I’d need to sit down and work out the normalization functions.
 This hasn’t been a top priority.</p></li>
-<li>
-<p>Parallelization improvements.</p>
-<ul>
-<li>The parallelization of functions like
-<code>define.flow.control</code> was problematic on Windows due to
-memory usage with <code>futures</code> and the tendency of Windows to
-usurp threads that R was using.</li>
-<li>A new parallel backend using <code>parLapply</code> on Windows or
-<code>mclapply</code> on Mac/Linux has been implemented. This should
-gracefully fall back to sequential <code>lapply</code> processing if it
-runs into any problems when being set-up.</li>
-<li>Parallelization of <code><a href="../reference/unmix.autospectral.html">unmix.autospectral()</a></code> in base R can
-be ~30% faster for per-cell unmixing if we use <code>foreach</code> with
-<code>doParallel</code>, but this introduces at least three new
-dependencies and is a minor improvement compared with running via
-Rcpp.</li>
-<li>I am struggling to produce fast adaptations of AutoSpectral for
-MacOS because I do not have access to MacOS. Suggestions would be
-appreciated for better implementation of the <code>mclapply</code>
-parallelization for Mac. Perhaps more importantly, AutoSpectralRcpp
-relies on OpenMP, and OpenMP is difficult to set up and use on Mac, in
-my understanding. If it would help, I could produce a version of
-AutoSpectralRcpp that just relies on <code>RcppArmadillo</code> without
-OpenMP.</li>
-<li>Memory management. This is a problem for unmixing large files, I
-believe.</li>
-</ul>
-</li>
-<li>
-<p>Code clean-up for <code>define.flow.control</code>.</p>
-<ul>
-<li>Currently, we read in all of the FCS data into active memory in R,
-gating as we go to reduce data size. It might be better to restructure
-this to simply generate gates and retain indices of gated events in each
-file. FCS files would need to be read in on the fly for
-<code>clean.controls</code> and <code>get.fluorophore.spectra</code>.
-This would require a faster FCS reader, such as the
-<code>data.table</code>-based approach in Nathan Laniewski’s <a href="https://github.com/nlaniewski/flowstate" class="external-link">flowState</a>.</li>
-</ul>
-</li>
 <li><p>More flexibility in negative/unstained samples.</p></li>
 <li><p>Allow multiple controls per fluorophore.</p></li>
-<li>
-<p>An alternative to the automated gating.</p>
-<ul>
-<li>This is now implemented in version 1.5.0</li>
-<li>This is based on the “Cellular Landmarks” approach from Nathan
-Laniewski’s <a href="https://github.com/nlaniewski/flowstate" class="external-link">flowState</a>
-</li>
-</ul>
-</li>
-<li>
-<p>Speed up per-cell AF extraction</p>
-<ul>
-<li>This is now implemented in v1.0.0, figuring out what each cell’s AF
-signature is without unmixing each AF possibility on all cells.
-Extraction is parallelized via C++ in AutoSpectralRcpp.</li>
-</ul>
-</li>
-<li>
-<p>Speed up per-cell fluorophore optimization.</p>
-<ul>
-<li>This is now implemented in v1.0.0 through strategic screening of
-variants for alignment with each cell’s profile/residual.</li>
-<li>The pure R version will now benefit from parallelization,
-particularly on Mac/Linux.</li>
-<li>At this point, I do not expect more major gains in performance. It
-has been suggested, however, that GPU acceleration may help. If you have
-experience with that and can offer insights, please reach out.</li>
-</ul>
-</li>
 <li>
 <p>Fix the issue causing discontinuities.</p>
 <ul>
@@ -184,8 +118,8 @@ channel where the optimized single spectrum has less than 5% of the peak
 detector signal is now regularized towards the optimized spectrum. This
 focuses the variation on the “peaks”, which is what causes the unmixing
 errors and spread.</li>
-<li>This should be improved further with the next round of updates,
-tentatively 1.6.0</li>
+<li>This should be eliminated entirely with the next round of updates,
+tentatively 1.6.0.</li>
 </ul>
 </li>
 <li>

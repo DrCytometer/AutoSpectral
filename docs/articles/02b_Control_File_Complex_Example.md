@@ -1,0 +1,234 @@
+# 02b Control File — Complex Panels
+
+This article covers control file setup for panels that are more complex
+than a straightforward single-cell-type staining with one unstained
+sample. Specifically:
+
+1.  **Mixed bead and cell controls** — different universal negatives for
+    each type
+2.  **Viability markers** — how the `is.viability` column affects the
+    legacy gating pipeline (not the automated pipeline)
+3.  **Fluorophores not in the AutoSpectral database** — how to handle
+    them and how to fill in their peak channel manually
+4.  **Fluorophore name disambiguation** when you have both beads and
+    cells for the same target (not recommended, but possible)
+
+This builds on the basics in [02 Creating the Control
+File](https://drcytometer.github.io/AutoSpectral/articles/02_Control_File_example.html).
+The automated pipeline
+([`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md))
+is used throughout.
+
+``` r
+
+library(AutoSpectral)
+asp <- get.autospectral.param(cytometer = "aurora")
+control.dir <- "~/my_experiment/controls"
+create.control.file(control.dir, asp)
+control.file <- "fcs_control_file.csv"
+```
+
+## Mixed bead and cell controls
+
+Many panels use compensation beads for dim or rare markers and cell
+controls for bright or common ones. Both types can coexist in a single
+control file.
+
+The `control.type` column tells AutoSpectral how to treat each sample.
+Set each row to `"cells"` or `"beads"` (lower case). In the automated
+pipeline:
+
+- **Cells** are processed with AF orthogonalisation and
+  cosine-similarity filtering against the universal negative’s AF
+  vector. Scatter-matched AF subtraction uses the nearest events from
+  the paired unstained cell sample.
+- **Beads** are assumed to have homogeneous, low-AF backgrounds. Cosine
+  filtering against an AF vector is skipped. The “universal” negative
+  for a bead control should be an unstained bead sample. If your beads
+  have separate negative and positive beads, use the unstained positive
+  beads as the universal negative.
+
+[`check.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/check.control.file.md)
+enforces that the `control.type` of a sample and its
+`universal.negative` must match — a cell control paired with a bead
+negative (or vice versa) is flagged as an error.
+
+### Naming fluorophores when you have both beads and cells
+
+[`check.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/check.control.file.md)
+requires every `fluorophore` value to be unique. If you have both a bead
+and a cell single-stained control for the same fluorophore, give them
+distinct names. For example:
+
+| filename            | fluorophore | control.type | universal.negative  |
+|---------------------|-------------|--------------|---------------------|
+| PE_cells.fcs        | PE          | cells        | Unstained_cells.fcs |
+| PE_beads.fcs        | PE beads    | beads        | Unstained_beads.fcs |
+| Unstained_cells.fcs | AF          | cells        | Unstained_cells.fcs |
+| Unstained_beads.fcs | Negative    | beads        | Unstained_beads.fcs |
+
+The name in the `fluorophore` column becomes the parameter name in the
+unmixed FCS file, so pick whichever version you want to appear in your
+analysis software. You will then run
+[`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md)
+once and receive spectra for both `PE` and `PE beads`. Choose one for
+unmixing — typically whichever produces the cleaner, more accurate
+spectrum (check the QC ribbon plots in `figure_spectral_ribbon/`).
+
+If you want to unmix using only one, subset the spectra matrix before
+passing it to
+[`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md):
+
+``` r
+
+# keep only the cell-based PE spectrum
+spectra.subset <- spectra[ rownames(spectra) != "PE beads", ]
+```
+
+### Multiple unstained samples
+
+When you have more than one unstained sample (one for cells, one for
+beads), both must appear in the `filename` column. Set `fluorophore` to
+`AF` for the unstained cell sample and to `Negative` for the unstained
+bead sample.
+[`check.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/check.control.file.md)
+enforces that every value in `universal.negative` must itself appear as
+a row in `filename`, and that it must be labelled `AF` or `Negative`.
+
+``` r
+
+issues <- check.control.file(control.dir, control.file, asp)
+```
+
+## Viability markers
+
+A viability dye labels dead cells selectively. Dead cells sit to the
+left of the live population on FSC. This only matters for the **legacy
+pipeline**
+([`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)),
+which uses the `is.viability` column to widen the FSC gate leftward to
+capture dead cells. The column is ignored by
+[`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md).
+
+If you are using the automated pipeline, you do not need to fill in
+`is.viability`. The automated extraction selects high-expressing events
+based on the peak channel signal and cosine filtering rather than
+scatter gating, so it works correctly for viability dyes without any
+special configuration.
+
+For completeness, the legacy approach is:
+
+    | filename           | fluorophore | is.viability |
+    |--------------------|-------------|--------------|
+    | LiveDead_cells.fcs | eFluor780   | TRUE         |
+
+For the v1.5.0 landmark gating system, assign the viability control to a
+dedicated gate group by setting `gate.name` to something like `"dead"`
+and `gate.define = TRUE`. See the [Full
+Workflow](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html)
+and [Advanced
+Gating](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html)
+articles for details.
+
+## Fluorophores not in the database
+
+If AutoSpectral cannot match a file name to a known fluorophore, you
+will see `No Match` in the `fluorophore` column. This is a validation
+error —
+[`check.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/check.control.file.md)
+will not let you proceed until every `No Match` is replaced.
+
+**Step 1 — fill in `fluorophore`.** Write any name you like. This name
+will appear in the unmixed FCS file and in all AutoSpectral plots, so
+choose carefully. The name does not need to match any database entry for
+the pipeline to run.
+
+**Step 2 — fill in `channel`.** This is the expected peak detection
+channel for the fluorophore on your cytometer. You can find it using:
+
+- [Cytek Cloud](https://cloud.cytekbio.com/) (for Cytek instruments)
+- [BD Spectrum
+  Viewer](https://www.bdbiosciences.com/en-us/resources/bd-spectrum-viewer)
+  (for BD instruments)
+- [BioLegend Spectra
+  Analyzer](https://www.biolegend.com/en-gb/spectra-analyzer)
+- [FluoroFinder](https://fluorofinder.com/) — note that FluoroFinder
+  channel names do not always match the actual names in the FCS file, so
+  treat this as approximate and verify against the [cytometer
+  database](https://docs.google.com/spreadsheets/d/1wj7QPkgpsuPNeVKyt-WWdBu5R48aZTgEbH8-_bpKeBY/edit?usp=sharing).
+
+In the **automated pipeline**, the `channel` column is optional — if you
+leave it blank,
+[`check.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/check.control.file.md)
+will issue a warning and
+[`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md)
+will derive the peak channel empirically from the data. However,
+providing the correct channel enables the QC step to verify the
+extraction against the expected peak, which is strongly recommended. An
+unrecognised fluorophore will not have a spectral reference library
+entry, so the cosine-similarity QC check against the reference library
+will be skipped for that fluorophore; only the peak-signal check will
+apply.
+
+**Step 3 (optional but encouraged) — add to the database.** If you add
+your fluorophore (with synonyms and peak channel entries for each
+cytometer) to the [fluorophore
+database](https://docs.google.com/spreadsheets/d/14j4lAQ6dkjDBKMborDv_MkSptyNBqZiBsq5jNNSCoiQ/edit?usp=sharing),
+it will be recognised automatically by future versions of AutoSpectral.
+Changes are incorporated with the next package update.
+
+## Putting it together — example control file
+
+Here is what a completed control file might look like for a panel with
+bead and cell controls, an unstained bead sample, a viability dye, and
+one fluorophore not in the database:
+
+| filename | fluorophore | marker | channel | control.type | universal.negative |
+|----|----|----|----|----|----|
+| BV421_cells.fcs | BV421 | CD4 | V4-A | cells | Unstained_cells.fcs |
+| PE_beads.fcs | PE | CD14 | YG3-A | beads | Unstained_beads.fcs |
+| eFluor780_cells.fcs | eFluor780 | Viability |  | cells | Unstained_cells.fcs |
+| NewDye660_cells.fcs | NewDye660 | CD8 | R2-A | cells | Unstained_cells.fcs |
+| Unstained_cells.fcs | AF |  |  | cells | Unstained_cells.fcs |
+| Unstained_beads.fcs | Negative |  |  | beads | Unstained_beads.fcs |
+
+Notes on this example:
+
+- `eFluor780` has no `channel` entry — the automated pipeline will
+  derive the peak empirically and warn about the missing channel. In
+  practice it is best to fill this in.
+- `NewDye660` is a hypothetical fluorophore not in the database. Its
+  `channel` (`R2-A`) has been filled in manually.
+- Both unstained samples are present, with matching `control.type`
+  values for each paired control.
+
+## Running the check
+
+``` r
+
+issues <- check.control.file(control.dir, control.file, asp)
+```
+
+The check is run in automated mode (`legacy = FALSE` by default), so
+gating columns are not validated. Pay attention to:
+
+| Severity | What to look for |
+|----|----|
+| **Error** | `No Match` in fluorophore; duplicate fluorophore names; `control.type` mismatch between sample and its universal negative; universal negative filename not found; `AF` control absent or set to `beads` |
+| **Warning** | Missing `channel` for non-AF/Negative rows; event count \< 5,000; cytometer name mismatch |
+
+Fix all errors before proceeding. When the check passes with a green
+message, run spectral extraction:
+
+``` r
+
+spectra <- get.spectra.automated(
+  control.dir      = control.dir,
+  control.def.file = control.file,
+  asp              = asp
+)
+```
+
+Check the outputs in `figure_spectral_ribbon/` to verify that spectra
+for both bead and cell controls look reasonable, then select the best
+version of each for unmixing.

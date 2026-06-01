@@ -11,8 +11,7 @@ scatter.match.plot(
   neg.expr.data,
   fluor.name,
   scatter.param,
-  asp,
-  color.palette = "rainbow"
+  asp
 )
 ```
 
@@ -37,15 +36,7 @@ scatter.match.plot(
 - asp:
 
   The AutoSpectral parameter list. Prepare using
-  `get.autospectral.param`
-
-- color.palette:
-
-  Optional character string defining the viridis color palette to be
-  used for the fluorophore traces. Default is `rainbow`, which will be
-  similar to FlowJo or SpectroFlo. Other options are the viridis color
-  options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`,
-  `mako` and `turbo`.
+  `get.autospectral.param`.
 
 ## Value
 

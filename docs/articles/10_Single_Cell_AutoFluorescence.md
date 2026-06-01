@@ -65,10 +65,8 @@ how the AF signatures present are likely to interfere with the unmixing.
 asp <- get.autospectral.param( cytometer = "aurora", figures = TRUE )
 control.dir <- "./SSC"
 control.file <- "fcs_control_file.csv"
-flow.control <- define.flow.control( control.dir, control.file, asp )
-flow.control <- clean.controls( flow.control, asp )
-spectra <- get.fluorophore.spectra( flow.control, asp, use.clean.expr = TRUE, 
-                                    title = "Clean Spectra" )
+flow.control <- reload.flow.control( control.dir, control.file, asp )
+spectra <- get.spectra.automated( control.dir, contro.file, asp )
 ```
 
 Now we are ready to get the AF spectra. For this data set, we have
@@ -100,6 +98,14 @@ simple AF mixtures like PBMCs, but it does not hurt except for taking
 longer during the unmixing. If you have really messy samples, you could
 play around with larger SOMs, but the default settings work well for
 mouse lung, which is pretty terrible for AF.
+
+If you feel that the number of AF spectra being generated is overkill,
+you can reduce the number by deduplicating similar spectral profile.
+This can be accessed through the logical parameter `deduplicate`
+(default is `FALSE`) and the cosine similarity threshold controlled by
+`deduplication.threshold = 0.99`. In testing, deduplication reduces the
+accuracy of per-cell AF assignment, as should be expected, but the
+impact is minor.
 
 We get output plots of the AF signatures in the
 `figure_autofluorescence` folder.
@@ -150,7 +156,8 @@ on the worst offenders. This is most useful for complex tissue samples,
 and allows extraction of the problematic last 1-3% of cells that are in
 the wrong place. To use this expanded set, run
 [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
-with `refine=TRUE`.
+with `refine=TRUE`. Note that `refine = TRUE` is the default as of
+version 1.0.0.
 
 ## Extracting AF for each cell
 
@@ -174,37 +181,15 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
 
 This will use OLS to find the optimal AF per cell.
 
-Alternatively, we can call method = “Automatic”, which is the default.
-
-``` r
-
-unmix.fcs( file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
-           spectra,
-           asp,
-           flow.control,
-           af.spectra = lung.af )
-```
-
 Unmixed FCS files will appear in folder `./autospectral_unmixed`.
 
 ### Go Faster
 
-Per-cell AF extraction involves a lot of unmixing. Since this is a lot
-of linear algebra, using an optimized library for linear algebra speeds
-this process up a lot. We suggest swapping out the default R BLAS and
-LAPACK dll files for the optimized versions in OpenBLAS (or other even
-better versions). This is relatively simple to do:
-<https://github.com/david-cortes/R-openblas-in-windows>
+Per-cell AF extraction involves a lot of unmixing. Visit the article on
+[Speed](https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.html)
+for tips on setting up your computer for faster processing.
 
-Expect speed ups of ~5x.
-
-Don’t set multiple threads for the BLAS. That will interfere with the
-parallel processing used in other parts of AutoSpectral and probably
-other R packages. That said, this is now dealt with automatically by
-AutoSpectral, so you shouldn’t have any issues even if you do. If you
-don’t know what this means, don’t worry about it.
-
-Additionally, as of version 1.0.0, the process of assigning AF
-signatures to individual cells (and then unmixing them) has been sped up
-in C++. Processing time is now comparable to standard unmixing. For
-this, you will need to install `AutoSpectralRcpp`.
+As of version 1.0.0, the process of assigning AF signatures to
+individual cells (and then unmixing them) has been sped up in C++.
+Processing time is now comparable to standard unmixing. For this, you
+will need to install `AutoSpectralRcpp`.

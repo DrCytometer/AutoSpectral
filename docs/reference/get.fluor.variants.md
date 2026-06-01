@@ -1,8 +1,23 @@
 # Get Fluorophore Variants
 
 Assesses variation in the spectral signature of a single-stained flow
-cytometry control sample. Uses SOM-based clustering on the brightest
-positive events in the file.
+cytometry control sample using SOM clustering on scatter-matched,
+background-corrected positive events.
+
+Autofluorescence is characterised **in situ** from the paired
+universal-negative file specified in the control table (or from the
+lower 25\\ available). The AF mean vector is unit-normalised and
+projected out of each event to identify the empirical peak detector,
+mirroring the approach in `get.spectra.automated`. All positive events
+above the raw threshold in the (empirical) peak channel are selected, up
+to `n.cells` (randomly downsampled when more are present). For each
+selected event, \\k\\ scatter-space nearest neighbours are found in the
+unstained pool and their spectral values are averaged to form a
+per-event background estimate, which is then subtracted. SOM clustering
+on the resulting background-corrected matrix recovers the
+population-level distribution of spectral shapes. A cosine-similarity QC
+step retains only SOM centroids sufficiently similar to the reference
+spectrum, followed by off-peak smoothing.
 
 ## Usage
 
@@ -13,20 +28,21 @@ get.fluor.variants(
   control.dir,
   asp,
   spectra,
-  af.spectra,
-  n.cells,
-  som.dim,
   figures,
   output.dir,
   verbose,
   spectral.channel,
+  scatter.channel,
   universal.negative,
   control.type,
   raw.thresholds,
   unmixed.thresholds,
   flow.channel,
-  refine = TRUE,
-  problem.quantile = 0.95,
+  af.pcs,
+  n.cells = 10000L,
+  som.dim = 10L,
+  k.neighbors = 3L,
+  sim.threshold = 0.985,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
@@ -38,65 +54,51 @@ get.fluor.variants(
 
 - fluor:
 
-  The name of the fluorophore.
+  Character. Name of the fluorophore.
 
 - file.name:
 
-  A named vector of file names for the samples.
+  Named character vector of control FCS filenames, named by fluorophore.
 
 - control.dir:
 
-  The directory containing the control files.
+  Character. Directory containing the control FCS files.
 
 - asp:
 
-  The AutoSpectral parameter list.
+  The AutoSpectral parameter list from
+  [`get.autospectral.param()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.md).
 
 - spectra:
 
-  A matrix containing the spectral data. Fluorophores in rows, detectors
-  in columns.
-
-- af.spectra:
-
-  Spectral signatures of autofluorescences, normalized between 0 and 1,
-  with fluorophores in rows and detectors in columns. Prepare using
-  `get.af.spectra`.
-
-- n.cells:
-
-  Numeric. Number of cells to use for defining the variation in spectra.
-  Up to `n.cells` cells will be selected as positive events in the peak
-  channel for each fluorophore, above the 99.5th percentile level in the
-  unstained sample.
-
-- som.dim:
-
-  Numeric. Number of x and y dimensions to use in the SOM for clustering
-  the spectral variation.
+  Numeric matrix. Reference spectra; fluorophores in rows, detectors in
+  columns.
 
 - figures:
 
-  Logical, controls whether the variation in spectra for each
-  fluorophore is plotted in `output.dir`. Default is `TRUE`.
+  Logical. Whether to save a spectral-variant plot. Default `TRUE`.
 
 - output.dir:
 
-  File path to whether the figures and .rds data file will be saved.
-  Default is `NULL`, in which case `asp$variant.dir` will be used.
+  Character. Directory for figures.
 
 - verbose:
 
-  Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+  Logical. Whether to print progress messages. Default `TRUE`.
 
 - spectral.channel:
 
-  A vector of spectral channels.
+  Character vector of spectral detector channel names.
+
+- scatter.channel:
+
+  Character vector of scatter parameter names (e.g. `"FSC-A"`,
+  `"SSC-A"`) used for KNN scatter matching against the unstained pool.
 
 - universal.negative:
 
-  A named vector of unstained negative samples, with names corresponding
-  to the fluorophores.
+  Named character vector mapping fluorophore names to their paired
+  unstained FCS filename, or `"FALSE"` / `NA` when none is available.
 
 - control.type:
 
@@ -105,9 +107,8 @@ get.fluor.variants(
 
 - raw.thresholds:
 
-  A named vector of numerical values corresponding to the threshold for
-  positivity in each raw detector channel. Determined by the 99.5th
-  percentile on the unstained sample, typically.
+  Named numeric vector of per-channel positivity thresholds (typically
+  the 99.5th percentile of the unstained sample).
 
 - unmixed.thresholds:
 
@@ -118,55 +119,58 @@ get.fluor.variants(
 
 - flow.channel:
 
-  A named vector of peak raw channels, one per fluorophore.
+  Named character vector of expected peak raw channels, one per
+  fluorophore.
 
-- refine:
+- af.pcs:
 
-  Logical, default is `TRUE`. Controls whether to perform a second round
-  of variation measurement on "problem cells", which are those with the
-  highest spillover, as defined by `problem.quantile`.
+  Matrix of autofluorescence-defining principal components.
 
-- problem.quantile:
+- n.cells:
 
-  Numeric, default `0.95`. The quantile for determining which cells will
-  be considered "problematic" after unmixing with per-cell AF
-  extraction. Cells in the `problem.quantile` or above with respect to
-  total signal in the fluorophore (non-AF) channels after per-cell AF
-  extraction will be used to determine additional autofluorescence
-  spectra, using a second round of clustering and modulation of the
-  previously selected autofluorescence spectra. A value of `0.95` means
-  the top 5% of cells, those farthest from zero, will be selected for
-  further investigation.
+  Integer, default `10000`. Maximum number of positive events used for
+  SOM clustering. Files with more events above threshold are randomly
+  downsampled to this number.
+
+- som.dim:
+
+  Integer, default `10`. Side length of the square SOM grid. Produces up
+  to `som.dim^2` candidate variant spectra before cosine QC.
+
+- k.neighbors:
+
+  Integer, default `3`. Number of scatter-space nearest neighbours from
+  the unstained pool used to form the per-event background estimate.
+
+- sim.threshold:
+
+  Numeric, default `0.985`. Minimum cosine similarity between a SOM
+  centroid and the reference spectrum for the centroid to be retained as
+  a variant.
 
 - variant.fill.color:
 
-  Color for the shaded region indicating the range of variation in the
-  spectra. Feeds to `fill` in `geom_ribbon`. Default is "red".
+  Color for the shaded ribbon in the variant plot. Default `"red"`.
 
 - variant.fill.alpha:
 
-  Transparency (alpha) for the color in `variant.fill.color`. How
-  intense the color of the variant spectra will be. Default is `0.7`
+  Alpha for `variant.fill.color`. Default `0.7`.
 
 - median.line.color:
 
-  Color for the line representing the median or optimized single
-  spectrum. Default is "black".
+  Color for the reference-spectrum line. Default `"black"`.
 
 - median.linewidth:
 
-  Width of the line for the single optimized spectrum. Default is `1`.
+  Width of the reference-spectrum line. Default `1`.
 
 ## Value
 
-A matrix with the flow expression data.
+A numeric matrix; variants in rows, detectors in columns, values
+normalised to \\\[0, 1\]\\. When no centroids survive cosine QC the
+single reference spectrum is returned (one row).
 
 ## References
 
-Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-visualization and interpretation of cytometry data." *Cytometry Part A*,
-87(7), 636-645.
-[doi:10.1002/cyto.a.22625](https://doi.org/10.1002/cyto.a.22625) Wehrens
-R, Kruisselbrink J (2018). “Flexible Self-Organizing Maps in kohonen
-3.0.” *Journal of Statistical Software*, *87*(7), 1-18.
-[doi:10.18637/jss.v087.i07](https://doi.org/10.18637/jss.v087.i07)
+Van Gassen S et al. (2015). FlowSOM. *Cytometry Part A*, 87(7), 636-645.
+[doi:10.1002/cyto.a.22625](https://doi.org/10.1002/cyto.a.22625)

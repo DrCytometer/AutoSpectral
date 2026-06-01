@@ -23,7 +23,8 @@ spectral.ribbon.plot(
   data.list = NULL,
   af = FALSE,
   plot.width = 15,
-  plot.height = 10
+  plot.height = 10,
+  max.points = 50000
 )
 ```
 
@@ -107,6 +108,10 @@ spectral.ribbon.plot(
 - plot.height:
 
   Height of the saved plot. Default is `10`.
+
+- max.points:
+
+  Number of events per panel to plot. Default is `5e4`.
 
 ## Value
 

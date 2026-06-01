@@ -2,7 +2,7 @@
 
 *NOTE* This has not yet been updated to reflect changes in version
 1.5.0. See the [full workflow
-article](https://drcytometer.github.io/AutoSpectral/articles/01_Full_AutoSpectral_Workflow.html)
+article](https://drcytometer.github.io/AutoSpectral/articles/01_Automated_Spectral_Workflow.html)
 for more detail. This will still work as before, but more control over
 the process is now available.
 
@@ -37,7 +37,8 @@ article](https://drcytometer.github.io/AutoSpectral/articles/02_Control_File_exa
 create.control.file(control.dir, asp)
 ```
 
-To modify the control file…
+To modify the control file open it in your favorite spreadsheet viewing
+program.
 
 For now, we’ll use the pre-filled control file, which you can get from
 [Mendeley Data](https://data.mendeley.com/datasets/xzt3h3gnx9/1).
@@ -46,8 +47,6 @@ For now, we’ll use the pre-filled control file, which you can get from
 
 control.file <- "~/AutoSpectral_data/Aurora_example/aurora_fcs_control_file.csv"
 ```
-
-This
 
 Now we are ready to read in the FCS files, gate the cells and organize
 the experiment.
@@ -86,12 +85,13 @@ plot](figures/SparkUV387_scatter_plot.jpg)
 CD14 scatter-matching plot: ![CD14 scatter match
 plot](figures/BV510_scatter_plot.jpg)
 
-Spectra can now be isolated from the controls. To use the cleaned data,
-set `use.clean.expr` to `TRUE`.
+Spectra can now be isolated from the controls. By default, we use the
+cleaned data. If you want to see the spectra without cleaning, set
+`use.clean.expr` to `FALSE`.
 
 ``` r
 
-spectra <- get.fluorophore.spectra(flow.control, asp, use.clean.expr = TRUE)
+spectra <- get.fluorophore.spectra(flow.control, asp)
 ```
 
 Check the spectral traces and heatmaps–do they look right?

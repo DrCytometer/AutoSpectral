@@ -2,8 +2,10 @@ pandoc: 3.8.3
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
+  articles/01_Automated_Spectral_Workflow: 01_Automated_Spectral_Workflow.html
   articles/01_Full_AutoSpectral_Workflow: 01_Full_AutoSpectral_Workflow.html
   articles/02_Control_File_example: 02_Control_File_example.html
+  articles/02b_Control_File_Complex_Example: 02b_Control_File_Complex_Example.html
   articles/03_Aurora_example: 03_Aurora_example.html
   articles/04_ID7000_WLS_example: 04_ID7000_WLS_example.html
   articles/05_Preparing_Controls: 05_Preparing_Controls.html
@@ -19,7 +21,8 @@ articles:
   articles/15_Updates_And_Issues: 15_Updates_And_Issues.html
   articles/16_Development: 16_Development.html
   articles/17_Acknowledgements: 17_Acknowledgements.html
-last_built: 2026-04-28T11:42Z
+  articles/18_Weighted_Least_Squares: 18_Weighted_Least_Squares.html
+last_built: 2026-06-01T14:13Z
 urls:
   reference: https://drcytometer.github.io/AutoSpectral/reference
   article: https://drcytometer.github.io/AutoSpectral/articles

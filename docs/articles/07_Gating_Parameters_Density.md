@@ -1,16 +1,20 @@
 # 07 Gating parameters for density gating
 
 In this article, we’ll go into more depth on how the automated
-density-based gating in AUtoSpectral works, covering the parameters that
+density-based gating in AutoSpectral works, covering the parameters that
 modify it. For this, we are focusing on the original gating system
 copied from AutoSpill. This article is most relevant if you are using a
 version of AutoSpectral prior to 1.5.0 or if you are using
 `gating.system = "density"` without supplying any pre-defined gates to
 [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md).
+All of this gating is only relevant if you are using the gating-based
+legacy pipeline, as gating is no longer required in the [Automated
+pipeline](https://drcytometer.github.io/AutoSpectral/articles/01_Automated_Spectral_Workflow.html)
 
 For better control of the gating, update to AutoSpectral version 1.5.0,
-and use the `tune.gates()` function to get the gates looking the way you
-want before calling
+and use the
+[`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md)
+function to get the gates looking the way you want before calling
 [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md).
 For this, see article [Advanced
 Gating](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html).
@@ -99,7 +103,7 @@ Immediately we have a failure, at least with this version of
 AutoSpectral. You may have run into this sort of issue, with
 incomprehensible error messages, which is really frustrating. The new
 approach (see
-[article](https://drcytometer.github.io/AutoSpectral/articles/07_Advanced_Gating.html))
+[article](https://drcytometer.github.io/AutoSpectral/articles/08_Advanced_Gating.html))
 should make this a lot more manageable, but let’s work through it here
 as well.
 
