@@ -55,10 +55,11 @@ If you have data from a different instrument and are willing to share files, con
 
 AutoSpectral will probably not solve all your unmixing issues; hopefully it will help. Here are some other tools that may also help:
 
+* [CompensAID](https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html)
+* [flowstate](https://github.com/nlaniewski/flowstate/tree/master)
+* [Ozette Resolve](https://www.ozette.com/)
 * [flowUnmix](https://github.com/hally166/flowUnmix)
 * [PanelBuilder](https://github.com/exaexa/panelbuilder)
-* [Ozette Resolve](https://www.ozette.com/)
-* [CompensAID](https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html)
 
 What AutoSpectral cannot do:
 
@@ -78,11 +79,11 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.5.6**
+**Version 1.6.0**
 
 Version 1.0+ is intended to greatly speed up the process of unmixing. This is done by pre-screening the variation in autofluorescence and fluorophores for each cell, identifying likely "best" candidates rather than using a brute force approach. If you are using [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp), you will need to update that for compatibility.
 
-To install the latest, hopefully stable version, install using `devtools` or `remotes`. You will need to install the Bioconductor packages separately. As of version 0.9.1, AutoSpectral relies on `FlowSOM` rather than `EmbedSOM`, so you will need to install `FlowSOM` via Bioconductor.
+To install the latest, hopefully stable version, install using `devtools` or `remotes`. You will need to install the Bioconductor packages separately. As of version 0.9.1, AutoSpectral relies primarily on `FlowSOM` rather than `EmbedSOM`, so you will need to install `FlowSOM` via Bioconductor. That said, if you install `EmbedSOM`, Autospectral will automatically detect and use it for faster processing.
 
 ``` {r, eval = FALSE}
 # Install Bioconductor packages
@@ -107,7 +108,7 @@ remotes::install_github("DrCytometer/AutoSpectral@v1.0.2")
 
 ### Dev branch
 
-If you're feeling adventurous or simply want early access to the latest features, you can try the `dev` branch. At any given point, this may not be working well.
+New features and patches will be implemented first in `dev` branch. So, at any given point, this may not be working well and is not advised for general use.
 
 AutoSpectral is open source. If you are interested in contributing, please visit [Development](https://drcytometer.github.io/AutoSpectral/articles/16_Development.html) for suggestions of where help is needed most.
 
@@ -161,7 +162,11 @@ Installation via GitHub should take only a minute or so. It takes less than that
 
 Occasionally, the help gets corrupted. Just re-install if that happens. If you know why this happens, let me know.
 
-Installation of `AutoSpectralRcpp` will take a couple of minutes because the code needs to compile. You will also first have to install Rtools to have a compiler, and that will take longer, probably 10 minutes or so including time to find it and download it.
+Installation of `AutoSpectralRcpp` will take a couple of minutes because the code needs to compile. A C++ compiler is required; what you need depends on your platform:
+
+- **Windows**: Install [Rtools](https://cran.r-project.org/bin/windows/Rtools/). This provides the compiler and takes around 10 minutes to download and install. OpenMP is included and enabled automatically.
+- **macOS**: Install the Xcode Command Line Tools (`xcode-select --install` in Terminal). OpenMP is not included in Apple's compiler, but `AutoSpectralRcpp` will detect whether [Homebrew](https://brew.sh) and `libomp` are available and enable it automatically if so. If not, it will build without OpenMP (single-threaded C++ only) and tell you what to run. To enable OpenMP manually: `brew install libomp`, then reinstall the package.
+- **Linux**: GCC is typically already present. OpenMP is enabled automatically.
 
 For more details and benchmarking of specific functions with an example 42-color cell control data set, see the article on [Speed](https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.html).
 
