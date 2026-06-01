@@ -412,7 +412,7 @@ unmixed.mxn.plot <- function(
 
   # --- shared downsample ---
   if ( nrow( mat ) > max.points ) {
-    set.seed( 42 )
+    set.seed( asp$bird.seed )
     mat <- mat[ sample( nrow( mat ), max.points ), , drop = FALSE ]
   }
   message( "\033[34mPlotting ", nrow( mat ), " events across ",

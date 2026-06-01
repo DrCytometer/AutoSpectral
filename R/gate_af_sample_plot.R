@@ -51,7 +51,7 @@ gate.af.sample.plot <- function(
   plot.data <- plot.data[ valid.idx, , drop = FALSE ]
 
   if ( nrow( plot.data ) > max.points ) {
-    set.seed( 42 )
+    set.seed( asp$bird.seed )
     plot.data <- plot.data[ sample( seq_len( nrow( plot.data ) ), max.points ), , drop = FALSE ]
   }
 
@@ -233,7 +233,7 @@ gate.af.sample.plot <- function(
   }
 
   # ---------------------------------------------------------------------------
-  # 8. AF gate boundary (already in raw scatter space — transform before drawing)
+  # 8. AF gate boundary
   # ---------------------------------------------------------------------------
 
   if ( !is.null( af.boundary.upper ) ) {

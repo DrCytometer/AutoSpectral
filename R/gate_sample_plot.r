@@ -61,7 +61,7 @@ gate.sample.plot <- function(
 
   n.points <- nrow( gate.data )
   if ( n.points > max.points ) {
-    set.seed( 42 )
+    set.seed( asp$bird.seed )
     gate.data <- gate.data[ sample( seq_len( n.points ), max.points ), , drop = FALSE ]
     n.points  <- max.points
   }
@@ -97,16 +97,6 @@ gate.sample.plot <- function(
     requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
     "bin_matrix_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) )
   ) {
-    # bin_matrix_cpp expects: data (n_events x n_cols), y_breaks, n_y
-    # We call it twice (once per axis acting as "columns") via the
-    # 2-column gate.data matrix directly; the function treats each column
-    # as an independent spectral channel, so pass the 2-col matrix and
-    # use a single shared y_break grid that covers BOTH axes.
-    # Simpler: bin a 2-col matrix with common breaks on the Y dimension and
-    # transpose / re-index for X.  The cleanest approach is to call the
-    # scalar 2D version we have: fast_kde2d_cpp if available, else fallback.
-    # For pure binning we do it in R using vectorised findInterval — fast enough
-    # for 50k points in a 256x256 grid.
     xi <- pmax( 1L, pmin( raster.bins, findInterval( gate.data[, 1], x_breaks_r ) ) )
     yi <- pmax( 1L, pmin( raster.bins, findInterval( gate.data[, 2], y_breaks_r ) ) )
     m  <- matrix( 0L, nrow = raster.bins, ncol = raster.bins )
@@ -137,7 +127,7 @@ gate.sample.plot <- function(
   scatter.raster <- scatter.raster[ raster.bins:1, , drop = FALSE ]   # flip Y
 
   # ---------------------------------------------------------------------------
-  # 4. KDE density contours (unified path — always fast_kde2d_cpp if available)
+  # 4. KDE density contours (always fast_kde2d_cpp if available)
   # ---------------------------------------------------------------------------
 
   density.df     <- NULL
@@ -203,7 +193,7 @@ gate.sample.plot <- function(
       ymin = y.limits[1], ymax = y.limits[2],
       fill = "white", colour = NA
     ) +
-    # rasterised scatter (fast — no per-point ggplot overhead)
+    # rasterised scatter
     annotation_raster(
       scatter.raster,
       xmin = x.limits[1], xmax = x.limits[2],

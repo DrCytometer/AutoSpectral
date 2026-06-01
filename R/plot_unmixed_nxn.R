@@ -104,7 +104,7 @@ unmixed.nxn.plot <- function(
 
   # --- shared downsample ---
   if ( nrow( mat ) > max.points ) {
-    set.seed( 42 )
+    set.seed( asp$bird.seed )
     mat <- mat[ sample( nrow( mat ), max.points ), , drop = FALSE ]
   }
 
