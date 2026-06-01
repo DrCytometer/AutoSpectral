@@ -1,7 +1,7 @@
 Package: AutoSpectral
 Type: Package
 Title: Tools for Unmixing Spectral Flow Cytometry Data
-Version: 1.5.7
+Version: 1.6.0
 Authors@R: c(
     person(
       "Oliver", "Burton",
@@ -11,9 +11,14 @@ Authors@R: c(
     ),
     person(
       "Adrian", "Liston",
-      email = "adrian.liston.com",
+      email = "al989@cam.ac.uk",
       role = c("aut"),
       comment = c( ORCID = "0000-0002-6272-4085" )
+    ),
+    person(
+      "Nathan", "Laniewski",
+      email = "Nathan_Laniewski@urmc.rochester.edu",
+      role = c("ctb")
     )
   )
 Description: Isolates and refines clean spectral signatures from 
