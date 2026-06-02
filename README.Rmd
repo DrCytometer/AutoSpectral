@@ -56,6 +56,7 @@ If you have data from a different instrument and are willing to share files, con
 AutoSpectral will probably not solve all your unmixing issues; hopefully it will help. Here are some other tools that may also help:
 
 * [CompensAID](https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html)
+* [spectracle](https://github.com/nlaniewski/spectracle/)
 * [flowstate](https://github.com/nlaniewski/flowstate/tree/master)
 * [Ozette Resolve](https://www.ozette.com/)
 * [flowUnmix](https://github.com/hally166/flowUnmix)

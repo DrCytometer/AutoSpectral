@@ -69,6 +69,7 @@ AutoSpectral will probably not solve all your unmixing issues; hopefully
 it will help. Here are some other tools that may also help:
 
 - [CompensAID](https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html)
+- [spectracle](https://github.com/nlaniewski/spectracle/)
 - [flowstate](https://github.com/nlaniewski/flowstate/tree/master)
 - [Ozette Resolve](https://www.ozette.com/)
 - [flowUnmix](https://github.com/hally166/flowUnmix)
@@ -108,7 +109,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.5.6**
+**Version 1.6.0**
 
 Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and
