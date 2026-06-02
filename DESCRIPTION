@@ -18,7 +18,8 @@ Authors@R: c(
     person(
       "Nathan", "Laniewski",
       email = "Nathan_Laniewski@urmc.rochester.edu",
-      role = c("ctb")
+      role = c("aut"),
+      comment = c( ORCID = "0000-0002-9550-8872" )
     )
   )
 Description: Isolates and refines clean spectral signatures from 
