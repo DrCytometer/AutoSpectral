@@ -11,7 +11,7 @@
   the clean spectral signatures.
 - A merging of the approaches for per-cell autofluorescence assignment using the
   covariance structure: `assign.af.joint.cov()` to assess how autofluorescence
-  variation impact fluorophore values, with joint scoring of residuals. This 
+  variation impacts fluorophore values, with joint scoring of residuals. This 
   improves on the existing residual- and projection-based AF assignment methods.
 - Extension of the variance-covariance error propagation plus residuals scoring
   metric to per-cell fluorophore optimization. This avoids the previous need to
