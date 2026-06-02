@@ -279,7 +279,7 @@ unmix.autospectral.joint <- function(
       return( c( fl.unm, uf[ F + 1L ], best.j.af ) )
     }
 
-    best.v <- setNames( rep( -1L, length( active.names ) ), active.names )
+    best.v <- stats::setNames( rep( -1L, length( active.names ) ), active.names )
 
     # -----------------------------------------------------------------
     # C. JOINT VARIANT SELECTION  (n.passes passes)
@@ -346,7 +346,7 @@ unmix.autospectral.joint <- function(
 
       # conflict resolution: commit non-overlapping swaps
       # two swaps conflict when their residual deltas have cosine similarity > 0.5
-      committed     <- setNames( rep( FALSE, length( active.names ) ), active.names )
+      committed     <- stats::setNames( rep( FALSE, length( active.names ) ), active.names )
       committed.drs <- list()
       commits       <- list()
 

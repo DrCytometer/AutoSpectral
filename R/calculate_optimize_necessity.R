@@ -128,7 +128,7 @@ calculate.optimize.necessity <- function(
   # -------------------------------------------------------------------------
   # Core scoring loop
   # -------------------------------------------------------------------------
-  scores.raw <- setNames( rep( 0, length( score.fluors ) ), score.fluors )
+  scores.raw <- stats::setNames( rep( 0, length( score.fluors ) ), score.fluors )
 
   for ( fl in score.fluors ) {
 
