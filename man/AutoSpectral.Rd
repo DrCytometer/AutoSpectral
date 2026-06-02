@@ -72,11 +72,7 @@ Authors:
 \itemize{
   \item Oliver Burton \email{olivertburton@gmail.com} (\href{https://orcid.org/0000-0003-3884-7373}{ORCID})
   \item Adrian Liston \email{al989@cam.ac.uk} (\href{https://orcid.org/0000-0002-6272-4085}{ORCID})
-}
-
-Other contributors:
-\itemize{
-  \item Nathan Laniewski \email{Nathan_Laniewski@urmc.rochester.edu} [contributor]
+  \item Nathan Laniewski \email{Nathan_Laniewski@urmc.rochester.edu} (\href{https://orcid.org/0000-0002-9550-8872}{ORCID})
 }
 
 }
