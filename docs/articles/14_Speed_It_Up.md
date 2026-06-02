@@ -75,18 +75,83 @@ your platform:
   [Rtools](https://cran.r-project.org/bin/windows/Rtools/). This
   provides the compiler and takes around 10 minutes to download and
   install. OpenMP support is included and enabled automatically.
-- **macOS**: Install the Xcode Command Line Tools by running
-  `xcode-select --install` in Terminal. Apple’s compiler does not
-  include OpenMP, but `AutoSpectralRcpp` will detect whether
-  [Homebrew](https://brew.sh) and `libomp` are installed and enable
-  OpenMP automatically if found. If not, it will build without OpenMP
-  (single-threaded C++ only) and print instructions telling you what to
-  run. To enable OpenMP manually, run `brew install libomp` in Terminal
-  and then reinstall the package. Note: keep the number of OpenMP
-  threads conservative on Mac, as high thread counts can conflict with
-  the Accelerate BLAS.
+
+- **macOS**: Apple’s built-in compiler does not include OpenMP support.
+  To get the best performance from `AutoSpectralRcpp` on a Mac, you need
+  to install two things from the Terminal: Homebrew (a package manager)
+  and `libomp` (the OpenMP library). Neither requires any programming
+  knowledge — it is just a matter of copying and pasting a couple of
+  commands. `AutoSpectralRcpp` will detect these automatically and
+  enable OpenMP at install time. If they are not present, the package
+  will still install and work correctly, just without multi-threading.
+
+  **Step 1: Open Terminal**
+
+  Terminal is a built-in Mac application. You can find it by opening
+  Spotlight (press `Cmd + Space`), typing “Terminal”, and pressing
+  Enter.
+
+  **Step 2: Install the Xcode Command Line Tools**
+
+  These provide the C++ compiler that R needs to build packages like
+  `AutoSpectralRcpp`. Paste the following into Terminal and press Enter:
+
+``` sh
+  xcode-select --install
+```
+
+A dialog box will appear asking you to confirm. Click “Install” and wait
+for it to finish — this may take a few minutes. If you see a message
+saying the tools are already installed, you can skip ahead.
+
+**Step 3: Install Homebrew**
+
+Homebrew is a free, widely-used package manager for macOS that makes it
+easy to install software from the Terminal. Paste the following into
+Terminal and press Enter:
+
+``` sh
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+You will be asked for your Mac login password. As you type it, nothing
+will appear on screen — this is normal. Press Enter when done. The
+installer will then run and may take a few minutes. At the end it will
+print a message about “Next steps” — follow any instructions it gives
+about adding Homebrew to your PATH (it will give you two lines to paste
+into Terminal; paste and run them).
+
+**Step 4: Install libomp**
+
+Once Homebrew is installed, installing `libomp` is straightforward.
+Paste the following into Terminal and press Enter:
+
+``` sh
+  brew install libomp
+```
+
+This should only take a minute or so.
+
+**Step 5: Install or reinstall AutoSpectralRcpp**
+
+Now install (or reinstall) `AutoSpectralRcpp` from R. The `configure`
+script will find `libomp` automatically and compile with OpenMP enabled:
+
+``` r
+
+  remotes::install_github("DrCytometer/AutoSpectralRcpp")
+```
+
+You should see a line in the output confirming OpenMP was found, e.g.:
+`configure: OpenMP enabled using libomp at /opt/homebrew/opt/libomp`
+
+If you do not see this, or if you see a warning that libomp was not
+found, double-check that Steps 3 and 4 completed successfully and try
+reinstalling.
+
 - **Linux**: GCC is typically already present. OpenMP is enabled
-  automatically.
+  automatically. If you’re using Linux, you probably know what you’re
+  doing.
 
 You can install AutoSpectralRcpp like so:
 

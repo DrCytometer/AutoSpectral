@@ -13,16 +13,22 @@
   : Assign AF Spectrum By Joint Covariance-Weighted Error
 - [`assign.af.residuals()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.residuals.md)
   : Assign AF Spectrum By Residual Alignment
+- [`assign.af.scatter.match()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.scatter.match.md)
+  : Assign AF Spectrum By Scatter-Matched Reference Averaging
 - [`assign.gates()`](https://drcytometer.github.io/AutoSpectral/reference/assign.gates.md)
   : Assign Gates
 - [`assign.variants()`](https://drcytometer.github.io/AutoSpectral/reference/assign.variants.md)
   : Assign Variant Spectrum By Fluorophore Projection
 - [`assign.variants.cosine()`](https://drcytometer.github.io/AutoSpectral/reference/assign.variants.cosine.md)
   : Assign Variant Spectrum By Fluorophore Projection
+- [`benchmark.af.scatter.match()`](https://drcytometer.github.io/AutoSpectral/reference/benchmark.af.scatter.match.md)
+  : Benchmark Scatter-Match Against Existing AF Assignment Methods
 - [`calculate.condition.number()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.condition.number.md)
   : Calculate Condition Number
 - [`calculate.hotspot.matrix()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.hotspot.matrix.md)
   : Calculate Hotspot Matrix
+- [`calculate.optimize.necessity()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.optimize.necessity.md)
+  : Calculate Optimization Necessity Scores for Spectral Variants
 - [`calculate.ssi()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.ssi.md)
   : Calculate Secondary Stain Index and Spillover
 - [`calculate.weights()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.weights.md)
@@ -123,6 +129,8 @@
   : Get Fluorophore Spectra - Automated Workflow
 - [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
   : Get Spectral Variations for Fluorophores
+- [`get.spectral.variants.test()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.test.md)
+  : Get Spectral Variations for Fluorophores
 - [`get.top.events()`](https://drcytometer.github.io/AutoSpectral/reference/get.top.events.md)
   : Get Top (Brightest) Events
 - [`get.universal.negative()`](https://drcytometer.github.io/AutoSpectral/reference/get.universal.negative.md)
@@ -189,7 +197,11 @@
   : Define Gate by Density
 - [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
   : Unmix AutoSpectral
+- [`unmix.autospectral.joint()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.joint.md)
+  : Joint AutoSpectral Unmixing (Pure R)
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+  : Unmix FCS Data
+- [`unmix.fcs.test()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.test.md)
   : Unmix FCS Data
 - [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
   : Unmix All FCS Files in a Directory

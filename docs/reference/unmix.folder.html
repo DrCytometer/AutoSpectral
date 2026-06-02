@@ -78,7 +78,7 @@ directory of the user's choice.</p>
 <span>  output.dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  file.suffix <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  include.raw <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  include.imaging <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  include.imaging <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  use.dist0 <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  divergence.threshold <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  divergence.handling <span class="op">=</span> <span class="st">"Balance"</span>,</span>
@@ -89,6 +89,8 @@ directory of the user's choice.</p>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  chunk.size <span class="op">=</span> <span class="fl">2e+06</span>,</span>
+<span>  pipeline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"joint"</span>, <span class="st">"legacy"</span><span class="op">)</span>,</span>
+<span>  n.passes <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -107,8 +109,8 @@ detectors in columns.</p></dd>
 
 
 <dt id="arg-asp">asp<a class="anchor" aria-label="anchor" href="#arg-asp"></a></dt>
-<dd><p>The AutoSpectral parameter list.
-Prepare using <code>get.autospectral.param</code></p></dd>
+<dd><p>The AutoSpectral parameter list. Prepare using
+<code>get.autospectral.param</code>.</p></dd>
 
 
 <dt id="arg-flow-control">flow.control<a class="anchor" aria-label="anchor" href="#arg-flow-control"></a></dt>
@@ -127,14 +129,14 @@ unmixing, select from the options: <code>OLS</code>, <code>WLS</code>, <code>Poi
 
 <dt id="arg-weighted">weighted<a class="anchor" aria-label="anchor" href="#arg-weighted"></a></dt>
 <dd><p>Logical, whether to use ordinary or weighted least squares
-unmixing as the base algorithm in AutoSpectral unmixing.
+unmixing as the base algorithm in AutoSpectral legacy pipeline unmixing.
 Default is <code>FALSE</code> and will use OLS.</p></dd>
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
-<dd><p>Optional numeric vector of weights: one per fluorescent
-detector. Default is <code>NULL</code>, in which case weighting will be done by
-channel means. Only used for <code>WLS</code></p></dd>
+<dd><p>Optional numeric vector of weights (one per fluorescent
+detector). Default is <code>NULL</code>, in which case weighting will be done by
+channel means (Poisson variance). Only used for <code>WLS</code>.</p></dd>
 
 
 <dt id="arg-af-spectra">af.spectra<a class="anchor" aria-label="anchor" href="#arg-af-spectra"></a></dt>
@@ -153,13 +155,13 @@ AutoSpectral unmixing. Required for per-cell fluorophore optimization.</p></dd>
 
 
 <dt id="arg-output-dir">output.dir<a class="anchor" aria-label="anchor" href="#arg-output-dir"></a></dt>
-<dd><p>Directory to save the unmixed FCS files
-(default is <code>asp$unmixed.fcs.dir</code>, which is <code>./AutoSpectral_unmixed</code>).</p></dd>
+<dd><p>A character string specifying the directory to save the
+unmixed FCS file. Default is <code>NULL</code>, which will use <code>./AutoSpectral_unmixed</code>.</p></dd>
 
 
 <dt id="arg-file-suffix">file.suffix<a class="anchor" aria-label="anchor" href="#arg-file-suffix"></a></dt>
 <dd><p>A character string to append to the output file name.
-Default is <code>NULL</code></p></dd>
+Default is <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-include-raw">include.raw<a class="anchor" aria-label="anchor" href="#arg-include-raw"></a></dt>
@@ -170,18 +172,16 @@ output files.</p></dd>
 
 <dt id="arg-include-imaging">include.imaging<a class="anchor" aria-label="anchor" href="#arg-include-imaging"></a></dt>
 <dd><p>A logical value indicating whether to include imaging
-parameters in the written FCS file. Default is <code>FALSE</code> to provide smaller
-output files.</p></dd>
+parameters in the written FCS file. Default is <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-use-dist-">use.dist0<a class="anchor" aria-label="anchor" href="#arg-use-dist-"></a></dt>
-<dd><p>Logical, controls whether the selection of the optimal AF
-signature for each cell is determined by which unmixing brings the fluorophore
-signals closest to 0 (<code>use.dist0</code> = <code>TRUE</code>) or by which unmixing minimizes the
-per-cell residual (<code>use.dist0</code> = <code>FALSE</code>). Default is <code>TRUE</code>. Used for
-AutoSpectral unmixing. The minimization of fluorophore signals can be thought
-of as a "worst-case" scenario, but it provides more accurate assignments,
-particularly with large panels.</p></dd>
+<dd><p>Legacy pipeline argument. Logical, controls whether the
+selection of the optimal AF signature for each cell is determined by the
+minimization of potential AF spillover into the fluorophore channels
+(<code>use.dist0</code> = <code>TRUE</code>) or by which unmixing minimizes the per-cell residual
+(<code>use.dist0</code> = <code>FALSE</code>). Default is <code>TRUE</code>. Used for legacy AutoSpectral
+unmixing.</p></dd>
 
 
 <dt id="arg-divergence-threshold">divergence.threshold<a class="anchor" aria-label="anchor" href="#arg-divergence-threshold"></a></dt>
@@ -206,7 +206,7 @@ To be deprecated.</p></dd>
 <dt id="arg-speed">speed<a class="anchor" aria-label="anchor" href="#arg-speed"></a></dt>
 <dd><p>Selector for the precision-speed trade-off in AutoSpectral per-cell
 fluorophore optimization. Options are <code>fast</code>, <code>medium</code> and <code>slow</code>, with the
-default being <code>slow</code>. As of version 1.0.0, the backend for how this works
+default being <code>fast</code>. As of version 1.0.0, the backend for how this works
 has changed. Spectral variants and AF signatures are now pre-screened per cell
 to identify likely candidates, so brute force testing of all variants is no
 longer required. So, <code>speed</code> controls the number of variants to be tested per
@@ -217,15 +217,13 @@ faster processing.</p></dd>
 
 
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
-<dd><p>Logical, default is <code>FALSE</code>. Set to <code>TRUE</code> to activate parallel
-processing for multiple FCS files.</p></dd>
+<dd><p>Logical, default is <code>TRUE</code>, which enables parallel processing
+for per-cell unmixing methods.</p></dd>
 
 
 <dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
-<dd><p>Numeric, default is <code>NULL</code>, in which case <code>asp$worker.process.n</code>
-will be used. <code>asp$worker.process.n</code> is set by default to be one less than the
-available cores on the machine. Multi-threading is only used if <code>parallel</code> is
-<code>TRUE</code>. If working on a computing cluster, try <code><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">parallelly::availableCores()</a></code>.</p></dd>
+<dd><p>Numeric, defaults to a single thread for sequential processing
+(<code>parallel=FALSE</code>) or all available cores if <code>parallel=TRUE</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -234,11 +232,12 @@ to have it shut up.</p></dd>
 
 
 <dt id="arg-n-variants">n.variants<a class="anchor" aria-label="anchor" href="#arg-n-variants"></a></dt>
-<dd><p>Number of variants to test per cell. Allows explicit control
-over the number used, as opposed to <code>speed</code>, which selects from pre-defined
-choices. Providing a numeric value to <code>n.variants</code> will override <code>speed</code>,
-allowing up to <code>n.variants</code> (or the max available) variants to be tested. The
-default is <code>NULL</code>, in which case <code>n.variants</code> will be ignored.</p></dd>
+<dd><p>Numeric, used for legacy AutoSpectral pipeline unmixing.
+Number of variants to test per cell. Allows explicit control over the
+number used, as opposed to <code>speed</code>, which selects from pre-defined choices.
+Providing a numeric value to <code>n.variants</code> will override <code>speed</code>, allowing
+up to <code>n.variants</code> (or the max available) variants to be tested. The default
+is <code>NULL</code>, in which case <code>n.variants</code> will be ignored.</p></dd>
 
 
 <dt id="arg-chunk-size">chunk.size<a class="anchor" aria-label="anchor" href="#arg-chunk-size"></a></dt>
@@ -246,6 +245,18 @@ default is <code>NULL</code>, in which case <code>n.variants</code> will be igno
 to manage memory when processing large FCS files. As a rough guide, you will
 need approximately 10x the size of the raw FCS file on disk as available
 memory. Default is set at <code>2e6</code> events, assuming ~20GB memory available.</p></dd>
+
+
+<dt id="arg-pipeline">pipeline<a class="anchor" aria-label="anchor" href="#arg-pipeline"></a></dt>
+<dd><p>Character, one of <code>"joint"</code> (default) or <code>"legacy"</code>. Passed
+to <code>unmix.autospectral.rcpp()</code>. <code>"joint"</code> uses the new covariance-weighted
+joint per-cell pipeline; <code>"legacy"</code> reproduces the behaviour of
+AutoSpectral prior to version 1.6.0.</p></dd>
+
+
+<dt id="arg-n-passes">n.passes<a class="anchor" aria-label="anchor" href="#arg-n-passes"></a></dt>
+<dd><p>Integer, default <code>2L</code>. Number of joint optimisation passes
+per cell. Only used when <code>pipeline = "joint"</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -263,7 +274,7 @@ memory. Default is set at <code>2e6</code> events, assuming ~20GB memory availab
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Oliver Burton, Adrian Liston.</p>
+  <p>Developed by Oliver Burton, Adrian Liston, Nathan Laniewski.</p>
 </div>
 
 <div class="pkgdown-footer-right">

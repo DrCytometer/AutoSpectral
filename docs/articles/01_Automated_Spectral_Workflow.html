@@ -199,6 +199,9 @@ or tune any gates:</p>
 <strong>Saturation removal</strong> — detector-saturated events are
 excluded before any per-fluorophore processing begins.</li>
 <li>
+<strong>Singlet gating</strong> — doublets are automatically
+excluded.</li>
+<li>
 <strong>AF orthogonalisation</strong> — for each single-stained
 control, the autofluorescence vector (from the paired
 <code>universal.negative</code> specified in your control file, or
@@ -248,7 +251,8 @@ key parameters can be adjusted if needed:</p>
 outputs:</p>
 <p><strong>Spectral traces and heatmap</strong> — the same standard
 outputs as the legacy pipeline. Check these against the expected
-profiles for your cytometer in online viewers such as <a href="https://cloud.cytekbio.com/" class="external-link">Cytek Cloud</a>.</p>
+profiles for your cytometer in online viewers such as <a href="https://cloud.cytekbio.com/" class="external-link">Cytek Cloud</a> or in the QC
+plots.</p>
 <div class="figure" style="text-align: center">
 <img src="figures/Workflow/spectral_trace.jpg" class="r-plt" alt="Spectral Signature Traces"><p class="caption">
 Spectral Signature Traces
@@ -657,7 +661,7 @@ analysis software.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Oliver Burton, Adrian Liston.</p>
+  <p>Developed by Oliver Burton, Adrian Liston, Nathan Laniewski.</p>
 </div>
 
 <div class="pkgdown-footer-right">

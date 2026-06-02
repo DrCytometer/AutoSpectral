@@ -53,6 +53,37 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.6.0" id="autospectral-160-2026-06-01">AutoSpectral 1.6.0 (2026-06-01)<a class="anchor" aria-label="anchor" href="#autospectral-160-2026-06-01"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-6-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-6-0"></a></h3>
+<ul><li>Automated spectral profile extraction using approaches developed by Nathan Laniewski in <code>flowState</code>. This simplifies the workflow considerably, and eliminates the need for gating, which was a key cause of stress. The new automated approach employs projection orthogonalization to determine the peak channel (which way is the control going that isn’t like the autofluorescence?), and uses cosine filtering (which events are least contaminated by AF?) to find the clean spectral signatures.</li>
+<li>A merging of the approaches for per-cell autofluorescence assignment using the covariance structure: <code><a href="../reference/assign.af.joint.cov.html">assign.af.joint.cov()</a></code> to assess how autofluorescence variation impacts fluorophore values, with joint scoring of residuals. This improves on the existing residual- and projection-based AF assignment methods.</li>
+<li>Extension of the variance-covariance error propagation plus residuals scoring metric to per-cell fluorophore optimization. This avoids the previous need to optimize in the reduced space of only positive fluorophores in each cell, which was responsible for discontinuities appearing in several data sets around zero.</li>
+<li>Legacy mode support. All pre-existing workflows remain intact, but some must be accessed via a <code>legacy</code> argument in the function calls.</li>
+<li>AutoSpectral landing page. Type <code><a href="../reference/AutoSpectral.html">?AutoSpectral</a></code> in your IDE to open a workflow overview with links to key functions and articles.</li>
+<li>FCS 3.1 compliance. Modified FCS files now carry the <code>$ORIGINALITY</code>, <code>$LAST_MODIFIER</code>, and <code>$LAST_MODIFIED</code> keywords per the FCS 3.1 standard.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="improvements-1-6-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-6-0"></a></h3>
+<ul><li>C++ accelerated FCS reading and writing via <code>AutoSpectralRcpp</code>. Adapted from work by Samuel Granjeaud.</li>
+<li>Much faster plotting throughout, using a combination of point downsampling, raster rendering (<code>ragg</code>/<code>scattermore</code>), and C++ acceleration when <code>AutoSpectralRcpp</code> is available.</li>
+<li>Faster variant and AF spectra determination via <code>EmbedSOM</code> when <code>AutoSpectralRcpp</code> is installed.</li>
+<li>
+<code>viridis</code> added as a dependency for improved colour scaling in density plots.</li>
+<li>Support for <code>patchwork</code> to allow manual faceting and combination of plots.</li>
+<li>Spectral reference library updated with additional entries.</li>
+<li>Scatter-matching via k-nearest neighbours for higher precision.</li>
+<li>Cosine filtering of unstained samples against the fluorophore spectral profiles to reduce potential errors when the “unstained” isn’t actually completely unstained.</li>
+<li>Cosine filtering and kNN background matching for <code>get.spectra.variants()</code> to reduce undesireable influence of autofluorescence.</li>
+<li>Non-negative clamping of spectral profiles to prevent artefactual negative spectral values propagating into unmixing.</li>
+<li>General function and code cleanup throughout.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-6-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-6-0"></a></h3>
+<ul><li>Keywords issue causing files from BD instruments to occasionally emit scrambled data should now be fixed. Only whitelisted channels are preserved from the input raw FCS files.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.5.6" id="autospectral-156-2026-04-21">AutoSpectral 1.5.6 (2026-04-21)<a class="anchor" aria-label="anchor" href="#autospectral-156-2026-04-21"></a></h2>
 <div class="section level3">
 <h3 id="improvements-1-5-6">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-5-6"></a></h3>
@@ -234,7 +265,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Oliver Burton, Adrian Liston.</p>
+  <p>Developed by Oliver Burton, Adrian Liston, Nathan Laniewski.</p>
 </div>
 
 <div class="pkgdown-footer-right">

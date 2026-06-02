@@ -93,6 +93,5 @@ Authors:
 - Adrian Liston <al989@cam.ac.uk>
   ([ORCID](https://orcid.org/0000-0002-6272-4085))
 
-Other contributors:
-
-- Nathan Laniewski <Nathan_Laniewski@urmc.rochester.edu> \[contributor\]
+- Nathan Laniewski <Nathan_Laniewski@urmc.rochester.edu>
+  ([ORCID](https://orcid.org/0000-0002-9550-8872))

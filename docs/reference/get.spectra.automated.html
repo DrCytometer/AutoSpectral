@@ -144,7 +144,7 @@ refined using the legacy gating and cleaning approach.</p></li>
 <span>  singlet.quantiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.85</span>, <span class="fl">0.975</span><span class="op">)</span>,</span>
 <span>  cosine.threshold <span class="op">=</span> <span class="fl">0.9</span>,</span>
 <span>  peak.signal.threshold <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  legacy.refinement. <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  legacy.refinement <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  top.expressing.override <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot.cosine.filter <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -204,6 +204,11 @@ values below this threshold trigger legacy pipeline refinement.</p></dd>
 signal in the expected peak detector. Used only for informational QC.</p></dd>
 
 
+<dt id="arg-legacy-refinement">legacy.refinement<a class="anchor" aria-label="anchor" href="#arg-legacy-refinement"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Whether to run legacy
+pipeline on controls where the signature does not match the reference well.</p></dd>
+
+
 <dt id="arg-top-expressing-override">top.expressing.override<a class="anchor" aria-label="anchor" href="#arg-top-expressing-override"></a></dt>
 <dd><p>Named numeric vector or <code>NULL</code> (default).
 Override the event count for specific samples. Names should match the FCS
@@ -232,11 +237,6 @@ their matched AF events). Set to <code>FALSE</code> to skip.</p></dd>
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical, default <code>TRUE</code>. Print progress messages.</p></dd>
 
-
-<dt id="arg-legacy-refinement">legacy.refinement<a class="anchor" aria-label="anchor" href="#arg-legacy-refinement"></a></dt>
-<dd><p>Logical, default <code>TRUE</code>. Whether to run legacy
-pipeline on controls where the signature does not match the reference well.</p></dd>
-
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -255,7 +255,7 @@ peak = 1). Compatible with all downstream AutoSpectral functions.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Oliver Burton, Adrian Liston.</p>
+  <p>Developed by Oliver Burton, Adrian Liston, Nathan Laniewski.</p>
 </div>
 
 <div class="pkgdown-footer-right">

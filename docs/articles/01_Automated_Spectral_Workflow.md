@@ -151,21 +151,22 @@ requiring you to define or tune any gates:
 
 1.  **Saturation removal** — detector-saturated events are excluded
     before any per-fluorophore processing begins.
-2.  **AF orthogonalisation** — for each single-stained control, the
+2.  **Singlet gating** — doublets are automatically excluded.
+3.  **AF orthogonalisation** — for each single-stained control, the
     autofluorescence vector (from the paired `universal.negative`
     specified in your control file, or estimated internally from the
     lower quartile of the control itself) is projected out to identify
     events whose signal is genuinely driven by the fluorophore rather
     than background.
-3.  **Cosine-similarity filtering** — top-expressing candidate events
+4.  **Cosine-similarity filtering** — top-expressing candidate events
     are ranked by their cosine similarity to the AF vector. Events that
     are too AF-like are excluded, retaining only the most
     fluorophore-rich subset.
-4.  **KNN scatter-matched AF subtraction** — for each retained event,
+5.  **KNN scatter-matched AF subtraction** — for each retained event,
     the nearest-neighbour unstained events in scatter space are averaged
     and subtracted, giving a per-event background-corrected spectral
     signature.
-5.  **Automated QC with legacy pipeline fallback** — the resulting
+6.  **Automated QC with legacy pipeline fallback** — the resulting
     spectrum is compared against the spectral reference library (via
     cosine similarity). If the similarity is below the default
     threshold, the function automatically re-runs that particular
@@ -202,7 +203,7 @@ produces several diagnostic outputs:
 **Spectral traces and heatmap** — the same standard outputs as the
 legacy pipeline. Check these against the expected profiles for your
 cytometer in online viewers such as [Cytek
-Cloud](https://cloud.cytekbio.com/).
+Cloud](https://cloud.cytekbio.com/) or in the QC plots.
 
 ![Spectral Signature Traces](figures/Workflow/spectral_trace.jpg)
 

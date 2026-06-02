@@ -137,28 +137,69 @@ you’ve got installed.</p>
 <p><code>AutoSpectralRcpp</code> requires a C++ compiler. What you need
 depends on your platform:</p>
 <ul>
-<li>
-<strong>Windows</strong>: Install <a href="https://cran.r-project.org/bin/windows/Rtools/" class="external-link">Rtools</a>. This
+<li><p><strong>Windows</strong>: Install <a href="https://cran.r-project.org/bin/windows/Rtools/" class="external-link">Rtools</a>. This
 provides the compiler and takes around 10 minutes to download and
-install. OpenMP support is included and enabled automatically.</li>
+install. OpenMP support is included and enabled automatically.</p></li>
 <li>
-<strong>macOS</strong>: Install the Xcode Command Line Tools by
-running <code>xcode-select --install</code> in Terminal. Apple’s
-compiler does not include OpenMP, but <code>AutoSpectralRcpp</code> will
-detect whether <a href="https://brew.sh" class="external-link">Homebrew</a> and
-<code>libomp</code> are installed and enable OpenMP automatically if
-found. If not, it will build without OpenMP (single-threaded C++ only)
-and print instructions telling you what to run. To enable OpenMP
-manually, run <code>brew install libomp</code> in Terminal and then
-reinstall the package. Note: keep the number of OpenMP threads
-conservative on Mac, as high thread counts can conflict with the
-Accelerate BLAS.</li>
+<p><strong>macOS</strong>: Apple’s built-in compiler does not
+include OpenMP support. To get the best performance from
+<code>AutoSpectralRcpp</code> on a Mac, you need to install two things
+from the Terminal: Homebrew (a package manager) and <code>libomp</code>
+(the OpenMP library). Neither requires any programming knowledge — it is
+just a matter of copying and pasting a couple of commands.
+<code>AutoSpectralRcpp</code> will detect these automatically and enable
+OpenMP at install time. If they are not present, the package will still
+install and work correctly, just without multi-threading.</p>
+<p><strong>Step 1: Open Terminal</strong></p>
+<p>Terminal is a built-in Mac application. You can find it by opening
+Spotlight (press <code>Cmd + Space</code>), typing “Terminal”, and
+pressing Enter.</p>
+<p><strong>Step 2: Install the Xcode Command Line Tools</strong></p>
+<p>These provide the C++ compiler that R needs to build packages like
+<code>AutoSpectralRcpp</code>. Paste the following into Terminal and
+press Enter:</p>
+</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>  <span class="ex">xcode-select</span> <span class="at">--install</span></span></code></pre></div>
+<p>A dialog box will appear asking you to confirm. Click “Install” and
+wait for it to finish — this may take a few minutes. If you see a
+message saying the tools are already installed, you can skip ahead.</p>
+<p><strong>Step 3: Install Homebrew</strong></p>
+<p>Homebrew is a free, widely-used package manager for macOS that makes
+it easy to install software from the Terminal. Paste the following into
+Terminal and press Enter:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>  <span class="ex">/bin/bash</span> <span class="at">-c</span> <span class="st">"</span><span class="va">$(</span><span class="ex">curl</span> <span class="at">-fsSL</span> https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh<span class="va">)</span><span class="st">"</span></span></code></pre></div>
+<p>You will be asked for your Mac login password. As you type it,
+nothing will appear on screen — this is normal. Press Enter when done.
+The installer will then run and may take a few minutes. At the end it
+will print a message about “Next steps” — follow any instructions it
+gives about adding Homebrew to your PATH (it will give you two lines to
+paste into Terminal; paste and run them).</p>
+<p><strong>Step 4: Install libomp</strong></p>
+<p>Once Homebrew is installed, installing <code>libomp</code> is
+straightforward. Paste the following into Terminal and press Enter:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>  <span class="ex">brew</span> install libomp</span></code></pre></div>
+<p>This should only take a minute or so.</p>
+<p><strong>Step 5: Install or reinstall AutoSpectralRcpp</strong></p>
+<p>Now install (or reinstall) <code>AutoSpectralRcpp</code> from R. The
+<code>configure</code> script will find <code>libomp</code>
+automatically and compile with OpenMP enabled:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span>  <span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectralRcpp"</span><span class="op">)</span></span></code></pre></div>
+<p>You should see a line in the output confirming OpenMP was found,
+e.g.:
+<code>configure: OpenMP enabled using libomp at /opt/homebrew/opt/libomp</code></p>
+<p>If you do not see this, or if you see a warning that libomp was not
+found, double-check that Steps 3 and 4 completed successfully and try
+reinstalling.</p>
+<ul>
 <li>
 <strong>Linux</strong>: GCC is typically already present. OpenMP is
-enabled automatically.</li>
+enabled automatically. If you’re using Linux, you probably know what
+you’re doing.</li>
 </ul>
 <p>You can install AutoSpectralRcpp like so:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectralRcpp"</span><span class="op">)</span></span></code></pre></div>
 <p>Third, turn on parallel processing in AutoSpectral. <em>Update</em>:
 This is now supported via a <code>parallel</code> backend. Importantly,
@@ -181,7 +222,7 @@ should be directly in the function call via a <code>threads</code>
 argument. If you don’t know how many threads to use, check the
 recommendation for your machine after running
 <code><a href="../reference/get.autospectral.param.html">get.autospectral.param()</a></code>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">asp</span><span class="op">$</span><span class="va">worker.process.n</span></span></code></pre></div>
 <p>Multi-threading will always default to this number if you do not
 explicitly set a number of threads and set <code>parallel=TRUE</code>.
@@ -189,7 +230,7 @@ This is one less than <code><a href="https://parallelly.futureverse.org/referenc
 is designed to allow you to keep working on minor stuff while
 AutoSpectral chugs along in the background.</p>
 <p>Or just check how many you have available:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">parallelly</span><span class="fu">::</span><span class="fu"><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">availableCores</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>For unmixing larger data sets, you will do well to use a machine with
 more CPUs. Version 1.0.0 brings faster processing for the unmixing.</p>
@@ -304,7 +345,7 @@ acceleration.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Oliver Burton, Adrian Liston.</p>
+  <p>Developed by Oliver Burton, Adrian Liston, Nathan Laniewski.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -104,6 +104,7 @@
 <p>AutoSpectral will probably not solve all your unmixing issues; hopefully it will help. Here are some other tools that may also help:</p>
 <ul>
 <li><a href="https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html" class="external-link">CompensAID</a></li>
+<li><a href="https://github.com/nlaniewski/spectracle/" class="external-link">spectracle</a></li>
 <li><a href="https://github.com/nlaniewski/flowstate/tree/master" class="external-link">flowstate</a></li>
 <li><a href="https://www.ozette.com/" class="external-link">Ozette Resolve</a></li>
 <li><a href="https://github.com/hally166/flowUnmix" class="external-link">flowUnmix</a></li>
@@ -126,7 +127,7 @@
 <div class="section level3">
 <h3 id="latest-stable-release">Latest Stable Release<a class="anchor" aria-label="anchor" href="#latest-stable-release"></a>
 </h3>
-<p><strong>Version 1.5.6</strong></p>
+<p><strong>Version 1.6.0</strong></p>
 <p>Version 1.0+ is intended to greatly speed up the process of unmixing. This is done by pre-screening the variation in autofluorescence and fluorophores for each cell, identifying likely “best” candidates rather than using a brute force approach. If you are using <a href="https://github.com/DrCytometer/AutoSpectralRcpp" class="external-link">AutoSpectralRcpp</a>, you will need to update that for compatibility.</p>
 <p>To install the latest, hopefully stable version, install using <code>devtools</code> or <code>remotes</code>. You will need to install the Bioconductor packages separately. As of version 0.9.1, AutoSpectral relies primarily on <code>FlowSOM</code> rather than <code>EmbedSOM</code>, so you will need to install <code>FlowSOM</code> via Bioconductor. That said, if you install <code>EmbedSOM</code>, Autospectral will automatically detect and use it for faster processing.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -238,7 +239,7 @@
 <ul class="list-unstyled">
 <li>Oliver Burton <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-3884-7373" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 <li>Adrian Liston <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-6272-4085" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
-<li><a href="authors.html">More about authors...</a></li>
+<li>Nathan Laniewski <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-9550-8872" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 </ul>
 </div>
 
@@ -249,7 +250,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Oliver Burton, Adrian Liston.</p>
+  <p>Developed by Oliver Burton, Adrian Liston, Nathan Laniewski.</p>
 </div>
 
 <div class="pkgdown-footer-right">

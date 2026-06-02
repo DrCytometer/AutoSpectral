@@ -50,7 +50,7 @@ get.spectra.automated(
   singlet.quantiles = c(0.85, 0.975),
   cosine.threshold = 0.9,
   peak.signal.threshold = 0.5,
-  legacy.refinement. = TRUE,
+  legacy.refinement = TRUE,
   top.expressing.override = NULL,
   figures = TRUE,
   plot.cosine.filter = TRUE,
@@ -110,6 +110,11 @@ get.spectra.automated(
   Numeric, default `0.5`. Minimum normalised signal in the expected peak
   detector. Used only for informational QC.
 
+- legacy.refinement:
+
+  Logical, default `TRUE`. Whether to run legacy pipeline on controls
+  where the signature does not match the reference well.
+
 - top.expressing.override:
 
   Named numeric vector or `NULL` (default). Override the event count for
@@ -138,11 +143,6 @@ get.spectra.automated(
 - verbose:
 
   Logical, default `TRUE`. Print progress messages.
-
-- legacy.refinement:
-
-  Logical, default `TRUE`. Whether to run legacy pipeline on controls
-  where the signature does not match the reference well.
 
 ## Value
 
