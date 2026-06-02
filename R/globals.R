@@ -25,6 +25,7 @@ utils::globalVariables(
      "library",
      "experiment",
      "AF_Intensity",
-     "Fluorophore_Intensity"
+     "Fluorophore_Intensity",
+     "comparison"
   )
 )
