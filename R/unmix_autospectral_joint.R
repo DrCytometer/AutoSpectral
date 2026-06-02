@@ -106,7 +106,7 @@ unmix.autospectral.joint <- function(
   nAF          <- nrow( af.spectra )
 
   # -------------------------------------------------------------------------
-  # Section 1 — Global pre-computations  (mirrors C++ Section 1)
+  # Section 1: Global pre-computations  (mirrors C++ Section 1)
   # -------------------------------------------------------------------------
 
   # Global pseudoinverse P = (S S^T)^{-1} S,  shape F x D
@@ -122,7 +122,7 @@ unmix.autospectral.joint <- function(
   w_af       <- sqrt( abs( diag( af.cov.mat ) ) ) + 1e-8     # length F
 
   # -------------------------------------------------------------------------
-  # Section 2 — Per-fluorophore pre-computations  (mirrors C++ Section 2)
+  # Section 2: Per-fluorophore pre-computations  (mirrors C++ Section 2)
   # -------------------------------------------------------------------------
   af.only <- is.null( spectra.variants ) || length( spectra.variants ) == 0
 
@@ -168,7 +168,7 @@ unmix.autospectral.joint <- function(
 
       v_lib <- U_nof %*% t( delta )   # (F-1) x n_variants
 
-      # covariance-propagated leakage weights — ridge 1e-4 matches C++ Section 2
+      # covariance-propagated leakage weights: ridge 1e-4 matches C++ Section 2
       delta.obs <- if ( !is.null( delta.list.in[[ fl ]] ) )
         delta.list.in[[ fl ]] else delta
       delta.cov        <- if ( nrow( delta.obs ) > 1 ) stats::cov( delta.obs )
@@ -198,17 +198,17 @@ unmix.autospectral.joint <- function(
 
   if ( verbose ) {
     if ( af.only )
-      message( "Running joint AutoSpectral pipeline (pure R) — AF extraction only." )
+      message( "Running joint AutoSpectral pipeline (pure R): AF extraction only." )
     else
       message( paste0(
-        "Running joint AutoSpectral pipeline (pure R) — AF extraction + ",
+        "Running joint AutoSpectral pipeline (pure R): AF extraction + ",
         "variant optimisation for: ",
         paste( active.names, collapse = ", " ), "."
       ) )
   }
 
   # -------------------------------------------------------------------------
-  # Section 3 — Per-cell parallel loop  (mirrors C++ Section 3)
+  # Section 3: Per-cell parallel loop  (mirrors C++ Section 3)
   # -------------------------------------------------------------------------
 
   # resolve threads
@@ -220,7 +220,7 @@ unmix.autospectral.joint <- function(
     threads <- 1L
   }
 
-  # objects the worker function closes over — listed explicitly for export
+  # objects the worker function closes over: listed explicitly for export
   worker.exports <- c(
     "raw.data", "spectra", "af.spectra",
     "F", "D", "nAF", "fluorophores",
@@ -238,7 +238,7 @@ unmix.autospectral.joint <- function(
   )
   lapply.function <- result.setup$lapply
 
-  # per-cell worker — closed over all pre-computed objects
+  # per-cell worker: closed over all pre-computed objects
   process.cell <- function( i ) {
 
     cell.raw <- raw.data[ i, , drop = TRUE ]
