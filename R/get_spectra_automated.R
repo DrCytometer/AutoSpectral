@@ -344,7 +344,7 @@ get.spectra.automated <- function(
     singlet.quantiles       = c( 0.85, 0.975 ),
     cosine.threshold        = 0.9,
     peak.signal.threshold   = 0.5,
-    legacy.refinement.      = TRUE,
+    legacy.refinement       = TRUE,
     top.expressing.override = NULL,
     figures                 = TRUE,
     plot.cosine.filter      = TRUE,

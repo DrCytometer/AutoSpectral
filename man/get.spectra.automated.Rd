@@ -14,7 +14,7 @@ get.spectra.automated(
   singlet.quantiles = c(0.85, 0.975),
   cosine.threshold = 0.9,
   peak.signal.threshold = 0.5,
-  legacy.refinement. = TRUE,
+  legacy.refinement = TRUE,
   top.expressing.override = NULL,
   figures = TRUE,
   plot.cosine.filter = TRUE,
@@ -52,6 +52,9 @@ values below this threshold trigger legacy pipeline refinement.}
 \item{peak.signal.threshold}{Numeric, default \code{0.5}. Minimum normalised
 signal in the expected peak detector. Used only for informational QC.}
 
+\item{legacy.refinement}{Logical, default \code{TRUE}. Whether to run legacy
+pipeline on controls where the signature does not match the reference well.}
+
 \item{top.expressing.override}{Named numeric vector or \code{NULL} (default).
 Override the event count for specific samples. Names should match the FCS
 filename (without extension) or the fluorophore name from the control file.}
@@ -70,9 +73,6 @@ for each fluorophore (unstained background, selected spectral events, and
 their matched AF events). Set to \code{FALSE} to skip.}
 
 \item{verbose}{Logical, default \code{TRUE}. Print progress messages.}
-
-\item{legacy.refinement}{Logical, default \code{TRUE}. Whether to run legacy
-pipeline on controls where the signature does not match the reference well.}
 }
 \value{
 A numeric matrix with fluorophores in rows and spectral detector
