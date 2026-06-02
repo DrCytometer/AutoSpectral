@@ -17,7 +17,7 @@ unmix.folder(
   output.dir = NULL,
   file.suffix = NULL,
   include.raw = FALSE,
-  include.imaging = FALSE,
+  include.imaging = TRUE,
   use.dist0 = TRUE,
   divergence.threshold = 10000,
   divergence.handling = "Balance",
@@ -28,6 +28,8 @@ unmix.folder(
   verbose = TRUE,
   n.variants = NULL,
   chunk.size = 2e+06,
+  pipeline = c("joint", "legacy"),
+  n.passes = 2L,
   ...
 )
 }
@@ -37,8 +39,8 @@ unmix.folder(
 \item{spectra}{A matrix containing the spectral data. Fluorophores in rows,
 detectors in columns.}
 
-\item{asp}{The AutoSpectral parameter list.
-Prepare using \code{get.autospectral.param}}
+\item{asp}{The AutoSpectral parameter list. Prepare using
+\code{get.autospectral.param}.}
 
 \item{flow.control}{A list containing flow cytometry control parameters.}
 
@@ -51,12 +53,12 @@ unmixing, select from the options: \code{OLS}, \code{WLS}, \code{Poisson} or \co
 \code{FastPoisson} requires installation of \code{AutoSpectralRcpp}.}
 
 \item{weighted}{Logical, whether to use ordinary or weighted least squares
-unmixing as the base algorithm in AutoSpectral unmixing.
+unmixing as the base algorithm in AutoSpectral legacy pipeline unmixing.
 Default is \code{FALSE} and will use OLS.}
 
-\item{weights}{Optional numeric vector of weights: one per fluorescent
-detector. Default is \code{NULL}, in which case weighting will be done by
-channel means. Only used for \code{WLS}}
+\item{weights}{Optional numeric vector of weights (one per fluorescent
+detector). Default is \code{NULL}, in which case weighting will be done by
+channel means (Poisson variance). Only used for \code{WLS}.}
 
 \item{af.spectra}{Spectral signatures of autofluorescences, normalized
 between 0 and 1, with fluorophores in rows and detectors in columns. Prepare
@@ -69,27 +71,25 @@ of spectral signature variations for each fluorophore. Prepare using
 \code{get.spectral.variants}. Default is \code{NULL}. Used for
 AutoSpectral unmixing. Required for per-cell fluorophore optimization.}
 
-\item{output.dir}{Directory to save the unmixed FCS files
-(default is \code{asp$unmixed.fcs.dir}, which is \code{./AutoSpectral_unmixed}).}
+\item{output.dir}{A character string specifying the directory to save the
+unmixed FCS file. Default is \code{NULL}, which will use \code{./AutoSpectral_unmixed}.}
 
 \item{file.suffix}{A character string to append to the output file name.
-Default is \code{NULL}}
+Default is \code{NULL}.}
 
 \item{include.raw}{A logical value indicating whether to include raw
 expression data in the written FCS file. Default is \code{FALSE} to provide smaller
 output files.}
 
 \item{include.imaging}{A logical value indicating whether to include imaging
-parameters in the written FCS file. Default is \code{FALSE} to provide smaller
-output files.}
+parameters in the written FCS file. Default is \code{TRUE}.}
 
-\item{use.dist0}{Logical, controls whether the selection of the optimal AF
-signature for each cell is determined by which unmixing brings the fluorophore
-signals closest to 0 (\code{use.dist0} = \code{TRUE}) or by which unmixing minimizes the
-per-cell residual (\code{use.dist0} = \code{FALSE}). Default is \code{TRUE}. Used for
-AutoSpectral unmixing. The minimization of fluorophore signals can be thought
-of as a "worst-case" scenario, but it provides more accurate assignments,
-particularly with large panels.}
+\item{use.dist0}{Legacy pipeline argument. Logical, controls whether the
+selection of the optimal AF signature for each cell is determined by the
+minimization of potential AF spillover into the fluorophore channels
+(\code{use.dist0} = \code{TRUE}) or by which unmixing minimizes the per-cell residual
+(\code{use.dist0} = \code{FALSE}). Default is \code{TRUE}. Used for legacy AutoSpectral
+unmixing.}
 
 \item{divergence.threshold}{Numeric. Used for \code{FastPoisson} only.
 Threshold to trigger reversion towards WLS unmixing when Poisson result
@@ -106,7 +106,7 @@ To be deprecated.}
 
 \item{speed}{Selector for the precision-speed trade-off in AutoSpectral per-cell
 fluorophore optimization. Options are \code{fast}, \code{medium} and \code{slow}, with the
-default being \code{slow}. As of version 1.0.0, the backend for how this works
+default being \code{fast}. As of version 1.0.0, the backend for how this works
 has changed. Spectral variants and AF signatures are now pre-screened per cell
 to identify likely candidates, so brute force testing of all variants is no
 longer required. So, \code{speed} controls the number of variants to be tested per
@@ -115,27 +115,34 @@ cell, with \code{fast} testing a single variant, \code{medium} testing 3 variant
 \code{AutoSpectral}, installation of \code{AutoSpectralRcpp} is strongly encouraged for
 faster processing.}
 
-\item{parallel}{Logical, default is \code{FALSE}. Set to \code{TRUE} to activate parallel
-processing for multiple FCS files.}
+\item{parallel}{Logical, default is \code{TRUE}, which enables parallel processing
+for per-cell unmixing methods.}
 
-\item{threads}{Numeric, default is \code{NULL}, in which case \code{asp$worker.process.n}
-will be used. \code{asp$worker.process.n} is set by default to be one less than the
-available cores on the machine. Multi-threading is only used if \code{parallel} is
-\code{TRUE}. If working on a computing cluster, try \code{parallelly::availableCores()}.}
+\item{threads}{Numeric, defaults to a single thread for sequential processing
+(\code{parallel=FALSE}) or all available cores if \code{parallel=TRUE}.}
 
 \item{verbose}{Logical, controls messaging. Default is \code{TRUE}. Set to \code{FALSE}
 to have it shut up.}
 
-\item{n.variants}{Number of variants to test per cell. Allows explicit control
-over the number used, as opposed to \code{speed}, which selects from pre-defined
-choices. Providing a numeric value to \code{n.variants} will override \code{speed},
-allowing up to \code{n.variants} (or the max available) variants to be tested. The
-default is \code{NULL}, in which case \code{n.variants} will be ignored.}
+\item{n.variants}{Numeric, used for legacy AutoSpectral pipeline unmixing.
+Number of variants to test per cell. Allows explicit control over the
+number used, as opposed to \code{speed}, which selects from pre-defined choices.
+Providing a numeric value to \code{n.variants} will override \code{speed}, allowing
+up to \code{n.variants} (or the max available) variants to be tested. The default
+is \code{NULL}, in which case \code{n.variants} will be ignored.}
 
 \item{chunk.size}{Numeric, number of events to use per chunk of unmixing. Used
 to manage memory when processing large FCS files. As a rough guide, you will
 need approximately 10x the size of the raw FCS file on disk as available
 memory. Default is set at \code{2e6} events, assuming ~20GB memory available.}
+
+\item{pipeline}{Character, one of \code{"joint"} (default) or \code{"legacy"}. Passed
+to \code{unmix.autospectral.rcpp()}. \code{"joint"} uses the new covariance-weighted
+joint per-cell pipeline; \code{"legacy"} reproduces the behaviour of
+AutoSpectral prior to version 1.6.0.}
+
+\item{n.passes}{Integer, default \code{2L}. Number of joint optimisation passes
+per cell. Only used when \code{pipeline = "joint"}.}
 
 \item{...}{Ignored. Previously used for deprecated arguments such as
 \code{calculate.error}.}
