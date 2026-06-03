@@ -50,10 +50,15 @@
 
 .onLoad <- function(libname, pkgname) {
 
-  # Check if AutoSpectralRcpp namespace is already loaded (e.g. via load_all())
-  # before falling back to requireNamespace(), which may load the installed copy.
-  rcpp_available <- isNamespaceLoaded("AutoSpectralRcpp") ||
-                    requireNamespace("AutoSpectralRcpp", quietly = TRUE)
+  rcpp_available <- isNamespaceLoaded("AutoSpectralRcpp")
+
+  if (!rcpp_available) {
+    rcpp_available <- tryCatch(
+      requireNamespace("AutoSpectralRcpp", quietly = FALSE),  # FALSE to surface errors
+      error   = function(e) { warning("AutoSpectralRcpp failed to load: ", conditionMessage(e), call. = FALSE); FALSE },
+      warning = function(w) { warning("AutoSpectralRcpp warning on load: ", conditionMessage(w), call. = FALSE); FALSE }
+    )
+  }
 
   if (!rcpp_available) return(invisible(NULL))
 
@@ -62,12 +67,11 @@
   if (.inject("writeFCS")) injected <- c(injected, "writeFCS")
 
   .AS$injected_fns <- injected
-
   invisible(NULL)
 }
 
 .onAttach <- function(libname, pkgname) {
-  fns <- .injected_fns
+  fns <- .AS$injected_fns
   if (length(fns) > 0) {
     packageStartupMessage(
       "AutoSpectralRcpp detected: using Rcpp-accelerated ",
