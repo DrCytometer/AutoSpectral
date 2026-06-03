@@ -294,9 +294,9 @@ unmix.folder <- function(
     result <- list( cleanup = NULL )
   }
 
-  execute.unmix <- function( apply.func ) {
+  execute.unmix <- function( lapply.func ) {
     invisible(
-      apply.func( files.to.unmix, function( f ) {
+      lapply.func( files.to.unmix, function( f ) {
         do.call( unmix.fcs, c( list( f ), args.list ) )
       } )
     )
