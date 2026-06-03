@@ -176,12 +176,12 @@ get.fluor.variants <- function(
       bg.matched <- bg.matched + neg.spectral[ knn.idx[ , ki ], , drop = FALSE ]
     }
     bg.matched    <- bg.matched / k.neighbors
-    pos.corrected <- pos.spectral[ pos.idx, ] - bg.matched
+    pos.corrected <- pos.spectral[ pos.idx, , drop = FALSE ] - bg.matched
   } else {
     # check that we have some internal negative events
     if ( length( neg.idx ) > 50 ) {
       # define mean background from negative fraction
-      background <- colMeans( pos.spectral[ neg.idx, ] )
+      background <- colMeans( pos.spectral[ neg.idx, , drop = FALSE ] )
       # subtract the global background
       pos.corrected <- pos.spectral - background
     } else {
@@ -207,9 +207,10 @@ get.fluor.variants <- function(
   keep.idx <- which( pos.unmixed[ , fluor ] > unmixed.thresholds[ fluor ] * 2 )
 
   # cosine screening
-  ev.max  <- apply( pos.corrected[ keep.idx, ], 1, max )
+  pos.corrected.keep <- pos.corrected[ keep.idx, , drop = FALSE ]
+  ev.max  <- apply( pos.corrected.keep, 1, max )
   ev.max[ ev.max <= 0 ] <- 1
-  ev.norm <- pos.corrected[ keep.idx, ] / ev.max
+  ev.norm <- pos.corrected.keep / ev.max
   ev.cosine <- .cosine.sim.rows( ev.norm, orig.vec )
   cosine.keep <- which( ev.cosine >= sim.threshold )
 
@@ -223,6 +224,7 @@ get.fluor.variants <- function(
                       pos.corrected[ keep.idx[ cosine.keep ], ] )
   colnames( som.input ) <- c( colnames( pos.unmixed ), spectral.channel )
   event.n   <- length( cosine.keep )
+
   if ( event.n < 500L )
     som.dim <- max( 2L, floor( sqrt( event.n / 3 ) ) )
 
@@ -230,7 +232,7 @@ get.fluor.variants <- function(
   set.seed( asp$bird.seed )
   if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
     map <- EmbedSOM::SOM(
-      som.input, # check with just pos.corrected
+      som.input,
       xdim = som.dim,
       ydim = som.dim,
       batch = TRUE,
@@ -250,6 +252,7 @@ get.fluor.variants <- function(
     apply( map$codes[ , spectral.channel, drop = FALSE ], 1,
            function( x ) x / max( x ) )
   )
+
   # remove anything that's NA (unlikely)
   variant.spectra <- as.matrix( stats::na.omit( variant.spectra ) )
 
@@ -259,24 +262,6 @@ get.fluor.variants <- function(
     return( original.spectrum )
   }
 
-  if ( FALSE ) {
-    # qc to remove dissimilar spectral variants (usually AF contamination)
-    similar <- apply( variant.spectra, 1, function( v ) {
-      sim.mat <- cosine.similarity( rbind( orig.vec, v ) )
-      sim.mat[ lower.tri( sim.mat ) ] > sim.threshold
-    } )
-
-    if ( !any( similar ) ) {
-      warning( paste0(
-        "\033[31mNo SOM centroids passed cosine QC (threshold = ",
-        sim.threshold, ") for ", fluor,
-        ". Returning reference spectrum.\033[0m"
-      ) )
-      return( original.spectrum )
-    }
-
-    variant.spectra <- variant.spectra[ similar, , drop = FALSE ]
-  }
   # Shrink variant values toward the reference in channels where the
   # fluorophore contributes negligible signal, to avoid inflating cross-talk.
   peak.idx <- orig.vec > 0.05
@@ -294,16 +279,24 @@ get.fluor.variants <- function(
     if ( verbose )
       message( paste0( "\033[32m  Plotting spectral variation for ",
                        fluor, "\033[0m" ) )
-    spectral.variant.plot.dens(
-      spectra.variants   = variant.spectra,
-      median.spectrum    = orig.vec,
-      title              = paste0( fluor, "_variants" ),
-      save               = TRUE,
-      plot.dir           = output.dir,
-      variant.color = variant.fill.color,
-      variant.alpha = variant.fill.alpha,
-      median.line.color  = median.line.color,
-      median.linewidth   = median.linewidth
+    tryCatch(
+      expr = {
+        spectral.variant.plot.dens(
+          spectra.variants   = variant.spectra,
+          median.spectrum    = orig.vec,
+          title              = paste0( fluor, "_variants" ),
+          save               = TRUE,
+          plot.dir           = output.dir,
+          variant.color      = variant.fill.color,
+          variant.alpha      = variant.fill.alpha,
+          median.line.color  = median.line.color,
+          median.linewidth   = median.linewidth
+        )
+      },
+      error = function( e ) {
+        warning( paste0( "Spectral variant plot failed for ", fluor,
+                         ": ", conditionMessage( e ) ) )
+      }
     )
   }
 
