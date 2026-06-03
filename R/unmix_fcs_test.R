@@ -100,7 +100,7 @@
 #'
 #' @export
 
-unmix.fcs.test <- function(
+unmix.fcs <- function(
     fcs.file,
     spectra,
     asp,
