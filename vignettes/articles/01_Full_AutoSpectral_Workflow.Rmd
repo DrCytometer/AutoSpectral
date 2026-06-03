@@ -571,16 +571,13 @@ For more detail on the per-cell AF extraction, see the [dedicated article](https
 
 To do per-cell fluorophore optimization, we will first measure the variation in the spectrum for each fluorophore. For the unmixing, we'll supply the `af.spectra` and the `spectra.variants`, calling `AutoSpectral` unmixing. Read more about how the per-cell fluorophore optimization works in the [GitHub](https://drcytometer.github.io/AutoSpectral/articles/11_Per_Cell_Optimization.html) or [Colibri](https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization) article.
 
-We provide `spleen.af` as the `af.spectra` here because the control samples are from spleen. Provide whatever is the best fit for your single-stained controls. The point here is to match the AF of the controls so that we isolate the variation in the fluorophore signatures independent of any AF variation. 
+As of version 1.6.0, we no longer provide autofluorescence information via `af.spectra` when calling `get.spectral.variants()`. This is handled automatically by the function internals to avoid creating any confusion.
 ```{r, eval=FALSE}
 variants <- get.spectral.variants(
   control.dir = control.dir,
   control.def.file = control.file,
   asp = asp,
-  spectra = spectra,
-  af.spectra = spleen.af, # the AF relevant to any cell-based single-stained controls
-  parallel = FALSE, # use parallel if TRUE
-  refine = TRUE # optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass
+  spectra = spectra
 )
 ```
 The output of this is saved as an RDS file in folder `figure_spectral_variants`. You can load it back in using the `readRDS()` function in base R.

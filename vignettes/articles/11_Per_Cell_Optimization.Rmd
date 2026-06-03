@@ -44,9 +44,7 @@ variants <- get.spectral.variants(
    control.dir,
    control.file,
    asp,
-   spectra,
-   parallel = TRUE,
-   verbose = TRUE 
+   spectra
 )
 ```
 
