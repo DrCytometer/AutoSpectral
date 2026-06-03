@@ -26,6 +26,9 @@ utils::globalVariables(
      "experiment",
      "AF_Intensity",
      "Fluorophore_Intensity",
-     "comparison"
+     "comparison",
+     "mean_Mean_Sim",
+     "sd_Mean_Sim",
+     "af_method"
   )
 )
