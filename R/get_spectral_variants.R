@@ -103,6 +103,19 @@ get.spectral.variants <- function(
 
   dots <- list( ... )
 
+  if ( !is.logical( figures ) || length( figures ) != 1L ) {
+    stop(
+      paste0(
+        "Argument `figures` must be TRUE or FALSE, but received a ",
+        class( figures ), ". ",
+        "If you are passing `af.spectra`, note that this argument was removed ",
+        "in AutoSpectral 1.6.0 and is no longer needed. ",
+        "Please remove it from your call to `get.spectral.variants()`."
+      ),
+      call. = FALSE
+    )
+  }
+
   for ( old.arg in c( "pos.quantile" ) ) {
     if ( !is.null( dots[[ old.arg ]] ) )
       lifecycle::deprecate_warn( "0.9.0",
@@ -184,7 +197,7 @@ get.spectral.variants <- function(
   universal.negative <- control.table$universal.negative
   universal.negative[ is.na( universal.negative ) ] <- "FALSE"
   names( universal.negative ) <- table.fluors
-  flow.channel       <- control.table$channel
+  flow.channel       <- control.table$channel # this needs to be changed to the empirical peak
   names( flow.channel ) <- table.fluors
   flow.file.name     <- control.table$filename
   names( flow.file.name ) <- table.fluors
@@ -259,9 +272,10 @@ get.spectral.variants <- function(
 
   # find the likely positivity thresholds for determining what needs refinement
   unstained.unmixed <- unmix.autospectral(
-    unstained,
-    spectra,
-    af.spectra,
+    raw.data = unstained,
+    spectra = spectra,
+    af.spectra = af.spectra,
+    asp = asp,
     verbose = FALSE
   )
   unmixed.thresholds <- apply(
