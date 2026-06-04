@@ -31,6 +31,10 @@ identify the scatter channels to use for kNN matching (e.g.
 \code{c("FSC-A", "SSC-A")}). These are excluded from the spectral
 similarity calculation.}
 
+\item{spectra}{Numeric matrix of fluorophore spectra (fluorophores x
+detectors). Row names must be fluorophore names; column names must match
+the detector channels in the FCS file.}
+
 \item{k}{Integer. Number of nearest reference neighbours to average.
 Default \code{5}. Larger values stabilise the reference estimate but may
 blur genuine AF heterogeneity.}
