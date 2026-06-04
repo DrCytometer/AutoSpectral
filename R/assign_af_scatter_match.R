@@ -98,6 +98,7 @@ assign.af.scatter.match <- function(
     test.data,
     ref.data,
     scatter.param,
+    spectra,
     k             = 5L,
     af.spectra    = NULL,
     scale.scatter = TRUE,
@@ -142,8 +143,8 @@ assign.af.scatter.match <- function(
       call. = FALSE
     )
 
-  # Spectral columns = everything that is NOT a scatter parameter
-  spectral.cols <- setdiff( colnames( test.data ), scatter.param )
+  spectral.cols <- colnames( spectra )
+  D             <- ncol( spectra )
 
   missing.spectral <- setdiff( spectral.cols, colnames( ref.data ) )
   if ( length( missing.spectral ) > 0 )
@@ -191,7 +192,7 @@ assign.af.scatter.match <- function(
 
   if ( scale.scatter ) {
     scatter.means <- colMeans( ref.scatter )
-    scatter.sds   <- apply( ref.scatter, 2, stats::sd )
+    scatter.sds   <- apply( ref.scatter, 2, stats::mad )
     scatter.sds[ scatter.sds < 1e-9 ] <- 1  # guard against zero-variance channels
 
     test.scatter.scaled <- sweep( sweep( test.scatter, 2, scatter.means, "-" ),
@@ -232,7 +233,6 @@ assign.af.scatter.match <- function(
 
   # Reshape to (n.test, k, D) by summing in blocks of k
   # Using matrix arithmetic: group rows into blocks of k and colMeans each block
-  D           <- ncol( ref.spectral.mat )
   block.sums  <- matrix( 0, nrow = n.test, ncol = D )
 
   # Vectorised summation across neighbours
@@ -294,6 +294,22 @@ assign.af.scatter.match <- function(
     af.assignment <- max.col( sim.matrix, ties.method = "first" )
   }
 
+  # unmixing
+  af.idx <- nrow( spectra ) + 1
+  unmixed <- matrix( 0, nrow = n.test, ncol = af.idx )
+  spectra.null <- rep( 0, D )
+  ref.average.norm <- t( apply( ref.average, 1, function( x ) x / max( x ) ) )
+  spectra.af <- rbind( spectra, spectra.null )
+  for ( cell in seq_len( n.test ) ) {
+    spectra.cell <- spectra.af
+    spectra.cell[ af.idx, ] <- ref.average.norm[ cell, ]
+    unmixed[ cell, ] <- unmix.ols.fast( test.data[ cell, spectral.cols ], spectra.cell )
+  }
+  colnames( unmixed ) <- c( rownames( spectra ), "AF" )
+  se.unmixed <- rowSums( unmixed[ , rownames( spectra ) ]^2 )
+  mean.se.unmixed <- mean( se.unmixed )
+  rsd.se.unmixed  <- stats::mad( se.unmixed )
+
   # ---------------------------------------------------------------------------
   # 9. Summary statistics
   # ---------------------------------------------------------------------------
@@ -303,21 +319,25 @@ assign.af.scatter.match <- function(
     k              = k,
     mean.cosine    = mean(   cosine.sim ),
     median.cosine  = stats::median( cosine.sim ),
-    sd.cosine      = stats::sd(     cosine.sim ),
+    rsd.cosine     = stats::mad(     cosine.sim ),
     pct.above.0.9  = mean(   cosine.sim > 0.9 ) * 100,
     pct.above.0.95 = mean(   cosine.sim > 0.95 ) * 100,
+    mean.unmix.err = mean.se.unmixed,
+    rsd.unmix.err  = rsd.se.unmixed,
     stringsAsFactors = FALSE
   )
 
   if ( verbose ) {
     message(
       sprintf(
-        "  Mean cosine = %.4f  |  Median = %.4f  |  SD = %.4f  |  >0.9: %.1f%%  |  >0.95: %.1f%%",
+        "  Mean cosine = %.4f  |  Median = %.4f  |  rSD = %.4f  |  >0.9: %.1f%%  |  >0.95: %.1f%%  |  Mean error = %.4f  |  rSD error = %.4f",
         summary.df$mean.cosine,
         summary.df$median.cosine,
-        summary.df$sd.cosine,
+        summary.df$rsd.cosine,
         summary.df$pct.above.0.9,
-        summary.df$pct.above.0.95
+        summary.df$pct.above.0.95,
+        summary.df$mean.unmix.err,
+        summary.df$rsd.unmix.err
       )
     )
   }
@@ -331,7 +351,8 @@ assign.af.scatter.match <- function(
     ref.average       = ref.average,
     af.assignment     = af.assignment,
     nn.index          = nn.index,
-    summary           = summary.df
+    summary           = summary.df,
+    unmixed           = unmixed
   ) )
 }
 
@@ -391,7 +412,7 @@ benchmark.af.scatter.match <- function(
   if ( is.character( ref.data  ) ) ref.data  <- readFCS( ref.data  )
   test.data <- as.matrix( test.data )
 
-  spectral.cols <- setdiff( colnames( test.data ), scatter.param )
+  spectral.cols <- colnames( spectra )
   test.spectral <- test.data[ , spectral.cols, drop = FALSE ]
 
   # ---- Helper: cosine similarity of each test cell against its assigned AF ----
