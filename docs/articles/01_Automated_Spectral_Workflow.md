@@ -211,7 +211,7 @@ Traces](figures/Automated_workflow/Automated_autospectral_spectra.jpg)
 Spectral Signature Traces
 
 ![Spectral Signature
-Heatmap](figures/Automated_workflow/Automated_autospectral_spectra%20spectral_heatmap.jpg)
+Heatmap](figures/Automated_workflow/Automated_spectral_heatmap.jpg)
 
 Spectral Signature Heatmap
 

@@ -55,6 +55,12 @@ assign.af.scatter.match(
   scatter channels to use for kNN matching (e.g. `c("FSC-A", "SSC-A")`).
   These are excluded from the spectral similarity calculation.
 
+- spectra:
+
+  Numeric matrix of fluorophore spectra (fluorophores x detectors). Row
+  names must be fluorophore names; column names must match the detector
+  channels in the FCS file.
+
 - k:
 
   Integer. Number of nearest reference neighbours to average. Default

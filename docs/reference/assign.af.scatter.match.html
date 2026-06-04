@@ -138,6 +138,12 @@ identify the scatter channels to use for kNN matching (e.g.
 similarity calculation.</p></dd>
 
 
+<dt id="arg-spectra">spectra<a class="anchor" aria-label="anchor" href="#arg-spectra"></a></dt>
+<dd><p>Numeric matrix of fluorophore spectra (fluorophores x
+detectors). Row names must be fluorophore names; column names must match
+the detector channels in the FCS file.</p></dd>
+
+
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
 <dd><p>Integer. Number of nearest reference neighbours to average.
 Default <code>5</code>. Larger values stabilise the reference estimate but may
