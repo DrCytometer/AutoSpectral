@@ -91,7 +91,7 @@ compare.af <- function(
       is.matrix( m ) && is.numeric( m ) && ncol( m ) == ncol( spectra ),
       logical( 1L ) ) ),
     is.character( assign.fn ), length( assign.fn ) == 1L,
-    existsFunction( assign.fn ),
+    exists( assign.fn, mode = "function" ),
     is.numeric( n.downsample ) || is.integer( n.downsample ),
     length( n.downsample ) == 1L, n.downsample >= 1L
   )
