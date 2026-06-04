@@ -56,6 +56,160 @@ appreciated.
   - This should be improved further with the next round of updates,
     tentatively 1.6.0
 
+## Benchmarking new AF assignment strategies
+
+If you are developing a new autofluorescence (AF) assignment or fitting
+function and want to compare it against the existing approaches,
+AutoSpectral provides two benchmarking functions:
+[`test.af.accuracy()`](https://drcytometer.github.io/AutoSpectral/reference/test.af.accuracy.md)
+and `benchmark.af.spectra.size()`.
+
+### What they measure
+
+Both functions evaluate AF assignment quality using **cosine
+similarity** between each cell’s raw detector signal and the AF spectrum
+it was assigned to. A similarity of 1 means the cell’s signal is
+perfectly explained by that AF spectrum; lower values indicate a worse
+fit. Results are always reported relative to a **mean-AF baseline**
+(every cell assigned to the mean AF spectrum, regardless of which
+variant it actually resembles), so you can immediately see whether your
+method beats the trivial case.
+
+### Writing a compatible function
+
+Your function must follow one of two calling conventions.
+
+**Assign-type** functions take `(raw.data, spectra, af.spectra)` and
+return an integer vector of per-cell AF-spectrum indices (one index per
+row of `raw.data`, values in `1:nrow(af.spectra)`). These are the
+simpler of the two to implement - you just need to decide which AF
+variant each cell is most likely to be.
+
+``` r
+
+my.assign.af <- function( raw.data, spectra, af.spectra ) {
+  # raw.data   : matrix, cells x detectors
+  # spectra    : matrix, fluorophores x detectors (no AF row)
+  # af.spectra : matrix, AF variants x detectors
+
+  # ... your logic here ...
+
+  af.idx  # integer vector, length nrow(raw.data), values in 1:nrow(af.spectra)
+}
+```
+
+**Fit-type** functions (name must start with `"fit."`) receive
+pre-computed OLS quantities and return both the assignments and the
+unmixed fluorophore values. They are called with
+`(raw.data, unmixed, unmixing.matrix, spectra, af.spectra)` and must
+return a list with elements `$unmixed` (cells x fluorophores matrix, no
+AF column) and `$af.idx` (integer vector as above).
+
+``` r
+
+fit.my.af <- function( raw.data, unmixed, unmixing.matrix, spectra, af.spectra ) {
+  # unmixed         : matrix, cells x fluorophores (OLS result without AF)
+  # unmixing.matrix : matrix, fluorophores x detectors
+
+  # ... your logic here ...
+
+  list(
+    unmixed = unmixed_with_af_corrected,  # cells x fluorophores, no AF column
+    af.idx  = af.idx                      # integer vector
+  )
+}
+```
+
+The naming convention matters:
+[`test.af.accuracy()`](https://drcytometer.github.io/AutoSpectral/reference/test.af.accuracy.md)
+dispatches on whether the function name starts with `"fit."`, so make
+sure your function is named accordingly and is available in the current
+search path (loaded via
+[`devtools::load_all()`](https://devtools.r-lib.org/reference/load_all.html)
+or [`source()`](https://rdrr.io/r/base/source.html)).
+
+### Quick accuracy check: `test.af.accuracy()`
+
+Use this first to confirm that your function actually works and to see
+how it compares on a single unstained file.
+
+``` r
+
+results <- test.af.accuracy(
+  unstained.fcs = "path/to/unstained.fcs",
+  spectra       = my.spectra,      # fluorophores x detectors
+  af.spectra    = my.af.spectra,   # AF variants x detectors
+  asp           = my.asp,
+  functions     = c(
+    "assign.af.fluorophores",  # existing method - keep as a reference point
+    "assign.af.residuals",     # existing method
+    "my.assign.af"             # your new function
+  ),
+  n.downsample  = 1000,        # events per run; increase for a final check
+  plot.dir      = "figures/af_dev"
+)
+```
+
+The function prints cosine similarity for each method and saves a PDF of
+biplots - one panel per method plus a no-AF baseline - to `plot.dir`.
+You can also inspect the numbers directly:
+
+``` r
+
+# mean cosine similarity for each method (higher is better)
+sapply( results, `[[`, "Mean_Sim" )
+
+# per-cell similarities for your method
+hist( results[["my.assign.af"]]$Similarity, breaks = 50,
+      main = "Per-cell cosine similarity", xlab = "Cosine similarity" )
+```
+
+### Scaling test: `benchmark.af.spectra.size()`
+
+Once your function looks promising on a single file, use this to check
+whether it holds up as the panel gets larger. It repeatedly subsamples
+the spectra matrix to a range of panel sizes and runs
+[`test.af.accuracy()`](https://drcytometer.github.io/AutoSpectral/reference/test.af.accuracy.md)
+for each subsample, producing a summary line plot of mean cosine
+similarity vs. fluorophore count.
+
+``` r
+
+bench <- benchmark.af.spectra.size(
+  unstained.fcs = "path/to/unstained.fcs",
+  spectra       = my.spectra,
+  af.spectra    = my.af.spectra,
+  asp           = my.asp,
+  functions     = c(
+    "assign.af.fluorophores",
+    "assign.af.residuals",
+    "my.assign.af"
+  ),
+  n.fluors     = c( 5, 10, 20, 30, 40 ),  # panel sizes to test
+  n.draws      = 5,                        # random draws per panel size
+  n.downsample = 1000,
+  plot.dir     = "figures/af_dev"
+)
+
+# the summary data frame: mean and SD of cosine similarity across draws
+head( bench$summary )
+
+# the ggplot object, if you want to tweak the figure
+bench$plot + ggplot2::ggtitle( "My new AF method" )
+```
+
+The output plot shows one line per method, with a ribbon spanning +/-1
+SD across random draws. A good new method should sit above the mean-AF
+baseline across all panel sizes, and ideally narrow the gap on the
+existing methods or beat them on larger panels where per-cell assignment
+becomes more important.
+
+If you have results you’d like to share, feel free to open an issue or
+pull request on GitHub with the summary data frame and the benchmark
+plot.
+
+------------------------------------------------------------------------
+
 To install the `dev` branch:
 
 ``` r

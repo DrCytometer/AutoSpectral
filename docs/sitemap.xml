@@ -96,6 +96,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/assign.variants.cosine.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/assign.variants.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/benchmark.af.scatter.match.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/benchmark.af.spectra.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/calculate.condition.number.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/calculate.hotspot.matrix.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/calculate.optimize.necessity.html</loc></url>
@@ -107,6 +108,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/check.critical.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/check.gates.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/clean.controls.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/compare.af.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/compare.unmix.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/concatenateFCS.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/convergence.plot.html</loc></url>
@@ -199,6 +201,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/spectral.trace.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/spectral.variant.plot.dens.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/spectral.variant.plot.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/test.af.accuracy.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/trim.extreme.events.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/tune.gate.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.html</loc></url>

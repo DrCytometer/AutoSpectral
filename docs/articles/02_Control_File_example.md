@@ -38,6 +38,8 @@ review and complete it before running the extraction.
 ``` r
 
 library(AutoSpectral)
+#> Loading required namespace: AutoSpectralRcpp
+#> AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.
 ```
 
 ## Setting up

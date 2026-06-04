@@ -114,7 +114,9 @@ cell AF extraction. We will start by mapping the variation in the
 single-color controls for each fluorophore using a self-organizing map
 (SOM).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span> <span class="va"><a href="https://github.com/DrCytometer/AutoSpectral" class="external-link">AutoSpectral</a></span> <span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span> <span class="va"><a href="https://github.com/DrCytometer/AutoSpectral" class="external-link">AutoSpectral</a></span> <span class="op">)</span></span>
+<span><span class="co">#&gt; Loading required namespace: AutoSpectralRcpp</span></span>
+<span><span class="co">#&gt; AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.</span></span></code></pre></div>
 <p>If you haven’t already done so, you’ll need to run the basic
 AutoSpectral workflow to get clean spectral signatures and
 autofluorescence signatures. See the articles on this, including “Single
@@ -145,9 +147,7 @@ in the peak channel, and cluster those to get variants.</p>
 <span>   <span class="va">control.dir</span>,</span>
 <span>   <span class="va">control.file</span>,</span>
 <span>   <span class="va">asp</span>,</span>
-<span>   <span class="va">spectra</span>,</span>
-<span>   parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>   verbose <span class="op">=</span> <span class="cn">TRUE</span> </span>
+<span>   <span class="va">spectra</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Set <code>parallel</code> to <code>TRUE</code> for possibly faster
 processing. This should take a couple of minutes or less. Note that as

@@ -43,6 +43,8 @@ single-color controls for each fluorophore using a self-organizing map
 ``` r
 
 library( AutoSpectral )
+#> Loading required namespace: AutoSpectralRcpp
+#> AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.
 ```
 
 If you haven’t already done so, you’ll need to run the basic
@@ -84,9 +86,7 @@ variants <- get.spectral.variants(
    control.dir,
    control.file,
    asp,
-   spectra,
-   parallel = TRUE,
-   verbose = TRUE 
+   spectra
 )
 ```
 

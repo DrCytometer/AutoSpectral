@@ -50,6 +50,8 @@ AutoSpectral, which you can access via
 ``` r
 
 library( AutoSpectral )
+#> Loading required namespace: AutoSpectralRcpp
+#> AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.
 ```
 
 Before doing the single-cell AF extraction, you’ll need to either run

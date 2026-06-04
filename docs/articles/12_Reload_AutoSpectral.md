@@ -24,6 +24,14 @@ already have all of this.
 ``` r
 
 library(AutoSpectral)
+```
+
+    ## Loading required namespace: AutoSpectralRcpp
+
+    ## AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.
+
+``` r
+
 asp <- get.autospectral.param(cytometer = "id7000")
 control.dir <- "path_to_my_single_stained_controls"
 control.def.file <- "fcs_control_file.csv"

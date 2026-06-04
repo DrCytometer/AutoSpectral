@@ -134,14 +134,151 @@ tentatively 1.6.0</li>
 </ul>
 </li>
 </ul>
-<p>To install the <code>dev</code> branch:</p>
+<div class="section level2">
+<h2 id="benchmarking-new-af-assignment-strategies">Benchmarking new AF assignment strategies<a class="anchor" aria-label="anchor" href="#benchmarking-new-af-assignment-strategies"></a>
+</h2>
+<p>If you are developing a new autofluorescence (AF) assignment or
+fitting function and want to compare it against the existing approaches,
+AutoSpectral provides two benchmarking functions:
+<code><a href="../reference/test.af.accuracy.html">test.af.accuracy()</a></code> and
+<code>benchmark.af.spectra.size()</code>.</p>
+<div class="section level3">
+<h3 id="what-they-measure">What they measure<a class="anchor" aria-label="anchor" href="#what-they-measure"></a>
+</h3>
+<p>Both functions evaluate AF assignment quality using <strong>cosine
+similarity</strong> between each cell’s raw detector signal and the AF
+spectrum it was assigned to. A similarity of 1 means the cell’s signal
+is perfectly explained by that AF spectrum; lower values indicate a
+worse fit. Results are always reported relative to a <strong>mean-AF
+baseline</strong> (every cell assigned to the mean AF spectrum,
+regardless of which variant it actually resembles), so you can
+immediately see whether your method beats the trivial case.</p>
+</div>
+<div class="section level3">
+<h3 id="writing-a-compatible-function">Writing a compatible function<a class="anchor" aria-label="anchor" href="#writing-a-compatible-function"></a>
+</h3>
+<p>Your function must follow one of two calling conventions.</p>
+<p><strong>Assign-type</strong> functions take
+<code>(raw.data, spectra, af.spectra)</code> and return an integer
+vector of per-cell AF-spectrum indices (one index per row of
+<code>raw.data</code>, values in <code>1:nrow(af.spectra)</code>). These
+are the simpler of the two to implement - you just need to decide which
+AF variant each cell is most likely to be.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">my.assign.af</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span> <span class="va">raw.data</span>, <span class="va">spectra</span>, <span class="va">af.spectra</span> <span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># raw.data   : matrix, cells x detectors</span></span>
+<span>  <span class="co"># spectra    : matrix, fluorophores x detectors (no AF row)</span></span>
+<span>  <span class="co"># af.spectra : matrix, AF variants x detectors</span></span>
+<span></span>
+<span>  <span class="co"># ... your logic here ...</span></span>
+<span></span>
+<span>  <span class="va">af.idx</span>  <span class="co"># integer vector, length nrow(raw.data), values in 1:nrow(af.spectra)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p><strong>Fit-type</strong> functions (name must start with
+<code>"fit."</code>) receive pre-computed OLS quantities and return both
+the assignments and the unmixed fluorophore values. They are called with
+<code>(raw.data, unmixed, unmixing.matrix, spectra, af.spectra)</code>
+and must return a list with elements <code>$unmixed</code> (cells x
+fluorophores matrix, no AF column) and <code>$af.idx</code> (integer
+vector as above).</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit.my.af</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span> <span class="va">raw.data</span>, <span class="va">unmixed</span>, <span class="va">unmixing.matrix</span>, <span class="va">spectra</span>, <span class="va">af.spectra</span> <span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># unmixed         : matrix, cells x fluorophores (OLS result without AF)</span></span>
+<span>  <span class="co"># unmixing.matrix : matrix, fluorophores x detectors</span></span>
+<span></span>
+<span>  <span class="co"># ... your logic here ...</span></span>
+<span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    unmixed <span class="op">=</span> <span class="va">unmixed_with_af_corrected</span>,  <span class="co"># cells x fluorophores, no AF column</span></span>
+<span>    af.idx  <span class="op">=</span> <span class="va">af.idx</span>                      <span class="co"># integer vector</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>The naming convention matters: <code><a href="../reference/test.af.accuracy.html">test.af.accuracy()</a></code>
+dispatches on whether the function name starts with <code>"fit."</code>,
+so make sure your function is named accordingly and is available in the
+current search path (loaded via <code><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">devtools::load_all()</a></code> or
+<code><a href="https://rdrr.io/r/base/source.html" class="external-link">source()</a></code>).</p>
+</div>
+<div class="section level3">
+<h3 id="quick-accuracy-check-test-af-accuracy">Quick accuracy check: <code>test.af.accuracy()</code><a class="anchor" aria-label="anchor" href="#quick-accuracy-check-test-af-accuracy"></a>
+</h3>
+<p>Use this first to confirm that your function actually works and to
+see how it compares on a single unstained file.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/test.af.accuracy.html">test.af.accuracy</a></span><span class="op">(</span></span>
+<span>  unstained.fcs <span class="op">=</span> <span class="st">"path/to/unstained.fcs"</span>,</span>
+<span>  spectra       <span class="op">=</span> <span class="va">my.spectra</span>,      <span class="co"># fluorophores x detectors</span></span>
+<span>  af.spectra    <span class="op">=</span> <span class="va">my.af.spectra</span>,   <span class="co"># AF variants x detectors</span></span>
+<span>  asp           <span class="op">=</span> <span class="va">my.asp</span>,</span>
+<span>  functions     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"assign.af.fluorophores"</span>,  <span class="co"># existing method - keep as a reference point</span></span>
+<span>    <span class="st">"assign.af.residuals"</span>,     <span class="co"># existing method</span></span>
+<span>    <span class="st">"my.assign.af"</span>             <span class="co"># your new function</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  n.downsample  <span class="op">=</span> <span class="fl">1000</span>,        <span class="co"># events per run; increase for a final check</span></span>
+<span>  plot.dir      <span class="op">=</span> <span class="st">"figures/af_dev"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The function prints cosine similarity for each method and saves a PDF
+of biplots - one panel per method plus a no-AF baseline - to
+<code>plot.dir</code>. You can also inspect the numbers directly:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># mean cosine similarity for each method (higher is better)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span> <span class="va">results</span>, <span class="va">`[[`</span>, <span class="st">"Mean_Sim"</span> <span class="op">)</span></span>
+<span></span>
+<span><span class="co"># per-cell similarities for your method</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span> <span class="va">results</span><span class="op">[[</span><span class="st">"my.assign.af"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">Similarity</span>, breaks <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>      main <span class="op">=</span> <span class="st">"Per-cell cosine similarity"</span>, xlab <span class="op">=</span> <span class="st">"Cosine similarity"</span> <span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="scaling-test-benchmark-af-spectra-size">Scaling test: <code>benchmark.af.spectra.size()</code><a class="anchor" aria-label="anchor" href="#scaling-test-benchmark-af-spectra-size"></a>
+</h3>
+<p>Once your function looks promising on a single file, use this to
+check whether it holds up as the panel gets larger. It repeatedly
+subsamples the spectra matrix to a range of panel sizes and runs
+<code><a href="../reference/test.af.accuracy.html">test.af.accuracy()</a></code> for each subsample, producing a summary
+line plot of mean cosine similarity vs. fluorophore count.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bench</span> <span class="op">&lt;-</span> <span class="fu">benchmark.af.spectra.size</span><span class="op">(</span></span>
+<span>  unstained.fcs <span class="op">=</span> <span class="st">"path/to/unstained.fcs"</span>,</span>
+<span>  spectra       <span class="op">=</span> <span class="va">my.spectra</span>,</span>
+<span>  af.spectra    <span class="op">=</span> <span class="va">my.af.spectra</span>,</span>
+<span>  asp           <span class="op">=</span> <span class="va">my.asp</span>,</span>
+<span>  functions     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"assign.af.fluorophores"</span>,</span>
+<span>    <span class="st">"assign.af.residuals"</span>,</span>
+<span>    <span class="st">"my.assign.af"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  n.fluors     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span> <span class="fl">5</span>, <span class="fl">10</span>, <span class="fl">20</span>, <span class="fl">30</span>, <span class="fl">40</span> <span class="op">)</span>,  <span class="co"># panel sizes to test</span></span>
+<span>  n.draws      <span class="op">=</span> <span class="fl">5</span>,                        <span class="co"># random draws per panel size</span></span>
+<span>  n.downsample <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  plot.dir     <span class="op">=</span> <span class="st">"figures/af_dev"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># the summary data frame: mean and SD of cosine similarity across draws</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span> <span class="va">bench</span><span class="op">$</span><span class="va">summary</span> <span class="op">)</span></span>
+<span></span>
+<span><span class="co"># the ggplot object, if you want to tweak the figure</span></span>
+<span><span class="va">bench</span><span class="op">$</span><span class="va">plot</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span> <span class="st">"My new AF method"</span> <span class="op">)</span></span></code></pre></div>
+<p>The output plot shows one line per method, with a ribbon spanning
++/-1 SD across random draws. A good new method should sit above the
+mean-AF baseline across all panel sizes, and ideally narrow the gap on
+the existing methods or beat them on larger panels where per-cell
+assignment becomes more important.</p>
+<p>If you have results you’d like to share, feel free to open an issue
+or pull request on GitHub with the summary data frame and the benchmark
+plot.</p>
+<hr>
+<p>To install the <code>dev</code> branch:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/install-deprecated.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@dev"</span><span class="op">)</span></span></code></pre></div>
 <p>To replace this with the (hopefully) stable version, run this:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/remove.packages.html" class="external-link">remove.packages</a></span><span class="op">(</span><span class="st">"AutoSpectral"</span><span class="op">)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/install-deprecated.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
-  </main>
+</div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

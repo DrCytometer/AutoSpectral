@@ -152,7 +152,7 @@ AutoSpectral would like me to pick one per fluorophore. It’s better to
 have only one control per fluorophore because we’ll use the spectral
 profiles matrix for unmixing, and if you have two instances of the same
 thing, that will create a big mess.</p>
-<p>Here’s what the control file looks like as first generated: <img src="figures/Workflow/initial_control_file.jpg" alt="Initial Control File"></p>
+<p>Here’s what the control file looks like as first generated: <img src="figures/Automated_workflow/Initial_control_file.png" alt="Initial Control File"></p>
 <p>Fill in or verify the <code>marker</code>, <code>fluorophore</code>,
 <code>control.type</code>, and <code>universal.negative</code> columns
 as appropriate. For more detail, see the <a href="https://drcytometer.github.io/AutoSpectral/articles/02_Control_File_example.html">Control
@@ -164,7 +164,7 @@ for the peak emission channel (or one that receives a lot of signal) is
 also optional in the automated pipeline. The peak channel will be
 automatically determined from the data.</p>
 <p>Here’s what a completed control file should look like for this
-workflow: <img src="figures/Workflow/fixed_control_file.jpg" alt="Fixed Control File"></p>
+workflow: <img src="figures/Automated_workflow/Final_control_file.png" alt="Fixed Control File"></p>
 <p>Once you’ve got it the way you want, write in the name of the control
 file and run the error checking function.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -249,47 +249,63 @@ key parameters can be adjusted if needed:</p>
 <p>When <code>figures = TRUE</code> (the default),
 <code><a href="../reference/get.spectra.automated.html">get.spectra.automated()</a></code> produces several diagnostic
 outputs:</p>
-<p><strong>Spectral traces and heatmap</strong> — the same standard
-outputs as the legacy pipeline. Check these against the expected
-profiles for your cytometer in online viewers such as <a href="https://cloud.cytekbio.com/" class="external-link">Cytek Cloud</a> or in the QC
-plots.</p>
+<p><strong>Spectral traces and heatmap</strong>
+(<code>figure_spectra/</code>) — the same standard outputs as the legacy
+pipeline. Check these against the expected profiles for your cytometer
+in online viewers such as <a href="https://cloud.cytekbio.com/" class="external-link">Cytek
+Cloud</a> or in the QC plots.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/spectral_trace.jpg" class="r-plt" alt="Spectral Signature Traces"><p class="caption">
+<img src="figures/Automated_workflow/Automated_autospectral_spectra.jpg" class="r-plt" alt="Spectral Signature Traces"><p class="caption">
 Spectral Signature Traces
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/spectral_heatmap.jpg" class="r-plt" alt="Spectral Signature Heatmap"><p class="caption">
+<img src="figures/Automated_workflow/Automated_autospectral_spectra%20spectral_heatmap.jpg" class="r-plt" alt="Spectral Signature Heatmap"><p class="caption">
 Spectral Signature Heatmap
 </p>
 </div>
-<p><strong>Cosine similarity heatmap</strong> — shows pairwise
-similarity between all fluorophore spectra.</p>
+<p><strong>Cosine similarity heatmap</strong>
+(<code>figure_similarity_heatmap/</code>) — shows pairwise similarity
+between all fluorophore spectra.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Clean_autospectral_similarity_matrix.jpg" class="r-plt" alt="Cosine Similarity Heatmap"><p class="caption">
+<img src="figures/Automated_workflow/Automated_autospectral_similarity_matrix.jpg" class="r-plt" alt="Cosine Similarity Heatmap"><p class="caption">
 Cosine Similarity Heatmap
 </p>
 </div>
-<p><strong>Hotspot matrix</strong> — highlights fluorophore pairs with
-high spectral overlap, as in Mage et al. Values above 6 are most likely
-to cause unmixing problems; values between 4 and 6 are worth
+<p><strong>Hotspot matrix</strong>
+(<code>figure_similarity_heatmap/</code>) — highlights fluorophore pairs
+with high spectral overlap, as in Mage et al. Values above 6 are most
+likely to cause unmixing problems; values between 4 and 6 are worth
 reviewing.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg" class="r-plt" alt="Hotspot Matrix Heatmap"><p class="caption">
+<img src="figures/Automated_workflow/Automated_Hotspot_Matrix_heatmap.jpg" class="r-plt" alt="Hotspot Matrix Heatmap"><p class="caption">
 Hotspot Matrix Heatmap
 </p>
 </div>
 <p><strong>Per-fluorophore cosine-filter traces</strong>
-(<code>figure_cosine_filter/</code>) — a multi-panel PDF showing, for
-each control, how events are distributed by their cosine similarity to
-the AF vector. Events are coloured from least to most AF-like, and the
-retained subset is highlighted. This is useful for diagnosing controls
-where the AF and fluorophore signals are hard to separate.</p>
+(<code>figure_spectra/</code>) — a multi-panel PDF showing, for each
+control, how events are distributed by their cosine similarity to the AF
+vector. Quantiles are coloured from least (blue) to most (red) AF-like.
+This is a very quick, automated approach to intrusive AF noise exclusion
+that takes the place of the gating-based exclusion in AutoSpectral
+&lt;1.6.0. You’ll notice that the brightest events are typically the
+cleanest, as should be expected (they are farthest from background).</p>
+<div class="figure" style="text-align: center">
+<img src="figures/Automated_workflow/Automated_cosine_filter.jpg" class="r-plt" alt="Hotspot Matrix Heatmap"><p class="caption">
+Hotspot Matrix Heatmap
+</p>
+</div>
 <p><strong>Scatter-match plots</strong>
 (<code>figure_scatter_match/</code>) — a multi-panel PDF showing, for
 each fluorophore, the unstained background population, the selected
-spectral events, and the matched AF events used for subtraction. Inspect
-these to confirm the pairing is sensible for each control.</p>
+spectral events, and the matched AF/negative events used for
+subtraction. This is now done using k-nearest neighbours, and should be
+essentially perfect. Here’s CD11b - BUV805:</p>
+<div class="figure" style="text-align: center">
+<img src="figures/Automated_workflow/BUV805_universal_negative_scatter_plot.jpg" class="r-plt" alt="Hotspot Matrix Heatmap"><p class="caption">
+Hotspot Matrix Heatmap
+</p>
+</div>
 <p><strong>Spectral QC report</strong>
 (<code>figure_spectral_ribbon/</code>) — a per-fluorophore PDF comparing
 the extracted spectrum against the reference library entry for that
@@ -297,12 +313,17 @@ instrument. Fluorophores that triggered the RLM fallback are flagged,
 and both the automated and refined spectra are shown where
 applicable.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Spectral_QC.jpg" class="r-plt" alt="Spectral QC Report"><p class="caption">
+<img src="figures/Automated_workflow/spectral_qc.png" class="r-plt" alt="Spectral QC Report" width="881"><p class="caption">
 Spectral QC Report
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/BUV395_QC.jpg" class="r-plt" alt="Spectral QC BUV395"><p class="caption">
+<img src="figures/Automated_workflow/spectral_qc_buv395.png" class="r-plt" alt="Spectral QC BUV395" width="978"><p class="caption">
+Spectral QC BUV395
+</p>
+</div>
+<div class="figure" style="text-align: center">
+<img src="figures/Automated_workflow/spectral_qc_buv805.png" class="r-plt" alt="Spectral QC BUV395" width="978"><p class="caption">
 Spectral QC BUV395
 </p>
 </div>
@@ -327,41 +348,19 @@ this is created using the <code><a href="../reference/reload.flow.control.html">
 <h2 id="unmixing">Unmixing<a class="anchor" aria-label="anchor" href="#unmixing"></a>
 </h2>
 <p>AutoSpectral provides options for unmixing. Let’s start with the most
-basic, which is replicating the OLS unmixing as in SpectroFlo.
-Autofluorescence extraction with OLS and WLS unmixing in AutoSpectral is
-handled by including an “AF” signature in <code>spectra</code>. This is
-generated automatically from the unstained cell control sample that is
-tagged as “AF” in your <code>control.file</code>. We can use OLS or WLS
-without autofluorescence extraction by removing this row from the
-<code>spectra</code> matrix before we pass it to the unmixing call. Here
-are two easy ways to do that:</p>
-<ol style="list-style-type: decimal">
-<li>subset <code>spectra</code>
-</li>
-<li>read in the CSV file in <code>table_spectra</code>, removing the AF
-channel</li>
-</ol>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">spectra</span><span class="op">)</span></span>
-<span><span class="va">no.af.spectra</span> <span class="op">&lt;-</span> <span class="va">spectra</span><span class="op">[</span> <span class="op">!</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">spectra</span><span class="op">)</span> <span class="op">==</span> <span class="st">"AF"</span><span class="op">)</span>,<span class="op">]</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">no.af.spectra</span><span class="op">)</span></span>
-<span><span class="va">no.af.spectra.2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read.spectra.html">read.spectra</a></span><span class="op">(</span><span class="st">"Clean_autospectral_spectra.csv"</span>,</span>
-<span>                                remove.af <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">no.af.spectra.2</span><span class="op">)</span></span></code></pre></div>
+basic, which is replicating the OLS unmixing as in SpectroFlo (this is
+Aurora data). By default, the automated spectral extraction pipeline
+does not provide an autofluorescence signature, so this will be
+comparable to performing unmixing without autofluorescence extraction.
+Autofluorescence is best handled via the per-cell approach detailed
+below.</p>
 <p>To unmix, specify the file (and path) of the FCS file you want to
 unmix:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spleen.fcs.file</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Stained/D4 Spleen_Set1.fcs"</span></span>
 <span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">spleen.fcs.file</span>,</span>
-<span>  <span class="va">spectra</span>, <span class="va">asp</span>,</span>
-<span>  <span class="va">flow.control</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"OLS"</span>,</span>
-<span>  file.suffix <span class="op">=</span> <span class="st">"with AF extraction"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
-<span>  <span class="va">spleen.fcs.file</span>,</span>
-<span>  <span class="va">no.af.spectra</span>,</span>
+<span>  <span class="va">spectra</span>,</span>
 <span>  <span class="va">asp</span>,</span>
 <span>  <span class="va">flow.control</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"OLS"</span>,</span>
@@ -376,25 +375,20 @@ over the files. It can, however, be parallelized (set
 <code>parallel=TRUE</code>). Memory usage is handled via file chunking,
 which you can modify using the <code>chunk.size</code> argument, if
 needed.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.folder.html">unmix.folder</a></span><span class="op">(</span></span>
 <span>  fcs.dir <span class="op">=</span> <span class="st">"./Raw/Set1/Stained/"</span>,</span>
 <span>  spectra <span class="op">=</span> <span class="va">spectra</span>,</span>
 <span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
 <span>  flow.control <span class="op">=</span> <span class="va">flow.control</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"OLS"</span>, <span class="co"># use OLS unmixing (not AutoSpectral unmixing)</span></span>
-<span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  threads <span class="op">=</span> <span class="fl">3</span></span>
+<span>  method <span class="op">=</span> <span class="st">"OLS"</span> <span class="co"># use OLS unmixing (not AutoSpectral unmixing)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>By default, the unmixed files are generated in
 <code>Autospectral_unmixed</code>, but you can change that by passing a
 path to <code>output.dir</code>.</p>
 <p>If we want to use weighted least-squares, we call like this:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span><span class="va">spleen.fcs.file</span>, <span class="va">spectra</span>, <span class="va">asp</span>, <span class="va">flow.control</span>, method <span class="op">=</span> <span class="st">"WLS"</span><span class="op">)</span></span></code></pre></div>
-<p>The <code>method</code> is automatically appended to the output file
-name. If you wish to add something else to the file name, use the
-<code>file.suffix</code> argument.</p>
 <p>More details on WLS unmixing, including calculating and re-using
 weights are detailed in <a href="https://drcytometer.github.io/AutoSpectral/articles/18_Weighted_Least_Squares.html">dedicated
 article</a></p>
@@ -422,7 +416,7 @@ above). Once installed, it takes over automatically — no further action
 is needed.</p>
 <p>To use per-cell autofluorescence extraction only, no fluorophore
 optimization, do this:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spleen.unstained</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Unstained/D1 Spleen_Set1.fcs"</span></span>
 <span><span class="va">spleen.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span></span>
 <span>  unstained.sample <span class="op">=</span> <span class="va">spleen.unstained</span>,</span>
@@ -448,16 +442,16 @@ spleen, you probably won’t see much benefit from this.</p>
 trace and as a heatmap in <code>figure_autofluorescence</code>. The AF
 spectra are saved as a CSV file in <code>table_spectra</code>.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/af_spectra.jpg" class="r-plt" alt="Autofluorescence profiles in the spleen"><p class="caption">
+<img src="figures/Automated_workflow/af_spectra.jpg" class="r-plt" alt="Autofluorescence profiles in the spleen"><p class="caption">
 Autofluorescence profiles in the spleen
 </p>
 </div>
 <p>We can also look at the distribution of autofluorescence like this,
 where the black line represents a median signature (what you might use
-with an automated single AF parameter), and the red region represents
+with an automated single AF parameter), and the red traces represents
 the variation:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/af_variation.jpg" class="r-plt" alt="Autofluorescence variation in the spleen"><p class="caption">
+<img src="figures/Automated_workflow/af_density.jpg" class="r-plt" alt="Autofluorescence variation in the spleen"><p class="caption">
 Autofluorescence variation in the spleen
 </p>
 </div>
@@ -466,21 +460,21 @@ unstained sample we have supplied.</p>
 <p>This is without any AF extraction, looking at what AutoSpectral has
 determined are the two most-affected fluorophore channels:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Spleen_No_AF_Extraction.jpg" class="r-plt" alt="Spleen: No AF Extraction"><p class="caption">
+<img src="figures/Automated_workflow/Spleen_No_AF_Extraction.jpg" class="r-plt" alt="Spleen: No AF Extraction"><p class="caption">
 Spleen: No AF Extraction
 </p>
 </div>
 <p>What you get on the same unstained sample with per-cell AF
 extraction, without refinement (refine=FALSE):</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction"><p class="caption">
+<img src="figures/Automated_workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction"><p class="caption">
 Spleen: Per-Cell AF Extraction
 </p>
 </div>
 <p>What you get on the same unstained sample with per-cell AF
 extraction, <em>with</em> refinement (refine=TRUE):</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction Refined"><p class="caption">
+<img src="figures/Automated_workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction Refined"><p class="caption">
 Spleen: Per-Cell AF Extraction Refined
 </p>
 </div>
@@ -500,9 +494,10 @@ article.</p>
 tissues. If you are working with human PBMCs, usually a single
 (optionally pooled) unstained PBMC sample is fine. If, however, you have
 samples from very sick donors, you might consider collecting unstained
-sample from each donor and matching the autofluorescence more
-closely.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+sample from each donor and matching the autofluorescence more closely.
+This is easier to set up in the <a href="https://honeychrome.cytkit.com" class="external-link">Honeychrome app</a>, where you can
+quickly assign and inspect the results in a visual interface.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lung.unstained</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Unstained/D2 Lung_Set1.fcs"</span></span>
 <span><span class="va">lung.af</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.af.spectra.html">get.af.spectra</a></span><span class="op">(</span><span class="va">lung.unstained</span>, <span class="va">asp</span>, <span class="va">spectra</span><span class="op">)</span> <span class="co"># use refine=TRUE for a modest improvement, default is FALSE</span></span>
 <span><span class="va">lung.fcs.file</span> <span class="op">&lt;-</span> <span class="st">"./Raw/Set1/Stained/D5 Lung_Set1.fcs"</span></span>
@@ -544,32 +539,30 @@ unmixing. Read more about how the per-cell fluorophore optimization
 works in the <a href="https://drcytometer.github.io/AutoSpectral/articles/11_Per_Cell_Optimization.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization" class="external-link">Colibri</a>
 article.</p>
-<p>We provide <code>spleen.af</code> as the <code>af.spectra</code> here
-because the control samples are from spleen. Provide whatever is the
-best fit for your single-stained controls. The point here is to match
-the AF of the controls so that we isolate the variation in the
-fluorophore signatures independent of any AF variation.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<p>As of version 1.6.0, we no longer provide autofluorescence
+information via <code>af.spectra</code> when calling
+<code><a href="../reference/get.spectral.variants.html">get.spectral.variants()</a></code>. This is handled automatically by
+the function internals to avoid creating any confusion and to make it
+easier for you, the user.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">variants</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.spectral.variants.html">get.spectral.variants</a></span><span class="op">(</span></span>
 <span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
 <span>  control.def.file <span class="op">=</span> <span class="va">control.file</span>,</span>
 <span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
 <span>  spectra <span class="op">=</span> <span class="va">spectra</span>,</span>
-<span>  af.spectra <span class="op">=</span> <span class="va">spleen.af</span>, <span class="co"># the AF relevant to any cell-based single-stained controls</span></span>
-<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>, <span class="co"># use parallel if TRUE</span></span>
-<span>  refine <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass</span></span>
+<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># use parallel if TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The output of this is saved as an RDS file in folder
 <code>figure_spectral_variants</code>. You can load it back in using the
 <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code> function in base R.</p>
 <p>There are plots of the spectral variation for each fluorophore. For
-something like the CD11b-BUV805 in this data, the variation is largely
-changes in the autofluorescence because there are multiple cell types
-expressing CD11b. We also have variation in the long wavelength
+something like the CD11b-BUV805 in this data, we have some changes in
+the autofluorescence because there are multiple cell types expressing
+CD11b, but we have at least as much variation in the long wavelength
 spillover on the violet and red laser, as should be expected from a
 tandem dye.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/BUV805_variants.jpg" class="r-plt" alt="Variation in BUV805"><p class="caption">
+<img src="figures/Automated_workflow/BUV805_variants.jpg" class="r-plt" alt="Variation in BUV805"><p class="caption">
 Variation in BUV805
 </p>
 </div>
@@ -577,17 +570,17 @@ Variation in BUV805
 blue and yellow-green lasers, which would cause spread if we had a
 fluorophore in that range on the blue laser, such as RB780. We don’t in
 this case.</p>
-<p>If we had tandem breakdown, we would probably see variability in the
-YG1-A detector.</p>
+<p>Variability in the YG1-A detector is likely tandem breakdown
+(variable free PE signal).</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/PECy7_variants.jpg" class="r-plt" alt="Variation in PE-Cy7"><p class="caption">
+<img src="figures/Automated_workflow/PECy7_variants.jpg" class="r-plt" alt="Variation in PE-Cy7"><p class="caption">
 Variation in PE-Cy7
 </p>
 </div>
 <p>We can now pass this to the unmixing call. For quicker results, you
 may set the <code>speed</code> to <code>fast</code>, which checks fewer
 pre-screened variants per cell.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span></span>
 <span>  <span class="va">lung.fcs.file</span>,</span>
 <span>  <span class="va">spectra</span>,</span>
@@ -620,7 +613,7 @@ but a dedicated flow cytometry analysis program with a graphical
 interface will be better. More on plotting on the dedicated article on
 <a href="https://drcytometer.github.io/AutoSpectral/articles/13_Plotting.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-plotting" class="external-link">Colibri</a>.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">autospectral.unmixed.lung</span> <span class="op">&lt;-</span> <span class="st">"AutoSpectral_unmixed/D5 Lung_Set1 AutoSpectral per-cell AF and fluorophore optimization.fcs"</span></span>
 <span><span class="va">spectroflo.unmixed.lung</span> <span class="op">&lt;-</span> <span class="st">"./Unmixed/Set1/Stained/D5 Lung_Set1.fcs"</span></span>
 <span></span>
@@ -632,12 +625,12 @@ or <a href="https://www.colibri-cytometry.com/post/autospectral-plotting" class=
 <span><span class="fu"><a href="../reference/create.biplot.html">create.biplot</a></span><span class="op">(</span><span class="va">asp.lung</span>, <span class="st">"BUV395-A"</span>, <span class="st">"BV421-A"</span>, <span class="va">asp</span>, title <span class="op">=</span> <span class="st">"AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
 <p>Let’s have a look at the unmixed data.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/SpectroFlo.jpg" class="r-plt" alt="SpectroFlo Unmixed"><p class="caption">
+<img src="figures/Automated_workflow/SpectroFlo.jpg" class="r-plt" alt="SpectroFlo Unmixed"><p class="caption">
 SpectroFlo Unmixed
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Workflow/AutoSpectral.jpg" class="r-plt" alt="AutoSpectral Unmixed"><p class="caption">
+<img src="figures/Automated_workflow/AutoSpectral.jpg" class="r-plt" alt="AutoSpectral Unmixed"><p class="caption">
 AutoSpectral Unmixed
 </p>
 </div>

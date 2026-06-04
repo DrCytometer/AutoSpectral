@@ -837,20 +837,16 @@ unmixing. Read more about how the per-cell fluorophore optimization
 works in the <a href="https://drcytometer.github.io/AutoSpectral/articles/11_Per_Cell_Optimization.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization" class="external-link">Colibri</a>
 article.</p>
-<p>We provide <code>spleen.af</code> as the <code>af.spectra</code> here
-because the control samples are from spleen. Provide whatever is the
-best fit for your single-stained controls. The point here is to match
-the AF of the controls so that we isolate the variation in the
-fluorophore signatures independent of any AF variation.</p>
+<p>As of version 1.6.0, we no longer provide autofluorescence
+information via <code>af.spectra</code> when calling
+<code><a href="../reference/get.spectral.variants.html">get.spectral.variants()</a></code>. This is handled automatically by
+the function internals to avoid creating any confusion.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">variants</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.spectral.variants.html">get.spectral.variants</a></span><span class="op">(</span></span>
 <span>  control.dir <span class="op">=</span> <span class="va">control.dir</span>,</span>
 <span>  control.def.file <span class="op">=</span> <span class="va">control.file</span>,</span>
 <span>  asp <span class="op">=</span> <span class="va">asp</span>,</span>
-<span>  spectra <span class="op">=</span> <span class="va">spectra</span>,</span>
-<span>  af.spectra <span class="op">=</span> <span class="va">spleen.af</span>, <span class="co"># the AF relevant to any cell-based single-stained controls</span></span>
-<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>, <span class="co"># use parallel if TRUE</span></span>
-<span>  refine <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass</span></span>
+<span>  spectra <span class="op">=</span> <span class="va">spectra</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>The output of this is saved as an RDS file in folder
 <code>figure_spectral_variants</code>. You can load it back in using the

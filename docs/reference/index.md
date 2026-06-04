@@ -23,6 +23,8 @@
   : Assign Variant Spectrum By Fluorophore Projection
 - [`benchmark.af.scatter.match()`](https://drcytometer.github.io/AutoSpectral/reference/benchmark.af.scatter.match.md)
   : Benchmark Scatter-Match Against Existing AF Assignment Methods
+- [`benchmark.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/benchmark.af.spectra.md)
+  : Benchmark AF Assignment Accuracy Against Spectral Panel Size
 - [`calculate.condition.number()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.condition.number.md)
   : Calculate Condition Number
 - [`calculate.hotspot.matrix()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.hotspot.matrix.md)
@@ -43,6 +45,8 @@
   : Check Gates For Errors
 - [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
   : Clean Controls
+- [`compare.af()`](https://drcytometer.github.io/AutoSpectral/reference/compare.af.md)
+  : Compare Autofluorescence Spectra Sets
 - [`compare.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/compare.unmix.md)
   : Compare Unmixing Quality Across Two Spectral References
 - [`concatenateFCS()`](https://drcytometer.github.io/AutoSpectral/reference/concatenateFCS.md)
@@ -193,6 +197,8 @@
   : Spectral Variant Plot
 - [`spectral.variant.plot.dens()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.variant.plot.dens.md)
   : Spectral Variant Density Plot
+- [`test.af.accuracy()`](https://drcytometer.github.io/AutoSpectral/reference/test.af.accuracy.md)
+  : Test Autofluorescence Assignment Accuracy
 - [`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md)
   : Define Gate by Density
 - [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
@@ -200,8 +206,6 @@
 - [`unmix.autospectral.joint()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.joint.md)
   : Joint AutoSpectral Unmixing (Pure R)
 - [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
-  : Unmix FCS Data
-- [`unmix.fcs.test()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.test.md)
   : Unmix FCS Data
 - [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
   : Unmix All FCS Files in a Directory

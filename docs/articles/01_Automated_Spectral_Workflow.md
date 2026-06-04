@@ -94,7 +94,7 @@ profiles matrix for unmixing, and if you have two instances of the same
 thing, that will create a big mess.
 
 Here’s what the control file looks like as first generated: ![Initial
-Control File](figures/Workflow/initial_control_file.jpg)
+Control File](figures/Automated_workflow/Initial_control_file.png)
 
 Fill in or verify the `marker`, `fluorophore`, `control.type`, and
 `universal.negative` columns as appropriate. For more detail, see the
@@ -109,7 +109,7 @@ pipeline. The peak channel will be automatically determined from the
 data.
 
 Here’s what a completed control file should look like for this workflow:
-![Fixed Control File](figures/Workflow/fixed_control_file.jpg)
+![Fixed Control File](figures/Automated_workflow/Final_control_file.png)
 
 Once you’ve got it the way you want, write in the name of the control
 file and run the error checking function.
@@ -200,48 +200,63 @@ When `figures = TRUE` (the default),
 [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md)
 produces several diagnostic outputs:
 
-**Spectral traces and heatmap** — the same standard outputs as the
-legacy pipeline. Check these against the expected profiles for your
-cytometer in online viewers such as [Cytek
+**Spectral traces and heatmap** (`figure_spectra/`) — the same standard
+outputs as the legacy pipeline. Check these against the expected
+profiles for your cytometer in online viewers such as [Cytek
 Cloud](https://cloud.cytekbio.com/) or in the QC plots.
 
-![Spectral Signature Traces](figures/Workflow/spectral_trace.jpg)
+![Spectral Signature
+Traces](figures/Automated_workflow/Automated_autospectral_spectra.jpg)
 
 Spectral Signature Traces
 
-![Spectral Signature Heatmap](figures/Workflow/spectral_heatmap.jpg)
+![Spectral Signature
+Heatmap](figures/Automated_workflow/Automated_autospectral_spectra%20spectral_heatmap.jpg)
 
 Spectral Signature Heatmap
 
-**Cosine similarity heatmap** — shows pairwise similarity between all
-fluorophore spectra.
+**Cosine similarity heatmap** (`figure_similarity_heatmap/`) — shows
+pairwise similarity between all fluorophore spectra.
 
 ![Cosine Similarity
-Heatmap](figures/Workflow/Clean_autospectral_similarity_matrix.jpg)
+Heatmap](figures/Automated_workflow/Automated_autospectral_similarity_matrix.jpg)
 
 Cosine Similarity Heatmap
 
-**Hotspot matrix** — highlights fluorophore pairs with high spectral
-overlap, as in Mage et al. Values above 6 are most likely to cause
-unmixing problems; values between 4 and 6 are worth reviewing.
+**Hotspot matrix** (`figure_similarity_heatmap/`) — highlights
+fluorophore pairs with high spectral overlap, as in Mage et al. Values
+above 6 are most likely to cause unmixing problems; values between 4 and
+6 are worth reviewing.
 
 ![Hotspot Matrix
-Heatmap](figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg)
+Heatmap](figures/Automated_workflow/Automated_Hotspot_Matrix_heatmap.jpg)
 
 Hotspot Matrix Heatmap
 
-**Per-fluorophore cosine-filter traces** (`figure_cosine_filter/`) — a
+**Per-fluorophore cosine-filter traces** (`figure_spectra/`) — a
 multi-panel PDF showing, for each control, how events are distributed by
-their cosine similarity to the AF vector. Events are coloured from least
-to most AF-like, and the retained subset is highlighted. This is useful
-for diagnosing controls where the AF and fluorophore signals are hard to
-separate.
+their cosine similarity to the AF vector. Quantiles are coloured from
+least (blue) to most (red) AF-like. This is a very quick, automated
+approach to intrusive AF noise exclusion that takes the place of the
+gating-based exclusion in AutoSpectral \<1.6.0. You’ll notice that the
+brightest events are typically the cleanest, as should be expected (they
+are farthest from background).
+
+![Hotspot Matrix
+Heatmap](figures/Automated_workflow/Automated_cosine_filter.jpg)
+
+Hotspot Matrix Heatmap
 
 **Scatter-match plots** (`figure_scatter_match/`) — a multi-panel PDF
 showing, for each fluorophore, the unstained background population, the
-selected spectral events, and the matched AF events used for
-subtraction. Inspect these to confirm the pairing is sensible for each
-control.
+selected spectral events, and the matched AF/negative events used for
+subtraction. This is now done using k-nearest neighbours, and should be
+essentially perfect. Here’s CD11b - BUV805:
+
+![Hotspot Matrix
+Heatmap](figures/Automated_workflow/BUV805_universal_negative_scatter_plot.jpg)
+
+Hotspot Matrix Heatmap
 
 **Spectral QC report** (`figure_spectral_ribbon/`) — a per-fluorophore
 PDF comparing the extracted spectrum against the reference library entry
@@ -249,11 +264,15 @@ for that instrument. Fluorophores that triggered the RLM fallback are
 flagged, and both the automated and refined spectra are shown where
 applicable.
 
-![Spectral QC Report](figures/Workflow/Spectral_QC.jpg)
+![Spectral QC Report](figures/Automated_workflow/spectral_qc.png)
 
 Spectral QC Report
 
-![Spectral QC BUV395](figures/Workflow/BUV395_QC.jpg)
+![Spectral QC BUV395](figures/Automated_workflow/spectral_qc_buv395.png)
+
+Spectral QC BUV395
+
+![Spectral QC BUV395](figures/Automated_workflow/spectral_qc_buv805.png)
 
 Spectral QC BUV395
 
@@ -281,27 +300,12 @@ flow.control <- reload.flow.control(
 ## Unmixing
 
 AutoSpectral provides options for unmixing. Let’s start with the most
-basic, which is replicating the OLS unmixing as in SpectroFlo.
-Autofluorescence extraction with OLS and WLS unmixing in AutoSpectral is
-handled by including an “AF” signature in `spectra`. This is generated
-automatically from the unstained cell control sample that is tagged as
-“AF” in your `control.file`. We can use OLS or WLS without
-autofluorescence extraction by removing this row from the `spectra`
-matrix before we pass it to the unmixing call. Here are two easy ways to
-do that:
-
-1.  subset `spectra`
-2.  read in the CSV file in `table_spectra`, removing the AF channel
-
-``` r
-
-rownames(spectra)
-no.af.spectra <- spectra[ !(rownames(spectra) == "AF"),]
-rownames(no.af.spectra)
-no.af.spectra.2 <- read.spectra("Clean_autospectral_spectra.csv",
-                                remove.af = TRUE)
-rownames(no.af.spectra.2)
-```
+basic, which is replicating the OLS unmixing as in SpectroFlo (this is
+Aurora data). By default, the automated spectral extraction pipeline
+does not provide an autofluorescence signature, so this will be
+comparable to performing unmixing without autofluorescence extraction.
+Autofluorescence is best handled via the per-cell approach detailed
+below.
 
 To unmix, specify the file (and path) of the FCS file you want to unmix:
 
@@ -310,14 +314,7 @@ To unmix, specify the file (and path) of the FCS file you want to unmix:
 spleen.fcs.file <- "./Raw/Set1/Stained/D4 Spleen_Set1.fcs"
 unmix.fcs(
   spleen.fcs.file,
-  spectra, asp,
-  flow.control,
-  method = "OLS",
-  file.suffix = "with AF extraction"
-)
-unmix.fcs(
-  spleen.fcs.file,
-  no.af.spectra,
+  spectra,
   asp,
   flow.control,
   method = "OLS",
@@ -342,9 +339,7 @@ unmix.folder(
   spectra = spectra,
   asp = asp,
   flow.control = flow.control,
-  method = "OLS", # use OLS unmixing (not AutoSpectral unmixing)
-  parallel = TRUE,
-  threads = 3
+  method = "OLS" # use OLS unmixing (not AutoSpectral unmixing)
 )
 ```
 
@@ -357,10 +352,6 @@ If we want to use weighted least-squares, we call like this:
 
 unmix.fcs(spleen.fcs.file, spectra, asp, flow.control, method = "WLS")
 ```
-
-The `method` is automatically appended to the output file name. If you
-wish to add something else to the file name, use the `file.suffix`
-argument.
 
 More details on WLS unmixing, including calculating and re-using weights
 are detailed in [dedicated
@@ -423,17 +414,17 @@ and as a heatmap in `figure_autofluorescence`. The AF spectra are saved
 as a CSV file in `table_spectra`.
 
 ![Autofluorescence profiles in the
-spleen](figures/Workflow/af_spectra.jpg)
+spleen](figures/Automated_workflow/af_spectra.jpg)
 
 Autofluorescence profiles in the spleen
 
 We can also look at the distribution of autofluorescence like this,
 where the black line represents a median signature (what you might use
-with an automated single AF parameter), and the red region represents
+with an automated single AF parameter), and the red traces represents
 the variation:
 
 ![Autofluorescence variation in the
-spleen](figures/Workflow/af_variation.jpg)
+spleen](figures/Automated_workflow/af_density.jpg)
 
 Autofluorescence variation in the spleen
 
@@ -444,7 +435,7 @@ This is without any AF extraction, looking at what AutoSpectral has
 determined are the two most-affected fluorophore channels:
 
 ![Spleen: No AF
-Extraction](figures/Workflow/Spleen_No_AF_Extraction.jpg)
+Extraction](figures/Automated_workflow/Spleen_No_AF_Extraction.jpg)
 
 Spleen: No AF Extraction
 
@@ -452,7 +443,7 @@ What you get on the same unstained sample with per-cell AF extraction,
 without refinement (refine=FALSE):
 
 ![Spleen: Per-Cell AF
-Extraction](figures/Workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg)
+Extraction](figures/Automated_workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg)
 
 Spleen: Per-Cell AF Extraction
 
@@ -460,7 +451,7 @@ What you get on the same unstained sample with per-cell AF extraction,
 *with* refinement (refine=TRUE):
 
 ![Spleen: Per-Cell AF Extraction
-Refined](figures/Workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg)
+Refined](figures/Automated_workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg)
 
 Spleen: Per-Cell AF Extraction Refined
 
@@ -484,6 +475,9 @@ tissues. If you are working with human PBMCs, usually a single
 (optionally pooled) unstained PBMC sample is fine. If, however, you have
 samples from very sick donors, you might consider collecting unstained
 sample from each donor and matching the autofluorescence more closely.
+This is easier to set up in the [Honeychrome
+app](https://honeychrome.cytkit.com), where you can quickly assign and
+inspect the results in a visual interface.
 
 ``` r
 
@@ -533,11 +527,11 @@ or
 [Colibri](https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization)
 article.
 
-We provide `spleen.af` as the `af.spectra` here because the control
-samples are from spleen. Provide whatever is the best fit for your
-single-stained controls. The point here is to match the AF of the
-controls so that we isolate the variation in the fluorophore signatures
-independent of any AF variation.
+As of version 1.6.0, we no longer provide autofluorescence information
+via `af.spectra` when calling
+[`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md).
+This is handled automatically by the function internals to avoid
+creating any confusion and to make it easier for you, the user.
 
 ``` r
 
@@ -546,9 +540,7 @@ variants <- get.spectral.variants(
   control.def.file = control.file,
   asp = asp,
   spectra = spectra,
-  af.spectra = spleen.af, # the AF relevant to any cell-based single-stained controls
-  parallel = FALSE, # use parallel if TRUE
-  refine = TRUE # optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass
+  parallel = FALSE # use parallel if TRUE
 )
 ```
 
@@ -557,13 +549,13 @@ The output of this is saved as an RDS file in folder
 [`readRDS()`](https://rdrr.io/r/base/readRDS.html) function in base R.
 
 There are plots of the spectral variation for each fluorophore. For
-something like the CD11b-BUV805 in this data, the variation is largely
-changes in the autofluorescence because there are multiple cell types
-expressing CD11b. We also have variation in the long wavelength
+something like the CD11b-BUV805 in this data, we have some changes in
+the autofluorescence because there are multiple cell types expressing
+CD11b, but we have at least as much variation in the long wavelength
 spillover on the violet and red laser, as should be expected from a
 tandem dye.
 
-![Variation in BUV805](figures/Workflow/BUV805_variants.jpg)
+![Variation in BUV805](figures/Automated_workflow/BUV805_variants.jpg)
 
 Variation in BUV805
 
@@ -572,10 +564,10 @@ blue and yellow-green lasers, which would cause spread if we had a
 fluorophore in that range on the blue laser, such as RB780. We don’t in
 this case.
 
-If we had tandem breakdown, we would probably see variability in the
-YG1-A detector.
+Variability in the YG1-A detector is likely tandem breakdown (variable
+free PE signal).
 
-![Variation in PE-Cy7](figures/Workflow/PECy7_variants.jpg)
+![Variation in PE-Cy7](figures/Automated_workflow/PECy7_variants.jpg)
 
 Variation in PE-Cy7
 
@@ -637,11 +629,11 @@ create.biplot(asp.lung, "BUV395-A", "BV421-A", asp, title = "AutoSpectral")
 
 Let’s have a look at the unmixed data.
 
-![SpectroFlo Unmixed](figures/Workflow/SpectroFlo.jpg)
+![SpectroFlo Unmixed](figures/Automated_workflow/SpectroFlo.jpg)
 
 SpectroFlo Unmixed
 
-![AutoSpectral Unmixed](figures/Workflow/AutoSpectral.jpg)
+![AutoSpectral Unmixed](figures/Automated_workflow/AutoSpectral.jpg)
 
 AutoSpectral Unmixed
 

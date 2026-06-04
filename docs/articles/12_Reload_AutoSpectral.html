@@ -102,13 +102,16 @@ the parameters for our cytometer. We also need the folder containing the
 single-stained controls and the control file spreadsheet. You should
 already have all of this.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/DrCytometer/AutoSpectral" class="external-link">AutoSpectral</a></span><span class="op">)</span></span>
-<span><span class="va">asp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.autospectral.param.html">get.autospectral.param</a></span><span class="op">(</span>cytometer <span class="op">=</span> <span class="st">"id7000"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/DrCytometer/AutoSpectral" class="external-link">AutoSpectral</a></span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Loading required namespace: AutoSpectralRcpp</span></span></code></pre>
+<pre><code><span><span class="co">## AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.</span></span></code></pre>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">asp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.autospectral.param.html">get.autospectral.param</a></span><span class="op">(</span>cytometer <span class="op">=</span> <span class="st">"id7000"</span><span class="op">)</span></span>
 <span><span class="va">control.dir</span> <span class="op">&lt;-</span> <span class="st">"path_to_my_single_stained_controls"</span></span>
 <span><span class="va">control.def.file</span> <span class="op">&lt;-</span> <span class="st">"fcs_control_file.csv"</span></span></code></pre></div>
 <p>Then, we create a shell of the <code>flow.control</code> list, mostly
 to provide us with the channels we’ll use for spectral unmixing.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/reload.flow.control.html">reload.flow.control</a></span><span class="op">(</span><span class="va">control.dir</span>, <span class="va">control.def.file</span>, <span class="va">asp</span><span class="op">)</span></span></code></pre></div>
 <p>We also need to load in our spectra. If we’ve run AutoSpectral
 already, these will be in <code>./table_spectra</code> and will, by
@@ -118,7 +121,7 @@ need to read this into R. For this, there’s a very simple helper
 function that reads the named CSV file and sets the structure back as it
 was when written. If your file isn’t in that folder, use the
 <code>spectra.dir</code> argument to define the location.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spectra.file</span> <span class="op">&lt;-</span> <span class="st">"Initial_autospectral_spectra.csv"</span></span>
 <span><span class="va">spectral.matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read.spectra.html">read.spectra</a></span><span class="op">(</span><span class="va">spectra.file</span><span class="op">)</span></span></code></pre></div>
 <p>There’s an option in <code>read.spectra</code> to remove the
@@ -130,7 +133,7 @@ change which fluorophore(s) are excluded by naming them to the
 need to point AutoSpectral to the folder containing the FCS files we
 want to unmix and tell it how we want to perform the unmixing. Here,
 we’re using weighted least squares by calling <code>WLS</code>.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sample.dir</span> <span class="op">&lt;-</span> <span class="st">"./Raw samples"</span></span>
 <span><span class="fu"><a href="../reference/unmix.folder.html">unmix.folder</a></span><span class="op">(</span> <span class="va">sample.dir</span>, <span class="va">spectral.matrix</span>, <span class="va">asp</span>, <span class="va">flow.control</span>, method <span class="op">=</span> <span class="st">"WLS"</span> <span class="op">)</span></span></code></pre></div>
 <p>The unmixed FCS files go to the “AutoSpectral_unmixed” folder in your
@@ -196,7 +199,7 @@ use the read.spectra function below.</p>
 the fluorophores, as this is what you’ll be importing into R.</p>
 <p>Save the spreadsheet as a CSV file. Then you can read it into R as
 follows:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spectra.file</span> <span class="op">&lt;-</span> <span class="st">"FlowJo_Spectra.csv"</span></span>
 <span><span class="va">flowjo.spectra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read.spectra.html">read.spectra</a></span><span class="op">(</span><span class="va">spectra.file</span>, spectra.dir <span class="op">=</span> <span class="st">"~/AutoSpectral_data/AlternativeMatrices/"</span><span class="op">)</span></span>
 <span><span class="va">flowjo.spectra</span></span></code></pre></div>
@@ -214,7 +217,7 @@ in SpectroFlo.</p>
 extract the spillover matrix both to an object in R as well as writing a
 copy to disk as a CSV file. Define where you’d like the CSV file to end
 up as <code>output.dir</code>.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spectroflo.expt</span> <span class="op">&lt;-</span> <span class="st">"~/AutoSpectral_data/AlternativeMatrices/20240620 Spectral Symposium-poor cell unmixed.Expt"</span></span>
 <span><span class="va">output.dir</span> <span class="op">&lt;-</span> <span class="st">"./table_spectra"</span></span>
 <span><span class="va">spectral.matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read.spectroflo.expt.html">read.spectroflo.expt</a></span><span class="op">(</span><span class="va">spectroflo.expt</span>, <span class="va">output.dir</span><span class="op">)</span></span>
@@ -236,7 +239,7 @@ L-infinity (peak) normalized.</p>
 <code>SPILL</code> keyword in the unmixed flow files. So, these should
 be in any FCS file from the A8 or S8 that is not a single-stained
 control and where you have run the unmixing in Chorus.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">s8.fcs</span> <span class="op">&lt;-</span> <span class="st">"~/AutoSpectral_data/S8_data/BP0323502_1.fcs"</span></span>
 <span><span class="va">chorus.spectra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read.bd.spectra.html">read.bd.spectra</a></span><span class="op">(</span><span class="va">s8.fcs</span><span class="op">)</span></span>
 <span><span class="va">chorus.spectra</span></span></code></pre></div>

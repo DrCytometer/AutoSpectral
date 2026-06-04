@@ -67,6 +67,8 @@ Right, let’s go over some data as an example.
 ``` r
 
 library( AutoSpectral )
+#> Loading required namespace: AutoSpectralRcpp
+#> AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.
 ```
 
 We need to set up our experiment. This is Aurora data. See the control

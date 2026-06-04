@@ -11,6 +11,8 @@ outputs.
 ``` r
 
 library( AutoSpectral )
+#> Loading required namespace: AutoSpectralRcpp
+#> AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.
 ```
 
 Let’s load in some spectra, here from OMIP-102.

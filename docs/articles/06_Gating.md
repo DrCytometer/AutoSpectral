@@ -25,6 +25,8 @@ articles for more detail.
 ``` r
 
 library(AutoSpectral)
+#> Loading required namespace: AutoSpectralRcpp
+#> AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.
 ```
 
 As always, we’ll start by loading in the parameters and telling

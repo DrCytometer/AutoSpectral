@@ -887,11 +887,11 @@ or
 [Colibri](https://www.colibri-cytometry.com/post/autospectral-per-cell-fluorophore-optimization)
 article.
 
-We provide `spleen.af` as the `af.spectra` here because the control
-samples are from spleen. Provide whatever is the best fit for your
-single-stained controls. The point here is to match the AF of the
-controls so that we isolate the variation in the fluorophore signatures
-independent of any AF variation.
+As of version 1.6.0, we no longer provide autofluorescence information
+via `af.spectra` when calling
+[`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md).
+This is handled automatically by the function internals to avoid
+creating any confusion.
 
 ``` r
 
@@ -899,10 +899,7 @@ variants <- get.spectral.variants(
   control.dir = control.dir,
   control.def.file = control.file,
   asp = asp,
-  spectra = spectra,
-  af.spectra = spleen.af, # the AF relevant to any cell-based single-stained controls
-  parallel = FALSE, # use parallel if TRUE
-  refine = TRUE # optional; when TRUE, the variation will focus on more problematic cells--those that remain far from the ideal location after a first pass
+  spectra = spectra
 )
 ```
 

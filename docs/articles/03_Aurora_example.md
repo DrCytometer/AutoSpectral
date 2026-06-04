@@ -9,6 +9,8 @@ the process is now available.
 ``` r
 
 library(AutoSpectral)
+#> Loading required namespace: AutoSpectralRcpp
+#> AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.
 ```
 
 To start, we need to get the relevant parameters for the cytometer. This

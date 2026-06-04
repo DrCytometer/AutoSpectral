@@ -328,10 +328,10 @@ We get the distribution of autofluorescence spectra as a spectral trace and as a
 knitr::include_graphics("figures/Automated_workflow/af_spectra.jpg")
 ```
 
-We can also look at the distribution of autofluorescence like this, where the black line represents a median signature (what you might use with an automated single AF parameter), and the red region represents the variation:
+We can also look at the distribution of autofluorescence like this, where the black line represents a median signature (what you might use with an automated single AF parameter), and the red traces represents the variation:
 
 ```{r, echo=FALSE, fig.cap="Autofluorescence variation in the spleen", fig.align="center"}
-knitr::include_graphics("figures/Automated_workflow/af_variation.jpg")
+knitr::include_graphics("figures/Automated_workflow/af_density.jpg")
 ```
 
 

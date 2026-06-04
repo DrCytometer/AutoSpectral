@@ -19,7 +19,7 @@ unmix.fcs(
   output.dir = NULL,
   file.suffix = NULL,
   include.raw = FALSE,
-  include.imaging = FALSE,
+  include.imaging = TRUE,
   use.dist0 = TRUE,
   divergence.threshold = 10000,
   divergence.handling = "Balance",
@@ -30,6 +30,8 @@ unmix.fcs(
   verbose = TRUE,
   n.variants = NULL,
   chunk.size = 2e+06,
+  pipeline = c("joint", "legacy"),
+  n.passes = 2L,
   ...
 )
 ```
@@ -68,8 +70,8 @@ unmix.fcs(
 - weighted:
 
   Logical, whether to use ordinary or weighted least squares unmixing as
-  the base algorithm in AutoSpectral unmixing. Default is `FALSE` and
-  will use OLS.
+  the base algorithm in AutoSpectral legacy pipeline unmixing. Default
+  is `FALSE` and will use OLS.
 
 - weights:
 
@@ -111,18 +113,16 @@ unmix.fcs(
 - include.imaging:
 
   A logical value indicating whether to include imaging parameters in
-  the written FCS file. Default is `FALSE` to provide smaller output
-  files.
+  the written FCS file. Default is `TRUE`.
 
 - use.dist0:
 
-  Logical, controls whether the selection of the optimal AF signature
-  for each cell is determined by which unmixing brings the fluorophore
-  signals closest to 0 (`use.dist0` = `TRUE`) or by which unmixing
-  minimizes the per-cell residual (`use.dist0` = `FALSE`). Default is
-  `TRUE`. Used for AutoSpectral unmixing. The minimization of
-  fluorophore signals can be thought of as a "worst-case" scenario, but
-  it provides more accurate assignments, particularly with large panels.
+  Legacy pipeline argument. Logical, controls whether the selection of
+  the optimal AF signature for each cell is determined by the
+  minimization of potential AF spillover into the fluorophore channels
+  (`use.dist0` = `TRUE`) or by which unmixing minimizes the per-cell
+  residual (`use.dist0` = `FALSE`). Default is `TRUE`. Used for legacy
+  AutoSpectral unmixing.
 
 - divergence.threshold:
 
@@ -174,12 +174,13 @@ unmix.fcs(
 
 - n.variants:
 
-  Number of variants to test per cell. Allows explicit control over the
-  number used, as opposed to `speed`, which selects from pre-defined
-  choices. Providing a numeric value to `n.variants` will override
-  `speed`, allowing up to `n.variants` (or the max available) variants
-  to be tested. The default is `NULL`, in which case `n.variants` will
-  be ignored.
+  Numeric, used for legacy AutoSpectral pipeline unmixing. Number of
+  variants to test per cell. Allows explicit control over the number
+  used, as opposed to `speed`, which selects from pre-defined choices.
+  Providing a numeric value to `n.variants` will override `speed`,
+  allowing up to `n.variants` (or the max available) variants to be
+  tested. The default is `NULL`, in which case `n.variants` will be
+  ignored.
 
 - chunk.size:
 
@@ -188,6 +189,19 @@ unmix.fcs(
   need approximately 10x the size of the raw FCS file on disk as
   available memory. Default is set at `2e6` events, assuming ~20GB
   memory available.
+
+- pipeline:
+
+  Character, one of `"joint"` (default) or `"legacy"`. Passed to
+  `unmix.autospectral.rcpp()`. `"joint"` uses the new
+  covariance-weighted joint per-cell pipeline; `"legacy"` reproduces the
+  behaviour of AutoSpectral prior to version 1.6.0.
+
+- n.passes:
+
+  Integer, default `2L`. Number of joint optimisation passes per cell.
+  Only used when `pipeline = "joint"`. Passed to
+  `unmix.autospectral.rcpp()`.
 
 - ...:
 
