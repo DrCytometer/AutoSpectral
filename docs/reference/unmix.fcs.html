@@ -49,7 +49,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Unmix FCS Data</h1>
-      <small class="dont-index">Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/R/unmix_fcs.R" class="external-link"><code>R/unmix_fcs.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/R/unmix_fcs_test.R" class="external-link"><code>R/unmix_fcs_test.R</code></a></small>
       <div class="d-none name"><code>unmix.fcs.Rd</code></div>
     </div>
 
@@ -72,7 +72,7 @@
 <span>  output.dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  file.suffix <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  include.raw <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  include.imaging <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  include.imaging <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  use.dist0 <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  divergence.threshold <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  divergence.handling <span class="op">=</span> <span class="st">"Balance"</span>,</span>
@@ -83,6 +83,8 @@
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  chunk.size <span class="op">=</span> <span class="fl">2e+06</span>,</span>
+<span>  pipeline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"joint"</span>, <span class="st">"legacy"</span><span class="op">)</span>,</span>
+<span>  n.passes <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -121,7 +123,7 @@ unmixing, select from the options: <code>OLS</code>, <code>WLS</code>, <code>Poi
 
 <dt id="arg-weighted">weighted<a class="anchor" aria-label="anchor" href="#arg-weighted"></a></dt>
 <dd><p>Logical, whether to use ordinary or weighted least squares
-unmixing as the base algorithm in AutoSpectral unmixing.
+unmixing as the base algorithm in AutoSpectral legacy pipeline unmixing.
 Default is <code>FALSE</code> and will use OLS.</p></dd>
 
 
@@ -164,18 +166,16 @@ output files.</p></dd>
 
 <dt id="arg-include-imaging">include.imaging<a class="anchor" aria-label="anchor" href="#arg-include-imaging"></a></dt>
 <dd><p>A logical value indicating whether to include imaging
-parameters in the written FCS file. Default is <code>FALSE</code> to provide smaller
-output files.</p></dd>
+parameters in the written FCS file. Default is <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-use-dist-">use.dist0<a class="anchor" aria-label="anchor" href="#arg-use-dist-"></a></dt>
-<dd><p>Logical, controls whether the selection of the optimal AF
-signature for each cell is determined by which unmixing brings the fluorophore
-signals closest to 0 (<code>use.dist0</code> = <code>TRUE</code>) or by which unmixing minimizes the
-per-cell residual (<code>use.dist0</code> = <code>FALSE</code>). Default is <code>TRUE</code>. Used for
-AutoSpectral unmixing. The minimization of fluorophore signals can be thought
-of as a "worst-case" scenario, but it provides more accurate assignments,
-particularly with large panels.</p></dd>
+<dd><p>Legacy pipeline argument. Logical, controls whether the
+selection of the optimal AF signature for each cell is determined by the
+minimization of potential AF spillover into the fluorophore channels
+(<code>use.dist0</code> = <code>TRUE</code>) or by which unmixing minimizes the per-cell residual
+(<code>use.dist0</code> = <code>FALSE</code>). Default is <code>TRUE</code>. Used for legacy AutoSpectral
+unmixing.</p></dd>
 
 
 <dt id="arg-divergence-threshold">divergence.threshold<a class="anchor" aria-label="anchor" href="#arg-divergence-threshold"></a></dt>
@@ -226,11 +226,12 @@ to have it shut up.</p></dd>
 
 
 <dt id="arg-n-variants">n.variants<a class="anchor" aria-label="anchor" href="#arg-n-variants"></a></dt>
-<dd><p>Number of variants to test per cell. Allows explicit control
-over the number used, as opposed to <code>speed</code>, which selects from pre-defined
-choices. Providing a numeric value to <code>n.variants</code> will override <code>speed</code>,
-allowing up to <code>n.variants</code> (or the max available) variants to be tested. The
-default is <code>NULL</code>, in which case <code>n.variants</code> will be ignored.</p></dd>
+<dd><p>Numeric, used for legacy AutoSpectral pipeline unmixing.
+Number of variants to test per cell. Allows explicit control over the
+number used, as opposed to <code>speed</code>, which selects from pre-defined choices.
+Providing a numeric value to <code>n.variants</code> will override <code>speed</code>, allowing
+up to <code>n.variants</code> (or the max available) variants to be tested. The default
+is <code>NULL</code>, in which case <code>n.variants</code> will be ignored.</p></dd>
 
 
 <dt id="arg-chunk-size">chunk.size<a class="anchor" aria-label="anchor" href="#arg-chunk-size"></a></dt>
@@ -238,6 +239,19 @@ default is <code>NULL</code>, in which case <code>n.variants</code> will be igno
 to manage memory when processing large FCS files. As a rough guide, you will
 need approximately 10x the size of the raw FCS file on disk as available
 memory. Default is set at <code>2e6</code> events, assuming ~20GB memory available.</p></dd>
+
+
+<dt id="arg-pipeline">pipeline<a class="anchor" aria-label="anchor" href="#arg-pipeline"></a></dt>
+<dd><p>Character, one of <code>"joint"</code> (default) or <code>"legacy"</code>. Passed
+to <code>unmix.autospectral.rcpp()</code>. <code>"joint"</code> uses the new covariance-weighted
+joint per-cell pipeline; <code>"legacy"</code> reproduces the behaviour of
+AutoSpectral prior to version 1.6.0.</p></dd>
+
+
+<dt id="arg-n-passes">n.passes<a class="anchor" aria-label="anchor" href="#arg-n-passes"></a></dt>
+<dd><p>Integer, default <code>2L</code>. Number of joint optimisation passes
+per cell. Only used when <code>pipeline = "joint"</code>. Passed to
+<code>unmix.autospectral.rcpp()</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

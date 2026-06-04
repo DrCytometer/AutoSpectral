@@ -8,6 +8,7 @@ assign.af.scatter.match(
   test.data,
   ref.data,
   scatter.param,
+  spectra,
   k = 5L,
   af.spectra = NULL,
   scale.scatter = TRUE,
