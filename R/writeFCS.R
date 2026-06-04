@@ -27,6 +27,16 @@
 #' \url{https://bioconductor.org/packages/flowCore}
 
 writeFCS <- function(mat, keys, file.name, output.dir) {
+
+  if (requireNamespace("AutoSpectralRcpp", quietly = TRUE)) {
+    return(AutoSpectralRcpp::writeFCS(
+      mat        = mat,
+      keys       = keys,
+      file.name  = file.name,
+      output.dir = output.dir
+    ))
+  }
+
   delim <- "|"
 
   # Ensure mandatory keys

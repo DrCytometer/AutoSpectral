@@ -41,6 +41,15 @@ readFCS <- function(
     end.row = NULL
 ) {
 
+  if (requireNamespace("AutoSpectralRcpp", quietly = TRUE)) {
+    return(AutoSpectralRcpp::readFCS(
+      fcs.path        = fcs.path,
+      return.keywords = return.keywords,
+      start.row       = start.row,
+      end.row         = end.row
+    ))
+  }
+
   con <- file(fcs.path, open = "rb")
   on.exit(close(con))
 
