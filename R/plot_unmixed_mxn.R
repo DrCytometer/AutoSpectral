@@ -495,7 +495,7 @@ unmixed.mxn.plot <- function(
   ggplot2::ggsave(
     filename  = file.path( output.dir, paste0( title, ".pdf" ) ),
     plot      = combined,
-    device    = grDevices::cairo_pdf,
+    device    = grDevices::pdf,
     width     = page.width,
     height    = page.height,
     limitsize = FALSE

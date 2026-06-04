@@ -216,7 +216,7 @@ unmixed.nxn.plot <- function(
   ggplot2::ggsave(
     filename  = file.path( output.dir, paste0( title, ".pdf" ) ),
     plot      = combined,
-    device    = grDevices::cairo_pdf,
+    device    = grDevices::pdf,
     width     = canvas.size,
     height    = canvas.size,
     limitsize = FALSE
