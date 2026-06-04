@@ -179,7 +179,7 @@ knitr::include_graphics("figures/Automated_workflow/Automated_autospectral_spect
 ```
 
 ```{r, echo=FALSE, fig.cap="Spectral Signature Heatmap", fig.align="center"}
-knitr::include_graphics("figures/Automated_workflow/Automated_autospectral_spectra spectral_heatmap.jpg")
+knitr::include_graphics("figures/Automated_workflow/Automated_spectral_heatmap.jpg")
 ```
 
 **Cosine similarity heatmap** (`figure_similarity_heatmap/`) — shows pairwise similarity between all
