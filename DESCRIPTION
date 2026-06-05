@@ -46,7 +46,8 @@ Imports:
     FNN,
     cowplot,
     patchwork,
-    viridis
+    viridis,
+    hexbin
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/DrCytometer/AutoSpectral,
      https://drcytometer.github.io/AutoSpectral/
