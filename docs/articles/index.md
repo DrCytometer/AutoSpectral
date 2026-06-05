@@ -42,3 +42,5 @@
   Acknowledgements](https://drcytometer.github.io/AutoSpectral/articles/17_Acknowledgements.md):
 - [18 Weighted Least Squares
   Unmixing](https://drcytometer.github.io/AutoSpectral/articles/18_Weighted_Least_Squares.md):
+- [19 Correcting Unmixing
+  Errors](https://drcytometer.github.io/AutoSpectral/articles/19_Correcting_Unmixing_Errors.md):

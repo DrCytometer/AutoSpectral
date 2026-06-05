@@ -18,11 +18,9 @@ detected in a given time window is Poisson distributed. A central
 property of the Poisson distribution is that its variance equals its
 mean. This means a channel with higher average signal also has higher
 variance, and therefore higher absolute noise. The standard WLS weight
-for channel $`j`$ is therefore:
+for channel \\j\\ is therefore:
 
-``` math
-w_j = \frac{1}{\text{mean signal in channel } j}
-```
+\\w_j = \frac{1}{\text{mean signal in channel } j}\\
 
 High mean signal means high absolute variance and therefore a low
 weight. Low mean signal means low absolute variance: the channel
@@ -105,13 +103,11 @@ weight vector (see below).
 
 Internally,
 [`unmix.wls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.wls.md)
-constructs the diagonal weight matrix $`W`$, applies it to the spectra
-matrix $`A`$ to form $`A^* = W^{1/2} A`$, and solves via SVD for
+constructs the diagonal weight matrix \\W\\, applies it to the spectra
+matrix \\A\\ to form \\A^\* = W^{1/2} A\\, and solves via SVD for
 numerical stability:
 
-``` math
-\hat{x} = (A^T W A)^{-1} A^T W \, y
-```
+\\\hat{x} = (A^T W A)^{-1} A^T W \\ y\\
 
 The SVD path is preferred over direct matrix inversion because the
 weighting can make the system poorly conditioned when some channels have

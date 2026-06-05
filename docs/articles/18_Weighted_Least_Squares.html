@@ -6,11 +6,22 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>18 Weighted Least Squares Unmixing • AutoSpectral</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="18 Weighted Least Squares Unmixing">
+<script>
+  window.MathJax = {
+    tex: { packages: {'[+]': ['boldsymbol']} }
+  };
+</script>
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -53,6 +64,7 @@
     <li><a class="dropdown-item" href="../articles/16_Development.html">16 Development</a></li>
     <li><a class="dropdown-item" href="../articles/17_Acknowledgements.html">17 Acknowledgements</a></li>
     <li><a class="dropdown-item" href="../articles/18_Weighted_Least_Squares.html">18 Weighted Least Squares Unmixing</a></li>
+    <li><a class="dropdown-item" href="../articles/19_Correcting_Unmixing_Errors.html">19 Correcting Unmixing Errors</a></li>
   </ul>
 </li>
       </ul>
@@ -99,10 +111,10 @@ photons detected in a given time window is Poisson distributed. A
 central property of the Poisson distribution is that its variance equals
 its mean. This means a channel with higher average signal also has
 higher variance, and therefore higher absolute noise. The standard WLS
-weight for channel
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
-is therefore:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mi>j</mi></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mrow><mtext mathvariant="normal">mean signal in channel </mtext><mspace width="0.333em"></mspace></mrow><mi>j</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">w_j = \frac{1}{\text{mean signal in channel } j}</annotation></semantics></math></p>
+weight for channel <span class="math inline">\(j\)</span> is
+therefore:</p>
+<p><span class="math display">\[w_j = \frac{1}{\text{mean signal in
+channel } j}\]</span></p>
 <p>High mean signal means high absolute variance and therefore a low
 weight. Low mean signal means low absolute variance: the channel
 reliably reads near zero, and the solver treats that reading as precise.
@@ -170,14 +182,11 @@ one-off calls but means the weights are derived from whatever data you
 pass in at that moment. For consistent results across multiple files,
 compute and reuse a shared weight vector (see below).</p>
 <p>Internally, <code><a href="../reference/unmix.wls.html">unmix.wls()</a></code> constructs the diagonal weight
-matrix
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>W</mi><annotation encoding="application/x-tex">W</annotation></semantics></math>,
-applies it to the spectra matrix
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
-to form
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>A</mi><mo>*</mo></msup><mo>=</mo><msup><mi>W</mi><mrow><mn>1</mn><mi>/</mi><mn>2</mn></mrow></msup><mi>A</mi></mrow><annotation encoding="application/x-tex">A^* = W^{1/2} A</annotation></semantics></math>,
-and solves via SVD for numerical stability:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>x</mi><mo accent="true">̂</mo></mover><mo>=</mo><mo stretchy="false" form="prefix">(</mo><msup><mi>A</mi><mi>T</mi></msup><mi>W</mi><mi>A</mi><msup><mo stretchy="false" form="postfix">)</mo><mrow><mi>−</mi><mn>1</mn></mrow></msup><msup><mi>A</mi><mi>T</mi></msup><mi>W</mi><mspace width="0.167em"></mspace><mi>y</mi></mrow><annotation encoding="application/x-tex">\hat{x} = (A^T W A)^{-1} A^T W \, y</annotation></semantics></math></p>
+matrix <span class="math inline">\(W\)</span>, applies it to the spectra
+matrix <span class="math inline">\(A\)</span> to form <span class="math inline">\(A^* = W^{1/2} A\)</span>, and solves via SVD for
+numerical stability:</p>
+<p><span class="math display">\[\hat{x} = (A^T W A)^{-1} A^T W \,
+y\]</span></p>
 <p>The SVD path is preferred over direct matrix inversion because the
 weighting can make the system poorly conditioned when some channels have
 very low signal.</p>

@@ -26,8 +26,6 @@ already have all of this.
 library(AutoSpectral)
 ```
 
-    ## Loading required namespace: AutoSpectralRcpp
-
     ## AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.
 
 ``` r

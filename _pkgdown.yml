@@ -1,5 +1,13 @@
 template:
   bootstrap: 5
+  math-rendering: mathjax
+  includes:
+    in_header: |
+      <script>
+        window.MathJax = {
+          tex: { packages: {'[+]': ['boldsymbol']} }
+        };
+      </script>
 
 url: https://drcytometer.github.io/AutoSpectral/
 
