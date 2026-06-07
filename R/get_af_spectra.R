@@ -218,7 +218,7 @@ get.af.spectra <- function(
   }
 
   # L-infinity normalise SOM node codes
-  af.spectra <- t( apply( map$codes[ , spectral.channels ], 1, function( x ) x / max( x ) ) )
+  af.spectra <- t( apply( map$codes[ , spectral.channels ], 1, function( x ) x / max( abs( x ) ) ) )
   af.spectra <- as.matrix( stats::na.omit( af.spectra ) )
 
   # Prepend population mean
@@ -254,11 +254,9 @@ get.af.spectra <- function(
   if ( figures ) {
     if ( verbose ) message( "Plotting autofluorescence spectra" )
 
-    # flip sign of negatively vectored AF spectra for plotting only (occurs on S8, A8)
-    af.spectra.plot <- t( apply( af.spectra, 1, function( x ) {
-      max.x <- ifelse( max( abs( x ) ) > max( x ), min( x ), max( x ) )
-      x / max.x
-    } ) )
+    # clamp negatively vectored AF spectra for plotting only (occurs on S8, A8)
+    af.spectra.plot <- af.spectra
+    af.spectra.plot[ af.spectra.plot < 0 ] <- 0
 
     tryCatch(
       expr = {
