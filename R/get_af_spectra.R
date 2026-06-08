@@ -408,16 +408,16 @@ get.af.spectra <- function(
         colnames( spill.ratios ) <- colnames( spectra )
         map.error <- EmbedSOM::SOM(
           spill.ratios,
-          xdim = som.dim,
-          ydim = som.dim,
+          xdim = som.dim.error,
+          ydim = som.dim.error,
           batch = TRUE,
           parallel = TRUE
         )
       } else {
         map.error <- FlowSOM::SOM(
           spill.ratios,
-          xdim = som.dim,
-          ydim = som.dim,
+          xdim = som.dim.error,
+          ydim = som.dim.error,
           silent = TRUE
         )
       }
