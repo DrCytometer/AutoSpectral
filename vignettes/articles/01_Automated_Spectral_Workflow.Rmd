@@ -239,7 +239,14 @@ knitr::include_graphics("figures/Automated_workflow/spectral_qc_buv805.png")
 
 **Spectra CSV** — the final normalised spectra matrix is saved to `table_spectra/`. You can reload it later using `read.spectra()` and pass it directly to any unmixing function. Call `list.files("table_spectra/")` to find all the files in that folder.
 
-We also need a minimal `flow.control` object for feeding in the dye and marker names during unmixing. In the automated workflow, this is created using the `reload.flow.control()` tool:
+By default, the new spectral profile extraction pipeline does not include any autofluorescence parameter in the output spectra. This is to try to reduce confusion. If you want a single AF, as you might have in SpectroFlo or other software, you can set `return.af=TRUE` in the call to `get.spectra.automated()`. This will extract the mean AF background in the unstained sample that you label as "AF" in the `fluorophore` column of your control file.
+
+
+# Unmixing
+
+AutoSpectral provides options for unmixing. Let's start with the most basic, which is replicating the OLS unmixing as in SpectroFlo (this is Aurora data). By default, the automated spectral extraction pipeline does not provide an autofluorescence signature, so this will be comparable to performing unmixing without autofluorescence extraction. Autofluorescence is best handled via the per-cell approach detailed below.
+
+We need a minimal `flow.control` object for feeding in the dye and marker names during unmixing. In the automated workflow, this is created using the `reload.flow.control()` tool:
 
 ```{r, eval=FALSE}
 flow.control <- reload.flow.control(
@@ -248,11 +255,6 @@ flow.control <- reload.flow.control(
   asp              = asp
 )
 ```
-
-
-# Unmixing
-
-AutoSpectral provides options for unmixing. Let's start with the most basic, which is replicating the OLS unmixing as in SpectroFlo (this is Aurora data). By default, the automated spectral extraction pipeline does not provide an autofluorescence signature, so this will be comparable to performing unmixing without autofluorescence extraction. Autofluorescence is best handled via the per-cell approach detailed below.
 
 To unmix, specify the file (and path) of the FCS file you want to unmix:
 ```{r, eval=FALSE}

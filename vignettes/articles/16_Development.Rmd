@@ -32,7 +32,7 @@ Here's some stuff that's in progress. These changes will show up first in the de
 If you would like to contribute to AutoSpectral, these are key areas I have identified where it has shortcomings or needs improvement. Suggestions for strategies, or better, code suggestions, would be appreciated.
 
 * Unmixing with controls from different days or different voltages
- + AutoSpectral does not currently support this, although it may work reasonably well anyway since these modern spectral cytometers are fairly well calibrated for PMT/APD linearity.
+ + AutoSpectral does not currently explicitly support this, although it may work reasonably well anyway since these modern spectral cytometers are fairly well calibrated for PMT/APD linearity.
  + In most cases, AutoSpectral does not have access to the information needed to normalize the files between different voltage settings. For Cytek instruments, this would be QC information and the initial linearity response curve for the APDs. For FACSDiscover systems, this is likely the QSPE values, which are in the FCS files.
  + I'd need to sit down and work out the normalization functions. This hasn't been a top priority.
 
@@ -46,16 +46,14 @@ If you would like to contribute to AutoSpectral, these are key areas I have iden
   + This should be eliminated entirely with the next round of updates, tentatively 1.6.0. This uses a variance-covariance matrix plus residual alignment to determine optimal per-cell fluorophore spectra, without the requirement to use the TRU-OLS trick of dropping into a "positive-fluorophore only" unmixed space. That trick is highly effective, since it gives us much more information about the shape of the residual, but inevitably surfaces optimization artefacts around the positivity threshold.
   
 * Better correction of unmixing errors
-  + There are several strategies I'm investigating to handling the cases where the multi-color samples contain obvious errors outside the range of variation seen in the single-color controls. This is not stuff I'm going to put online, so get in touch if you'd like to work on this. 
+  + There are several strategies I'm investigating to handling the cases where the multi-color samples contain obvious errors outside the range of variation seen in the single-color controls. Some thoughts on this can be seen in [Correcting Unmixing Errors](https://drcytometer.github.io/AutoSpectral/articles/19_Correcting_Unmixing_Errors.html)
   + This should be improved further with the next round of updates, tentatively 1.6.0
   
 * Autofluorescence modeling
  +infer more precise AF spectra through geometric mapping to multiple points on the SOM. I tried this using weighted averages of how much each AF "helped" or "fit" the cell, but the result was worse. Probably I did something wrong because conceptually this make sense to me.
 
 * Faster AF assignment through machine learning
- + Run a representative or pooled sample, figure out which AF spectrum belongs to each cell, train a model, use the model for lightweight (quick) approximation of the best spectrum for remaining samples. This is how I anticipate AutoSpectral could be employed on cell sorters. That said,
-the Honeychrome implementation in Python uses a 3D matrix multiplication and is quite fast,
-so this may not be necessary.
+ + Run a representative or pooled sample, figure out which AF spectrum belongs to each cell, train a model, use the model for lightweight (quick) approximation of the best spectrum for remaining samples. This is how I anticipate AutoSpectral could be employed on cell sorters. That said, the Honeychrome implementation in Python uses either a 3D matrix multiplication via NumPy or a C kernel and is quite fast, so this may not be necessary.
   
 
 
@@ -508,6 +506,90 @@ knitr::include_graphics("figures/Development/af_benchmark.png")
 
 ---
 
+## Synthetic Data for Development and Testing
+
+`sim.flow.data()` generates synthetic spectral flow cytometry data for 
+testing unmixing ideas and benchmarking AF assignment methods. The function 
+takes a spectral matrix and an `asp` parameter list (for some cytometer-specific
+aspects), then builds a detector-space signal matrix that includes my attempt to
+simulate the noise sources present in instruments. 
+
+The main advantage of using this synthetic data is that you get a "ground truth"
+of the actual abundances for the  fluorophore signals in the absence of any 
+confounding noise. You can also turn on and off specific noise sources. That 
+said, I haven't used this much and tend to rely on biology and cytometry 
+knowledge to evaluate unmixing, basically going on my opinion. I have also 
+modelled this after my understanding of flow and the aspects I've worked out in
+`AutoSpectral`, so it will contain those biases implicitly.
+
+The simulation proceeds in three steps. First, each cell is assigned a random
+subset of fluorophores (controlled by `complexity`), and per-cell abundances are
+drawn from a log-normal distribution parameterised by three discrete expression
+layers (`layer.centroids`). Second, if `af.spectra` and `variants` are
+supplied, per-cell AF spectra and per-fluorophore spectral variants are sampled
+and mixed into the signal, enabling ground-truth evaluation of assignment
+accuracy. Third, the clean mixed signal is corrupted by binomial spillover
+sampling, Poisson shot noise, and additive Gaussian readout noise according to
+a cytometer-specific detector preset drawn from `asp$cytometer`; presets are
+included for Aurora, ID7000, FACSDiscover S8/A8, Opteon, Mosaic, Xenith, and
+Symphony.
+
+The function returns a list with four elements:
+
+- `$raw` — the detector-space matrix, ready to pass to any unmixing function.
+- `$unmixed.no.af` — an OLS unmix of `$raw` against `spectra` with no AF term,
+  useful for a quick sanity check.
+- `$truth` — ground-truth abundances, expression layer assignments, variant
+  indices, AF row assignments, AF abundances, and scatter values.
+- `$params` — the full set of simulation settings, for reproducibility.
+
+How to use it:
+
+```{r simulate-example, eval=FALSE}
+asp      <- get.autospectral.param("Aurora")
+spectra  <- get.fluorophore.spectra(panel, asp)
+unstained.fcs <- "./path/to/my.fcs"
+af.spectra  <- get.af.spectra(unstained.fcs, asp, spectra)
+
+sim <- sim.flow.data(
+  spectra    = spectra,
+  asp        = asp,
+  n.cells    = 20000,
+  af.spectra = af.spectra
+)
+
+# Ground-truth vs assigned AF abundance
+plot(sim$truth$af.abundance, sim$unmixed.no.af[, "AF"])
+
+create.biplot(
+  sim$unmixed.no.af,
+  "APC", "BUV661", # your fluorophores
+  x.min = -10000, # adjust axes if needed
+  asp,
+  save = FALSE
+)
+```
+
+Scatter can be replaced with real FSC/SSC data from an experiment (via
+`scatter.data`) to produce a synthetic population with realistic morphological
+distribution. The `seed` argument ensures reproducibility. The `benchmark.af.spectra()`
+function accepts `simulate.flow.data()` output directly: pass `sim$raw` as
+the data matrix and `sim$truth` for accuracy evaluation.
+
+By default, you get a negative population and three nicely spaced positive
+populations, for a grid of 16 in a biplot. Here's an example without any AF or
+fluorophore variation thrown in.
+
+```{r, echo=FALSE, fig.cap="Synthetic Data", fig.align="center"}
+knitr::include_graphics("figures/synthetic_data.png")
+```
+
+
+---
+
+## Per-Cell Unmixing as a Continuous Optimization Problem
+---
+
 ## Understanding Per-Cell Fluorophore Spectral Variant Selection
 
 ### From a biologist's perspective
@@ -635,7 +717,7 @@ IRLS solver iterates this weighting to convergence and is implemented in C++ in
 Standard WLS, in contrast, uses one set of weights for all cells. We don't usually
 have access to the detector noise readings that would make for optimal weights,
 so AutoSpectral uses an empirical estimate based on the mean signal in the data.
-More on this in the WLS article.
+More on this in the [WLS article](https://drcytometer.github.io/AutoSpectral/articles/18_Weighted_Least_Squares.html).
 
 AutoSpectral unmixing does not, as of this writing, use WLS for cell-specific
 spectral optimization. A single set of weights does not, empirically, appear to
@@ -643,7 +725,16 @@ produce better unmixing, likely because the metric in AutoSpectral already
 effectively optimizes for the same net effect. Using cell-specific weights without
 IRLS refinement of those weights introduces noise, because each individual cell's
 measurements are noisy. IRLS is costly to compute, but perhaps a kNN approach to
-select similar cells and use that average as weights would be effective.
+select similar cells and use that average as weights would be effective. A simple
+solution to approximate cell-specific weighting without allowing the noise to
+dominate the weights is to use a cap on the maximum weight values via a 
+`noise_floor`. We know that there is a certain amount of average signal in the
+detectors when running even clean unstained samples. If we set the upper limit
+of that range as the effective zero point (rather than zero itself), the weights
+become much less noisy and can assist in reducing spillover spread in the
+unmixed data. This `noise_floor` value probably needs to be determined 
+empirically per instrument and per detector, but anything above `1` prevents the
+influence of detector noise on the assignment of weights.
 
 ### Directions for future development
 
@@ -673,8 +764,8 @@ spectrum lies between two SOM nodes, at the cost of requiring a differentiable
 spectral model. It is difficult to do this without allowing the entire model to
 go haywire.
 
-**Bayesian formulation.** The variant selection problem is naturally expressed
-as Bayesian inference: the prior over AF and fluorophore variants encodes what
+**Bayesian formulation.** The variant selection problem can be considered
+as a Bayesian inference problem: the prior over AF and fluorophore variants encodes what
 is known from the single-colour controls, and the likelihood is the OLS or
 Poisson residual. A Markov chain Monte Carlo (MCMC) sampler would explore the
 joint posterior over all variant assignments simultaneously, correctly
