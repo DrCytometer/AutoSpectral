@@ -55,7 +55,9 @@
 #'   unmixing.
 #' @param flow.channel Named character vector of expected peak raw channels,
 #'   one per fluorophore.
-#' @param af.pcs Matrix of autofluorescence-defining principal components.
+#' @param af.pcs Named list of autofluorescence-defining principal component
+#'   matrices, one per unique unstained FCS file. Names are FCS filenames
+#'   matching entries in \code{universal.negative}.
 #' @param n.cells Integer, default \code{10000}. Maximum number of positive
 #'   events used for SOM clustering. Files with more events above threshold
 #'   are randomly downsampled to this number.
@@ -191,11 +193,20 @@ get.fluor.variants <- function(
 
   # project out any remaining AF (cells only) using AF components
   if ( control.type[ fluor ] == "cells" ) {
+    # select the AF PCs derived from this control's paired unstained file;
+    # fall back to the first entry if the filename is not found
+    neg.fn <- universal.negative[ fluor ]
+    if ( is.list( af.pcs ) ) {
+      af.pcs.mat <- if ( !is.na( neg.fn ) && neg.fn %in% names( af.pcs ) )
+        af.pcs[[ neg.fn ]] else af.pcs[[ 1L ]]
+    } else {
+      af.pcs.mat <- af.pcs
+    }
     # unmix with this fluor + AF components
-    pos.unmixed <- unmix.ols( pos.corrected, rbind( af.pcs, original.spectrum ) )
+    pos.unmixed <- unmix.ols( pos.corrected, rbind( af.pcs.mat, original.spectrum ) )
     # back-project the AF components into raw space
-    af.pc.n <- nrow( af.pcs )
-    af.projection <- pos.unmixed[ , 1:af.pc.n ] %*% af.pcs
+    af.pc.n <- nrow( af.pcs.mat )
+    af.projection <- pos.unmixed[ , 1:af.pc.n ] %*% af.pcs.mat
     # subtract the projected AF
     pos.corrected <- pos.corrected - af.projection
   }

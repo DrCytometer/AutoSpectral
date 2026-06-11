@@ -240,7 +240,7 @@ get.spectral.variants.test <- function(
   # ---------------------------------------------------------------------------
 
   if ( verbose )
-    message( paste0( "\033[32m", "Calculating positivity thresholds", "\033[0m" ) )
+    message( paste0( "\033[32m", "Measuring background in unstained samples", "\033[0m" ) )
 
   unstained <- readFCS( file.path( control.dir, flow.file.name[ "AF" ] ) )
 
@@ -266,9 +266,28 @@ get.spectral.variants.test <- function(
     refine = FALSE
   )
 
-  # get PCs of AF for unmixing the controls
-  sv <- svd( unstained, nu = 0, nv = 4 )
-  af.pcs <- t( sv$v )
+  # derive per-file AF PCs for all unique unstained cell files used as negatives
+  cell.fluors <- names( control.type )[ control.type == "cells" ]
+  univ.neg.files <- unique( universal.negative[
+    names( universal.negative ) %in% cell.fluors &
+      universal.negative != "FALSE" &
+      !is.na( universal.negative ) &
+      grepl( "\\.fcs$", universal.negative, ignore.case = TRUE )
+  ] )
+
+  af.pcs.list <- lapply( univ.neg.files, function( fn ) {
+    dat <- readFCS( file.path( control.dir, fn ) )
+    if ( nrow( dat ) > asp$gate.downsample.n.cells ) {
+      set.seed( asp$bird.seed )
+      dat <- dat[ sample( nrow( dat ), asp$gate.downsample.n.cells ),
+                  spectral.channel, drop = FALSE ]
+    } else {
+      dat <- dat[ , spectral.channel, drop = FALSE ]
+    }
+    sv <- svd( dat, nu = 0, nv = 4 )
+    t( sv$v )
+  } )
+  names( af.pcs.list ) <- univ.neg.files
 
   # find the likely positivity thresholds for determining what needs refinement
   unstained.unmixed <- unmix.autospectral(
@@ -305,7 +324,7 @@ get.spectral.variants.test <- function(
     raw.thresholds     = raw.thresholds,
     unmixed.thresholds = unmixed.thresholds,
     flow.channel       = flow.channel,
-    af.pcs             = af.pcs,
+    af.pcs             = af.pcs.list,
     n.cells            = n.cells,
     som.dim            = som.dim,
     k.neighbors        = k.neighbors,

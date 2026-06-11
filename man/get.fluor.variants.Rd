@@ -76,7 +76,9 @@ unmixing.}
 \item{flow.channel}{Named character vector of expected peak raw channels,
 one per fluorophore.}
 
-\item{af.pcs}{Matrix of autofluorescence-defining principal components.}
+\item{af.pcs}{Named list of autofluorescence-defining principal component
+matrices, one per unique unstained FCS file. Names are FCS filenames
+matching entries in \code{universal.negative}.}
 
 \item{n.cells}{Integer, default \code{10000}. Maximum number of positive
 events used for SOM clustering. Files with more events above threshold
