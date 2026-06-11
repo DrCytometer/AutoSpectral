@@ -66,7 +66,7 @@ Default: \code{"af_accuracy_spectra_benchmark"}.}
 A named list with three elements:
 \describe{
 \item{\code{raw}}{Data frame of per-draw results with columns
-\code{n.fluors}, \code{draw}, \code{af_method}, \code{Mean_Sim},
+\code{n.fluors}, \code{draw}, \code{method}, \code{Mean_Sim},
 and \code{SD_Sim}.}
 \item{\code{summary}}{Data frame summarising \code{raw} across draws
 for each \code{(n.fluors, method)} combination, with columns

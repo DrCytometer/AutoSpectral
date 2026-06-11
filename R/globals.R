@@ -29,7 +29,7 @@ utils::globalVariables(
      "comparison",
      "mean_Mean_Sim",
      "sd_Mean_Sim",
-     "af_method",
+     "method",
      "Mean_Sim",
      "rSD_Sim"
   )

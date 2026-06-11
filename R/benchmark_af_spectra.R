@@ -42,7 +42,7 @@
 #' @return A named list with three elements:
 #'   \describe{
 #'     \item{\code{raw}}{Data frame of per-draw results with columns
-#'       \code{n.fluors}, \code{draw}, \code{af_method}, \code{Mean_Sim},
+#'       \code{n.fluors}, \code{draw}, \code{method}, \code{Mean_Sim},
 #'       and \code{SD_Sim}.}
 #'     \item{\code{summary}}{Data frame summarising \code{raw} across draws
 #'       for each \code{(n.fluors, method)} combination, with columns
@@ -190,14 +190,14 @@ benchmark.af.spectra <- function(
 
   # ---- plot ------------------------------------------------------------------
 
-  summary.df$af_method <- factor(
-    summary.df$af_method,
+  summary.df$method <- factor(
+    summary.df$method,
     levels = c( "mean.af", functions )
   )
 
-  n.methods     <- length( levels( summary.df$af_method ) )
+  n.methods     <- length( levels( summary.df$method ) )
   method.colors <- grDevices::hcl.colors( n.methods, palette = "Dark 3" )
-  names( method.colors ) <- levels( summary.df$af_method )
+  names( method.colors ) <- levels( summary.df$method )
 
   ribbon.alpha <- 0.15
 
@@ -206,9 +206,9 @@ benchmark.af.spectra <- function(
     ggplot2::aes(
       x      = n.fluors,
       y      = mean_Mean_Sim,
-      colour = af_method,
-      fill   = af_method,
-      group  = af_method
+      colour = method,
+      fill   = method,
+      group  = method
     )
   ) +
     ggplot2::geom_ribbon(
