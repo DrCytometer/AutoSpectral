@@ -16,6 +16,7 @@ get.spectra.automated(
   peak.signal.threshold = 0.5,
   legacy.refinement = TRUE,
   top.expressing.override = NULL,
+  return.af = FALSE,
   figures = TRUE,
   plot.cosine.filter = TRUE,
   plot.scatter.match = TRUE,
@@ -58,6 +59,11 @@ pipeline on controls where the signature does not match the reference well.}
 \item{top.expressing.override}{Named numeric vector or \code{NULL} (default).
 Override the event count for specific samples. Names should match the FCS
 filename (without extension) or the fluorophore name from the control file.}
+
+\item{return.af}{Logical, default \code{FALSE}. Adds a single mean
+autofluorescence spectrum to the output to allow unmixing with OLS or WLS
+using autofluorescence extraction. Requires naming the unstained cell
+control sample as \code{AF} for the fluorophore in the control file.}
 
 \item{figures}{Logical, default \code{TRUE}. Produce spectral trace, heatmap,
 cosine-similarity, and reference-library QC plots.}

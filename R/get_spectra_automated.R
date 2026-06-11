@@ -313,6 +313,10 @@
 #' @param top.expressing.override Named numeric vector or `NULL` (default).
 #'   Override the event count for specific samples. Names should match the FCS
 #'   filename (without extension) or the fluorophore name from the control file.
+#' @param return.af Logical, default `FALSE`. Adds a single mean
+#'   autofluorescence spectrum to the output to allow unmixing with OLS or WLS
+#'   using autofluorescence extraction. Requires naming the unstained cell
+#'   control sample as `AF` for the fluorophore in the control file.
 #' @param figures Logical, default `TRUE`. Produce spectral trace, heatmap,
 #'   cosine-similarity, and reference-library QC plots.
 #' @param plot.cosine.filter Logical, default `TRUE`. When `figures = TRUE`,
@@ -346,6 +350,7 @@ get.spectra.automated <- function(
     peak.signal.threshold   = 0.5,
     legacy.refinement       = TRUE,
     top.expressing.override = NULL,
+    return.af               = FALSE,
     figures                 = TRUE,
     plot.cosine.filter      = TRUE,
     plot.scatter.match      = TRUE,
@@ -477,6 +482,32 @@ get.spectra.automated <- function(
       mean     = colMeans( af.spec.uf ),
       median   = apply( af.spec.uf, 2, stats::median )
     )
+  }
+
+  # if return.af requested and the AF file is not already in the cache, load it
+  if ( return.af ) {
+    af.row.idx <- which( ctrl.tbl$fluorophore == "AF" )
+    if ( length( af.row.idx ) == 1L ) {
+      uf.af <- ctrl.tbl$filename[ af.row.idx ]
+      if ( !uf.af %in% names( af.cache ) ) {
+        uf.af.path <- file.path( control.dir, uf.af )
+        if ( file.exists( uf.af.path ) ) {
+          ust.af       <- .read.fcs.clean(
+            uf.af.path, paste0( "AF (", uf.af, ")" ),
+            spectral.channels, scatter.channels, sat.value, singlet.quantiles, asp, verbose
+          )
+          spec.in.af   <- intersect( spectral.channels, colnames( ust.af ) )
+          af.spec.af   <- ust.af[ , spec.in.af, drop = FALSE ]
+          af.scat.af   <- ust.af[ , intersect( scatter.channels, colnames( ust.af ) ), drop = FALSE ]
+          af.cache[[ uf.af ]] <- list(
+            spectral = af.spec.af,
+            scatter  = af.scat.af,
+            mean     = colMeans( af.spec.af ),
+            median   = apply( af.spec.af, 2, stats::median )
+          )
+        }
+      }
+    }
   }
 
   # read fluorophore FCS files
@@ -922,6 +953,35 @@ get.spectra.automated <- function(
     )
     print( qc.log[ , c( "Fluorophore", "EmpiricalPeak", "ExpectedPeak",
                          "PeakSignal", "CosineSim", "Status" ) ] )
+  }
+
+  # add AF if requested
+  if ( return.af ) {
+    af.row.idx <- which( ctrl.tbl$fluorophore == "AF" )
+    if ( length( af.row.idx ) == 1L ) {
+      uf <- ctrl.tbl$filename[ af.row.idx ]
+      if ( !is.null( af.cache[[ uf ]] ) ) {
+        af.mean <- af.cache[[ uf ]]$mean
+        af.norm <- af.mean / max( abs( af.mean ) )
+        af.norm.mat              <- matrix( af.norm, nrow = 1L )
+        rownames( af.norm.mat )  <- "AF"
+        colnames( af.norm.mat )  <- names( af.mean )
+        marker.spectra <- rbind( marker.spectra, af.norm.mat )
+      } else {
+        warning(
+          "return.af = TRUE but the AF file ('", uf, "') was not loaded into the ",
+          "unstained cache. Ensure it appears as a universal.negative for at least ",
+          "one fluorophore, or load it explicitly.",
+          call. = FALSE
+        )
+      }
+    } else {
+      warning(
+        "return.af = TRUE but no row with fluorophore == 'AF' found in the control ",
+        "table. The AF row will not be appended.",
+        call. = FALSE
+      )
+    }
   }
 
   # -- 10. Figures
