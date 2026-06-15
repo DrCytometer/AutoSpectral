@@ -82,6 +82,12 @@ spectral.reference.plot <- function(
   cyt <- asp$cytometer
   # small switch to consolidate A8/S8 to same reference library
   if ( grepl( "Discover", cyt ) ) cyt <- "Discover"
+  # ID7000 has no fixed detector voltage standard, so spectral shapes vary
+  # more than on fixed-voltage instruments; apply relaxed QC thresholds.
+  if ( isTRUE( cyt == "ID7000" ) ) {
+    qc.threshold.warn <- min( qc.threshold.warn, 0.85 )
+    qc.threshold.fail <- min( qc.threshold.fail, 0.70 )
+  }
 
   # read in the reference spectra for this cytometer
   database.path <- system.file( "extdata", package = "AutoSpectral" )
@@ -218,6 +224,12 @@ spectral.reference.plot <- function(
 
   # console output
   cat( "\n--- Spectral QC Compared to Library References ---\n" )
+  cat( "Note: This report is for guidance only. Spectra are expected to vary by\n" )
+  cat( "instrument and protocol; minor deviations from library references are normal.\n" )
+  if ( isTRUE( cyt == "ID7000" ) ) {
+    cat( "ID7000: thresholds relaxed (warn < 0.85, fail < 0.70) due to variable detector voltages.\n" )
+  }
+  cat( "\n" )
   print( summary.df )
   cat( "---------------------------\n" )
 
@@ -233,6 +245,16 @@ spectral.reference.plot <- function(
   n.fluors <- nrow( summary.df )
   pages <- split( 1:n.fluors, ceiling( seq_along( 1:n.fluors ) / 20 ) )
 
+  id7000.note <- isTRUE( cyt == "ID7000" )
+  guidance.text <- paste0(
+    "This QC report is for guidance only. Spectra are expected to vary somewhat",
+    " by instrument and protocol; minor deviations from library references are normal.",
+    if ( id7000.note )
+      " Note: thresholds are relaxed for the ID7000 because detector voltages are not standardised."
+    else
+      ""
+  )
+
   for( idx in seq_along( pages ) ) {
     grid::grid.newpage()
     grid::grid.text(
@@ -241,16 +263,24 @@ spectral.reference.plot <- function(
       gp = grid::gpar( fontsize = 16, fontface = "bold" )
     )
 
+    grid::grid.text(
+      guidance.text,
+      x   = 0.5,
+      y   = 0.91,
+      gp  = grid::gpar( fontsize = 8, col = "grey40" ),
+      just = "centre"
+    )
+
     # subheader for multi-page reports
     if( length( pages ) > 1 ) {
       grid::grid.text(
         paste( "Page", idx, "of", length( pages ) ),
-        y = 0.92,
+        y = 0.88,
         gp = grid::gpar( fontsize = 10 )
       )
     }
 
-    y.pos <- seq( 0.85, by = -0.035, length.out = length( pages[[ idx ]] ) + 1 )
+    y.pos <- seq( 0.84, by = -0.035, length.out = length( pages[[ idx ]] ) + 1 )
     cols <- c( 0.2, 0.5, 0.8 )
     headers <- colnames( summary.df )
 
