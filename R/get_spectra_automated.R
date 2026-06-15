@@ -272,14 +272,14 @@
 #'
 #' 1. Reads all single-stained controls with `readFCS()`.
 #' 2. Removes saturating events.
-#' 3. For each fluorophore, determines the AF reference from the paired
+#' #' 3. For each fluorophore, determines the AF reference from the paired
 #'    universal-negative file specified in `universal.negative` column of the
-#'    control table, or - if that column is empty - from the lower 25% of
-#'    the control file's own events ranked by the expected peak channel
-#'    (internal-negative mode).
-#' 4. Performs projection-based AF orthogonalisation to identify the empirical
-#'    peak detector; selects top-expressing events filtered by lowest cosine
-#'    similarity to the AF vector; performs KNN scatter-matched AF subtraction.
+#'    control table, or - if that column is empty - uses internal-negative mode.
+#' 4. **External-negative:** projection-based AF orthogonalisation to identify
+#'    the empirical peak detector; cosine-similarity filter to select the least
+#'    AF-like events; KNN scatter-matched AF subtraction; column median summary.
+#'    **Internal-negative:** top-100 events by expected peak channel minus the
+#'    mean of the bottom-10%; row mean summary; no cosine filter or kNN step.
 #' 5. Applies QC: if the normalised signal cosine similarity against the
 #'    spectral reference library is below `cosine.threshold`, the spectrum is
 #'    refined using the legacy gating and cleaning approach.
@@ -607,19 +607,26 @@ get.spectra.automated <- function(
       use.internal  <- TRUE
     }
 
-    v.unit.i <- af.mean.i / ( sqrt( sum( af.mean.i^2 ) ) + 1e-9 )
+    # -- 4b. AF orthogonalisation -> empirical peak  (external-negative only)
+    if ( !use.internal ) {
+      v.unit.i <- af.mean.i / ( sqrt( sum( af.mean.i^2 ) ) + 1e-9 )
+      proj     <- spec.data %*% v.unit.i
+      mat.orth <- spec.data - proj %*% t( v.unit.i )
 
-    # -- 4b. AF orthogonalisation -> empirical peak
-    proj     <- spec.data %*% v.unit.i
-    mat.orth <- spec.data - proj %*% t( v.unit.i )
-
-    empirical.peak            <- names( which.max( colMeans( mat.orth ) ) )
-    qc.log$EmpiricalPeak[ i ] <- empirical.peak
+      empirical.peak            <- names( which.max( colMeans( mat.orth ) ) )
+      qc.log$EmpiricalPeak[ i ] <- empirical.peak
+    } else {
+      empirical.peak            <- expeak
+      qc.log$EmpiricalPeak[ i ] <- empirical.peak
+    }
 
     # -- 4c. Select top candidate events
     if ( use.internal ) {
 
-      i.top        <- i.internal.pos
+      # Top-100 by expected peak channel (mirrors Python: min(100, n_pos))
+      peak.col     <- if ( expeak %in% spec.i ) expeak else spec.i[ 1L ]
+      order.peak2  <- order( spec.data[ , peak.col ], decreasing = TRUE )
+      i.top        <- order.peak2[ seq_len( min( 100L, nrow( spec.data ) ) ) ]
       n.cand.actual <- length( i.top )
 
     } else {
@@ -644,75 +651,94 @@ get.spectra.automated <- function(
                       decreasing = TRUE )[ seq_len( n.cand.actual ) ]
     }
 
-    # -- 4d. Cosine-similarity filter: keep least-AF-like events
-    top.mat  <- spec.data[ i.top, , drop = FALSE ]
-    cs.vs.af <- .cosine.sim.rows( top.mat, af.median.i )
+    if ( use.internal ) {
+      # --- Internal-negative path ---
+      # Top-100 minus bottom-10% mean -> row mean -> clip.
+      # No cosine filter, no kNN subtraction (mirrors Python SpectralCleaner).
+      top.mat        <- spec.data[ i.top, , drop = FALSE ]
+      peak.col.int   <- if ( expeak %in% spec.i ) expeak else spec.i[ 1L ]
+      order.neg      <- order( spec.data[ , peak.col.int ] )
+      n.int.neg      <- max( 2L, floor( nrow( spec.data ) * 0.10 ) )
+      int.neg.idx    <- order.neg[ seq_len( n.int.neg ) ]
+      neg.mean       <- colMeans( spec.data[ int.neg.idx, , drop = FALSE ] )
 
-    n.spec.actual  <- min( n.spectral, length( i.top ) )
-    i.spectral     <- i.top[ order( cs.vs.af )[ seq_len( n.spec.actual ) ] ]
-    spectral.events <- spec.data[ i.spectral, , drop = FALSE ]
+      spectral.sub   <- sweep( top.mat, 2, neg.mean, `-` )
+      raw.spectrum   <- pmax( colMeans( spectral.sub ), 0 )
 
-    # -- 4e. Collect cosine filter data (rendered to PDF after loop)
-    if ( figures && plot.cosine.filter ) {
-      cosine.filter.data[[ i ]] <- list(
-        top.mat       = top.mat,
-        af.median.i   = af.median.i,
-        fluor         = fluor,
-        empirical.peak = empirical.peak
-      )
-    }
+    } else {
+      # --- External-negative path ---
 
-    # -- 4f. KNN scatter-matched background (AF) subtraction
-    knn.idx.i <- NULL
+      # -- 4d. Cosine-similarity filter: keep least-AF-like events
+      top.mat  <- spec.data[ i.top, , drop = FALSE ]
+      cs.vs.af <- .cosine.sim.rows( top.mat, af.median.i )
 
-    if ( nrow( af.scatter.i ) > 0 && length( common.scat ) >= 1L ) {
+      n.spec.actual  <- min( n.spectral, length( i.top ) )
+      i.spectral     <- i.top[ order( cs.vs.af )[ seq_len( n.spec.actual ) ] ]
+      spectral.events <- spec.data[ i.spectral, , drop = FALSE ]
 
-      fluor.scatter <- mat.i[ i.spectral, common.scat, drop = FALSE ]
-
-      knn.idx.i <- FNN::knnx.index(
-        data  = as.matrix( af.scatter.i[ , common.scat, drop = FALSE ] ),
-        query = as.matrix( fluor.scatter ),
-        k     = k.neighbors
-      )
-
-      n.ev       <- nrow( knn.idx.i )
-      af.matched <- matrix( 0, n.ev, length( spec.i ) )
-      colnames( af.matched ) <- spec.i
-
-      for ( ki in seq_len( k.neighbors ) ) {
-        af.matched <- af.matched +
-          af.spectral.i[ knn.idx.i[ , ki ], spec.i, drop = FALSE ]
-      }
-      af.matched <- af.matched / k.neighbors
-
-      spectral.sub <- spectral.events - af.matched
-
-      # -- 4g. Scatter match plot (saved immediately per fluorophore)
-      if ( figures && plot.scatter.match ) {
-        matched.scatter <- af.scatter.i[
-          unique( as.vector( knn.idx.i ) ), common.scat, drop = FALSE
-        ]
-        tryCatch(
-          scatter.match.plot(
-            pos.expr.data = fluor.scatter,
-            neg.expr.data = matched.scatter,
-            fluor.name    = fluor,
-            scatter.param = common.scat,
-            asp           = asp
-          ),
-          error = function( e )
-            message( "\033[31m  scatter.match.plot error [", fluor, "]: ",
-                     e$message, "\033[0m" )
+      # -- 4e. Collect cosine filter data (rendered to PDF after loop)
+      if ( figures && plot.cosine.filter ) {
+        cosine.filter.data[[ i ]] <- list(
+          top.mat       = top.mat,
+          af.median.i   = af.median.i,
+          fluor         = fluor,
+          empirical.peak = empirical.peak
         )
       }
 
-    } else {
-      spectral.sub <- spectral.events
+      # -- 4f. KNN scatter-matched background (AF) subtraction
+      knn.idx.i <- NULL
+
+      if ( nrow( af.scatter.i ) > 0 && length( common.scat ) >= 1L ) {
+
+        fluor.scatter <- mat.i[ i.spectral, common.scat, drop = FALSE ]
+
+        knn.idx.i <- FNN::knnx.index(
+          data  = as.matrix( af.scatter.i[ , common.scat, drop = FALSE ] ),
+          query = as.matrix( fluor.scatter ),
+          k     = k.neighbors
+        )
+
+        n.ev       <- nrow( knn.idx.i )
+        af.matched <- matrix( 0, n.ev, length( spec.i ) )
+        colnames( af.matched ) <- spec.i
+
+        for ( ki in seq_len( k.neighbors ) ) {
+          af.matched <- af.matched +
+            af.spectral.i[ knn.idx.i[ , ki ], spec.i, drop = FALSE ]
+        }
+        af.matched <- af.matched / k.neighbors
+
+        spectral.sub <- spectral.events - af.matched
+
+        # -- 4g. Scatter match plot
+        if ( figures && plot.scatter.match ) {
+          matched.scatter <- af.scatter.i[
+            unique( as.vector( knn.idx.i ) ), common.scat, drop = FALSE
+          ]
+          tryCatch(
+            scatter.match.plot(
+              pos.expr.data = fluor.scatter,
+              neg.expr.data = matched.scatter,
+              fluor.name    = fluor,
+              scatter.param = common.scat,
+              asp           = asp
+            ),
+            error = function( e )
+              message( "\033[31m  scatter.match.plot error [", fluor, "]: ",
+                       e$message, "\033[0m" )
+          )
+        }
+
+      } else {
+        spectral.sub <- spectral.events
+      }
+
+      # -- 4h. Compute spectrum: column median -> normalise [0,1]
+      raw.spectrum <- apply( spectral.sub, 2, stats::median )
     }
 
-    # -- 4h. Compute spectrum: column median -> normalise [0,1]
-    raw.spectrum <- apply( spectral.sub, 2, stats::median )
-    max.val      <- max( raw.spectrum )
+    max.val <- max( raw.spectrum )
 
     if ( !is.finite( max.val ) || max.val <= 0 ) {
       if ( verbose )

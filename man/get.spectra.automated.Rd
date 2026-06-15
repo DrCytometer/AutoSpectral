@@ -99,14 +99,14 @@ pipeline:
 \enumerate{
 \item Reads all single-stained controls with \code{readFCS()}.
 \item Removes saturating events.
-\item For each fluorophore, determines the AF reference from the paired
+#' 3. For each fluorophore, determines the AF reference from the paired
 universal-negative file specified in \code{universal.negative} column of the
-control table, or - if that column is empty - from the lower 25\% of
-the control file's own events ranked by the expected peak channel
-(internal-negative mode).
-\item Performs projection-based AF orthogonalisation to identify the empirical
-peak detector; selects top-expressing events filtered by lowest cosine
-similarity to the AF vector; performs KNN scatter-matched AF subtraction.
+control table, or - if that column is empty - uses internal-negative mode.
+\item \strong{External-negative:} projection-based AF orthogonalisation to identify
+the empirical peak detector; cosine-similarity filter to select the least
+AF-like events; KNN scatter-matched AF subtraction; column median summary.
+\strong{Internal-negative:} top-100 events by expected peak channel minus the
+mean of the bottom-10\%; row mean summary; no cosine filter or kNN step.
 \item Applies QC: if the normalised signal cosine similarity against the
 spectral reference library is below \code{cosine.threshold}, the spectrum is
 refined using the legacy gating and cleaning approach.
