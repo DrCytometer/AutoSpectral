@@ -57,6 +57,17 @@
 #'   \code{"black"}.
 #' @param median.linewidth Width of the reference-spectrum line. Default
 #'   \code{1}.
+#' @param stained.sample Optional file path to a representative stained FCS
+#'   file. When supplied, it is read and unmixed to obtain per-fluorophore
+#'   median positive signal (MFI), which weights the optimization necessity
+#'   scores by fluorophore brightness. Pass `NULL` (default) to use purely
+#'   geometric scores.
+#' @param optimize.necessity.threshold Numeric in `[0, 1]`, default `0.01`.
+#'   Passed to `calculate.optimize.necessity()`. Fluorophores whose normalised
+#'   leakage score falls below this value are flagged as not requiring per-cell
+#'   spectral optimisation. The result is stored in
+#'   `$optimize.recommended` in the returned list and used automatically by
+#'   `unmix.autospectral.rcpp()` to skip unnecessary optimisation passes.
 #' @param ... Ignored. Catches and warns on previously used deprecated
 #'   arguments: \code{af.spectra}, \code{refine}, \code{problem.quantile},
 #'   \code{pos.quantile}.
@@ -94,6 +105,8 @@ get.spectral.variants <- function(
     variant.fill.alpha = 0.7,
     median.line.color  = "black",
     median.linewidth   = 1,
+    stained.sample               = NULL,
+    optimize.necessity.threshold = 0.01,
     ...
 ) {
 
@@ -102,19 +115,6 @@ get.spectral.variants <- function(
   # ---------------------------------------------------------------------------
 
   dots <- list( ... )
-
-  if ( !is.logical( figures ) || length( figures ) != 1L ) {
-    stop(
-      paste0(
-        "Argument `figures` must be TRUE or FALSE, but received a ",
-        class( figures ), ". ",
-        "If you are passing `af.spectra`, note that this argument was removed ",
-        "in AutoSpectral 1.6.0 and is no longer needed. ",
-        "Please remove it from your call to `get.spectral.variants()`."
-      ),
-      call. = FALSE
-    )
-  }
 
   for ( old.arg in c( "pos.quantile" ) ) {
     if ( !is.null( dots[[ old.arg ]] ) )
@@ -197,7 +197,7 @@ get.spectral.variants <- function(
   universal.negative <- control.table$universal.negative
   universal.negative[ is.na( universal.negative ) ] <- "FALSE"
   names( universal.negative ) <- table.fluors
-  flow.channel       <- control.table$channel # this needs to be changed to the empirical peak
+  flow.channel       <- control.table$channel
   names( flow.channel ) <- table.fluors
   flow.file.name     <- control.table$filename
   names( flow.file.name ) <- table.fluors
@@ -240,7 +240,7 @@ get.spectral.variants <- function(
   # ---------------------------------------------------------------------------
 
   if ( verbose )
-    message( paste0( "\033[32m", "Calculating positivity thresholds", "\033[0m" ) )
+    message( paste0( "\033[32m", "Measuring background in unstained samples", "\033[0m" ) )
 
   unstained <- readFCS( file.path( control.dir, flow.file.name[ "AF" ] ) )
 
@@ -266,16 +266,34 @@ get.spectral.variants <- function(
     refine = FALSE
   )
 
-  # get PCs of AF for unmixing the controls
-  sv <- svd( unstained, nu = 0, nv = 4 )
-  af.pcs <- t( sv$v )
+  # derive per-file AF PCs for all unique unstained cell files used as negatives
+  cell.fluors <- names( control.type )[ control.type == "cells" ]
+  univ.neg.files <- unique( universal.negative[
+    names( universal.negative ) %in% cell.fluors &
+      universal.negative != "FALSE" &
+      !is.na( universal.negative ) &
+      grepl( "\\.fcs$", universal.negative, ignore.case = TRUE )
+  ] )
+
+  af.pcs.list <- lapply( univ.neg.files, function( fn ) {
+    dat <- readFCS( file.path( control.dir, fn ) )
+    if ( nrow( dat ) > asp$gate.downsample.n.cells ) {
+      set.seed( asp$bird.seed )
+      dat <- dat[ sample( nrow( dat ), asp$gate.downsample.n.cells ),
+                  spectral.channel, drop = FALSE ]
+    } else {
+      dat <- dat[ , spectral.channel, drop = FALSE ]
+    }
+    sv <- svd( dat, nu = 0, nv = 4 )
+    t( sv$v )
+  } )
+  names( af.pcs.list ) <- univ.neg.files
 
   # find the likely positivity thresholds for determining what needs refinement
   unstained.unmixed <- unmix.autospectral(
-    raw.data = unstained,
-    spectra = spectra,
-    af.spectra = af.spectra,
-    asp = asp,
+    unstained,
+    spectra,
+    af.spectra,
     verbose = FALSE
   )
   unmixed.thresholds <- apply(
@@ -306,7 +324,7 @@ get.spectral.variants <- function(
     raw.thresholds     = raw.thresholds,
     unmixed.thresholds = unmixed.thresholds,
     flow.channel       = flow.channel,
-    af.pcs             = af.pcs,
+    af.pcs             = af.pcs.list,
     n.cells            = n.cells,
     som.dim            = som.dim,
     k.neighbors        = k.neighbors,
@@ -386,7 +404,7 @@ get.spectral.variants <- function(
   # ---------------------------------------------------------------------------
   # Deltas
   # ---------------------------------------------------------------------------
-
+  # calculate deltas for each fluorophore's variants
   delta.list <- lapply( names( spectral.variants ), function( fl ) {
     spectral.variants[[ fl ]] - matrix(
       spectra[ fl, ],
@@ -400,6 +418,72 @@ get.spectral.variants <- function(
   delta.norms <- lapply( delta.list, function( d ) sqrt( rowSums( d^2 ) ) )
   names( delta.norms ) <- names( spectral.variants )
 
+  ### calculate optimization necessity scores ###
+
+  # spectra matrix without AF row for scoring
+  spectra.no.af <- spectra[ rownames( spectra ) != "AF", , drop = FALSE ]
+
+  # optionally derive MFI weights from a representative stained sample
+  mu.weights <- NULL
+
+  if ( !is.null( stained.sample ) ) {
+
+    if ( !file.exists( stained.sample ) ) {
+      warning(
+        paste( "stained.sample file not found:", stained.sample,
+               "- proceeding with geometric scores only." ),
+        call. = FALSE
+      )
+    } else {
+
+      if ( verbose )
+        message( paste0(
+          "\033[34m",
+          "Computing per-fluorophore MFI weights from stained sample",
+          "\033[0m"
+        ) )
+
+      stained.raw <- readFCS( stained.sample )
+
+      if ( nrow( stained.raw ) > 5000 ) {
+        set.seed( asp$bird.seed )
+        stained.raw <- stained.raw[
+          sample( nrow( stained.raw ), 5000 ),
+          spectral.channel,
+          drop = FALSE
+        ]
+      } else {
+        stained.raw <- stained.raw[ , spectral.channel, drop = FALSE ]
+      }
+      # TBD: add autospectralRcpp option here
+      stained.unmixed <- unmix.autospectral(
+        stained.raw,
+        spectra,
+        af.spectra,
+        verbose = FALSE
+      )
+
+      fluor.cols <- rownames( spectra.no.af )
+
+      mu.weights <- apply(
+        stained.unmixed[ , fluor.cols, drop = FALSE ],
+        2,
+        function( x ) {
+          pos <- x[ x > 0 ]
+          if ( length( pos ) == 0 ) 0 else stats::median( pos )
+        }
+      )
+    }
+  }
+
+  necessity <- calculate.optimize.necessity(
+    spectra    = spectra.no.af,
+    delta.list = delta.list,
+    mu         = mu.weights,
+    threshold  = optimize.necessity.threshold,
+    verbose    = verbose
+  )
+
   if ( verbose )
     message( paste0( "\033[34m", "Spectral variation computed!", "\033[0m" ) )
 
@@ -407,7 +491,9 @@ get.spectral.variants <- function(
     thresholds  = unmixed.thresholds,
     variants    = spectral.variants,
     delta.list  = delta.list,
-    delta.norms = delta.norms
+    delta.norms = delta.norms,
+    optimize.scores      = necessity$scores.norm,
+    optimize.recommended = necessity$optimize.recommended
   )
 
   saveRDS( variants, file = file.path( output.dir, asp$variant.filename ) )
