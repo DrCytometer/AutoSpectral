@@ -9,7 +9,7 @@ benchmark.af.spectra(
   spectra,
   af.spectra,
   asp,
-  functions = c("assign.af.fluorophores", "assign.af.residuals", "assign.af.joint.cov"),
+  functions = c("assign.af.joint.cov", "assign.af.fluorophores", "assign.af.residuals"),
   n.fluors = c(5, 10, 15, 20, 25, 30, 35, 40),
   n.draws = 5L,
   seed = 42L,
