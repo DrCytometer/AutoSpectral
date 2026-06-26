@@ -162,8 +162,12 @@ get.af.spectra <- function(
   # number of contaminating events will not dominate an entire SOM node.
   # ------------------------------------------------------------------
   if ( remove.contaminants ) {
+    # subtract mean background
+    sample.mean <- colMeans( unstained.exprs )
+    unstained.exprs.orth <- sweep( unstained.exprs, 2, sample.mean, "-" )
+    # check for fluor contamination on background-subtracted data
     keep.events <- .filter.contaminant.events(
-      unstained.exprs,
+      unstained.exprs.orth,
       spectra,
       contaminant.threshold
     )
