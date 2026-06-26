@@ -84,6 +84,9 @@ As of version 1.0.0, we speed up the process by pre-screening variants per cell.
 
 Anyway, running this in pure R is now possible, albeit slow. The faster implementation is in C++ and requires installation of `AutoSpectralRcpp`. I strongly encourage you to install that prior to running unmixing as below. Also, be sure that you have the fast BLAS and LAPACK installed. Please reach out if you have suggestions for faster implementation (I'm not a computer scientist). See the article on  [Computing Speed](https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.html) for full tips.
 
+As of version 1.6.0, there is a change to how the variants are evaluated. Up to this point, selection of the best variants has been done in a reduced fluorophore space, using on the fluorophores that are "positive", i.e., above the unstained threshold, in a given cell. This is faster, since we aren't solving for everything all the time, and gives us a residual that is more informative (we effectively have a smaller panel for each cell, so any leftover bits are easier to assign). That trick is responsible for the appearance of discontinuities in the unmixing, though. So, version 1.6.0 uses a different approach involving the covariance matrix, which looks at the pattern of variation we are seeing for the spectrum of a given fluorophore and asks how it is likely to propagate into the unmixed data as error or spread. This allows us to know more or less **where** we are going to get error. The residual then, ideally, tells us the **direction** of the error. Additionally, this approach holds off on committing to a variant for a fluorophore until any other fluorophores that are competing for that same bit of information have also been assessed. Because of this, we can often get a bit better solution (better unmixing), but it may take longer, and may require multiple rounds or "passes" to achieve the best result.
+
+So, the covariance approach is now the default option for unmixing when you supply variant information. If you want to use the original method for consistency, it is still available. Just specify `pipeline = "legacy"`.
 
 ```{r, eval=FALSE}
 fully.stained.dir <- "./Fully stained"
@@ -95,8 +98,20 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
            method = "AutoSpectral",
            af.spectra = lung.af,
            spectra.variants = variants,
-           speed = "fast" )
+           parellel = TRUE,
+           threads = 0,
+           pipeline = "joint",
+           n.passes = 1 )
 ```
+
+Most datasets I have tested show good results with a single pass. Setting `n.passes` to anywhere between 2 and 10 can show some improvement, larger improvement in some messy data sets. This will increase the computational time roughly linearly unless the data converges early.
+
+Unmixed FCS files will appear in folder `./autospectral_unmixed`.
+
+Add a `file.suffix` argument if you want a tag on the FCS file's name to differentiate it from other versions.
+
+
+## Legacy pipeline notes:
 
 Setting the "speed" determines how many pre-screened candidate variants will be tested per cell. The options are "fast" = 1, "medium" = 3, and "slow" = 10. This is based on quite a bit of testing with high parameter data from the Aurora, ID7000 and S8. For data with messier fluorophores (like that BUV661 above), using "slow" is likely to show some improvement. If you are using more modern fluorophores, you may find minimal difference now when using "fast".
 
@@ -113,12 +128,8 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
            n.variants = 100 )
 ```
 
-Note that the "fast" approach in version 1.0.0 is very different from the "fast" approximation in earlier version of AutoSpectral. It is not expected to produce any substantial discontinuities in the data--if you see this, please reach out (data will be helpful in identifying any issues). Further work on improving this is ongoing.
 
-Unmixed FCS files will appear in folder `./autospectral_unmixed`.
-
-Add a `file.suffix` argument if you want a tag on the FCS file's name to differentiate it from other versions.
-
+## Accuracy
 
 To demonstrate the effectiveness and accuracy of this approach, we created a set of synthetic data. In this 42-colour data set from the Aurora, BUV661 and APC are used to detect CD19 and Foxp3, markers that are not co-expressed. We created a set of data in silico where the raw data for BUV661+ and APC+ events (based on OLS unmixing) were combined or maintained as separate original events. In this way, ground truth is available for BUV661+, APC+ and BUV661+APC+ events. When unmixed using OLS, populations containing BUV661 suffered from misclassification with respect to a positivity threshold for APC set based on a value double that of the 99.5th percentile on the unstained sample. These false positivity errors were reduced when per-cell spectral selection was performed, and the median absolute deviation of ground truth BUV661+APC- events in the APC channel was reduced from 2194 to 723. 
 
