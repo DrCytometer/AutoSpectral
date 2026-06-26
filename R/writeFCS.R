@@ -28,6 +28,8 @@
 
 writeFCS <- function(mat, keys, file.name, output.dir) {
 
+  output.dir <- path.expand(output.dir)
+
   if (requireNamespace("AutoSpectralRcpp", quietly = TRUE)) {
     return(AutoSpectralRcpp::writeFCS(
       mat        = mat,

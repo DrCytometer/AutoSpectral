@@ -41,6 +41,8 @@ readFCS <- function(
     end.row = NULL
 ) {
 
+  fcs.path <- path.expand(fcs.path)
+
   if (requireNamespace("AutoSpectralRcpp", quietly = TRUE)) {
     return(AutoSpectralRcpp::readFCS(
       fcs.path        = fcs.path,
