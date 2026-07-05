@@ -206,7 +206,7 @@ get.fluor.variants <- function(
     pos.unmixed <- unmix.ols( pos.corrected, rbind( af.pcs.mat, original.spectrum ) )
     # back-project the AF components into raw space
     af.pc.n <- nrow( af.pcs.mat )
-    af.projection <- pos.unmixed[ , 1:af.pc.n ] %*% af.pcs.mat
+    af.projection <- pos.unmixed[ , 1:af.pc.n, drop = FALSE ] %*% af.pcs.mat
     # subtract the projected AF
     pos.corrected <- pos.corrected - af.projection
   }
@@ -231,8 +231,8 @@ get.fluor.variants <- function(
     return( original.spectrum )
   }
 
-  som.input <- cbind( pos.unmixed[ keep.idx[ cosine.keep ], ],
-                      pos.corrected[ keep.idx[ cosine.keep ], ] )
+  som.input <- cbind( pos.unmixed[ keep.idx[ cosine.keep ], , drop = FALSE ],
+                      pos.corrected[ keep.idx[ cosine.keep ], , drop = FALSE ] )
   colnames( som.input ) <- c( colnames( pos.unmixed ), spectral.channel )
   event.n   <- length( cosine.keep )
 

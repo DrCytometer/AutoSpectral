@@ -125,7 +125,7 @@ get.spectral.variants <- function(
 
   for ( old.arg in c( "refine", "problem.quantile" ) ) {
     if ( !is.null( dots[[ old.arg ]] ) )
-      lifecycle::deprecate_warn( "2.0.0",
+      lifecycle::deprecate_warn( "1.6.0",
         paste0( "get.spectral.variants(", old.arg, ")" ),
         details = paste0(
           "The second-pass refinement is superseded by in-situ ",
@@ -134,12 +134,84 @@ get.spectral.variants <- function(
   }
 
   if ( !is.null( dots$af.spectra ) )
-    lifecycle::deprecate_warn( "2.0.0",
+    lifecycle::deprecate_warn( "1.6.0",
       "get.spectral.variants(af.spectra)",
       details = paste0(
         "AF is now derived in situ from the universal-negative files ",
         "listed in the control table. The af.spectra argument is ignored."
       ) )
+
+  # ---------------------------------------------------------------------------
+  # Input validation
+  # ---------------------------------------------------------------------------
+  # Catches the common failure mode of a positional argument shifting into
+  # the wrong parameter (e.g. passing the now-deprecated `af.spectra` as the
+  # 5th positional argument, which silently lands in `figures`).
+
+  .type.err <- function( arg.name, expected, x ) {
+    stop(
+      paste0(
+        "`", arg.name, "` must be ", expected, ", but got an object of class `",
+        paste( class( x ), collapse = "/" ), "` with length ", length( x ), ".\n",
+        "  If you're passing a spectra matrix or other object positionally, ",
+        "check that it lines up with the current argument order for ",
+        "get.spectral.variants() -- deprecated arguments like `af.spectra` ",
+        "are ignored and must not be passed positionally."
+      ),
+      call. = FALSE
+    )
+  }
+
+  if ( !is.character( control.dir ) || length( control.dir ) != 1 || is.na( control.dir ) )
+    .type.err( "control.dir", "a single character path", control.dir )
+
+  if ( !is.character( control.def.file ) || length( control.def.file ) != 1 || is.na( control.def.file ) )
+    .type.err( "control.def.file", "a single character path", control.def.file )
+
+  if ( !is.list( asp ) )
+    .type.err( "asp", "a list (from get.autospectral.param())", asp )
+
+  if ( !is.matrix( spectra ) && !is.data.frame( spectra ) )
+    .type.err( "spectra", "a numeric matrix (fluorophores in rows, detectors in columns)", spectra )
+  spectra <- as.matrix( spectra )
+  storage.mode( spectra ) <- "double"
+  if ( is.null( rownames( spectra ) ) )
+    stop( "`spectra` must have rownames giving fluorophore names (including \"AF\").", call. = FALSE )
+
+  if ( !is.logical( figures ) || length( figures ) != 1 || is.na( figures ) )
+    .type.err( "figures", "a single TRUE/FALSE value", figures )
+
+  if ( !is.null( output.dir ) && ( !is.character( output.dir ) || length( output.dir ) != 1 ) )
+    .type.err( "output.dir", "NULL or a single character path", output.dir )
+
+  if ( !is.logical( parallel ) || length( parallel ) != 1 || is.na( parallel ) )
+    .type.err( "parallel", "a single TRUE/FALSE value", parallel )
+
+  if ( !is.logical( verbose ) || length( verbose ) != 1 || is.na( verbose ) )
+    .type.err( "verbose", "a single TRUE/FALSE value", verbose )
+
+  if ( !is.null( threads ) && ( !is.numeric( threads ) || length( threads ) != 1 ) )
+    .type.err( "threads", "NULL or a single number", threads )
+
+  if ( !is.numeric( n.cells ) || length( n.cells ) != 1 || n.cells <= 0 )
+    .type.err( "n.cells", "a single positive number", n.cells )
+
+  if ( !is.numeric( som.dim ) || length( som.dim ) != 1 || som.dim <= 0 )
+    .type.err( "som.dim", "a single positive number", som.dim )
+
+  if ( !is.numeric( k.neighbors ) || length( k.neighbors ) != 1 || k.neighbors <= 0 )
+    .type.err( "k.neighbors", "a single positive number", k.neighbors )
+
+  if ( !is.numeric( sim.threshold ) || length( sim.threshold ) != 1 ||
+       sim.threshold < 0 || sim.threshold > 1 )
+    .type.err( "sim.threshold", "a single number in [0, 1]", sim.threshold )
+
+  if ( !is.null( stained.sample ) && ( !is.character( stained.sample ) || length( stained.sample ) != 1 ) )
+    .type.err( "stained.sample", "NULL or a single character path", stained.sample )
+
+  if ( !is.numeric( optimize.necessity.threshold ) || length( optimize.necessity.threshold ) != 1 ||
+       optimize.necessity.threshold < 0 || optimize.necessity.threshold > 1 )
+    .type.err( "optimize.necessity.threshold", "a single number in [0, 1]", optimize.necessity.threshold )
 
   # ---------------------------------------------------------------------------
   # Setup
