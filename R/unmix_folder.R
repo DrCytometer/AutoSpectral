@@ -94,6 +94,27 @@
 #'   AutoSpectral prior to version 1.6.0.
 #' @param n.passes Integer, default `2L`. Number of joint optimisation passes
 #'   per cell. Only used when `pipeline = "joint"`.
+#' @param n.af.passes Integer, default `1L`. Number of autofluorescence
+#'   extraction passes per cell. Only used when `pipeline = "joint"`. Passed
+#'   to `unmix.autospectral.rcpp()`.
+#' @param cell.weight Logical, default `FALSE`. Applies per-cell detector
+#'   weighting to the joint unmixing solve. Only used when
+#'   `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+#' @param noise.floor Numeric, default `125`. Lower clamp on the denominator
+#'   of the per-cell detector weights when `cell.weight = TRUE`. Only used
+#'   when `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+#' @param alpha Numeric, default `0.5`. Weighting for balancing residual and
+#'   covariance spillover minimization. Only used when `pipeline = "joint"`.
+#'   Passed to `unmix.autospectral.rcpp()`.
+#' @param collinear.threshold Numeric, default `0.5`. Cosine similarity value
+#'   to trigger conflict assessment for collinear fluorophore variants. Only
+#'   used when `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+#' @param joint.pair.resolution Logical, default `TRUE`. Whether to perform
+#'   conflict-resolution for collinear fluorophore pairs. Only used when
+#'   `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+#' @param refine.af.quantile Numeric, default `0.5`. Fraction of cells taken
+#'   forward for additional AF passes (see `n.af.passes`). Only used when
+#'   `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
 #' @param ... Ignored. Previously used for deprecated arguments such as
 #' `calculate.error`.
 #'
@@ -127,6 +148,13 @@ unmix.folder <- function(
     chunk.size = 2e6,
     pipeline  = c( "joint", "legacy" ),
     n.passes  = 2L,
+    n.af.passes            = 1L,
+    cell.weight            = FALSE,
+    noise.floor            = 125,
+    alpha                  = 0.5,
+    collinear.threshold    = 0.5,
+    joint.pair.resolution  = TRUE,
+    refine.af.quantile     = 0.5,
     ...
 ) {
 
@@ -264,7 +292,14 @@ unmix.folder <- function(
     n.variants = n.variants,
     chunk.size = chunk.size,
     pipeline  = match.arg( pipeline ),
-    n.passes  = n.passes
+    n.passes  = n.passes,
+    n.af.passes           = n.af.passes,
+    cell.weight           = cell.weight,
+    noise.floor           = noise.floor,
+    alpha                 = alpha,
+    collinear.threshold   = collinear.threshold,
+    joint.pair.resolution = joint.pair.resolution,
+    refine.af.quantile    = refine.af.quantile
   )
 
   # set up parallel processing

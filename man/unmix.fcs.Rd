@@ -30,6 +30,13 @@ unmix.fcs(
   chunk.size = 2e+06,
   pipeline = c("joint", "legacy"),
   n.passes = 2L,
+  n.af.passes = 1L,
+  cell.weight = FALSE,
+  noise.floor = 125,
+  alpha = 0.5,
+  collinear.threshold = 0.5,
+  joint.pair.resolution = TRUE,
+  refine.af.quantile = 0.5,
   ...
 )
 }
@@ -144,6 +151,34 @@ AutoSpectral prior to version 1.6.0.}
 \item{n.passes}{Integer, default \code{2L}. Number of joint optimisation passes
 per cell. Only used when \code{pipeline = "joint"}. Passed to
 \code{unmix.autospectral.rcpp()}.}
+
+\item{n.af.passes}{Integer, default \code{1L}. Number of autofluorescence
+extraction passes per cell. Only used when \code{pipeline = "joint"}. Passed
+to \code{unmix.autospectral.rcpp()}.}
+
+\item{cell.weight}{Logical, default \code{FALSE}. Applies per-cell detector
+weighting to the joint unmixing solve. Only used when
+\code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}.}
+
+\item{noise.floor}{Numeric, default \code{125}. Lower clamp on the denominator
+of the per-cell detector weights when \code{cell.weight = TRUE}. Only used
+when \code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}.}
+
+\item{alpha}{Numeric, default \code{0.5}. Weighting for balancing residual and
+covariance spillover minimization. Only used when \code{pipeline = "joint"}.
+Passed to \code{unmix.autospectral.rcpp()}.}
+
+\item{collinear.threshold}{Numeric, default \code{0.5}. Cosine similarity value
+to trigger conflict assessment for collinear fluorophore variants. Only
+used when \code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}.}
+
+\item{joint.pair.resolution}{Logical, default \code{TRUE}. Whether to perform
+conflict-resolution for collinear fluorophore pairs. Only used when
+\code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}.}
+
+\item{refine.af.quantile}{Numeric, default \code{0.5}. Fraction of cells taken
+forward for additional AF passes (see \code{n.af.passes}). Only used when
+\code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}.}
 
 \item{...}{Ignored. Used to catch deprecated arguments.}
 }
