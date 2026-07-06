@@ -88,18 +88,15 @@ unmix.autospectral <- function(
     spectra <- spectra[ rownames( spectra ) != "AF", , drop = FALSE ]
 
   if ( is.null( af.spectra ) )
-    stop( "Multiple AF spectra must be provided.",
-          call. = FALSE )
+    stop( "Multiple AF spectra must be provided.", call. = FALSE )
   if ( nrow( af.spectra ) < 2 )
-    stop( "Multiple AF spectra must be provided.",
-          call. = FALSE )
+    stop( "Multiple AF spectra must be provided.", call. = FALSE )
 
   # check for data/spectra column matching
   raw.data.cols <- colnames( raw.data )
   spectra.cols <- colnames( spectra )
 
   if ( !identical( raw.data.cols, spectra.cols ) ) {
-
     # ensure both actually have the same columns before reordering
     if ( all( spectra.cols %in% raw.data.cols ) &&
          length( spectra.cols ) == length( raw.data.cols ) ) {
