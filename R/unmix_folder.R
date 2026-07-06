@@ -99,7 +99,8 @@
 #'   to `unmix.autospectral.rcpp()`.
 #' @param cell.weight Logical, default `FALSE`. Applies per-cell detector
 #'   weighting to the joint unmixing solve. Only used when
-#'   `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+#'   `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`. Useful for
+#'   ID7000 files.
 #' @param noise.floor Numeric, default `125`. Lower clamp on the denominator
 #'   of the per-cell detector weights when `cell.weight = TRUE`. Only used
 #'   when `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
@@ -149,7 +150,7 @@ unmix.folder <- function(
     pipeline  = c( "joint", "legacy" ),
     n.passes  = 2L,
     n.af.passes            = 1L,
-    cell.weight            = FALSE,
+    cell.weight            = if (asp$cytometer == "ID7000") TRUE else FALSE,
     noise.floor            = 125,
     alpha                  = 0.5,
     collinear.threshold    = 0.5,

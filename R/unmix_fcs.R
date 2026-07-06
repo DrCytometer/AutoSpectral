@@ -148,7 +148,7 @@ unmix.fcs <- function(
     pipeline  = c( "joint", "legacy" ),
     n.passes  = 2L,
     n.af.passes            = 1L,
-    cell.weight            = FALSE,
+    cell.weight            = if (asp$cytometer == "ID7000") TRUE else FALSE,
     noise.floor            = 125,
     alpha                  = 0.5,
     collinear.threshold    = 0.5,
@@ -375,6 +375,9 @@ unmix.fcs <- function(
     weights <- 1 / pmax( abs( colMeans( weight.sample[ , spectral.channel ] ) ), 1e-6 )
     rm( weight.sample )
   }
+
+  # track user intention regarding WLS in AutoSpectral unmixing
+  if ( isTRUE( weighted ) ) cell.weight <- TRUE
 
   # unmix in chunks for big files
   for ( i in 1:chunk.n ) {
