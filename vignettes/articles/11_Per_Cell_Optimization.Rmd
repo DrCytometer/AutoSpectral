@@ -53,9 +53,13 @@ Set `parallel` to `TRUE` for possibly faster processing. This should take a coup
 This outputs a list containing:
 1) The thresholds for positivity in each unmixed channel, as determined by the 99.5th percentile on the `AF` sample (unstained cell control) in your control file. If you refer back to your `control.file`, this will be whichever sample contains "AF" as the fluorophore. This should be an unstained cell control matching the single-colour controls in `control.file` and hence `flow.control`. 2) A named list of matrices, one per fluorophore in `flow.control`. Each matrix contains up to 100 spectra per fluorophore. This number can be adjusted by argument `som.dim` to `get.spectral.variants()`, which is by default `10`.
 
+A few other arguments control this step. `k.neighbors` (default `3`) sets how many scatter-matched nearest neighbours from the unstained pool are used to estimate each event's background. `n.cells` (default `10000`) caps how many positive events per fluorophore go into the SOM; files with more get randomly downsampled.
+
+Optionally, you can supply `stained.sample`, a path to a representative fully-stained FCS file. When provided, it's unmixed internally to get per-fluorophore median positive signal (MFI), which weights the "optimization necessity" scoring by brightness rather than geometry alone. This feeds into `optimize.necessity.threshold` (default `0.01`): fluorophores whose normalised leakage score falls below this are flagged `$optimize.recommended = FALSE` in the output and are automatically skipped during per-cell optimization by `unmix.autospectral.rcpp()`, saving computation on fluorophores where it won't help.
+
 This is saved as an R object in a .rds file. This will be in the same folder as the output plots, unless you change the specified location using the argument `output.dir`. By default, you should get "Spectral_variants.rds" in folder `figure_spectral_variants`. This can be accessed later using the `readRDS()` base function in R.
 
-The variant spectra are QC'd against the optimized single spectrum for that fluorophore, as defined in `spectra`. If `spectra` don't all look right, neither will the variants. The QC is done by cosine similarity, with a default threshold set to exclude anything less than 0.98.
+The variant spectra are QC'd against the optimized single spectrum for that fluorophore, as defined in `spectra`. If `spectra` don't all look right, neither will the variants. The QC is done by cosine similarity, with a default `sim.threshold` of `0.985`, below which a candidate variant is excluded.
 
 It's important to bear in mind that we're only allowing variation within the range seen in the single-colour control, nothing more.
 
@@ -106,6 +110,18 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
 
 Most datasets I have tested show good results with a single pass. Setting `n.passes` to anywhere between 2 and 10 can show some improvement, larger improvement in some messy data sets. This will increase the computational time roughly linearly unless the data converges early.
 
+### Additional joint-pipeline tuning
+
+A few more arguments let you tune the joint pipeline beyond `n.passes`:
+
+**Multipass autofluorescence refinement.** `n.af.passes` (default `1`) controls how many AF extraction passes are run per cell. The first pass uses matching pursuit to assign an AF candidate to every cell; if `n.af.passes` is greater than 1, subsequent passes revisit the highest-abundance AF cells (controlled by `refine.af.quantile`, default `0.5`, the fraction of cells taken forward for reassessment — set to `1` to reassess everyone) and can refine the AF assignment further. Like `n.passes`, this trades additional computation time for improved AF characterization, and is most useful for tissue samples with more heterogeneous autofluorescence; PBMC data typically shows negligible benefit.
+
+**Collinear fluorophore handling.** `collinear.threshold` (default `0.5`) sets the cosine similarity above which two fluorophore variants are treated as structurally collinear (e.g. APC/BUV661) and routed into conflict resolution rather than independent assignment. Lower values trigger conflict resolution more often (more thorough, slower); higher values allow more variants to be committed based on minimizing spillover from the brighter fluorophore alone, which is faster but can understate a dimmer collinear fluorophore's true abundance. `joint.pair.resolution` (default `TRUE`) turns this conflict-resolution step on or off; when enabled, a small combinatorial test is run specifically for the competing pair(s) to find a better joint solution.
+
+**Per-cell detector weighting.** `cell.weight` (default `FALSE`, but `TRUE` automatically on ID7000 data) applies per-cell weighting to the joint solve based on each detector's fitted signal, with `noise.floor` (default `125`) preventing near-dark channels from receiving runaway weight. `alpha` (default `0.5`) balances residual minimization against covariance-based spillover minimization when scoring candidate variants.
+
+Most users won't need to touch these — the defaults were chosen from testing across Aurora, ID7000 and S8 data — but they're there if you're working with an unusually noisy panel or you want to explore how they impact the unmixing.
+
 Unmixed FCS files will appear in folder `./autospectral_unmixed`.
 
 Add a `file.suffix` argument if you want a tag on the FCS file's name to differentiate it from other versions.
@@ -131,10 +147,10 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
 
 ## Accuracy
 
-To demonstrate the effectiveness and accuracy of this approach, we created a set of synthetic data. In this 42-colour data set from the Aurora, BUV661 and APC are used to detect CD19 and Foxp3, markers that are not co-expressed. We created a set of data in silico where the raw data for BUV661+ and APC+ events (based on OLS unmixing) were combined or maintained as separate original events. In this way, ground truth is available for BUV661+, APC+ and BUV661+APC+ events. When unmixed using OLS, populations containing BUV661 suffered from misclassification with respect to a positivity threshold for APC set based on a value double that of the 99.5th percentile on the unstained sample. These false positivity errors were reduced when per-cell spectral selection was performed, and the median absolute deviation of ground truth BUV661+APC- events in the APC channel was reduced from 2194 to 723. 
+To demonstrate the effectiveness and accuracy of this approach, we created a set of synthetic data. In this 42-colour data set from the Aurora, BUV661 and APC are used to detect CD19 and Foxp3, markers that are not co-expressed. We created a set of data in silico where the raw data for BUV661+ and APC+ events (based on OLS unmixing) were combined or maintained as separate original events. In this way, ground truth is available for BUV661+, APC+ and BUV661+APC+ events. When unmixed using OLS, populations containing BUV661 suffered from misclassification with respect to a positivity threshold for APC set based on a value double that of the 99.5th percentile on the unstained sample. These false positivity errors were reduced when per-cell spectral selection was performed, and the median absolute deviation of ground truth BUV661+APC- events in the APC channel was reduced from 2194 to 723.
 
 ![Synthetic per-cell fluorophore optimization](figures/Synthetic_perCell_fluor.jpg)
-Synthetic data showing that per-cell optimization of the fluorophore signatures reduces spillover spread.
+Synthetic data showing that per-cell optimization of the fluorophore signatures reduces spillover spread. This example was produced using the legacy pipeline. Similar results are obtained with the new joint covariance pipeline.
 
 Correspondingly, the cosine similarity between the model’s predictions for BUV661 and the actual data for BUV661 was closer to 1 (identity), consistent with more accurate modelling of the underlying data.
 
