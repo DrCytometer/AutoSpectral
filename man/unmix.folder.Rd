@@ -29,9 +29,9 @@ unmix.folder(
   n.variants = NULL,
   chunk.size = 2e+06,
   pipeline = c("joint", "legacy"),
-  n.passes = 2L,
+  n.passes = 1L,
   n.af.passes = 1L,
-  cell.weight = FALSE,
+  cell.weight = if (asp$cytometer == "ID7000") TRUE else FALSE,
   noise.floor = 125,
   alpha = 0.5,
   collinear.threshold = 0.5,
@@ -148,8 +148,9 @@ to \code{unmix.autospectral.rcpp()}. \code{"joint"} uses the new covariance-weig
 joint per-cell pipeline; \code{"legacy"} reproduces the behaviour of
 AutoSpectral prior to version 1.6.0.}
 
-\item{n.passes}{Integer, default \code{2L}. Number of joint optimisation passes
-per cell. Only used when \code{pipeline = "joint"}.}
+\item{n.passes}{Integer, default \code{1L}. Number of joint optimisation passes
+per cell. Only used when \code{pipeline = "joint"}. Set higher for some
+improvement in unmixing with high spillover datasets.}
 
 \item{n.af.passes}{Integer, default \code{1L}. Number of autofluorescence
 extraction passes per cell. Only used when \code{pipeline = "joint"}. Passed
@@ -157,7 +158,8 @@ to \code{unmix.autospectral.rcpp()}.}
 
 \item{cell.weight}{Logical, default \code{FALSE}. Applies per-cell detector
 weighting to the joint unmixing solve. Only used when
-\code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}.}
+\code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}. Useful for
+ID7000 files.}
 
 \item{noise.floor}{Numeric, default \code{125}. Lower clamp on the denominator
 of the per-cell detector weights when \code{cell.weight = TRUE}. Only used

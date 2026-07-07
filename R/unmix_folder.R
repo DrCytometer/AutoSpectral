@@ -92,8 +92,9 @@
 #'   to `unmix.autospectral.rcpp()`. `"joint"` uses the new covariance-weighted
 #'   joint per-cell pipeline; `"legacy"` reproduces the behaviour of
 #'   AutoSpectral prior to version 1.6.0.
-#' @param n.passes Integer, default `2L`. Number of joint optimisation passes
-#'   per cell. Only used when `pipeline = "joint"`.
+#' @param n.passes Integer, default `1L`. Number of joint optimisation passes
+#'   per cell. Only used when `pipeline = "joint"`. Set higher for some
+#'   improvement in unmixing with high spillover datasets.
 #' @param n.af.passes Integer, default `1L`. Number of autofluorescence
 #'   extraction passes per cell. Only used when `pipeline = "joint"`. Passed
 #'   to `unmix.autospectral.rcpp()`.
@@ -148,7 +149,7 @@ unmix.folder <- function(
     n.variants = NULL,
     chunk.size = 2e6,
     pipeline  = c( "joint", "legacy" ),
-    n.passes  = 2L,
+    n.passes  = 1L,
     n.af.passes            = 1L,
     cell.weight            = if (asp$cytometer == "ID7000") TRUE else FALSE,
     noise.floor            = 125,
@@ -238,6 +239,21 @@ unmix.folder <- function(
         stop(
           "Package `AutoSpectralRcpp` >= 1.0.0 is required for this method.
           Please update the package.",
+          call. = FALSE
+        )
+      }
+      # the joint pipeline requires a newer AutoSpectralRcpp than the base
+      # 1.0.0 check above; older installs only export the legacy C++ pipeline
+      # and will error (or silently mis-dispatch) if asked for `pipeline = "joint"`
+      if ( match.arg( pipeline ) == "joint" &&
+           utils::packageVersion( "AutoSpectralRcpp" ) < package_version( "1.1.0" ) ) {
+        stop(
+          "The joint AutoSpectral pipeline (`pipeline = \"joint\"`) requires ",
+          "`AutoSpectralRcpp` >= 1.1.0, but version ",
+          utils::packageVersion( "AutoSpectralRcpp" ), " is installed.\n",
+          "Please update AutoSpectralRcpp:\n",
+          "  remotes::install_github(\"DrCytometer/AutoSpectralRcpp\")\n",
+          "Alternatively, call with `pipeline = \"legacy\"` to use the currently installed version.",
           call. = FALSE
         )
       }
