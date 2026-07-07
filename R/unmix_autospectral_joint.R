@@ -4,20 +4,40 @@
 #'
 #' @description
 #' Pure-R implementation of the joint covariance-weighted AutoSpectral pipeline.
-#' Mirrors the algorithm in `unmix_autospectral_joint_cpp` without requiring
-#' `AutoSpectralRcpp`. For each cell, AF variant selection and fluorophore
-#' spectral variant optimisation are performed in a single jointly-scored pass
-#' rather than sequentially.
+#' Mirrors `unmix_autospectral_joint_cpp` (in
+#' `unmix_autospectral_joint_pipeline.cpp`) instruction-for-instruction,
+#' without requiring `AutoSpectralRcpp`.
 #'
-#' The AF selection score is a multiplicative product of the residual ratio and
-#' a covariance-propagated fluorophore leakage ratio, matching Section A of the
-#' C++ pipeline. Fluorophore variant selection uses the same composite score
-#' across all optimisable fluorophores before any swaps are committed, with
-#' conflict resolution by residual-delta cosine similarity (Section C).
+#' The pipeline is staged identically to the C++ version:
+#'   1. Global weighted pseudoinverse + AF helper pre-computation (Section 1).
+#'   2. Per-fluorophore variant pre-computation, including leakage weights and
+#'      rank-1 residual-update helpers (Section 2), plus a structural
+#'      collinearity table used later for joint-pair conflict retries
+#'      (Section 2B).
+#'   3. Per-cell AF selection, with optional multi-pass AF refinement against
+#'      the residual (`n.af.passes`).
+#'   4. Per-cell fluorophore solve against the AF-subtracted residual (with
+#'      optional per-cell Poisson-style weighting, `cell.weight`), followed by
+#'      joint variant selection: candidates are scored with an alpha-weighted
+#'      composite of residual ratio and covariance-propagated leakage ratio,
+#'      conflicting swaps are resolved by residual-delta cosine similarity,
+#'      and swaps flagged as a structurally collinear pair are queued for a
+#'      retry once the winning partner's own swap has been applied. Each
+#'      commit is individually verified against the currently accepted RSS
+#'      and reverted if it does not improve it.
+#'
+#' Note: unlike the legacy pipeline, there is no `n.variants` / top-K
+#' candidate pre-filter here — every variant of every active fluorophore is
+#' scored each pass (subject only to the 1.05x residual-ratio fast-reject),
+#' exactly as `unmix_autospectral_joint_cpp` does.
 #'
 #' Parallelisation follows the same pattern as `unmix.autospectral()`, using
 #' `create.parallel.lapply()` to handle platform differences between Windows
-#' (PSOCK cluster) and Linux (forked `mclapply`).
+#' (PSOCK cluster) and Linux/Mac (forked `mclapply`). Because a PSOCK cluster
+#' only receives exported globals once (at cluster creation), every quantity
+#' that changes between pipeline stages (per-cell residuals, AF abundances)
+#' is passed explicitly through the `lapply` argument rather than read back
+#' off a mutated global, so results are identical regardless of backend.
 #'
 #' @importFrom parallelly availableCores
 #'
@@ -35,19 +55,41 @@
 #'   flagged `FALSE` are excluded from variant optimisation. Pass `NULL` for
 #'   AF-only mode (no variant optimisation).
 #' @param n.passes Integer, default `2L`. Number of joint optimisation passes
-#'   per cell. Matches `n_passes` in `unmix_autospectral_joint_cpp`. Higher
-#'   values allow more variant swaps to be committed per cell at the cost of
-#'   additional computation.
-#' @param n.variants Integer, default `1L`. Maximum number of top-scoring
-#'   variants to evaluate per fluorophore per pass. Corresponds to `k_opt`
-#'   in the legacy pipeline. Set via `speed` in the calling function, or
-#'   supply directly.
+#'   per cell. Matches `n_passes` in `unmix_autospectral_joint_cpp`.
 #' @param parallel Logical, default `TRUE`. Whether to use parallel processing
 #'   across cells. Uses `create.parallel.lapply()` to handle platform
 #'   differences.
 #' @param threads Numeric, default `NULL`. Number of worker threads. When
 #'   `NULL`, `asp$worker.process.n` is used. When `threads = 0`,
 #'   `parallelly::availableCores()` is used. Ignored when `parallel = FALSE`.
+#' @param cell.weight Logical, default `FALSE`. Enables per-cell Poisson-style
+#'   detector weighting (`1 / max(|y_hat|, noise.floor)`), matching
+#'   `cell_weight` in the C++ pipeline. When `FALSE`, weighting collapses to
+#'   the (all-ones, unless a global weight was requested) `w.global` used in
+#'   Section 1.
+#' @param noise.floor Numeric scalar or length-D vector, default `NULL`.
+#'   Per-detector noise floor used by the weighting scheme; falls back to a
+#'   constant `125.0` per detector when `NULL`, matching the C++ default.
+#'   Only used when `cell.weight = TRUE`.
+#' @param alpha Numeric in `[0, 1]`, default `0.5`. Weighting exponent for the
+#'   joint candidate score: `resid.ratio^alpha * leakage.ratio^(1 - alpha)`.
+#' @param collinear.thresh Numeric, default `0.5`. Cosine-similarity
+#'   threshold (in the pseudoinverse row space) above which two optimisable
+#'   fluorophores are flagged as structurally collinear for joint-pair
+#'   conflict retries.
+#' @param joint.pair.resolution Logical, default `TRUE`. When `TRUE`, a
+#'   candidate swap that conflicts with an already-committed swap belonging
+#'   to a structurally collinear partner is queued and retried once that
+#'   partner's own swap has been applied (rather than simply dropped).
+#' @param n.af.passes Integer, default `1L`. Number of AF selection passes.
+#'   When `> 1`, cells with an initial AF abundance at or above the
+#'   `refine.af.quantile` quantile are re-scored against their residual in
+#'   subsequent passes, accumulating additional AF abundance where the
+#'   refinement score is < 1.0. The AF *index* used in the output is always
+#'   the one selected on the first pass.
+#' @param refine.af.quantile Numeric in `[0, 1]`, default `0.5`. Quantile
+#'   (type 7) of the first-pass AF abundance used to select which cells are
+#'   eligible for AF refinement passes.
 #' @param verbose Logical, default `TRUE`.
 #'
 #' @return Numeric matrix (cells x (n_fluorophores + 2)) with column names
@@ -65,12 +107,18 @@ unmix.autospectral.joint <- function(
     spectra,
     af.spectra,
     asp,
-    spectra.variants = NULL,
-    n.passes         = 2L,
-    n.variants       = 1L,
-    parallel         = TRUE,
-    threads          = NULL,
-    verbose          = TRUE
+    spectra.variants     = NULL,
+    n.passes              = 2L,
+    parallel              = TRUE,
+    threads               = NULL,
+    cell.weight           = FALSE,
+    noise.floor           = NULL,
+    alpha                 = 0.5,
+    collinear.thresh      = 0.5,
+    joint.pair.resolution = TRUE,
+    n.af.passes           = 1L,
+    refine.af.quantile    = 0.5,
+    verbose               = TRUE
 ) {
 
   # -------------------------------------------------------------------------
@@ -99,46 +147,99 @@ unmix.autospectral.joint <- function(
     }
   }
 
+  if ( n.af.passes < 1 )
+    stop( "n.af.passes must be >= 1.", call. = FALSE )
+  if ( refine.af.quantile < 0 || refine.af.quantile > 1 )
+    stop( "refine.af.quantile must be between 0 and 1.", call. = FALSE )
+
   fluorophores <- rownames( spectra )
   F            <- nrow( spectra )
   D            <- ncol( spectra )
   N            <- nrow( raw.data )
   nAF          <- nrow( af.spectra )
 
+  # noise floor: scalar fallback / expansion, matches C++ default of 125.0
+  if ( is.null( noise.floor ) ) {
+    noise.floor <- rep( 125.0, D )
+  } else if ( length( noise.floor ) == 1L ) {
+    noise.floor <- rep( noise.floor, D )
+  }
+
   # -------------------------------------------------------------------------
   # Section 1: Global pre-computations  (mirrors C++ Section 1)
   # -------------------------------------------------------------------------
 
-  # Global pseudoinverse P = (S S^T)^{-1} S,  shape F x D
-  P <- solve( spectra %*% t( spectra ), spectra )
+  # Global detector weight vector: 1 / max(mean detector signal, noise.floor)
+  # when cell.weight is requested, all-ones otherwise.
+  if ( cell.weight ) {
+    col.means   <- colMeans( raw.data )
+    w.global    <- 1 / pmax( col.means, noise.floor )
+  } else {
+    w.global    <- rep( 1, D )
+  }
+  sqrt.w.global <- sqrt( w.global )
 
-  # AF helpers: v_lib_af and r_lib_af for rank-1 update scoring
-  v_lib_af <- P %*% t( af.spectra )                           # F   x nAF
-  r_lib_af <- t( af.spectra ) - t( spectra ) %*% v_lib_af    # D   x nAF
-  r_dots_af <- pmax( colSums( r_lib_af^2 ), 1e-10 )           # nAF
+  # Global weighted pseudoinverse P = (S_w S_w^T)^{-1} S_w, re-scaled back
+  # into unweighted detector space: P[f,d] = P_w[f,d] * sqrt.w.global[d].
+  spectra.w <- sweep( spectra, 2, sqrt.w.global, `*` )
+  P.w       <- solve( spectra.w %*% t( spectra.w ), spectra.w )
+  P         <- sweep( P.w, 2, sqrt.w.global, `*` )
 
-  # Covariance-propagated AF weights
+  # AF helpers, mirroring the C++ weighted/unweighted split exactly.
+  v_lib_af      <- P %*% t( af.spectra )                             # F x nAF
+  r_lib_af      <- t( af.spectra ) - t( spectra ) %*% v_lib_af       # D x nAF
+  r_dots_af     <- pmax( colSums( ( r_lib_af^2 ) * w.global ), 1e-10 )       # nAF, weighted
+  r_lib_af_w2   <- sweep( r_lib_af, 1, w.global^2, `*` )             # D x nAF
+  r_dots_af_raw <- colSums( r_lib_af^2 )                              # nAF, unweighted
+
+  # Covariance-propagated AF endmember weights.
   af.cov.mat <- P %*% stats::cov( af.spectra ) %*% t( P )
-  w_af       <- sqrt( abs( diag( af.cov.mat ) ) ) + 1e-8     # length F
+  w_af       <- sqrt( abs( diag( af.cov.mat ) ) ) + 1e-8              # length F
+
+  af.only <- is.null( spectra.variants ) || length( spectra.variants ) == 0
+
+  # Per-cell (or per-residual) AF scoring closure — used both for the initial
+  # AF pass and any refinement passes. Mirrors the `score_af` lambda in the
+  # C++ pipeline exactly, including the rank-1 residual-norm update trick.
+  score.af <- function( active.raw ) {
+    init.f          <- as.numeric( P %*% active.raw )
+    base.resid.af   <- active.raw - as.numeric( t( spectra ) %*% init.f )
+    base.resid.sq   <- max( sum( base.resid.af^2 ), 1e-16 )
+    base.resid.norm <- sqrt( base.resid.sq )
+    base.fluor.l1   <- max( sum( w_af * abs( init.f ) ), 1e-8 )
+
+    k.af.vec <- pmax( as.numeric( t( r_lib_af_w2 ) %*% active.raw ), 0 ) / r_dots_af
+
+    cross.af    <- as.numeric( t( r_lib_af ) %*% base.resid.af )
+    resid.sq.af <- base.resid.sq - 2 * ( k.af.vec * cross.af ) +
+                   ( k.af.vec^2 * r_dots_af_raw )
+    presid.af   <- sqrt( pmax( resid.sq.af, 0 ) ) / base.resid.norm
+
+    diffs.af  <- sweep( v_lib_af, 2, k.af.vec, `*` )
+    diffs.af  <- sweep( diffs.af, 1, init.f, `-` )
+    pfluor.af <- as.numeric( t( abs( diffs.af ) ) %*% w_af ) / base.fluor.l1
+
+    score.af.vec <- presid.af * pfluor.af
+    best.j       <- which.min( score.af.vec )
+
+    list( j = best.j, k = k.af.vec[ best.j ], score = score.af.vec[ best.j ] )
+  }
 
   # -------------------------------------------------------------------------
   # Section 2: Per-fluorophore pre-computations  (mirrors C++ Section 2)
   # -------------------------------------------------------------------------
-  af.only <- is.null( spectra.variants ) || length( spectra.variants ) == 0
-
   precomp      <- list()
   active.names <- character( 0 )
 
   if ( !af.only ) {
 
-    variants      <- spectra.variants$variants
-    delta.list.in <- spectra.variants$delta.list
+    variants       <- spectra.variants$variants
+    delta.list.in  <- spectra.variants$delta.list
     pos.thresholds <- rep( Inf, F )
     names( pos.thresholds ) <- fluorophores
     if ( !is.null( spectra.variants$thresholds ) )
       pos.thresholds[ names( spectra.variants$thresholds ) ] <- spectra.variants$thresholds
 
-    # respect optimize.recommended filter if present
     opt.rec   <- spectra.variants$optimize.recommended
     opt.names <- if ( !is.null( opt.rec ) ) names( opt.rec )[ opt.rec ] else names( variants )
     opt.names <- intersect( opt.names, fluorophores )
@@ -155,31 +256,22 @@ unmix.autospectral.joint <- function(
 
       other.fl <- fluorophores[ fluorophores != fl ]
       S_nof    <- spectra[ other.fl, , drop = FALSE ]
-      U_nof    <- tryCatch(
-        solve( S_nof %*% t( S_nof ), S_nof ),
-        error = function( e ) {
-          # Moore-Penrose fallback if S_nof S_nof^T is singular
-          sv    <- svd( S_nof )
-          tol   <- max( dim( S_nof ) ) * .Machine$double.eps * sv$d[ 1 ]
-          d.inv <- ifelse( sv$d > tol, 1 / sv$d, 0 )
-          t( sv$v %*% diag( d.inv, length( d.inv ) ) %*% t( sv$u ) )
-        }
-      )
+      U_nof    <- solve( S_nof %*% t( S_nof ), S_nof )
 
       v_lib <- U_nof %*% t( delta )   # (F-1) x n_variants
 
       # covariance-propagated leakage weights: ridge 1e-4 matches C++ Section 2
-      delta.obs <- if ( !is.null( delta.list.in[[ fl ]] ) )
-        delta.list.in[[ fl ]] else delta
-      delta.cov        <- if ( nrow( delta.obs ) > 1 ) stats::cov( delta.obs )
-                          else t( delta.obs ) %*% delta.obs / max( nrow( delta.obs ) - 1, 1 )
+      delta.obs         <- if ( !is.null( delta.list.in[[ fl ]] ) )
+                              delta.list.in[[ fl ]] else delta
+      delta.cov         <- stats::cov( delta.obs )
       diag( delta.cov ) <- diag( delta.cov ) + 1e-4
-      leakage.cov      <- U_nof %*% delta.cov %*% t( U_nof )
-      w.leakage        <- sqrt( abs( diag( leakage.cov ) ) ) + 1e-8  # length F-1
+      leakage.cov       <- U_nof %*% delta.cov %*% t( U_nof )
+      w.leakage         <- sqrt( abs( diag( leakage.cov ) ) ) + 1e-8   # length F-1
 
       # rank-1 residual helpers: r_lib(:,v) = delta(v) - S^T P delta(v)
-      r_lib  <- t( delta ) - t( spectra ) %*% ( P %*% t( delta ) )   # D x n_var
-      r_dots <- pmax( colSums( r_lib^2 ), 1e-12 )                     # n_var
+      r_lib    <- t( delta ) - t( spectra ) %*% ( P %*% t( delta ) )   # D x n_var
+      r_lib_sq <- r_lib^2                                              # D x n_var
+      r_dots   <- colSums( r_lib^2 )                                   # n_var, unweighted
 
       precomp[[ fl ]] <- list(
         master.idx = which( fluorophores == fl ),
@@ -189,10 +281,31 @@ unmix.autospectral.joint <- function(
         v_lib      = v_lib,
         w.leakage  = w.leakage,
         r_lib      = r_lib,
+        r_lib_sq   = r_lib_sq,
         r_dots     = r_dots,
         pos.thresh = pos.thresholds[ fl ]
       )
       active.names <- c( active.names, fl )
+    }
+  }
+
+  # -------------------------------------------------------------------------
+  # Section 2B: Structural collinearity precompute  (mirrors C++ Section 2B)
+  # -------------------------------------------------------------------------
+  is.collinear <- matrix( FALSE, F, F )
+  if ( !af.only && length( active.names ) > 1 ) {
+    idxs <- vapply( active.names, function( fl ) precomp[[ fl ]]$master.idx, integer( 1 ) )
+    n.act <- length( idxs )
+    for ( a in seq_len( n.act - 1 ) ) {
+      for ( b in ( a + 1 ):n.act ) {
+        fa <- idxs[ a ]; fb <- idxs[ b ]
+        c.val <- abs( sum( P[ fa, ] * P[ fb, ] ) ) /
+          ( sqrt( sum( P[ fa, ]^2 ) ) * sqrt( sum( P[ fb, ]^2 ) ) + 1e-12 )
+        if ( c.val > collinear.thresh ) {
+          is.collinear[ fa, fb ] <- TRUE
+          is.collinear[ fb, fa ] <- TRUE
+        }
+      }
     }
   }
 
@@ -208,7 +321,7 @@ unmix.autospectral.joint <- function(
   }
 
   # -------------------------------------------------------------------------
-  # Section 3: Per-cell parallel loop  (mirrors C++ Section 3)
+  # Section 3: parallel execution, staged to match the C++ pipeline
   # -------------------------------------------------------------------------
 
   # resolve threads
@@ -220,13 +333,18 @@ unmix.autospectral.joint <- function(
     threads <- 1L
   }
 
-  # objects the worker function closes over: listed explicitly for export
+  # Only *static* (unchanging-throughout-the-pipeline) objects are exported to
+  # the parallel backend. Anything that changes between stages (per-cell
+  # residuals, AF abundance/index) is passed explicitly through the `lapply`
+  # argument itself, so a PSOCK backend (which snapshots exports once, at
+  # cluster creation) produces identical results to a forked backend.
   worker.exports <- c(
-    "raw.data", "spectra", "af.spectra",
-    "F", "D", "nAF", "fluorophores",
-    "P", "v_lib_af", "r_lib_af", "r_dots_af", "w_af",
-    "af.only", "precomp", "active.names",
-    "n.passes", "n.variants"
+    "spectra", "af.spectra", "F", "D", "nAF", "fluorophores",
+    "P", "v_lib_af", "r_lib_af", "r_lib_af_w2", "r_dots_af", "r_dots_af_raw", "w_af",
+    "score.af",
+    "af.only", "precomp", "active.names", "is.collinear",
+    "cell.weight", "sqrt.w.global", "noise.floor",
+    "n.passes", "alpha", "collinear.thresh", "joint.pair.resolution"
   )
 
   result.setup <- create.parallel.lapply(
@@ -238,59 +356,107 @@ unmix.autospectral.joint <- function(
   )
   lapply.function <- result.setup$lapply
 
-  # per-cell worker: closed over all pre-computed objects
-  process.cell <- function( i ) {
+  # -----------------------------------------------------------------------
+  # Per-cell worker: fluorophore solve + joint variant selection, run once
+  # AF selection/refinement (Stages A/B below) has already produced a final
+  # residual, AF abundance, and AF index for every cell. Mirrors C++
+  # Section 3's main `#pragma omp for` loop.
+  # -----------------------------------------------------------------------
+  process.cell <- function( input ) {
 
-    cell.raw <- raw.data[ i, , drop = TRUE ]
+    cell.raw   <- input$raw
+    cell.resid <- input$resid
+    k.af       <- input$k.af
+    best.j.af  <- input$j.af
 
-    # -----------------------------------------------------------------
-    # A. AF SELECTION
-    # -----------------------------------------------------------------
-    init.f        <- as.numeric( P %*% cell.raw )
-    base.resid.af <- cell.raw - as.numeric( t( spectra ) %*% init.f )
-    base.resid.n  <- max( sqrt( sum( base.resid.af^2 ) ), 1e-8 )
-    base.fluor.l1 <- max( sum( w_af * abs( init.f ) ), 1e-8 )
+    cell.S <- spectra   # F x D — AF already subtracted into cell.resid
 
-    best.score.af <- Inf
-    best.j.af     <- 1L
+    if ( cell.weight ) {
+      S.F.w      <- sweep( cell.S, 2, sqrt.w.global, `*` )
+      coeff.init <- as.numeric( solve(
+        S.F.w %*% t( S.F.w ),
+        S.F.w %*% ( cell.resid * sqrt.w.global )
+      ) )
+      y.hat <- as.numeric( t( cell.S ) %*% coeff.init ) + ( cell.raw - cell.resid )
+      sw    <- 1 / sqrt( pmax( abs( y.hat ), noise.floor ) )
+    } else {
+      sw <- rep( 1, D )
+    }
 
-    for ( j in seq_len( nAF ) ) {
-      k.j     <- max( 0, sum( cell.raw * r_lib_af[ , j ] ) / r_dots_af[ j ] )
-      r.j     <- base.resid.af - k.j * r_lib_af[ , j ]
-      p.resid <- sqrt( sum( r.j^2 ) ) / base.resid.n
-      p.fluor <- sum( w_af * abs( init.f - k.j * v_lib_af[ , j ] ) ) / base.fluor.l1
-      score   <- p.resid * p.fluor
-      if ( score < best.score.af ) {
-        best.score.af <- score
-        best.j.af     <- j
+    cell.S.w      <- sweep( cell.S, 2, sw, `*` )
+    fl.unm        <- as.numeric( solve(
+      cell.S.w %*% t( cell.S.w ),
+      cell.S.w %*% ( cell.resid * sw )
+    ) )
+    resid.raw     <- cell.resid - as.numeric( t( cell.S ) %*% pmax( fl.unm, 0 ) )
+    resid         <- resid.raw * sw
+
+    if ( af.only || length( active.names ) == 0 ) {
+      return( c( fl.unm, k.af, best.j.af ) )
+    }
+
+    cell.resid.ss <- sum( cell.resid^2 )
+    best.v        <- stats::setNames( rep( -1L, length( active.names ) ), active.names )
+    y.vec         <- cell.resid * sw
+    rss.accepted  <- NULL   # (re)initialised at the top of every pass below
+
+    # ---------------------------------------------------------------------
+    # try.commit: verifies a single candidate swap by re-solving the F x F
+    # normal equations with that row of cell.S replaced, and only keeps it
+    # if it reduces the currently accepted (weighted) RSS. Mathematically
+    # equivalent to the C++ incremental Gram-matrix update — both simply
+    # recompute A = S_w S_w^T for the current cell.S — just without the
+    # rank-1 shortcut, which R doesn't need for correctness.
+    # ---------------------------------------------------------------------
+    try.commit <- function( fl, v ) {
+      pc  <- precomp[[ fl ]]
+      idx <- pc$master.idx
+
+      prev.row      <- cell.S[ idx, ]
+      cell.S[ idx, ] <<- pc$v.mats[ v, ]
+
+      cell.S.w.trial <- sweep( cell.S, 2, sw, `*` )
+      A.trial <- cell.S.w.trial %*% t( cell.S.w.trial )
+      b.trial <- as.numeric( cell.S.w.trial %*% y.vec )
+
+      trial.unmixed <- tryCatch( solve( A.trial, b.trial ), error = function( e ) NULL )
+      if ( is.null( trial.unmixed ) ) {
+        cell.S[ idx, ] <<- prev.row
+        return( invisible( FALSE ) )
+      }
+
+      trial.resid.raw <- cell.resid - as.numeric( t( cell.S ) %*% pmax( trial.unmixed, 0 ) )
+      trial.resid     <- trial.resid.raw * sw
+      trial.rss       <- sum( trial.resid^2 )
+
+      if ( trial.rss < rss.accepted ) {
+        best.v[ fl ]  <<- v
+        fl.unm        <<- trial.unmixed
+        resid.raw     <<- trial.resid.raw
+        resid         <<- trial.resid
+        rss.accepted  <<- trial.rss
+        invisible( TRUE )
+      } else {
+        cell.S[ idx, ] <<- prev.row
+        invisible( FALSE )
       }
     }
 
-    # -----------------------------------------------------------------
-    # B. INITIAL JOINT SOLVE
-    # -----------------------------------------------------------------
-    cell.S     <- rbind( spectra, af.spectra[ best.j.af, , drop = FALSE ] )
-    StS        <- t( cell.S ) %*% cell.S
-    uf         <- as.numeric( solve( StS, t( cell.S ) %*% cell.raw ) )
-    fl.unm     <- uf[ seq_len( F ) ]
-    resid      <- cell.raw - as.numeric( t( cell.S ) %*% uf )
-
-    if ( af.only || length( active.names ) == 0 ) {
-      return( c( fl.unm, uf[ F + 1L ], best.j.af ) )
-    }
-
-    best.v <- stats::setNames( rep( -1L, length( active.names ) ), active.names )
-
-    # -----------------------------------------------------------------
+    # ---------------------------------------------------------------------
     # C. JOINT VARIANT SELECTION  (n.passes passes)
-    # -----------------------------------------------------------------
+    # ---------------------------------------------------------------------
     for ( pass in seq_len( n.passes ) ) {
 
-      rss.curr      <- max( sum( resid^2 ), 1e-12 )
-      rss.curr.sqrt <- sqrt( rss.curr )
+      rss.curr        <- max( sum( resid^2 ), 1e-12 )
+      rss.curr.sqrt   <- sqrt( rss.curr )
+      ratio.thresh.sq <- 1.1025 * rss.curr   # (1.05^2) * rss.curr
+      rss.accepted    <- sum( resid^2 )      # reset every pass, matches C++
 
-      # score all candidate swaps across all active fluorophores
-      candidates <- list()
+      candidates    <- list()
+      rsw           <- resid * sw
+      w.eff         <- sw * sw
+      q.ready       <- stats::setNames( rep( FALSE, length( active.names ) ), active.names )
+      q.by.active   <- list()
 
       for ( fl in active.names ) {
         pc    <- precomp[[ fl ]]
@@ -301,39 +467,50 @@ unmix.autospectral.joint <- function(
         base.leak <- max( sum( pc$w.leakage * abs( other.unm ) ), 1e-8 )
         cur.v     <- best.v[ fl ]
 
-        # limit candidates to top n.variants by residual-update score
-        resid.scores <- numeric( pc$n.var )
-        for ( v in seq_len( pc$n.var ) ) {
-          dr       <- if ( cur.v < 0L ) pc$r_lib[ , v ]
-                      else pc$r_lib[ , v ] - pc$r_lib[ , cur.v ]
-          cross    <- sum( resid * dr )
-          dr.sq    <- sum( dr^2 )
-          new.rss  <- max( rss.curr - 2 * abund * cross + abund^2 * dr.sq, 0 )
-          resid.scores[ v ] <- sqrt( new.rss )
-        }
-        top.v <- order( resid.scores )[ seq_len( min( n.variants, pc$n.var ) ) ]
-
-        for ( v in top.v ) {
-          if ( cur.v < 0L ) {
-            dr         <- pc$r_lib[ , v ]
-            dv.leakage <- pc$v_lib[ , v ]
-          } else {
-            dr         <- pc$r_lib[ , v ] - pc$r_lib[ , cur.v ]
-            dv.leakage <- pc$v_lib[ , v ] - pc$v_lib[ , cur.v ]
+        if ( cell.weight ) {
+          if ( !q.ready[ fl ] ) {
+            q.by.active[[ fl ]] <- as.numeric( t( pc$r_lib_sq ) %*% w.eff )
+            q.ready[ fl ]       <- TRUE
           }
+          q.ref <- q.by.active[[ fl ]]
+        } else {
+          q.ref <- pc$r_dots
+        }
 
-          cross     <- sum( resid * dr )
-          dr.sq     <- sum( dr^2 )
-          new.rss   <- max( rss.curr - 2 * abund * cross + abund^2 * dr.sq, 0 )
+        cross.v <- as.numeric( t( pc$r_lib ) %*% rsw )
+        if ( cur.v < 0L ) {
+          drsq.v <- q.ref
+        } else {
+          g.cur   <- if ( cell.weight )
+            as.numeric( t( pc$r_lib ) %*% ( pc$r_lib[ , cur.v ] * w.eff ) )
+          else
+            as.numeric( t( pc$r_lib ) %*% pc$r_lib[ , cur.v ] )
+          drsq.v  <- q.ref + q.ref[ cur.v ] - 2 * g.cur
+          cross.v <- cross.v - cross.v[ cur.v ]
+        }
 
-          resid.ratio   <- sqrt( new.rss ) / rss.curr.sqrt
-          new.other     <- other.unm - abund * dv.leakage
-          leakage.ratio <- sum( pc$w.leakage * abs( new.other ) ) / base.leak
-          composite     <- resid.ratio * leakage.ratio
+        abund2 <- abund * abund
 
-          if ( composite < 1.0 )
+        for ( v in seq_len( pc$n.var ) ) {
+          new.rss <- rss.curr - 2 * abund * cross.v[ v ] + abund2 * drsq.v[ v ]
+          if ( new.rss > ratio.thresh.sq ) next   # fast reject: resid_ratio > 1.05
+
+          vl <- pc$v_lib[ , v ]
+          if ( cur.v < 0L ) {
+            leak.num <- sum( pc$w.leakage * abs( other.unm - abund * vl ) )
+          } else {
+            vlc      <- pc$v_lib[ , cur.v ]
+            leak.num <- sum( pc$w.leakage * abs( other.unm - abund * ( vl - vlc ) ) )
+          }
+          leakage.ratio <- leak.num / base.leak
+          resid.ratio   <- sqrt( max( new.rss, 0 ) ) / rss.curr.sqrt
+
+          joint.score <- max( resid.ratio,   1e-8 )^alpha *
+                         max( leakage.ratio, 1e-8 )^( 1 - alpha )
+
+          if ( joint.score < 1.0 )
             candidates[[ length( candidates ) + 1L ]] <- list(
-              score = composite, fl = fl, v = v
+              score = joint.score, fl = fl, v = v
             )
         }
       }
@@ -341,14 +518,16 @@ unmix.autospectral.joint <- function(
       if ( length( candidates ) == 0L ) break
 
       # sort candidates best-first
-      scores.ord <- order( sapply( candidates, `[[`, "score" ) )
+      scores.ord <- order( vapply( candidates, `[[`, numeric( 1 ), "score" ) )
       candidates <- candidates[ scores.ord ]
 
-      # conflict resolution: commit non-overlapping swaps
-      # two swaps conflict when their residual deltas have cosine similarity > 0.5
-      committed     <- stats::setNames( rep( FALSE, length( active.names ) ), active.names )
-      committed.drs <- list()
-      commits       <- list()
+      # conflict resolution: commit non-overlapping swaps, queueing retries
+      # for candidates that only conflict with a structurally collinear
+      # committed partner.
+      committed        <- stats::setNames( rep( FALSE, length( active.names ) ), active.names )
+      committed.deltas <- list()
+      commits          <- list()
+      queued.retries   <- list()
 
       for ( cand in candidates ) {
         fl <- cand$fl
@@ -359,47 +538,105 @@ unmix.autospectral.joint <- function(
         cur.v <- best.v[ fl ]
         v     <- cand$v
 
-        dr      <- if ( cur.v < 0L ) pc$r_lib[ , v ] * abund
-                   else ( pc$r_lib[ , v ] - pc$r_lib[ , cur.v ] ) * abund
+        dr <- if ( cur.v < 0L ) pc$r_lib[ , v ] * abund
+              else ( pc$r_lib[ , v ] - pc$r_lib[ , cur.v ] ) * abund
         dr.norm <- max( sqrt( sum( dr^2 ) ), 1e-12 )
 
         conflict <- FALSE
-        for ( cd in committed.drs ) {
-          cosine <- abs( sum( dr * cd ) ) /
-            ( dr.norm * max( sqrt( sum( cd^2 ) ), 1e-12 ) )
-          if ( cosine > 0.5 ) { conflict <- TRUE; break }
+        for ( cd in committed.deltas ) {
+          cosine <- abs( sum( dr * cd$dr ) ) / ( dr.norm * cd$norm )
+          if ( cosine > 0.5 ) {
+            conflict <- TRUE
+            winner.master  <- precomp[[ cd$fl ]]$master.idx
+            collinear.pair <- is.collinear[ pc$master.idx, winner.master ]
+            if ( joint.pair.resolution && collinear.pair )
+              queued.retries[[ length( queued.retries ) + 1L ]] <- list( fl = fl, v = v )
+            break
+          }
         }
         if ( conflict ) next
 
-        committed[ fl ]    <- TRUE
-        committed.drs[[ length( committed.drs ) + 1L ]] <- dr
+        committed[ fl ] <- TRUE
+        committed.deltas[[ length( committed.deltas ) + 1L ]] <- list( dr = dr, norm = dr.norm, fl = fl )
         commits[[ length( commits ) + 1L ]] <- list( fl = fl, v = v )
       }
 
       if ( length( commits ) == 0L ) break
 
-      # apply committed swaps and re-solve once per pass
-      for ( cm in commits ) {
-        best.v[ cm$fl ]                       <- cm$v
-        cell.S[ precomp[[ cm$fl ]]$master.idx, ] <- precomp[[ cm$fl ]]$v.mats[ cm$v, ]
+      for ( cm in commits ) try.commit( cm$fl, cm$v )
+
+      # Joint-pair retry: replay candidates discarded for conflicting with a
+      # structurally-collinear committed candidate, now that partner's own
+      # swap (if any) has already been applied above.
+      if ( joint.pair.resolution ) {
+        for ( qr in queued.retries ) try.commit( qr$fl, qr$v )
       }
 
-      StS    <- t( cell.S ) %*% cell.S
-      uf     <- as.numeric( solve( StS, t( cell.S ) %*% cell.raw ) )
-      fl.unm <- uf[ seq_len( F ) ]
-      resid  <- cell.raw - as.numeric( t( cell.S ) %*% uf )
-
-      # early exit if residual is negligible
-      if ( sqrt( sum( resid^2 ) ) < 1e-8 * sqrt( sum( cell.raw^2 ) ) ) break
+      if ( sum( resid.raw^2 ) < 1e-16 * cell.resid.ss ) break
     }
 
-    return( c( fl.unm, uf[ F + 1L ], best.j.af ) )
+    return( c( fl.unm, k.af, best.j.af ) )
   }
 
-  # run across all cells
+  # -----------------------------------------------------------------------
+  # Stage A: initial per-cell AF selection (parallel). raw.data is static
+  # for the whole pipeline, so it's safe to reference it directly here even
+  # under a PSOCK backend.
+  # -----------------------------------------------------------------------
+  stage.a <- tryCatch(
+    expr    = lapply.function( seq_len( N ), function( i ) score.af( raw.data[ i, ] ) ),
+    finally = NULL
+  )
+  af.index.vec     <- vapply( stage.a, `[[`, integer( 1 ), "j" )
+  af.abundance.vec <- vapply( stage.a, `[[`, numeric( 1 ), "k" )
+  resid.mat        <- raw.data - af.abundance.vec * af.spectra[ af.index.vec, , drop = FALSE ]
+
+  # -----------------------------------------------------------------------
+  # Stage B: optional AF refinement passes. Only cells at/above the
+  # refine.af.quantile of first-pass abundance are refined. The AF *index*
+  # recorded in the output is always the one chosen on the first pass.
+  # -----------------------------------------------------------------------
+  still.active <- rep( FALSE, N )
+  if ( n.af.passes > 1 ) {
+    af.refine.cutoff <- stats::quantile(
+      af.abundance.vec, probs = refine.af.quantile, type = 7, names = FALSE
+    )
+    still.active <- af.abundance.vec >= af.refine.cutoff
+  }
+
+  for ( af.pass in seq_len( n.af.passes - 1L ) ) {
+    active.idx <- which( still.active )
+    if ( length( active.idx ) == 0L ) break
+
+    resid.list  <- lapply( active.idx, function( i ) resid.mat[ i, ] )
+    refine.res  <- lapply.function( resid.list, score.af )
+
+    for ( k in seq_along( active.idx ) ) {
+      i <- active.idx[ k ]
+      r <- refine.res[[ k ]]
+      if ( r$score < 1.0 ) {
+        af.abundance.vec[ i ] <- af.abundance.vec[ i ] + r$k
+        resid.mat[ i, ]       <- resid.mat[ i, ] - r$k * af.spectra[ r$j, ]
+      } else {
+        still.active[ i ] <- FALSE
+      }
+    }
+  }
+
+  # -----------------------------------------------------------------------
+  # Stage C: main per-cell loop — fluorophore solve + joint variant
+  # selection. Per-cell dynamic state (raw row, post-AF residual, AF
+  # abundance/index) is bundled explicitly per call, as noted above.
+  # -----------------------------------------------------------------------
   cell.results <- tryCatch(
     expr = {
-      lapply.function( seq_len( N ), process.cell )
+      cell.inputs <- lapply( seq_len( N ), function( i ) list(
+        raw   = raw.data[ i, ],
+        resid = resid.mat[ i, ],
+        k.af  = af.abundance.vec[ i ],
+        j.af  = af.index.vec[ i ]
+      ) )
+      lapply.function( cell.inputs, process.cell )
     },
     finally = {
       if ( !is.null( result.setup$cleanup ) ) result.setup$cleanup()

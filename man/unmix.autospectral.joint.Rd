@@ -11,9 +11,15 @@ unmix.autospectral.joint(
   asp,
   spectra.variants = NULL,
   n.passes = 2L,
-  n.variants = 1L,
   parallel = TRUE,
   threads = NULL,
+  cell.weight = FALSE,
+  noise.floor = NULL,
+  alpha = 0.5,
+  collinear.thresh = 0.5,
+  joint.pair.resolution = TRUE,
+  n.af.passes = 1L,
+  refine.af.quantile = 0.5,
   verbose = TRUE
 )
 }
@@ -37,14 +43,7 @@ flagged \code{FALSE} are excluded from variant optimisation. Pass \code{NULL} fo
 AF-only mode (no variant optimisation).}
 
 \item{n.passes}{Integer, default \code{2L}. Number of joint optimisation passes
-per cell. Matches \code{n_passes} in \code{unmix_autospectral_joint_cpp}. Higher
-values allow more variant swaps to be committed per cell at the cost of
-additional computation.}
-
-\item{n.variants}{Integer, default \code{1L}. Maximum number of top-scoring
-variants to evaluate per fluorophore per pass. Corresponds to \code{k_opt}
-in the legacy pipeline. Set via \code{speed} in the calling function, or
-supply directly.}
+per cell. Matches \code{n_passes} in \code{unmix_autospectral_joint_cpp}.}
 
 \item{parallel}{Logical, default \code{TRUE}. Whether to use parallel processing
 across cells. Uses \code{create.parallel.lapply()} to handle platform
@@ -53,6 +52,41 @@ differences.}
 \item{threads}{Numeric, default \code{NULL}. Number of worker threads. When
 \code{NULL}, \code{asp$worker.process.n} is used. When \code{threads = 0},
 \code{parallelly::availableCores()} is used. Ignored when \code{parallel = FALSE}.}
+
+\item{cell.weight}{Logical, default \code{FALSE}. Enables per-cell Poisson-style
+detector weighting (\verb{1 / max(|y_hat|, noise.floor)}), matching
+\code{cell_weight} in the C++ pipeline. When \code{FALSE}, weighting collapses to
+the (all-ones, unless a global weight was requested) \code{w.global} used in
+Section 1.}
+
+\item{noise.floor}{Numeric scalar or length-D vector, default \code{NULL}.
+Per-detector noise floor used by the weighting scheme; falls back to a
+constant \code{125.0} per detector when \code{NULL}, matching the C++ default.
+Only used when \code{cell.weight = TRUE}.}
+
+\item{alpha}{Numeric in \verb{[0, 1]}, default \code{0.5}. Weighting exponent for the
+joint candidate score: \code{resid.ratio^alpha * leakage.ratio^(1 - alpha)}.}
+
+\item{collinear.thresh}{Numeric, default \code{0.5}. Cosine-similarity
+threshold (in the pseudoinverse row space) above which two optimisable
+fluorophores are flagged as structurally collinear for joint-pair
+conflict retries.}
+
+\item{joint.pair.resolution}{Logical, default \code{TRUE}. When \code{TRUE}, a
+candidate swap that conflicts with an already-committed swap belonging
+to a structurally collinear partner is queued and retried once that
+partner's own swap has been applied (rather than simply dropped).}
+
+\item{n.af.passes}{Integer, default \code{1L}. Number of AF selection passes.
+When \verb{> 1}, cells with an initial AF abundance at or above the
+\code{refine.af.quantile} quantile are re-scored against their residual in
+subsequent passes, accumulating additional AF abundance where the
+refinement score is < 1.0. The AF \emph{index} used in the output is always
+the one selected on the first pass.}
+
+\item{refine.af.quantile}{Numeric in \verb{[0, 1]}, default \code{0.5}. Quantile
+(type 7) of the first-pass AF abundance used to select which cells are
+eligible for AF refinement passes.}
 
 \item{verbose}{Logical, default \code{TRUE}.}
 }
@@ -64,20 +98,42 @@ selected AF spectrum).
 }
 \description{
 Pure-R implementation of the joint covariance-weighted AutoSpectral pipeline.
-Mirrors the algorithm in \code{unmix_autospectral_joint_cpp} without requiring
-\code{AutoSpectralRcpp}. For each cell, AF variant selection and fluorophore
-spectral variant optimisation are performed in a single jointly-scored pass
-rather than sequentially.
+Mirrors \code{unmix_autospectral_joint_cpp} (in
+\code{unmix_autospectral_joint_pipeline.cpp}) instruction-for-instruction,
+without requiring \code{AutoSpectralRcpp}.
 
-The AF selection score is a multiplicative product of the residual ratio and
-a covariance-propagated fluorophore leakage ratio, matching Section A of the
-C++ pipeline. Fluorophore variant selection uses the same composite score
-across all optimisable fluorophores before any swaps are committed, with
-conflict resolution by residual-delta cosine similarity (Section C).
+The pipeline is staged identically to the C++ version:
+\enumerate{
+\item Global weighted pseudoinverse + AF helper pre-computation (Section 1).
+\item Per-fluorophore variant pre-computation, including leakage weights and
+rank-1 residual-update helpers (Section 2), plus a structural
+collinearity table used later for joint-pair conflict retries
+(Section 2B).
+\item Per-cell AF selection, with optional multi-pass AF refinement against
+the residual (\code{n.af.passes}).
+\item Per-cell fluorophore solve against the AF-subtracted residual (with
+optional per-cell Poisson-style weighting, \code{cell.weight}), followed by
+joint variant selection: candidates are scored with an alpha-weighted
+composite of residual ratio and covariance-propagated leakage ratio,
+conflicting swaps are resolved by residual-delta cosine similarity,
+and swaps flagged as a structurally collinear pair are queued for a
+retry once the winning partner's own swap has been applied. Each
+commit is individually verified against the currently accepted RSS
+and reverted if it does not improve it.
+}
+
+Note: unlike the legacy pipeline, there is no \code{n.variants} / top-K
+candidate pre-filter here — every variant of every active fluorophore is
+scored each pass (subject only to the 1.05x residual-ratio fast-reject),
+exactly as \code{unmix_autospectral_joint_cpp} does.
 
 Parallelisation follows the same pattern as \code{unmix.autospectral()}, using
 \code{create.parallel.lapply()} to handle platform differences between Windows
-(PSOCK cluster) and Linux (forked \code{mclapply}).
+(PSOCK cluster) and Linux/Mac (forked \code{mclapply}). Because a PSOCK cluster
+only receives exported globals once (at cluster creation), every quantity
+that changes between pipeline stages (per-cell residuals, AF abundances)
+is passed explicitly through the \code{lapply} argument rather than read back
+off a mutated global, so results are identical regardless of backend.
 }
 \seealso{
 \code{\link[=unmix.autospectral]{unmix.autospectral()}}, \code{\link[AutoSpectralRcpp:unmix.autospectral.rcpp]{unmix.autospectral.rcpp()}},
