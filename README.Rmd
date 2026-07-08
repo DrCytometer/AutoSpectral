@@ -57,7 +57,8 @@ AutoSpectral will probably not solve all your unmixing issues; hopefully it will
 
 * [CompensAID](https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html)
 * [spectracle](https://github.com/nlaniewski/spectracle/)
-* [flowstate](https://github.com/nlaniewski/flowstate/tree/master)
+* [flowstate](https://github.com/nlaniewski/flowstate)
+* [spectreasy](https://github.com/pkheisig/spectreasy)
 * [Ozette Resolve](https://www.ozette.com/)
 * [flowUnmix](https://github.com/hally166/flowUnmix)
 * [PanelBuilder](https://github.com/exaexa/panelbuilder)

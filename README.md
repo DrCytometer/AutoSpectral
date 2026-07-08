@@ -70,7 +70,8 @@ it will help. Here are some other tools that may also help:
 
 - [CompensAID](https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html)
 - [spectracle](https://github.com/nlaniewski/spectracle/)
-- [flowstate](https://github.com/nlaniewski/flowstate/tree/master)
+- [flowstate](https://github.com/nlaniewski/flowstate)
+- [spectreasy](https://github.com/pkheisig/spectreasy)
 - [Ozette Resolve](https://www.ozette.com/)
 - [flowUnmix](https://github.com/hally166/flowUnmix)
 - [PanelBuilder](https://github.com/exaexa/panelbuilder)
