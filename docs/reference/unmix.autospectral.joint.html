@@ -6,30 +6,50 @@
     }
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Joint AutoSpectral Unmixing (Pure R) — unmix.autospectral.joint"><meta name="description" content="Pure-R implementation of the joint covariance-weighted AutoSpectral pipeline.
-Mirrors the algorithm in unmix_autospectral_joint_cpp without requiring
-AutoSpectralRcpp. For each cell, AF variant selection and fluorophore
-spectral variant optimisation are performed in a single jointly-scored pass
-rather than sequentially.
-The AF selection score is a multiplicative product of the residual ratio and
-a covariance-propagated fluorophore leakage ratio, matching Section A of the
-C++ pipeline. Fluorophore variant selection uses the same composite score
-across all optimisable fluorophores before any swaps are committed, with
-conflict resolution by residual-delta cosine similarity (Section C).
-Parallelisation follows the same pattern as unmix.autospectral(), using
-create.parallel.lapply() to handle platform differences between Windows
-(PSOCK cluster) and Linux (forked mclapply)."><meta property="og:description" content="Pure-R implementation of the joint covariance-weighted AutoSpectral pipeline.
-Mirrors the algorithm in unmix_autospectral_joint_cpp without requiring
-AutoSpectralRcpp. For each cell, AF variant selection and fluorophore
-spectral variant optimisation are performed in a single jointly-scored pass
-rather than sequentially.
-The AF selection score is a multiplicative product of the residual ratio and
-a covariance-propagated fluorophore leakage ratio, matching Section A of the
-C++ pipeline. Fluorophore variant selection uses the same composite score
-across all optimisable fluorophores before any swaps are committed, with
-conflict resolution by residual-delta cosine similarity (Section C).
-Parallelisation follows the same pattern as unmix.autospectral(), using
-create.parallel.lapply() to handle platform differences between Windows
-(PSOCK cluster) and Linux (forked mclapply)."><script>
+Mirrors unmix_autospectral_joint_cpp (in
+unmix_autospectral_joint_pipeline.cpp) instruction-for-instruction,
+without requiring AutoSpectralRcpp.
+The pipeline is staged identically to the C++ version:
+Global weighted pseudoinverse + AF helper pre-computation (Section 1).
+Per-fluorophore variant pre-computation, including leakage weights and
+rank-1 residual-update helpers (Section 2), plus a structural
+collinearity table used later for joint-pair conflict retries
+(Section 2B).
+Per-cell AF selection, with optional multi-pass AF refinement against
+the residual (n.af.passes).
+Per-cell fluorophore solve against the AF-subtracted residual (with
+optional per-cell Poisson-style weighting, cell.weight), followed by
+joint variant selection: candidates are scored with an alpha-weighted
+composite of residual ratio and covariance-propagated leakage ratio,
+conflicting swaps are resolved by residual-delta cosine similarity,
+and swaps flagged as a structurally collinear pair are queued for a
+retry once the winning partner's own swap has been applied. Each
+commit is individually verified against the currently accepted RSS
+and reverted if it does not improve it.
+
+"><meta property="og:description" content="Pure-R implementation of the joint covariance-weighted AutoSpectral pipeline.
+Mirrors unmix_autospectral_joint_cpp (in
+unmix_autospectral_joint_pipeline.cpp) instruction-for-instruction,
+without requiring AutoSpectralRcpp.
+The pipeline is staged identically to the C++ version:
+Global weighted pseudoinverse + AF helper pre-computation (Section 1).
+Per-fluorophore variant pre-computation, including leakage weights and
+rank-1 residual-update helpers (Section 2), plus a structural
+collinearity table used later for joint-pair conflict retries
+(Section 2B).
+Per-cell AF selection, with optional multi-pass AF refinement against
+the residual (n.af.passes).
+Per-cell fluorophore solve against the AF-subtracted residual (with
+optional per-cell Poisson-style weighting, cell.weight), followed by
+joint variant selection: candidates are scored with an alpha-weighted
+composite of residual ratio and covariance-propagated leakage ratio,
+conflicting swaps are resolved by residual-delta cosine similarity,
+and swaps flagged as a structurally collinear pair are queued for a
+retry once the winning partner's own swap has been applied. Each
+commit is individually verified against the currently accepted RSS
+and reverted if it does not improve it.
+
+"><script>
   window.MathJax = {
     tex: { packages: {'[+]': ['boldsymbol']} }
   };
@@ -90,19 +110,26 @@ create.parallel.lapply() to handle platform differences between Windows
 
     <div class="ref-description section level2">
     <p>Pure-R implementation of the joint covariance-weighted AutoSpectral pipeline.
-Mirrors the algorithm in <code>unmix_autospectral_joint_cpp</code> without requiring
-<code>AutoSpectralRcpp</code>. For each cell, AF variant selection and fluorophore
-spectral variant optimisation are performed in a single jointly-scored pass
-rather than sequentially.</p>
-<p>The AF selection score is a multiplicative product of the residual ratio and
-a covariance-propagated fluorophore leakage ratio, matching Section A of the
-C++ pipeline. Fluorophore variant selection uses the same composite score
-across all optimisable fluorophores before any swaps are committed, with
-conflict resolution by residual-delta cosine similarity (Section C).</p>
-<p>Parallelisation follows the same pattern as <code><a href="unmix.autospectral.html">unmix.autospectral()</a></code>, using
-<code><a href="create.parallel.lapply.html">create.parallel.lapply()</a></code> to handle platform differences between Windows
-(PSOCK cluster) and Linux (forked <code>mclapply</code>).</p>
-    </div>
+Mirrors <code>unmix_autospectral_joint_cpp</code> (in
+<code>unmix_autospectral_joint_pipeline.cpp</code>) instruction-for-instruction,
+without requiring <code>AutoSpectralRcpp</code>.</p>
+<p>The pipeline is staged identically to the C++ version:</p><ol><li><p>Global weighted pseudoinverse + AF helper pre-computation (Section 1).</p></li>
+<li><p>Per-fluorophore variant pre-computation, including leakage weights and
+rank-1 residual-update helpers (Section 2), plus a structural
+collinearity table used later for joint-pair conflict retries
+(Section 2B).</p></li>
+<li><p>Per-cell AF selection, with optional multi-pass AF refinement against
+the residual (<code>n.af.passes</code>).</p></li>
+<li><p>Per-cell fluorophore solve against the AF-subtracted residual (with
+optional per-cell Poisson-style weighting, <code>cell.weight</code>), followed by
+joint variant selection: candidates are scored with an alpha-weighted
+composite of residual ratio and covariance-propagated leakage ratio,
+conflicting swaps are resolved by residual-delta cosine similarity,
+and swaps flagged as a structurally collinear pair are queued for a
+retry once the winning partner's own swap has been applied. Each
+commit is individually verified against the currently accepted RSS
+and reverted if it does not improve it.</p></li>
+</ol></div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
@@ -112,10 +139,16 @@ conflict resolution by residual-delta cosine similarity (Section C).</p>
 <span>  <span class="va">af.spectra</span>,</span>
 <span>  <span class="va">asp</span>,</span>
 <span>  spectra.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  n.passes <span class="op">=</span> <span class="fl">2L</span>,</span>
-<span>  n.variants <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  n.passes <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cell.weight <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  noise.floor <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  collinear.thresh <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  joint.pair.resolution <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  n.af.passes <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  refine.af.quantile <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -153,17 +186,8 @@ AF-only mode (no variant optimisation).</p></dd>
 
 
 <dt id="arg-n-passes">n.passes<a class="anchor" aria-label="anchor" href="#arg-n-passes"></a></dt>
-<dd><p>Integer, default <code>2L</code>. Number of joint optimisation passes
-per cell. Matches <code>n_passes</code> in <code>unmix_autospectral_joint_cpp</code>. Higher
-values allow more variant swaps to be committed per cell at the cost of
-additional computation.</p></dd>
-
-
-<dt id="arg-n-variants">n.variants<a class="anchor" aria-label="anchor" href="#arg-n-variants"></a></dt>
-<dd><p>Integer, default <code>1L</code>. Maximum number of top-scoring
-variants to evaluate per fluorophore per pass. Corresponds to <code>k_opt</code>
-in the legacy pipeline. Set via <code>speed</code> in the calling function, or
-supply directly.</p></dd>
+<dd><p>Integer, default <code>1L</code>. Number of joint optimisation passes
+per cell. Matches <code>n_passes</code> in <code>unmix_autospectral_joint_cpp</code>.</p></dd>
 
 
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
@@ -176,6 +200,55 @@ differences.</p></dd>
 <dd><p>Numeric, default <code>NULL</code>. Number of worker threads. When
 <code>NULL</code>, <code>asp$worker.process.n</code> is used. When <code>threads = 0</code>,
 <code><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">parallelly::availableCores()</a></code> is used. Ignored when <code>parallel = FALSE</code>.</p></dd>
+
+
+<dt id="arg-cell-weight">cell.weight<a class="anchor" aria-label="anchor" href="#arg-cell-weight"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. Enables per-cell Poisson-style
+detector weighting (<code>1 / max(|y_hat|, noise.floor)</code>), matching
+<code>cell_weight</code> in the C++ pipeline. When <code>FALSE</code>, weighting collapses to
+the (all-ones, unless a global weight was requested) <code>w.global</code> used in
+Section 1.</p></dd>
+
+
+<dt id="arg-noise-floor">noise.floor<a class="anchor" aria-label="anchor" href="#arg-noise-floor"></a></dt>
+<dd><p>Numeric scalar or length-D vector, default <code>NULL</code>.
+Per-detector noise floor used by the weighting scheme; falls back to a
+constant <code>125.0</code> per detector when <code>NULL</code>, matching the C++ default.
+Only used when <code>cell.weight = TRUE</code>.</p></dd>
+
+
+<dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
+<dd><p>Numeric in <code>[0, 1]</code>, default <code>0.5</code>. Weighting exponent for the
+joint candidate score: <code>resid.ratio^alpha * leakage.ratio^(1 - alpha)</code>.</p></dd>
+
+
+<dt id="arg-collinear-thresh">collinear.thresh<a class="anchor" aria-label="anchor" href="#arg-collinear-thresh"></a></dt>
+<dd><p>Numeric, default <code>0.5</code>. Cosine-similarity
+threshold (in the pseudoinverse row space) above which two optimisable
+fluorophores are flagged as structurally collinear for joint-pair
+conflict retries.</p></dd>
+
+
+<dt id="arg-joint-pair-resolution">joint.pair.resolution<a class="anchor" aria-label="anchor" href="#arg-joint-pair-resolution"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. When <code>TRUE</code>, a
+candidate swap that conflicts with an already-committed swap belonging
+to a structurally collinear partner is queued and retried once that
+partner's own swap has been applied (rather than simply dropped).</p></dd>
+
+
+<dt id="arg-n-af-passes">n.af.passes<a class="anchor" aria-label="anchor" href="#arg-n-af-passes"></a></dt>
+<dd><p>Integer, default <code>1L</code>. Number of AF selection passes.
+When <code>&gt; 1</code>, cells with an initial AF abundance at or above the
+<code>refine.af.quantile</code> quantile are re-scored against their residual in
+subsequent passes, accumulating additional AF abundance where the
+refinement score is &lt; 1.0. The AF <em>index</em> used in the output is always
+the one selected on the first pass.</p></dd>
+
+
+<dt id="arg-refine-af-quantile">refine.af.quantile<a class="anchor" aria-label="anchor" href="#arg-refine-af-quantile"></a></dt>
+<dd><p>Numeric in <code>[0, 1]</code>, default <code>0.5</code>. Quantile
+(type 7) of the first-pass AF abundance used to select which cells are
+eligible for AF refinement passes.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>

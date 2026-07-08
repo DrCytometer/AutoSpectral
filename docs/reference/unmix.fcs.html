@@ -60,7 +60,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Unmix FCS Data</h1>
-      <small class="dont-index">Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/R/unmix_fcs_test.R" class="external-link"><code>R/unmix_fcs_test.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/R/unmix_fcs.R" class="external-link"><code>R/unmix_fcs.R</code></a></small>
       <div class="d-none name"><code>unmix.fcs.Rd</code></div>
     </div>
 
@@ -94,8 +94,15 @@
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  chunk.size <span class="op">=</span> <span class="fl">2e+06</span>,</span>
-<span>  pipeline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"joint"</span>, <span class="st">"legacy"</span><span class="op">)</span>,</span>
-<span>  n.passes <span class="op">=</span> <span class="fl">2L</span>,</span>
+<span>  pipeline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"legacy"</span>, <span class="st">"joint"</span><span class="op">)</span>,</span>
+<span>  n.passes <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  n.af.passes <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  cell.weight <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">asp</span><span class="op">$</span><span class="va">cytometer</span> <span class="op">==</span> <span class="st">"ID7000"</span><span class="op">)</span> <span class="cn">TRUE</span> <span class="kw">else</span> <span class="cn">FALSE</span>,</span>
+<span>  noise.floor <span class="op">=</span> <span class="fl">125</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  collinear.threshold <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  joint.pair.resolution <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  refine.af.quantile <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -253,16 +260,58 @@ memory. Default is set at <code>2e6</code> events, assuming ~20GB memory availab
 
 
 <dt id="arg-pipeline">pipeline<a class="anchor" aria-label="anchor" href="#arg-pipeline"></a></dt>
-<dd><p>Character, one of <code>"joint"</code> (default) or <code>"legacy"</code>. Passed
+<dd><p>Character, one of <code>"legacy"</code> (default) or <code>"joint"</code>. Passed
 to <code>unmix.autospectral.rcpp()</code>. <code>"joint"</code> uses the new covariance-weighted
 joint per-cell pipeline; <code>"legacy"</code> reproduces the behaviour of
 AutoSpectral prior to version 1.6.0.</p></dd>
 
 
 <dt id="arg-n-passes">n.passes<a class="anchor" aria-label="anchor" href="#arg-n-passes"></a></dt>
-<dd><p>Integer, default <code>2L</code>. Number of joint optimisation passes
-per cell. Only used when <code>pipeline = "joint"</code>. Passed to
-<code>unmix.autospectral.rcpp()</code>.</p></dd>
+<dd><p>Integer, default <code>1L</code>. Number of joint optimisation passes
+per cell. Only used when <code>pipeline = "joint"</code>. Set higher for some
+improvement in unmixing with high spillover datasets.</p></dd>
+
+
+<dt id="arg-n-af-passes">n.af.passes<a class="anchor" aria-label="anchor" href="#arg-n-af-passes"></a></dt>
+<dd><p>Integer, default <code>1L</code>. Number of autofluorescence
+extraction passes per cell. Only used when <code>pipeline = "joint"</code>. Passed
+to <code>unmix.autospectral.rcpp()</code>.</p></dd>
+
+
+<dt id="arg-cell-weight">cell.weight<a class="anchor" aria-label="anchor" href="#arg-cell-weight"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. Applies per-cell detector
+weighting to the joint unmixing solve. Only used when
+<code>pipeline = "joint"</code>. Passed to <code>unmix.autospectral.rcpp()</code>.</p></dd>
+
+
+<dt id="arg-noise-floor">noise.floor<a class="anchor" aria-label="anchor" href="#arg-noise-floor"></a></dt>
+<dd><p>Numeric, default <code>125</code>. Lower clamp on the denominator
+of the per-cell detector weights when <code>cell.weight = TRUE</code>. Only used
+when <code>pipeline = "joint"</code>. Passed to <code>unmix.autospectral.rcpp()</code>.</p></dd>
+
+
+<dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
+<dd><p>Numeric, default <code>0.5</code>. Weighting for balancing residual and
+covariance spillover minimization. Only used when <code>pipeline = "joint"</code>.
+Passed to <code>unmix.autospectral.rcpp()</code>.</p></dd>
+
+
+<dt id="arg-collinear-threshold">collinear.threshold<a class="anchor" aria-label="anchor" href="#arg-collinear-threshold"></a></dt>
+<dd><p>Numeric, default <code>0.5</code>. Cosine similarity value
+to trigger conflict assessment for collinear fluorophore variants. Only
+used when <code>pipeline = "joint"</code>. Passed to <code>unmix.autospectral.rcpp()</code>.</p></dd>
+
+
+<dt id="arg-joint-pair-resolution">joint.pair.resolution<a class="anchor" aria-label="anchor" href="#arg-joint-pair-resolution"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Whether to perform
+conflict-resolution for collinear fluorophore pairs. Only used when
+<code>pipeline = "joint"</code>. Passed to <code>unmix.autospectral.rcpp()</code>.</p></dd>
+
+
+<dt id="arg-refine-af-quantile">refine.af.quantile<a class="anchor" aria-label="anchor" href="#arg-refine-af-quantile"></a></dt>
+<dd><p>Numeric, default <code>0.5</code>. Fraction of cells taken
+forward for additional AF passes (see <code>n.af.passes</code>). Only used when
+<code>pipeline = "joint"</code>. Passed to <code>unmix.autospectral.rcpp()</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

@@ -282,7 +282,72 @@ Spectral QC BUV395
 and pass it directly to any unmixing function. Call
 `list.files("table_spectra/")` to find all the files in that folder.
 
-We also need a minimal `flow.control` object for feeding in the dye and
+By default, the new spectral profile extraction pipeline does not
+include any autofluorescence parameter in the output spectra. This is to
+try to reduce confusion. If you want a single AF, as you might have in
+SpectroFlo or other software, you can set `return.af=TRUE` in the call
+to
+[`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md).
+This will extract the mean AF background in the unstained sample that
+you label as “AF” in the `fluorophore` column of your control file.
+
+**Note for ID7000 users:** because the ID7000 can be set up with
+basically any voltage settings for the controls, the spectral signatures
+are really not very consistent between machines (in my experience). So,
+the spectral references in AutoSpectral will not be very informative. In
+order to avoid having all of the “mismatches” trigger legacy refinement,
+the thresholds for this are relaxed for ID7000 files. This should be
+fine, since the new automated pipeline tends to be at least as accurate
+as the legacy approach.
+
+## Details: `get.spectra.automated()` Parameter Reference
+
+| Parameter | Default | What it does |
+|----|----|----|
+| `control.dir` | — | Path to the directory of single-stained control FCS files. |
+| `control.def.file` | — | Path/filename of the control definition CSV. Must already pass [`check.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/check.control.file.md). |
+| `asp` | — | The AutoSpectral parameter list from [`get.autospectral.param()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.md). |
+| `n.candidates` | `1000L` | Top-expressing candidate events selected per fluorophore before cosine filtering. **Ignored in internal-negative mode** (no paired `universal.negative` file), where the top 5% of events by peak channel are used instead. |
+| `n.spectral` | `200L` | Number of spectral events retained after cosine-similarity filtering against the AF vector. |
+| `k.neighbors` | `2L` | Number of nearest neighbours in scatter space used for per-event AF subtraction (KNN scatter-matched AF subtraction step). |
+| `singlet.quantiles` | `c(0.85, 0.975)` | Quantile range used for doublet discrimination on the FSC-H/FSC-A (and SSC) ratio. Tighten this range if you suspect doublet contamination is still getting through. |
+| `cosine.threshold` | `0.9` | Minimum cosine similarity against the spectral reference library required to accept the automated spectrum. Anything below this triggers legacy-pipeline refinement (see note above for ID7000 data). |
+| `peak.signal.threshold` | `0.5` | Minimum normalised signal expected in the peak detector. Informational QC only — it’s reported in the QC log but does not itself trigger legacy refinement. |
+| `legacy.refinement` | `TRUE` | Whether to fall back to the legacy `define.flow.control` → `clean.controls` → `get.fluorophore.spectra` pipeline for any fluorophore that fails the cosine QC check. Set to `FALSE` if you’d rather just see the QC failures and handle them manually. |
+| `top.expressing.override` | `NULL` | A named numeric vector to override the candidate-event count for specific controls (e.g. `c("BUV805" = 500)`). Names can be the FCS filename (no extension) or the fluorophore name. Useful for a control with unusually low event counts or very few positives. |
+| `return.af` | `FALSE` | Appends a single mean-AF row (named `"AF"`) to the output spectra matrix, for use with plain OLS/WLS unmixing. Requires a control row with `fluorophore = AF`. |
+| `figures` | `TRUE` | Produces the full set of diagnostic plots (spectral trace, heatmap, cosine-similarity heatmap, hotspot matrix, QC report). |
+| `plot.cosine.filter` | `TRUE` | When `figures = TRUE`, also generates the multi-panel cosine-similarity filter PDF (per-fluorophore, binned by AF-likeness). Turn off to save time on large panels. |
+| `plot.scatter.match` | `TRUE` | When `figures = TRUE`, also generates the multi-panel KNN scatter-match PDF. Turn off to save time on large panels. |
+| `verbose` | `TRUE` | Print progress messages and the final QC summary table to the console. |
+
+**Tips:**
+
+- If you’re getting a lot of `LEGACY_REFINEMENT` flags, check
+  `peak.signal.threshold` and `cosine.threshold` together in the QC log
+  before assuming your controls are bad. A genuinely dim control will
+  show low `PeakSignal` as well as low `CosineSim`.
+- `n.candidates` and `n.spectral` only matter in **external-negative**
+  mode (i.e. where a `universal.negative` file is paired with the
+  control). In **internal-negative** mode, the top-5%/bottom-10% event
+  split is fixed and these two parameters are silently ignored.
+- The function always writes two CSVs to `table_spectra/`:
+  `Automated_<name>.csv` (best-choice, may include legacy-adopted
+  spectra) and `Automated_original_<name>.csv` (always all-automated).
+  If you’re benchmarking the automated pipeline itself, use the
+  `_original_` file so legacy fallbacks don’t skew your comparison.
+
+## Unmixing
+
+AutoSpectral provides options for unmixing. Let’s start with the most
+basic, which is replicating the OLS unmixing as in SpectroFlo (this is
+Aurora data). By default, the automated spectral extraction pipeline
+does not provide an autofluorescence signature, so this will be
+comparable to performing unmixing without autofluorescence extraction.
+Autofluorescence is best handled via the per-cell approach detailed
+below.
+
+We need a minimal `flow.control` object for feeding in the dye and
 marker names during unmixing. In the automated workflow, this is created
 using the
 [`reload.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/reload.flow.control.md)
@@ -296,16 +361,6 @@ flow.control <- reload.flow.control(
   asp              = asp
 )
 ```
-
-## Unmixing
-
-AutoSpectral provides options for unmixing. Let’s start with the most
-basic, which is replicating the OLS unmixing as in SpectroFlo (this is
-Aurora data). By default, the automated spectral extraction pipeline
-does not provide an autofluorescence signature, so this will be
-comparable to performing unmixing without autofluorescence extraction.
-Autofluorescence is best handled via the per-cell approach detailed
-below.
 
 To unmix, specify the file (and path) of the FCS file you want to unmix:
 

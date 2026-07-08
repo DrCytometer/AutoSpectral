@@ -133,8 +133,6 @@
   : Get Fluorophore Spectra - Automated Workflow
 - [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
   : Get Spectral Variations for Fluorophores
-- [`get.spectral.variants.test()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.test.md)
-  : Get Spectral Variations for Fluorophores
 - [`get.top.events()`](https://drcytometer.github.io/AutoSpectral/reference/get.top.events.md)
   : Get Top (Brightest) Events
 - [`get.universal.negative()`](https://drcytometer.github.io/AutoSpectral/reference/get.universal.negative.md)
@@ -183,6 +181,8 @@
   : Save Unmixing Matrix
 - [`scatter.match.plot()`](https://drcytometer.github.io/AutoSpectral/reference/scatter.match.plot.md)
   : Plot Scatter-Matching of Universal Negative
+- [`sim.flow.data()`](https://drcytometer.github.io/AutoSpectral/reference/sim.flow.data.md)
+  : Simulate Spectral Flow Cytometry Data
 - [`spectral.heatmap()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.heatmap.md)
   : Spectral Heatmap
 - [`spectral.mismatch.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.mismatch.plot.md)

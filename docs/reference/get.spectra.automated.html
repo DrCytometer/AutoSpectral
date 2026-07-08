@@ -16,14 +16,14 @@ control-file metadata already required by the rest of the AutoSpectral
 pipeline:
 Reads all single-stained controls with readFCS().
 Removes saturating events.
-For each fluorophore, determines the AF reference from the paired
+#' 3. For each fluorophore, determines the AF reference from the paired
 universal-negative file specified in universal.negative column of the
-control table, or - if that column is empty - from the lower 25% of
-the control file's own events ranked by the expected peak channel
-(internal-negative mode).
-Performs projection-based AF orthogonalisation to identify the empirical
-peak detector; selects top-expressing events filtered by lowest cosine
-similarity to the AF vector; performs KNN scatter-matched AF subtraction.
+control table, or - if that column is empty - uses internal-negative mode.
+External-negative: projection-based AF orthogonalisation to identify
+the empirical peak detector; cosine-similarity filter to select the least
+AF-like events; KNN scatter-matched AF subtraction; column median summary.
+Internal-negative: top-100 events by expected peak channel minus the
+mean of the bottom-10%; row mean summary; no cosine filter or kNN step.
 Applies QC: if the normalised signal cosine similarity against the
 spectral reference library is below cosine.threshold, the spectrum is
 refined using the legacy gating and cleaning approach.
@@ -42,14 +42,14 @@ control-file metadata already required by the rest of the AutoSpectral
 pipeline:
 Reads all single-stained controls with readFCS().
 Removes saturating events.
-For each fluorophore, determines the AF reference from the paired
+#' 3. For each fluorophore, determines the AF reference from the paired
 universal-negative file specified in universal.negative column of the
-control table, or - if that column is empty - from the lower 25% of
-the control file's own events ranked by the expected peak channel
-(internal-negative mode).
-Performs projection-based AF orthogonalisation to identify the empirical
-peak detector; selects top-expressing events filtered by lowest cosine
-similarity to the AF vector; performs KNN scatter-matched AF subtraction.
+control table, or - if that column is empty - uses internal-negative mode.
+External-negative: projection-based AF orthogonalisation to identify
+the empirical peak detector; cosine-similarity filter to select the least
+AF-like events; KNN scatter-matched AF subtraction; column median summary.
+Internal-negative: top-100 events by expected peak channel minus the
+mean of the bottom-10%; row mean summary; no cosine filter or kNN step.
 Applies QC: if the normalised signal cosine similarity against the
 spectral reference library is below cosine.threshold, the spectrum is
 refined using the legacy gating and cleaning approach.
@@ -126,15 +126,15 @@ input.</p>
 AutoSpectral's internal FCS reader, matrix-based data layout, and the
 control-file metadata already required by the rest of the AutoSpectral
 pipeline:</p><ol><li><p>Reads all single-stained controls with <code><a href="readFCS.html">readFCS()</a></code>.</p></li>
-<li><p>Removes saturating events.</p></li>
-<li><p>For each fluorophore, determines the AF reference from the paired
+<li><p>Removes saturating events.
+#' 3. For each fluorophore, determines the AF reference from the paired
 universal-negative file specified in <code>universal.negative</code> column of the
-control table, or - if that column is empty - from the lower 25% of
-the control file's own events ranked by the expected peak channel
-(internal-negative mode).</p></li>
-<li><p>Performs projection-based AF orthogonalisation to identify the empirical
-peak detector; selects top-expressing events filtered by lowest cosine
-similarity to the AF vector; performs KNN scatter-matched AF subtraction.</p></li>
+control table, or - if that column is empty - uses internal-negative mode.</p></li>
+<li><p><strong>External-negative:</strong> projection-based AF orthogonalisation to identify
+the empirical peak detector; cosine-similarity filter to select the least
+AF-like events; KNN scatter-matched AF subtraction; column median summary.
+<strong>Internal-negative:</strong> top-100 events by expected peak channel minus the
+mean of the bottom-10%; row mean summary; no cosine filter or kNN step.</p></li>
 <li><p>Applies QC: if the normalised signal cosine similarity against the
 spectral reference library is below <code>cosine.threshold</code>, the spectrum is
 refined using the legacy gating and cleaning approach.</p></li>
@@ -157,6 +157,7 @@ refined using the legacy gating and cleaning approach.</p></li>
 <span>  peak.signal.threshold <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  legacy.refinement <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  top.expressing.override <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  return.af <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot.cosine.filter <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot.scatter.match <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -224,6 +225,13 @@ pipeline on controls where the signature does not match the reference well.</p><
 <dd><p>Named numeric vector or <code>NULL</code> (default).
 Override the event count for specific samples. Names should match the FCS
 filename (without extension) or the fluorophore name from the control file.</p></dd>
+
+
+<dt id="arg-return-af">return.af<a class="anchor" aria-label="anchor" href="#arg-return-af"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. Adds a single mean
+autofluorescence spectrum to the output to allow unmixing with OLS or WLS
+using autofluorescence extraction. Requires naming the unstained cell
+control sample as <code>AF</code> for the fluorophore in the control file.</p></dd>
 
 
 <dt id="arg-figures">figures<a class="anchor" aria-label="anchor" href="#arg-figures"></a></dt>

@@ -106,6 +106,22 @@ adjusted by argument `som.dim` to
 [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md),
 which is by default `10`.
 
+A few other arguments control this step. `k.neighbors` (default `3`)
+sets how many scatter-matched nearest neighbours from the unstained pool
+are used to estimate each event’s background. `n.cells` (default
+`10000`) caps how many positive events per fluorophore go into the SOM;
+files with more get randomly downsampled.
+
+Optionally, you can supply `stained.sample`, a path to a representative
+fully-stained FCS file. When provided, it’s unmixed internally to get
+per-fluorophore median positive signal (MFI), which weights the
+“optimization necessity” scoring by brightness rather than geometry
+alone. This feeds into `optimize.necessity.threshold` (default `0.01`):
+fluorophores whose normalised leakage score falls below this are flagged
+`$optimize.recommended = FALSE` in the output and are automatically
+skipped during per-cell optimization by `unmix.autospectral.rcpp()`,
+saving computation on fluorophores where it won’t help.
+
 This is saved as an R object in a .rds file. This will be in the same
 folder as the output plots, unless you change the specified location
 using the argument `output.dir`. By default, you should get
@@ -116,7 +132,8 @@ be accessed later using the
 The variant spectra are QC’d against the optimized single spectrum for
 that fluorophore, as defined in `spectra`. If `spectra` don’t all look
 right, neither will the variants. The QC is done by cosine similarity,
-with a default threshold set to exclude anything less than 0.98.
+with a default `sim.threshold` of `0.985`, below which a candidate
+variant is excluded.
 
 It’s important to bear in mind that we’re only allowing variation within
 the range seen in the single-colour control, nothing more.
@@ -221,6 +238,31 @@ implementation (I’m not a computer scientist). See the article on
 Speed](https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.html)
 for full tips.
 
+As of version 1.6.0, there is a change to how the variants are
+evaluated. Up to this point, selection of the best variants has been
+done in a reduced fluorophore space, using on the fluorophores that are
+“positive”, i.e., above the unstained threshold, in a given cell. This
+is faster, since we aren’t solving for everything all the time, and
+gives us a residual that is more informative (we effectively have a
+smaller panel for each cell, so any leftover bits are easier to assign).
+That trick is responsible for the appearance of discontinuities in the
+unmixing, though. So, version 1.6.0 uses a different approach involving
+the covariance matrix, which looks at the pattern of variation we are
+seeing for the spectrum of a given fluorophore and asks how it is likely
+to propagate into the unmixed data as error or spread. This allows us to
+know more or less **where** we are going to get error. The residual
+then, ideally, tells us the **direction** of the error. Additionally,
+this approach holds off on committing to a variant for a fluorophore
+until any other fluorophores that are competing for that same bit of
+information have also been assessed. Because of this, we can often get a
+bit better solution (better unmixing), but it may take longer, and may
+require multiple rounds or “passes” to achieve the best result.
+
+So, the covariance approach is now the default option for unmixing when
+you supply variant information. If you want to use the original method
+for consistency, it is still available. Just specify
+`pipeline = "legacy"`.
+
 ``` r
 
 fully.stained.dir <- "./Fully stained"
@@ -232,8 +274,64 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
            method = "AutoSpectral",
            af.spectra = lung.af,
            spectra.variants = variants,
-           speed = "fast" )
+           parellel = TRUE,
+           threads = 0,
+           pipeline = "joint",
+           n.passes = 1 )
 ```
+
+Most datasets I have tested show good results with a single pass.
+Setting `n.passes` to anywhere between 2 and 10 can show some
+improvement, larger improvement in some messy data sets. This will
+increase the computational time roughly linearly unless the data
+converges early.
+
+### Additional joint-pipeline tuning
+
+A few more arguments let you tune the joint pipeline beyond `n.passes`:
+
+**Multipass autofluorescence refinement.** `n.af.passes` (default `1`)
+controls how many AF extraction passes are run per cell. The first pass
+uses matching pursuit to assign an AF candidate to every cell; if
+`n.af.passes` is greater than 1, subsequent passes revisit the
+highest-abundance AF cells (controlled by `refine.af.quantile`, default
+`0.5`, the fraction of cells taken forward for reassessment — set to `1`
+to reassess everyone) and can refine the AF assignment further. Like
+`n.passes`, this trades additional computation time for improved AF
+characterization, and is most useful for tissue samples with more
+heterogeneous autofluorescence; PBMC data typically shows negligible
+benefit.
+
+**Collinear fluorophore handling.** `collinear.threshold` (default
+`0.5`) sets the cosine similarity above which two fluorophore variants
+are treated as structurally collinear (e.g. APC/BUV661) and routed into
+conflict resolution rather than independent assignment. Lower values
+trigger conflict resolution more often (more thorough, slower); higher
+values allow more variants to be committed based on minimizing spillover
+from the brighter fluorophore alone, which is faster but can understate
+a dimmer collinear fluorophore’s true abundance. `joint.pair.resolution`
+(default `TRUE`) turns this conflict-resolution step on or off; when
+enabled, a small combinatorial test is run specifically for the
+competing pair(s) to find a better joint solution.
+
+**Per-cell detector weighting.** `cell.weight` (default `FALSE`, but
+`TRUE` automatically on ID7000 data) applies per-cell weighting to the
+joint solve based on each detector’s fitted signal, with `noise.floor`
+(default `125`) preventing near-dark channels from receiving runaway
+weight. `alpha` (default `0.5`) balances residual minimization against
+covariance-based spillover minimization when scoring candidate variants.
+
+Most users won’t need to touch these — the defaults were chosen from
+testing across Aurora, ID7000 and S8 data — but they’re there if you’re
+working with an unusually noisy panel or you want to explore how they
+impact the unmixing.
+
+Unmixed FCS files will appear in folder `./autospectral_unmixed`.
+
+Add a `file.suffix` argument if you want a tag on the FCS file’s name to
+differentiate it from other versions.
+
+## Legacy pipeline notes:
 
 Setting the “speed” determines how many pre-screened candidate variants
 will be tested per cell. The options are “fast” = 1, “medium” = 3, and
@@ -261,16 +359,7 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
            n.variants = 100 )
 ```
 
-Note that the “fast” approach in version 1.0.0 is very different from
-the “fast” approximation in earlier version of AutoSpectral. It is not
-expected to produce any substantial discontinuities in the data–if you
-see this, please reach out (data will be helpful in identifying any
-issues). Further work on improving this is ongoing.
-
-Unmixed FCS files will appear in folder `./autospectral_unmixed`.
-
-Add a `file.suffix` argument if you want a tag on the FCS file’s name to
-differentiate it from other versions.
+## Accuracy
 
 To demonstrate the effectiveness and accuracy of this approach, we
 created a set of synthetic data. In this 42-colour data set from the
@@ -289,7 +378,8 @@ events in the APC channel was reduced from 2194 to 723.
 ![Synthetic per-cell fluorophore
 optimization](figures/Synthetic_perCell_fluor.jpg) Synthetic data
 showing that per-cell optimization of the fluorophore signatures reduces
-spillover spread.
+spillover spread. This example was produced using the legacy pipeline.
+Similar results are obtained with the new joint covariance pipeline.
 
 Correspondingly, the cosine similarity between the model’s predictions
 for BUV661 and the actual data for BUV661 was closer to 1 (identity),

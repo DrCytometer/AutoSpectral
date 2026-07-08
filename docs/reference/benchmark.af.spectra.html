@@ -87,7 +87,7 @@ saved as a line-plot PDF and returned as a list.</p>
 <span>  <span class="va">spectra</span>,</span>
 <span>  <span class="va">af.spectra</span>,</span>
 <span>  <span class="va">asp</span>,</span>
-<span>  functions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"assign.af.fluorophores"</span>, <span class="st">"assign.af.residuals"</span>, <span class="st">"assign.af.joint.cov"</span><span class="op">)</span>,</span>
+<span>  functions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"assign.af.joint.cov"</span>, <span class="st">"assign.af.fluorophores"</span>, <span class="st">"assign.af.residuals"</span><span class="op">)</span>,</span>
 <span>  n.fluors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">10</span>, <span class="fl">15</span>, <span class="fl">20</span>, <span class="fl">25</span>, <span class="fl">30</span>, <span class="fl">35</span>, <span class="fl">40</span><span class="op">)</span>,</span>
 <span>  n.draws <span class="op">=</span> <span class="fl">5L</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
@@ -170,7 +170,7 @@ Default: <code>"af_accuracy_spectra_benchmark"</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named list with three elements:</p><dl><dt><code>raw</code></dt>
 <dd><p>Data frame of per-draw results with columns
-<code>n.fluors</code>, <code>draw</code>, <code>af_method</code>, <code>Mean_Sim</code>,
+<code>n.fluors</code>, <code>draw</code>, <code>method</code>, <code>Mean_Sim</code>,
 and <code>SD_Sim</code>.</p></dd>
 
 <dt><code>summary</code></dt>

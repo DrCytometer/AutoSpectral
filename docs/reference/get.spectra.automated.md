@@ -14,24 +14,23 @@ pipeline:
 1.  Reads all single-stained controls with
     [`readFCS()`](https://drcytometer.github.io/AutoSpectral/reference/readFCS.md).
 
-2.  Removes saturating events.
+2.  Removes saturating events. \#' 3. For each fluorophore, determines
+    the AF reference from the paired universal-negative file specified
+    in `universal.negative` column of the control table, or - if that
+    column is empty - uses internal-negative mode.
 
-3.  For each fluorophore, determines the AF reference from the paired
-    universal-negative file specified in `universal.negative` column of
-    the control table, or - if that column is empty - from the lower 25%
-    of the control file's own events ranked by the expected peak channel
-    (internal-negative mode).
+3.  **External-negative:** projection-based AF orthogonalisation to
+    identify the empirical peak detector; cosine-similarity filter to
+    select the least AF-like events; KNN scatter-matched AF subtraction;
+    column median summary. **Internal-negative:** top-100 events by
+    expected peak channel minus the mean of the bottom-10%; row mean
+    summary; no cosine filter or kNN step.
 
-4.  Performs projection-based AF orthogonalisation to identify the
-    empirical peak detector; selects top-expressing events filtered by
-    lowest cosine similarity to the AF vector; performs KNN
-    scatter-matched AF subtraction.
-
-5.  Applies QC: if the normalised signal cosine similarity against the
+4.  Applies QC: if the normalised signal cosine similarity against the
     spectral reference library is below `cosine.threshold`, the spectrum
     is refined using the legacy gating and cleaning approach.
 
-6.  Returns the spectra matrix in AutoSpectral format (fluorophores x
+5.  Returns the spectra matrix in AutoSpectral format (fluorophores x
     detectors).
 
 The legacy workflow (`define.flow.control` + `clean.controls` +
@@ -52,6 +51,7 @@ get.spectra.automated(
   peak.signal.threshold = 0.5,
   legacy.refinement = TRUE,
   top.expressing.override = NULL,
+  return.af = FALSE,
   figures = TRUE,
   plot.cosine.filter = TRUE,
   plot.scatter.match = TRUE,
@@ -120,6 +120,13 @@ get.spectra.automated(
   Named numeric vector or `NULL` (default). Override the event count for
   specific samples. Names should match the FCS filename (without
   extension) or the fluorophore name from the control file.
+
+- return.af:
+
+  Logical, default `FALSE`. Adds a single mean autofluorescence spectrum
+  to the output to allow unmixing with OLS or WLS using autofluorescence
+  extraction. Requires naming the unstained cell control sample as `AF`
+  for the fluorophore in the control file.
 
 - figures:
 

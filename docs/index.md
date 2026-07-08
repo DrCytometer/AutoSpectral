@@ -63,7 +63,8 @@ it will help. Here are some other tools that may also help:
 
 - [CompensAID](https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html)
 - [spectracle](https://github.com/nlaniewski/spectracle/)
-- [flowstate](https://github.com/nlaniewski/flowstate/tree/master)
+- [flowstate](https://github.com/nlaniewski/flowstate)
+- [spectreasy](https://github.com/pkheisig/spectreasy)
 - [Ozette Resolve](https://www.ozette.com/)
 - [flowUnmix](https://github.com/hally166/flowUnmix)
 - [PanelBuilder](https://github.com/exaexa/panelbuilder)
@@ -103,6 +104,21 @@ What AutoSpectral cannot do:
 ### Latest Stable Release
 
 **Version 1.6.0**
+
+Version 1.6+ provides a new automated approach to extracting spectral
+profiles. Most of the development here has been by Nathan Laniewksi.
+This is fast, highly reproducible, clean and avoids all the issues with
+gating. Try it out with
+[`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md).
+
+Version 1.6+ also provides a new unmixing pipeline for per-cell
+fluorophore optimization to eliminate discontinuities that appeared in
+some data sets. To use this approach, call
+[`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+or
+[`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
+with `pipeline = "joint"`. Otherwise the unmixing will default to the
+original approach.
 
 Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and

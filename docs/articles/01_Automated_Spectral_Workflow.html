@@ -344,17 +344,170 @@ saved to <code>table_spectra/</code>. You can reload it later using
 <code><a href="../reference/read.spectra.html">read.spectra()</a></code> and pass it directly to any unmixing
 function. Call <code>list.files("table_spectra/")</code> to find all the
 files in that folder.</p>
-<p>We also need a minimal <code>flow.control</code> object for feeding
-in the dye and marker names during unmixing. In the automated workflow,
-this is created using the <code><a href="../reference/reload.flow.control.html">reload.flow.control()</a></code> tool:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/reload.flow.control.html">reload.flow.control</a></span><span class="op">(</span></span>
-<span>  control.dir      <span class="op">=</span> <span class="va">control.dir</span>,</span>
-<span>  control.def.file <span class="op">=</span> <span class="va">control.file</span>,</span>
-<span>  asp              <span class="op">=</span> <span class="va">asp</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<p>By default, the new spectral profile extraction pipeline does not
+include any autofluorescence parameter in the output spectra. This is to
+try to reduce confusion. If you want a single AF, as you might have in
+SpectroFlo or other software, you can set <code>return.af=TRUE</code> in
+the call to <code><a href="../reference/get.spectra.automated.html">get.spectra.automated()</a></code>. This will extract the
+mean AF background in the unstained sample that you label as “AF” in the
+<code>fluorophore</code> column of your control file.</p>
+<p><strong>Note for ID7000 users:</strong> because the ID7000 can be set
+up with basically any voltage settings for the controls, the spectral
+signatures are really not very consistent between machines (in my
+experience). So, the spectral references in AutoSpectral will not be
+very informative. In order to avoid having all of the “mismatches”
+trigger legacy refinement, the thresholds for this are relaxed for
+ID7000 files. This should be fine, since the new automated pipeline
+tends to be at least as accurate as the legacy approach.</p>
 </div>
 </div>
+</div>
+<div class="section level2">
+<h2 id="details-get-spectra-automated-parameter-reference">Details: <code>get.spectra.automated()</code> Parameter
+Reference<a class="anchor" aria-label="anchor" href="#details-get-spectra-automated-parameter-reference"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>Parameter</th>
+<th>Default</th>
+<th>What it does</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>control.dir</code></td>
+<td>—</td>
+<td>Path to the directory of single-stained control FCS files.</td>
+</tr>
+<tr class="even">
+<td><code>control.def.file</code></td>
+<td>—</td>
+<td>Path/filename of the control definition CSV. Must already pass
+<code><a href="../reference/check.control.file.html">check.control.file()</a></code>.</td>
+</tr>
+<tr class="odd">
+<td><code>asp</code></td>
+<td>—</td>
+<td>The AutoSpectral parameter list from
+<code><a href="../reference/get.autospectral.param.html">get.autospectral.param()</a></code>.</td>
+</tr>
+<tr class="even">
+<td><code>n.candidates</code></td>
+<td><code>1000L</code></td>
+<td>Top-expressing candidate events selected per fluorophore before
+cosine filtering. <strong>Ignored in internal-negative mode</strong> (no
+paired <code>universal.negative</code> file), where the top 5% of events
+by peak channel are used instead.</td>
+</tr>
+<tr class="odd">
+<td><code>n.spectral</code></td>
+<td><code>200L</code></td>
+<td>Number of spectral events retained after cosine-similarity filtering
+against the AF vector.</td>
+</tr>
+<tr class="even">
+<td><code>k.neighbors</code></td>
+<td><code>2L</code></td>
+<td>Number of nearest neighbours in scatter space used for per-event AF
+subtraction (KNN scatter-matched AF subtraction step).</td>
+</tr>
+<tr class="odd">
+<td><code>singlet.quantiles</code></td>
+<td><code>c(0.85, 0.975)</code></td>
+<td>Quantile range used for doublet discrimination on the FSC-H/FSC-A
+(and SSC) ratio. Tighten this range if you suspect doublet contamination
+is still getting through.</td>
+</tr>
+<tr class="even">
+<td><code>cosine.threshold</code></td>
+<td><code>0.9</code></td>
+<td>Minimum cosine similarity against the spectral reference library
+required to accept the automated spectrum. Anything below this triggers
+legacy-pipeline refinement (see note above for ID7000 data).</td>
+</tr>
+<tr class="odd">
+<td><code>peak.signal.threshold</code></td>
+<td><code>0.5</code></td>
+<td>Minimum normalised signal expected in the peak detector.
+Informational QC only — it’s reported in the QC log but does not itself
+trigger legacy refinement.</td>
+</tr>
+<tr class="even">
+<td><code>legacy.refinement</code></td>
+<td><code>TRUE</code></td>
+<td>Whether to fall back to the legacy <code>define.flow.control</code>
+→ <code>clean.controls</code> → <code>get.fluorophore.spectra</code>
+pipeline for any fluorophore that fails the cosine QC check. Set to
+<code>FALSE</code> if you’d rather just see the QC failures and handle
+them manually.</td>
+</tr>
+<tr class="odd">
+<td><code>top.expressing.override</code></td>
+<td><code>NULL</code></td>
+<td>A named numeric vector to override the candidate-event count for
+specific controls (e.g. <code>c("BUV805" = 500)</code>). Names can be
+the FCS filename (no extension) or the fluorophore name. Useful for a
+control with unusually low event counts or very few positives.</td>
+</tr>
+<tr class="even">
+<td><code>return.af</code></td>
+<td><code>FALSE</code></td>
+<td>Appends a single mean-AF row (named <code>"AF"</code>) to the output
+spectra matrix, for use with plain OLS/WLS unmixing. Requires a control
+row with <code>fluorophore = AF</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>figures</code></td>
+<td><code>TRUE</code></td>
+<td>Produces the full set of diagnostic plots (spectral trace, heatmap,
+cosine-similarity heatmap, hotspot matrix, QC report).</td>
+</tr>
+<tr class="even">
+<td><code>plot.cosine.filter</code></td>
+<td><code>TRUE</code></td>
+<td>When <code>figures = TRUE</code>, also generates the multi-panel
+cosine-similarity filter PDF (per-fluorophore, binned by AF-likeness).
+Turn off to save time on large panels.</td>
+</tr>
+<tr class="odd">
+<td><code>plot.scatter.match</code></td>
+<td><code>TRUE</code></td>
+<td>When <code>figures = TRUE</code>, also generates the multi-panel KNN
+scatter-match PDF. Turn off to save time on large panels.</td>
+</tr>
+<tr class="even">
+<td><code>verbose</code></td>
+<td><code>TRUE</code></td>
+<td>Print progress messages and the final QC summary table to the
+console.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tips:</strong></p>
+<ul>
+<li>If you’re getting a lot of <code>LEGACY_REFINEMENT</code> flags,
+check <code>peak.signal.threshold</code> and
+<code>cosine.threshold</code> together in the QC log before assuming
+your controls are bad. A genuinely dim control will show low
+<code>PeakSignal</code> as well as low <code>CosineSim</code>.</li>
+<li>
+<code>n.candidates</code> and <code>n.spectral</code> only matter in
+<strong>external-negative</strong> mode (i.e. where a
+<code>universal.negative</code> file is paired with the control). In
+<strong>internal-negative</strong> mode, the top-5%/bottom-10% event
+split is fixed and these two parameters are silently ignored.</li>
+<li>The function always writes two CSVs to <code>table_spectra/</code>:
+<code>Automated_&lt;name&gt;.csv</code> (best-choice, may include
+legacy-adopted spectra) and
+<code>Automated_original_&lt;name&gt;.csv</code> (always all-automated).
+If you’re benchmarking the automated pipeline itself, use the
+<code>_original_</code> file so legacy fallbacks don’t skew your
+comparison.</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="unmixing">Unmixing<a class="anchor" aria-label="anchor" href="#unmixing"></a>
@@ -366,6 +519,15 @@ does not provide an autofluorescence signature, so this will be
 comparable to performing unmixing without autofluorescence extraction.
 Autofluorescence is best handled via the per-cell approach detailed
 below.</p>
+<p>We need a minimal <code>flow.control</code> object for feeding in the
+dye and marker names during unmixing. In the automated workflow, this is
+created using the <code><a href="../reference/reload.flow.control.html">reload.flow.control()</a></code> tool:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/reload.flow.control.html">reload.flow.control</a></span><span class="op">(</span></span>
+<span>  control.dir      <span class="op">=</span> <span class="va">control.dir</span>,</span>
+<span>  control.def.file <span class="op">=</span> <span class="va">control.file</span>,</span>
+<span>  asp              <span class="op">=</span> <span class="va">asp</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>To unmix, specify the file (and path) of the FCS file you want to
 unmix:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">

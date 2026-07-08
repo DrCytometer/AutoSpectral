@@ -67,7 +67,7 @@ asp <- get.autospectral.param( cytometer = "aurora", figures = TRUE )
 control.dir <- "./SSC"
 control.file <- "fcs_control_file.csv"
 flow.control <- reload.flow.control( control.dir, control.file, asp )
-spectra <- get.spectra.automated( control.dir, contro.file, asp )
+spectra <- get.spectra.automated( control.dir, control.file, asp )
 ```
 
 Now we are ready to get the AF spectra. For this data set, we have
@@ -108,6 +108,18 @@ This can be accessed through the logical parameter `deduplicate`
 accuracy of per-cell AF assignment, as should be expected, but the
 impact is minor.
 
+Before the SOM is even built,
+[`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
+also screens the unstained sample itself for likely contamination. Any
+event whose cosine similarity to a fluorophore spectrum in `spectra`
+meets or exceeds `contaminant.threshold` (default `0.99`) is removed
+prior to clustering; this is controlled by the logical
+`remove.contaminants` (default `TRUE`). This per-event check is more
+sensitive than a post-hoc check on the finished AF spectra, since a
+handful of contaminating events (a stray stained cell, a bead) are
+unlikely to dominate an entire SOM node on their own, but would
+otherwise get baked into an AF signature.
+
 We get output plots of the AF signatures in the
 `figure_autofluorescence` folder.
 
@@ -142,31 +154,38 @@ acquired, although you may need to increase `som.dim` or set
 `refine=TRUE` if there are a lot of AF signatures present in each part
 of the pool.
 
-## Update for Version 1.0.0
+## Refining the AF spectrum library (Version 1.0.0)
 
 Version 1.0.0 changes the way autofluorescence spectra are identified
 slightly, allowing for a second round of identification of cells that
 are likely to be problematic given only the first set of AF spectra.
-This is done by using AutoSpectral’ per-cell autofluorescence extraction
-on the unstained sample. Any signal in the fluorophore channels in the
-unmixed unstained data can be considered to be error. In the update, we
-select the cells that are the furthest from zero in the unmixed space
-and run a second round of cluster on these, updating the AF spectra that
-were used to unmix them. This expands the set of possibilities, focusing
-on the worst offenders. This is most useful for complex tissue samples,
-and allows extraction of the problematic last 1-3% of cells that are in
-the wrong place. To use this expanded set, run
+This is done by using AutoSpectral’s per-cell autofluorescence
+extraction on the unstained sample. Any signal in the fluorophore
+channels in the unmixed unstained data can be considered to be error. In
+the update, we select the cells that are the furthest from zero in the
+unmixed space and run a second round of clustering on these, updating
+the AF spectra that were used to unmix them. This expands the set of
+possibilities, focusing on the worst offenders. This is most useful for
+complex tissue samples, and allows extraction of the problematic last
+1-3% of cells that are in the wrong place. To use this expanded set, run
 [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
 with `refine=TRUE`. Note that `refine = TRUE` is the default as of
 version 1.0.0.
+
+Note that this is distinct from the multipass AF *assignment* option
+described later in this article (`n.af.passes`). This section is about
+building a better *library* of AF spectra before unmixing ever happens;
+`n.af.passes` is about giving each cell more than one shot at matching
+against that library *during* unmixing itself.
 
 ## Extracting AF for each cell
 
 While you can call
 [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)
-directly, this requires reading in the FCS file into R, extracting the
-expression data and so on. The better option is to just call unmix.fcs
-directly, which will create an unmixed FCS file from your raw FCS file.
+or `unmix.autospectral.rcpp()` directly, this requires reading in the
+FCS file into R, extracting the expression data and so on. The better
+option is to just call unmix.fcs directly, which will create an unmixed
+FCS file from your raw FCS file.
 
 ``` r
 
@@ -180,9 +199,59 @@ unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs
            af.spectra = lung.af )
 ```
 
-This will use OLS to find the optimal AF per cell.
-
 Unmixed FCS files will appear in folder `./autospectral_unmixed`.
+
+### Multipass AF assignment for complex samples
+
+For particularly messy samples (tissues, tumors), a single AF
+subtraction pass per cell may not remove everything it should,
+particularly for the higher-abundance “worst offender” cells. The joint
+unmixing pipeline underlying
+[`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+(see `unmix.autospectral.rcpp()`, backed by
+`unmix_autospectral_joint_pipeline.cpp`) supports a second pass of AF
+*assignment*, on top of whatever spectra you generated with
+[`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md).
+
+This is controlled by two arguments to
+[`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md):
+
+- `n.af.passes` (default `1L`): the number of AF assignment passes to
+  run per cell. Setting this to `2` re-scores the residual left over
+  after the first pass against the AF library and, if a better match is
+  found, adds that AF contribution on top of the first pass’s estimate.
+- `refine.af.quantile` (default `0.5`): controls which cells are taken
+  forward for the additional pass(es). Only cells at or above this
+  quantile of first-pass AF abundance are re-scored; the rest are left
+  as-is. Set to `1` to force every cell through additional passes,
+  though this is rarely necessary and will increase unmixing time.
+  Testing suggests that a value of around `0.7` will be good for most
+  problematic samples, so `0.5` is generous.
+
+``` r
+
+unmix.fcs( fcs.file = file.path( fully.stained.dir, "C3 Lung_GFP_003_Samples.fcs" ),
+           spectra = spectra,
+           asp = asp,
+           flow.control = flow.control,
+           method = "AutoSpectral",
+           af.spectra = lung.af,
+           n.af.passes = 2L,
+           refine.af.quantile = 0.5 )
+```
+
+As with `get.af.spectra(refine = TRUE)`, this is aimed at complex AF
+samples and comes at some cost in processing time proportional to the
+fraction of cells re-scored. For clean PBMC-type samples, the default
+`n.af.passes = 1` is usually sufficient.
+
+[`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+also exposes several other joint-pipeline tuning parameters
+(`cell.weight`, `alpha`, `collinear.threshold`, `joint.pair.resolution`,
+`noise.floor`) that control the per-cell fluorophore variant
+optimisation rather than AF extraction; see
+[`?unmix.fcs`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+for details.
 
 ### Go Faster
 

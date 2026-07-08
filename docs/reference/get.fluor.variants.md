@@ -124,7 +124,9 @@ get.fluor.variants(
 
 - af.pcs:
 
-  Matrix of autofluorescence-defining principal components.
+  Named list of autofluorescence-defining principal component matrices,
+  one per unique unstained FCS file. Names are FCS filenames matching
+  entries in `universal.negative`.
 
 - n.cells:
 

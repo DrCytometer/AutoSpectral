@@ -124,6 +124,8 @@ produced if requested.</p>
 <span>  variant.fill.alpha <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  median.line.color <span class="op">=</span> <span class="st">"black"</span>,</span>
 <span>  median.linewidth <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  stained.sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  optimize.necessity.threshold <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -217,6 +219,23 @@ Default <code>"red"</code>.</p></dd>
 <dt id="arg-median-linewidth">median.linewidth<a class="anchor" aria-label="anchor" href="#arg-median-linewidth"></a></dt>
 <dd><p>Width of the reference-spectrum line. Default
 <code>1</code>.</p></dd>
+
+
+<dt id="arg-stained-sample">stained.sample<a class="anchor" aria-label="anchor" href="#arg-stained-sample"></a></dt>
+<dd><p>Optional file path to a representative stained FCS
+file. When supplied, it is read and unmixed to obtain per-fluorophore
+median positive signal (MFI), which weights the optimization necessity
+scores by fluorophore brightness. Pass <code>NULL</code> (default) to use purely
+geometric scores.</p></dd>
+
+
+<dt id="arg-optimize-necessity-threshold">optimize.necessity.threshold<a class="anchor" aria-label="anchor" href="#arg-optimize-necessity-threshold"></a></dt>
+<dd><p>Numeric in <code>[0, 1]</code>, default <code>0.01</code>.
+Passed to <code><a href="calculate.optimize.necessity.html">calculate.optimize.necessity()</a></code>. Fluorophores whose normalised
+leakage score falls below this value are flagged as not requiring per-cell
+spectral optimisation. The result is stored in
+<code>$optimize.recommended</code> in the returned list and used automatically by
+<code>unmix.autospectral.rcpp()</code> to skip unnecessary optimisation passes.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

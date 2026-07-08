@@ -152,7 +152,7 @@ unmixing.</p>
 <span><span class="va">control.dir</span> <span class="op">&lt;-</span> <span class="st">"./SSC"</span></span>
 <span><span class="va">control.file</span> <span class="op">&lt;-</span> <span class="st">"fcs_control_file.csv"</span></span>
 <span><span class="va">flow.control</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/reload.flow.control.html">reload.flow.control</a></span><span class="op">(</span> <span class="va">control.dir</span>, <span class="va">control.file</span>, <span class="va">asp</span> <span class="op">)</span></span>
-<span><span class="va">spectra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.spectra.automated.html">get.spectra.automated</a></span><span class="op">(</span> <span class="va">control.dir</span>, <span class="va">contro.file</span>, <span class="va">asp</span> <span class="op">)</span></span></code></pre></div>
+<span><span class="va">spectra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.spectra.automated.html">get.spectra.automated</a></span><span class="op">(</span> <span class="va">control.dir</span>, <span class="va">control.file</span>, <span class="va">asp</span> <span class="op">)</span></span></code></pre></div>
 <p>Now we are ready to get the AF spectra. For this data set, we have
 spleen, lung and brain samples from mouse. We can do all three. I’ve got
 the files in the <code>./SSC</code> folder, but be sure to pass the file
@@ -187,6 +187,17 @@ similarity threshold controlled by
 <code>deduplication.threshold = 0.99</code>. In testing, deduplication
 reduces the accuracy of per-cell AF assignment, as should be expected,
 but the impact is minor.</p>
+<p>Before the SOM is even built, <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> also
+screens the unstained sample itself for likely contamination. Any event
+whose cosine similarity to a fluorophore spectrum in
+<code>spectra</code> meets or exceeds <code>contaminant.threshold</code>
+(default <code>0.99</code>) is removed prior to clustering; this is
+controlled by the logical <code>remove.contaminants</code> (default
+<code>TRUE</code>). This per-event check is more sensitive than a
+post-hoc check on the finished AF spectra, since a handful of
+contaminating events (a stray stained cell, a bead) are unlikely to
+dominate an entire SOM node on their own, but would otherwise get baked
+into an AF signature.</p>
 <p>We get output plots of the AF signatures in the
 <code>figure_autofluorescence</code> folder.</p>
 <p><img src="figures/Lung_AF_20250909.jpg" alt="Lung AF"><img src="figures/Brain_AF_20250909.jpg" alt="Lung AF"><img src="figures/Spleen_AF_20250909.jpg" alt="Lung AF"></p>
@@ -213,30 +224,37 @@ events acquired, although you may need to increase <code>som.dim</code>
 or set <code>refine=TRUE</code> if there are a lot of AF signatures
 present in each part of the pool.</p>
 <div class="section level2">
-<h2 id="update-for-version-1-0-0">Update for Version 1.0.0<a class="anchor" aria-label="anchor" href="#update-for-version-1-0-0"></a>
+<h2 id="refining-the-af-spectrum-library-version-1-0-0">Refining the AF spectrum library (Version 1.0.0)<a class="anchor" aria-label="anchor" href="#refining-the-af-spectrum-library-version-1-0-0"></a>
 </h2>
 <p>Version 1.0.0 changes the way autofluorescence spectra are identified
 slightly, allowing for a second round of identification of cells that
 are likely to be problematic given only the first set of AF spectra.
-This is done by using AutoSpectral’ per-cell autofluorescence extraction
-on the unstained sample. Any signal in the fluorophore channels in the
-unmixed unstained data can be considered to be error. In the update, we
-select the cells that are the furthest from zero in the unmixed space
-and run a second round of cluster on these, updating the AF spectra that
-were used to unmix them. This expands the set of possibilities, focusing
-on the worst offenders. This is most useful for complex tissue samples,
-and allows extraction of the problematic last 1-3% of cells that are in
-the wrong place. To use this expanded set, run
+This is done by using AutoSpectral’s per-cell autofluorescence
+extraction on the unstained sample. Any signal in the fluorophore
+channels in the unmixed unstained data can be considered to be error. In
+the update, we select the cells that are the furthest from zero in the
+unmixed space and run a second round of clustering on these, updating
+the AF spectra that were used to unmix them. This expands the set of
+possibilities, focusing on the worst offenders. This is most useful for
+complex tissue samples, and allows extraction of the problematic last
+1-3% of cells that are in the wrong place. To use this expanded set, run
 <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> with <code>refine=TRUE</code>. Note that
 <code>refine = TRUE</code> is the default as of version 1.0.0.</p>
+<p>Note that this is distinct from the multipass AF <em>assignment</em>
+option described later in this article (<code>n.af.passes</code>). This
+section is about building a better <em>library</em> of AF spectra before
+unmixing ever happens; <code>n.af.passes</code> is about giving each
+cell more than one shot at matching against that library <em>during</em>
+unmixing itself.</p>
 </div>
 <div class="section level2">
 <h2 id="extracting-af-for-each-cell">Extracting AF for each cell<a class="anchor" aria-label="anchor" href="#extracting-af-for-each-cell"></a>
 </h2>
-<p>While you can call <code><a href="../reference/unmix.autospectral.html">unmix.autospectral()</a></code> directly, this
-requires reading in the FCS file into R, extracting the expression data
-and so on. The better option is to just call unmix.fcs directly, which
-will create an unmixed FCS file from your raw FCS file.</p>
+<p>While you can call <code><a href="../reference/unmix.autospectral.html">unmix.autospectral()</a></code> or
+<code>unmix.autospectral.rcpp()</code> directly, this requires reading
+in the FCS file into R, extracting the expression data and so on. The
+better option is to just call unmix.fcs directly, which will create an
+unmixed FCS file from your raw FCS file.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fully.stained.dir</span> <span class="op">&lt;-</span> <span class="st">"./Fully stained"</span></span>
 <span></span>
@@ -246,9 +264,58 @@ will create an unmixed FCS file from your raw FCS file.</p>
 <span>           flow.control <span class="op">=</span> <span class="va">flow.control</span>,</span>
 <span>           method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
 <span>           af.spectra <span class="op">=</span> <span class="va">lung.af</span> <span class="op">)</span></span></code></pre></div>
-<p>This will use OLS to find the optimal AF per cell.</p>
 <p>Unmixed FCS files will appear in folder
 <code>./autospectral_unmixed</code>.</p>
+<div class="section level3">
+<h3 id="multipass-af-assignment-for-complex-samples">Multipass AF assignment for complex samples<a class="anchor" aria-label="anchor" href="#multipass-af-assignment-for-complex-samples"></a>
+</h3>
+<p>For particularly messy samples (tissues, tumors), a single AF
+subtraction pass per cell may not remove everything it should,
+particularly for the higher-abundance “worst offender” cells. The joint
+unmixing pipeline underlying <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> (see
+<code>unmix.autospectral.rcpp()</code>, backed by
+<code>unmix_autospectral_joint_pipeline.cpp</code>) supports a second
+pass of AF <em>assignment</em>, on top of whatever spectra you generated
+with <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code>.</p>
+<p>This is controlled by two arguments to <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code>:</p>
+<ul>
+<li>
+<code>n.af.passes</code> (default <code>1L</code>): the number of AF
+assignment passes to run per cell. Setting this to <code>2</code>
+re-scores the residual left over after the first pass against the AF
+library and, if a better match is found, adds that AF contribution on
+top of the first pass’s estimate.</li>
+<li>
+<code>refine.af.quantile</code> (default <code>0.5</code>): controls
+which cells are taken forward for the additional pass(es). Only cells at
+or above this quantile of first-pass AF abundance are re-scored; the
+rest are left as-is. Set to <code>1</code> to force every cell through
+additional passes, though this is rarely necessary and will increase
+unmixing time. Testing suggests that a value of around <code>0.7</code>
+will be good for most problematic samples, so <code>0.5</code> is
+generous.</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/unmix.fcs.html">unmix.fcs</a></span><span class="op">(</span> fcs.file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span> <span class="va">fully.stained.dir</span>, <span class="st">"C3 Lung_GFP_003_Samples.fcs"</span> <span class="op">)</span>,</span>
+<span>           spectra <span class="op">=</span> <span class="va">spectra</span>,</span>
+<span>           asp <span class="op">=</span> <span class="va">asp</span>,</span>
+<span>           flow.control <span class="op">=</span> <span class="va">flow.control</span>,</span>
+<span>           method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
+<span>           af.spectra <span class="op">=</span> <span class="va">lung.af</span>,</span>
+<span>           n.af.passes <span class="op">=</span> <span class="fl">2L</span>,</span>
+<span>           refine.af.quantile <span class="op">=</span> <span class="fl">0.5</span> <span class="op">)</span></span></code></pre></div>
+<p>As with <code>get.af.spectra(refine = TRUE)</code>, this is aimed at
+complex AF samples and comes at some cost in processing time
+proportional to the fraction of cells re-scored. For clean PBMC-type
+samples, the default <code>n.af.passes = 1</code> is usually
+sufficient.</p>
+<p><code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> also exposes several other joint-pipeline
+tuning parameters (<code>cell.weight</code>, <code>alpha</code>,
+<code>collinear.threshold</code>, <code>joint.pair.resolution</code>,
+<code>noise.floor</code>) that control the per-cell fluorophore variant
+optimisation rather than AF extraction; see <code><a href="../reference/unmix.fcs.html">?unmix.fcs</a></code> for
+details.</p>
+</div>
 <div class="section level3">
 <h3 id="go-faster">Go Faster<a class="anchor" aria-label="anchor" href="#go-faster"></a>
 </h3>

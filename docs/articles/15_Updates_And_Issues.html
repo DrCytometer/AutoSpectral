@@ -92,9 +92,9 @@
 
     
     
-<div class="section level2">
-<h2 id="updates-and-news">Updates and news<a class="anchor" aria-label="anchor" href="#updates-and-news"></a>
-</h2>
+<div class="section level3">
+<h3 id="updates-and-news">Updates and news<a class="anchor" aria-label="anchor" href="#updates-and-news"></a>
+</h3>
 <ul>
 <li><p>Version 0.8.1: More fluorophores, rearranging detectors if
 needed</p></li>
@@ -284,7 +284,234 @@ removed because the user should be providing this.</li>
 </li>
 </ul>
 </div>
-  </main>
+<div class="section level2">
+<h2 id="autospectral-1-5-3-2026-03-31">AutoSpectral 1.5.3 (2026-03-31)<a class="anchor" aria-label="anchor" href="#autospectral-1-5-3-2026-03-31"></a>
+</h2>
+<div class="section level3">
+<h3 id="improvements">Improvements<a class="anchor" aria-label="anchor" href="#improvements"></a>
+</h3>
+<ul>
+<li>Change to only create output folders on an as-needed basis.</li>
+<li>Improve fluorophore matching to take the longest fluorophore name
+found.</li>
+<li>Fix Xenith transformation settings.</li>
+<li>Add spectral references for the Xenith.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="bug-fixes">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes"></a>
+</h3>
+<ul>
+<li>A patch to allow per-cell fluorophore optimization when only a
+single fluorophore is present in the data. This was being blocked by
+checks on the structure of the spectral variants being passed.</li>
+</ul>
+</div>
+</div>
+<div class="section level2">
+<h2 id="autospectral-1-5-4-2026-04-13">AutoSpectral 1.5.4 (2026-04-13)<a class="anchor" aria-label="anchor" href="#autospectral-1-5-4-2026-04-13"></a>
+</h2>
+<div class="section level3">
+<h3 id="improvements-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1"></a>
+</h3>
+<ul>
+<li>More fluorophores.</li>
+<li>More markers.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="bug-fixes-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1"></a>
+</h3>
+<ul>
+<li>A change to <code><a href="../reference/validate.control.file.html">validate.control.file()</a></code> to permit
+duplication of the unstained samples in the control file. Necessary for
+integration with the new <code>AutoSpectralHelper</code> app.</li>
+</ul>
+</div>
+</div>
+<div class="section level2">
+<h2 id="autospectral-1-5-5-2026-04-18">AutoSpectral 1.5.5 (2026-04-18)<a class="anchor" aria-label="anchor" href="#autospectral-1-5-5-2026-04-18"></a>
+</h2>
+<div class="section level3">
+<h3 id="improvements-2">Improvements<a class="anchor" aria-label="anchor" href="#improvements-2"></a>
+</h3>
+<ul>
+<li>More fluorophores.</li>
+<li>More A5SE spectral signatures.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="bug-fixes-2">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2"></a>
+</h3>
+<ul>
+<li>Spectral normalization to the peak channel (L-inf) when reading
+spectral profiles from BD S8/A8 FCS files.</li>
+</ul>
+</div>
+</div>
+<div class="section level2">
+<h2 id="autospectral-1-5-6-2026-04-21">AutoSpectral 1.5.6 (2026-04-21)<a class="anchor" aria-label="anchor" href="#autospectral-1-5-6-2026-04-21"></a>
+</h2>
+<div class="section level3">
+<h3 id="improvements-3">Improvements<a class="anchor" aria-label="anchor" href="#improvements-3"></a>
+</h3>
+<ul>
+<li>M x N and N x N plotting of unmixed data using
+<code><a href="../reference/unmixed.mxn.plot.html">unmixed.mxn.plot()</a></code> and <code><a href="../reference/unmixed.nxn.plot.html">unmixed.nxn.plot()</a></code>
+</li>
+<li>Calculate the secondary stain index per “Evaluating the performance
+of Slingshot SpectraComp particles as universal single stain controls in
+flow cytometry” by Oliveira et al. Call
+<code><a href="../reference/calculate.ssi.html">calculate.ssi()</a></code>.</li>
+<li>Plot the mismatch between two spectral profiles (e.g., beads
+vs. cells) as in the pre-print by Konecny et al. on unmixing-dependent
+spread. Call <code>ppectral.mismatch.plot()</code>.</li>
+<li>Compare unmixing of the same data side-by-side with two different
+spectral mixing matrices. Call <code><a href="../reference/compare.unmix.html">compare.unmix()</a></code>.</li>
+<li>Multiple file formats when creating plots: pdf, tiff, png, jpg,
+etc.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="bug-fixes-3">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-3"></a>
+</h3>
+<ul>
+<li>Now passing random seed from <code>asp$downsample.seed</code>
+throughout.</li>
+<li>Fixed an issue where <code><a href="../reference/spectral.variant.plot.html">spectral.variant.plot()</a></code> would not
+push the plot to the viewer.</li>
+</ul>
+</div>
+</div>
+<div class="section level2">
+<h2 id="autospectral-1-6-0-2026-06-01">AutoSpectral 1.6.0 (2026-06-01)<a class="anchor" aria-label="anchor" href="#autospectral-1-6-0-2026-06-01"></a>
+</h2>
+<div class="section level3">
+<h3 id="new-features">New Features<a class="anchor" aria-label="anchor" href="#new-features"></a>
+</h3>
+<ul>
+<li>Automated spectral profile extraction using approaches developed by
+Nathan Laniewski in <code>flowState</code>. This simplifies the workflow
+considerably, and eliminates the need for gating, which was a key cause
+of stress. The new automated approach employs projection
+orthogonalization to determine the peak channel (which way is the
+control going that isn’t like the autofluorescence?), and uses cosine
+filtering (which events are least contaminated by AF?) to find the clean
+spectral signatures.</li>
+<li>New joint unmixing pipeline
+(<code><a href="../reference/unmix.autospectral.joint.html">unmix.autospectral.joint()</a></code>), implemented in C++, using
+covariance-weighted spillover and residual alignment to solve
+autofluorescence and fluorophore assignment together rather than
+sequentially. Structurally collinear fluorophore pairs (e.g.,
+APC/BUV661) are handled via joint-pair conflict resolution so genuine
+double-positive signal isn’t suppressed. Seven new tuning parameters
+(<code>n.af.passes</code>, <code>cell.weight</code>,
+<code>noise.floor</code>, <code>alpha</code>,
+<code>collinear.threshold</code>, <code>joint.pair.resolution</code>,
+<code>refine.af.quantile</code>) are now wired through both
+<code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> and <code><a href="../reference/unmix.folder.html">unmix.folder()</a></code>.</li>
+<li>
+<code><a href="../reference/calculate.optimize.necessity.html">calculate.optimize.necessity()</a></code> to determine which cells
+actually require per-cell fluorophore optimization, avoiding unnecessary
+computation.</li>
+<li>Multipass autofluorescence refinement using a matching-pursuit
+approach, with fixed pass-1 baseline denominators to prevent noise from
+dominating the highest-abundance cells in later passes.</li>
+<li>
+<code>simulate.flow.data()</code> generates synthetic ground-truth
+data by summing single-stained controls, providing a benchmark for
+false-negative rates on double-positive populations.</li>
+<li>New AF autofluorescence comparison and benchmarking functions for
+evaluating accuracy against ground truth.</li>
+<li>A merging of the approaches for per-cell autofluorescence assignment
+using the covariance structure: <code><a href="../reference/assign.af.joint.cov.html">assign.af.joint.cov()</a></code> to
+assess how autofluorescence variation impacts fluorophore values, with
+joint scoring of residuals. This improves on the existing residual- and
+projection-based AF assignment methods.</li>
+<li>Extension of the variance-covariance error propagation plus
+residuals scoring metric to per-cell fluorophore optimization. This
+avoids the previous need to optimize in the reduced space of only
+positive fluorophores in each cell, which was responsible for
+discontinuities appearing in several data sets around zero.</li>
+<li>Legacy mode support. All pre-existing workflows remain intact, but
+some must be accessed via a <code>legacy</code> argument in the function
+calls.</li>
+<li>AutoSpectral landing page. Type <code><a href="../reference/AutoSpectral.html">?AutoSpectral</a></code> in your
+IDE to open a workflow overview with links to key functions and
+articles.</li>
+<li>FCS 3.1 compliance. Modified FCS files now carry the
+<code>$ORIGINALITY</code>, <code>$LAST_MODIFIER</code>, and
+<code>$LAST_MODIFIED</code> keywords per the FCS 3.1 standard.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="improvements-4">Improvements<a class="anchor" aria-label="anchor" href="#improvements-4"></a>
+</h3>
+<ul>
+<li>C++ accelerated FCS reading and writing via
+<code>AutoSpectralRcpp</code>. Adapted from work by Samuel
+Granjeaud.</li>
+<li>Much faster plotting throughout, using a combination of point
+downsampling, raster rendering
+(<code>ragg</code>/<code>scattermore</code>), and C++ acceleration when
+<code>AutoSpectralRcpp</code> is available.</li>
+<li>Faster variant and AF spectra determination via
+<code>EmbedSOM</code> when <code>AutoSpectralRcpp</code> is
+installed.</li>
+<li>
+<code>viridis</code> added as a dependency for improved colour
+scaling in density plots.</li>
+<li>Support for <code>patchwork</code> to allow manual faceting and
+combination of plots.</li>
+<li>Spectral reference library updated with additional entries.</li>
+<li>Scatter-matching via k-nearest neighbours for higher precision.</li>
+<li>Cosine filtering of unstained samples against the fluorophore
+spectral profiles to reduce potential errors when the “unstained” isn’t
+actually completely unstained.</li>
+<li>Cosine filtering and kNN background matching for
+<code>get.spectra.variants()</code> to reduce undesireable influence of
+autofluorescence.</li>
+<li>Non-negative clamping of spectral profiles to prevent artefactual
+negative spectral values propagating into unmixing.</li>
+<li>Type-checking and validation added at function entry (e.g.,
+<code><a href="../reference/get.spectral.variants.html">get.spectral.variants()</a></code>) to guard against deprecated
+positional arguments silently corrupting subsequent parameters, with
+explicit error messages.</li>
+<li>Cell weighting is now enabled by default for the ID7000, and
+detection thresholds have been relaxed for this platform.</li>
+<li>
+<code>NAMESPACE</code> injection for optional dependencies
+(<code>AutoSpectralRcpp</code>, <code>EmbedSOM</code>) replaced with
+<code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> calls for a safer, more portable
+pattern.</li>
+<li>Removed the <code>cairo</code> and <code>methods</code> package
+dependencies.</li>
+<li>Defensive <code>tryCatch</code> wrapping around plotting calls, and
+guards against unintended matrix-to-vector dropping.</li>
+<li>Guards added for low cell count edge cases to prevent dimension
+errors.</li>
+<li>General function and code cleanup throughout.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="bug-fixes-4">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-4"></a>
+</h3>
+<ul>
+<li>Keywords issue causing files from BD instruments to occasionally
+emit scrambled data should now be fixed. Only whitelisted channels are
+preserved from the input raw FCS files.</li>
+<li>Fixed handling of negative autofluorescence spectra in normalization
+and plotting.</li>
+<li>Fixed hexbin rendering in N x N plots.</li>
+<li>Fixed a typo (<code>apply</code> should have been
+<code>lapply</code>).</li>
+<li>Various fixes to get <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> passing its test suite
+again.</li>
+</ul>
+</div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

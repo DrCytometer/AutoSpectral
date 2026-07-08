@@ -12,6 +12,30 @@
   control going that isn’t like the autofluorescence?), and uses cosine
   filtering (which events are least contaminated by AF?) to find the
   clean spectral signatures.
+- New joint unmixing pipeline
+  ([`unmix.autospectral.joint()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.joint.md)),
+  implemented in C++, using covariance-weighted spillover and residual
+  alignment to solve autofluorescence and fluorophore assignment
+  together rather than sequentially. Structurally collinear fluorophore
+  pairs (e.g., APC/BUV661) are handled via joint-pair conflict
+  resolution so genuine double-positive signal isn’t suppressed. Seven
+  new tuning parameters (`n.af.passes`, `cell.weight`, `noise.floor`,
+  `alpha`, `collinear.threshold`, `joint.pair.resolution`,
+  `refine.af.quantile`) are now wired through both
+  [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+  and
+  [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md).
+- [`calculate.optimize.necessity()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.optimize.necessity.md)
+  to determine which cells actually require per-cell fluorophore
+  optimization, avoiding unnecessary computation.
+- Multipass autofluorescence refinement using a matching-pursuit
+  approach, with fixed pass-1 baseline denominators to prevent noise
+  from dominating the highest-abundance cells in later passes.
+- `simulate.flow.data()` generates synthetic ground-truth data by
+  summing single-stained controls, providing a benchmark for
+  false-negative rates on double-positive populations.
+- New AF autofluorescence comparison and benchmarking functions for
+  evaluating accuracy against ground truth.
 - A merging of the approaches for per-cell autofluorescence assignment
   using the covariance structure:
   [`assign.af.joint.cov()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.joint.cov.md)
@@ -56,6 +80,21 @@
   autofluorescence.
 - Non-negative clamping of spectral profiles to prevent artefactual
   negative spectral values propagating into unmixing.
+- Type-checking and validation added at function entry (e.g.,
+  [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md))
+  to guard against deprecated positional arguments silently corrupting
+  subsequent parameters, with explicit error messages.
+- Cell weighting is now enabled by default for the ID7000, and detection
+  thresholds have been relaxed for this platform.
+- `NAMESPACE` injection for optional dependencies (`AutoSpectralRcpp`,
+  `EmbedSOM`) replaced with
+  [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) calls for
+  a safer, more portable pattern.
+- Removed the `cairo` and `methods` package dependencies.
+- Defensive `tryCatch` wrapping around plotting calls, and guards
+  against unintended matrix-to-vector dropping.
+- Guards added for low cell count edge cases to prevent dimension
+  errors.
 - General function and code cleanup throughout.
 
 ### Bug fixes
@@ -63,6 +102,13 @@
 - Keywords issue causing files from BD instruments to occasionally emit
   scrambled data should now be fixed. Only whitelisted channels are
   preserved from the input raw FCS files.
+- Fixed handling of negative autofluorescence spectra in normalization
+  and plotting.
+- Fixed hexbin rendering in N x N plots.
+- Fixed a typo (`apply` should have been `lapply`).
+- Various fixes to get
+  [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+  passing its test suite again.
 
 ## AutoSpectral 1.5.6 (2026-04-21)
 

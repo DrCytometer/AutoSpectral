@@ -37,6 +37,8 @@ get.spectral.variants(
   variant.fill.alpha = 0.7,
   median.line.color = "black",
   median.linewidth = 1,
+  stained.sample = NULL,
+  optimize.necessity.threshold = 0.01,
   ...
 )
 ```
@@ -124,6 +126,24 @@ get.spectral.variants(
 - median.linewidth:
 
   Width of the reference-spectrum line. Default `1`.
+
+- stained.sample:
+
+  Optional file path to a representative stained FCS file. When
+  supplied, it is read and unmixed to obtain per-fluorophore median
+  positive signal (MFI), which weights the optimization necessity scores
+  by fluorophore brightness. Pass `NULL` (default) to use purely
+  geometric scores.
+
+- optimize.necessity.threshold:
+
+  Numeric in `[0, 1]`, default `0.01`. Passed to
+  [`calculate.optimize.necessity()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.optimize.necessity.md).
+  Fluorophores whose normalised leakage score falls below this value are
+  flagged as not requiring per-cell spectral optimisation. The result is
+  stored in `$optimize.recommended` in the returned list and used
+  automatically by `unmix.autospectral.rcpp()` to skip unnecessary
+  optimisation passes.
 
 - ...:
 

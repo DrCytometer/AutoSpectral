@@ -177,6 +177,23 @@ named list of matrices, one per fluorophore in
 fluorophore. This number can be adjusted by argument
 <code>som.dim</code> to <code><a href="../reference/get.spectral.variants.html">get.spectral.variants()</a></code>, which is
 by default <code>10</code>.</p>
+<p>A few other arguments control this step. <code>k.neighbors</code>
+(default <code>3</code>) sets how many scatter-matched nearest
+neighbours from the unstained pool are used to estimate each event’s
+background. <code>n.cells</code> (default <code>10000</code>) caps how
+many positive events per fluorophore go into the SOM; files with more
+get randomly downsampled.</p>
+<p>Optionally, you can supply <code>stained.sample</code>, a path to a
+representative fully-stained FCS file. When provided, it’s unmixed
+internally to get per-fluorophore median positive signal (MFI), which
+weights the “optimization necessity” scoring by brightness rather than
+geometry alone. This feeds into
+<code>optimize.necessity.threshold</code> (default <code>0.01</code>):
+fluorophores whose normalised leakage score falls below this are flagged
+<code>$optimize.recommended = FALSE</code> in the output and are
+automatically skipped during per-cell optimization by
+<code>unmix.autospectral.rcpp()</code>, saving computation on
+fluorophores where it won’t help.</p>
 <p>This is saved as an R object in a .rds file. This will be in the same
 folder as the output plots, unless you change the specified location
 using the argument <code>output.dir</code>. By default, you should get
@@ -186,8 +203,9 @@ function in R.</p>
 <p>The variant spectra are QC’d against the optimized single spectrum
 for that fluorophore, as defined in <code>spectra</code>. If
 <code>spectra</code> don’t all look right, neither will the variants.
-The QC is done by cosine similarity, with a default threshold set to
-exclude anything less than 0.98.</p>
+The QC is done by cosine similarity, with a default
+<code>sim.threshold</code> of <code>0.985</code>, below which a
+candidate variant is excluded.</p>
 <p>It’s important to bear in mind that we’re only allowing variation
 within the range seen in the single-colour control, nothing more.</p>
 <p>We get output plots of the variant signatures, which should appear in
@@ -279,6 +297,30 @@ BLAS and LAPACK installed. Please reach out if you have suggestions for
 faster implementation (I’m not a computer scientist). See the article on
 <a href="https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.html">Computing
 Speed</a> for full tips.</p>
+<p>As of version 1.6.0, there is a change to how the variants are
+evaluated. Up to this point, selection of the best variants has been
+done in a reduced fluorophore space, using on the fluorophores that are
+“positive”, i.e., above the unstained threshold, in a given cell. This
+is faster, since we aren’t solving for everything all the time, and
+gives us a residual that is more informative (we effectively have a
+smaller panel for each cell, so any leftover bits are easier to assign).
+That trick is responsible for the appearance of discontinuities in the
+unmixing, though. So, version 1.6.0 uses a different approach involving
+the covariance matrix, which looks at the pattern of variation we are
+seeing for the spectrum of a given fluorophore and asks how it is likely
+to propagate into the unmixed data as error or spread. This allows us to
+know more or less <strong>where</strong> we are going to get error. The
+residual then, ideally, tells us the <strong>direction</strong> of the
+error. Additionally, this approach holds off on committing to a variant
+for a fluorophore until any other fluorophores that are competing for
+that same bit of information have also been assessed. Because of this,
+we can often get a bit better solution (better unmixing), but it may
+take longer, and may require multiple rounds or “passes” to achieve the
+best result.</p>
+<p>So, the covariance approach is now the default option for unmixing
+when you supply variant information. If you want to use the original
+method for consistency, it is still available. Just specify
+<code>pipeline = "legacy"</code>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fully.stained.dir</span> <span class="op">&lt;-</span> <span class="st">"./Fully stained"</span></span>
 <span></span>
@@ -289,7 +331,66 @@ Speed</a> for full tips.</p>
 <span>           method <span class="op">=</span> <span class="st">"AutoSpectral"</span>,</span>
 <span>           af.spectra <span class="op">=</span> <span class="va">lung.af</span>,</span>
 <span>           spectra.variants <span class="op">=</span> <span class="va">variants</span>,</span>
-<span>           speed <span class="op">=</span> <span class="st">"fast"</span> <span class="op">)</span></span></code></pre></div>
+<span>           parellel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>           threads <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>           pipeline <span class="op">=</span> <span class="st">"joint"</span>,</span>
+<span>           n.passes <span class="op">=</span> <span class="fl">1</span> <span class="op">)</span></span></code></pre></div>
+<p>Most datasets I have tested show good results with a single pass.
+Setting <code>n.passes</code> to anywhere between 2 and 10 can show some
+improvement, larger improvement in some messy data sets. This will
+increase the computational time roughly linearly unless the data
+converges early.</p>
+<div class="section level3">
+<h3 id="additional-joint-pipeline-tuning">Additional joint-pipeline tuning<a class="anchor" aria-label="anchor" href="#additional-joint-pipeline-tuning"></a>
+</h3>
+<p>A few more arguments let you tune the joint pipeline beyond
+<code>n.passes</code>:</p>
+<p><strong>Multipass autofluorescence refinement.</strong>
+<code>n.af.passes</code> (default <code>1</code>) controls how many AF
+extraction passes are run per cell. The first pass uses matching pursuit
+to assign an AF candidate to every cell; if <code>n.af.passes</code> is
+greater than 1, subsequent passes revisit the highest-abundance AF cells
+(controlled by <code>refine.af.quantile</code>, default
+<code>0.5</code>, the fraction of cells taken forward for reassessment —
+set to <code>1</code> to reassess everyone) and can refine the AF
+assignment further. Like <code>n.passes</code>, this trades additional
+computation time for improved AF characterization, and is most useful
+for tissue samples with more heterogeneous autofluorescence; PBMC data
+typically shows negligible benefit.</p>
+<p><strong>Collinear fluorophore handling.</strong>
+<code>collinear.threshold</code> (default <code>0.5</code>) sets the
+cosine similarity above which two fluorophore variants are treated as
+structurally collinear (e.g. APC/BUV661) and routed into conflict
+resolution rather than independent assignment. Lower values trigger
+conflict resolution more often (more thorough, slower); higher values
+allow more variants to be committed based on minimizing spillover from
+the brighter fluorophore alone, which is faster but can understate a
+dimmer collinear fluorophore’s true abundance.
+<code>joint.pair.resolution</code> (default <code>TRUE</code>) turns
+this conflict-resolution step on or off; when enabled, a small
+combinatorial test is run specifically for the competing pair(s) to find
+a better joint solution.</p>
+<p><strong>Per-cell detector weighting.</strong>
+<code>cell.weight</code> (default <code>FALSE</code>, but
+<code>TRUE</code> automatically on ID7000 data) applies per-cell
+weighting to the joint solve based on each detector’s fitted signal,
+with <code>noise.floor</code> (default <code>125</code>) preventing
+near-dark channels from receiving runaway weight. <code>alpha</code>
+(default <code>0.5</code>) balances residual minimization against
+covariance-based spillover minimization when scoring candidate
+variants.</p>
+<p>Most users won’t need to touch these — the defaults were chosen from
+testing across Aurora, ID7000 and S8 data — but they’re there if you’re
+working with an unusually noisy panel or you want to explore how they
+impact the unmixing.</p>
+<p>Unmixed FCS files will appear in folder
+<code>./autospectral_unmixed</code>.</p>
+<p>Add a <code>file.suffix</code> argument if you want a tag on the FCS
+file’s name to differentiate it from other versions.</p>
+</div>
+<div class="section level2">
+<h2 id="legacy-pipeline-notes">Legacy pipeline notes:<a class="anchor" aria-label="anchor" href="#legacy-pipeline-notes"></a>
+</h2>
 <p>Setting the “speed” determines how many pre-screened candidate
 variants will be tested per cell. The options are “fast” = 1, “medium” =
 3, and “slow” = 10. This is based on quite a bit of testing with high
@@ -311,15 +412,10 @@ would be comparable to the previous “slow” brute force approach.</p>
 <span>           af.spectra <span class="op">=</span> <span class="va">lung.af</span>,</span>
 <span>           spectra.variants <span class="op">=</span> <span class="va">variants</span>,</span>
 <span>           n.variants <span class="op">=</span> <span class="fl">100</span> <span class="op">)</span></span></code></pre></div>
-<p>Note that the “fast” approach in version 1.0.0 is very different from
-the “fast” approximation in earlier version of AutoSpectral. It is not
-expected to produce any substantial discontinuities in the data–if you
-see this, please reach out (data will be helpful in identifying any
-issues). Further work on improving this is ongoing.</p>
-<p>Unmixed FCS files will appear in folder
-<code>./autospectral_unmixed</code>.</p>
-<p>Add a <code>file.suffix</code> argument if you want a tag on the FCS
-file’s name to differentiate it from other versions.</p>
+</div>
+<div class="section level2">
+<h2 id="accuracy">Accuracy<a class="anchor" aria-label="anchor" href="#accuracy"></a>
+</h2>
 <p>To demonstrate the effectiveness and accuracy of this approach, we
 created a set of synthetic data. In this 42-colour data set from the
 Aurora, BUV661 and APC are used to detect CD19 and Foxp3, markers that
@@ -335,7 +431,8 @@ performed, and the median absolute deviation of ground truth BUV661+APC-
 events in the APC channel was reduced from 2194 to 723.</p>
 <p><img src="figures/Synthetic_perCell_fluor.jpg" alt="Synthetic per-cell fluorophore optimization"> Synthetic data
 showing that per-cell optimization of the fluorophore signatures reduces
-spillover spread.</p>
+spillover spread. This example was produced using the legacy pipeline.
+Similar results are obtained with the new joint covariance pipeline.</p>
 <p>Correspondingly, the cosine similarity between the model’s
 predictions for BUV661 and the actual data for BUV661 was closer to 1
 (identity), consistent with more accurate modelling of the underlying
@@ -345,7 +442,9 @@ similarity values between the ground truth and the assigned spectrum for
 BUV661. Comparison between standard OLS unmixing and AutoSpectral with
 per-cell fluorophore optimization on synthetic data. Stats by
 Komogorov-Smirnov test.</p>
-  </main>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

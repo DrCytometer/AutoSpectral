@@ -68,6 +68,13 @@
 <div class="section level3">
 <h3 id="new-features-1-6-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-6-0"></a></h3>
 <ul><li>Automated spectral profile extraction using approaches developed by Nathan Laniewski in <code>flowState</code>. This simplifies the workflow considerably, and eliminates the need for gating, which was a key cause of stress. The new automated approach employs projection orthogonalization to determine the peak channel (which way is the control going that isn’t like the autofluorescence?), and uses cosine filtering (which events are least contaminated by AF?) to find the clean spectral signatures.</li>
+<li>New joint unmixing pipeline (<code><a href="../reference/unmix.autospectral.joint.html">unmix.autospectral.joint()</a></code>), implemented in C++, using covariance-weighted spillover and residual alignment to solve autofluorescence and fluorophore assignment together rather than sequentially. Structurally collinear fluorophore pairs (e.g., APC/BUV661) are handled via joint-pair conflict resolution so genuine double-positive signal isn’t suppressed. Seven new tuning parameters (<code>n.af.passes</code>, <code>cell.weight</code>, <code>noise.floor</code>, <code>alpha</code>, <code>collinear.threshold</code>, <code>joint.pair.resolution</code>, <code>refine.af.quantile</code>) are now wired through both <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> and <code><a href="../reference/unmix.folder.html">unmix.folder()</a></code>.</li>
+<li>
+<code><a href="../reference/calculate.optimize.necessity.html">calculate.optimize.necessity()</a></code> to determine which cells actually require per-cell fluorophore optimization, avoiding unnecessary computation.</li>
+<li>Multipass autofluorescence refinement using a matching-pursuit approach, with fixed pass-1 baseline denominators to prevent noise from dominating the highest-abundance cells in later passes.</li>
+<li>
+<code>simulate.flow.data()</code> generates synthetic ground-truth data by summing single-stained controls, providing a benchmark for false-negative rates on double-positive populations.</li>
+<li>New AF autofluorescence comparison and benchmarking functions for evaluating accuracy against ground truth.</li>
 <li>A merging of the approaches for per-cell autofluorescence assignment using the covariance structure: <code><a href="../reference/assign.af.joint.cov.html">assign.af.joint.cov()</a></code> to assess how autofluorescence variation impacts fluorophore values, with joint scoring of residuals. This improves on the existing residual- and projection-based AF assignment methods.</li>
 <li>Extension of the variance-covariance error propagation plus residuals scoring metric to per-cell fluorophore optimization. This avoids the previous need to optimize in the reduced space of only positive fluorophores in each cell, which was responsible for discontinuities appearing in several data sets around zero.</li>
 <li>Legacy mode support. All pre-existing workflows remain intact, but some must be accessed via a <code>legacy</code> argument in the function calls.</li>
@@ -87,11 +94,22 @@
 <li>Cosine filtering of unstained samples against the fluorophore spectral profiles to reduce potential errors when the “unstained” isn’t actually completely unstained.</li>
 <li>Cosine filtering and kNN background matching for <code>get.spectra.variants()</code> to reduce undesireable influence of autofluorescence.</li>
 <li>Non-negative clamping of spectral profiles to prevent artefactual negative spectral values propagating into unmixing.</li>
+<li>Type-checking and validation added at function entry (e.g., <code><a href="../reference/get.spectral.variants.html">get.spectral.variants()</a></code>) to guard against deprecated positional arguments silently corrupting subsequent parameters, with explicit error messages.</li>
+<li>Cell weighting is now enabled by default for the ID7000, and detection thresholds have been relaxed for this platform.</li>
+<li>
+<code>NAMESPACE</code> injection for optional dependencies (<code>AutoSpectralRcpp</code>, <code>EmbedSOM</code>) replaced with <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> calls for a safer, more portable pattern.</li>
+<li>Removed the <code>cairo</code> and <code>methods</code> package dependencies.</li>
+<li>Defensive <code>tryCatch</code> wrapping around plotting calls, and guards against unintended matrix-to-vector dropping.</li>
+<li>Guards added for low cell count edge cases to prevent dimension errors.</li>
 <li>General function and code cleanup throughout.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-1-6-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-6-0"></a></h3>
 <ul><li>Keywords issue causing files from BD instruments to occasionally emit scrambled data should now be fixed. Only whitelisted channels are preserved from the input raw FCS files.</li>
+<li>Fixed handling of negative autofluorescence spectra in normalization and plotting.</li>
+<li>Fixed hexbin rendering in N x N plots.</li>
+<li>Fixed a typo (<code>apply</code> should have been <code>lapply</code>).</li>
+<li>Various fixes to get <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> passing its test suite again.</li>
 </ul></div>
 </div>
     <div class="section level2">

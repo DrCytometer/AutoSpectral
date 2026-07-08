@@ -31,8 +31,15 @@ unmix.folder(
   verbose = TRUE,
   n.variants = NULL,
   chunk.size = 2e+06,
-  pipeline = c("joint", "legacy"),
-  n.passes = 2L,
+  pipeline = c("legacy", "joint"),
+  n.passes = 1L,
+  n.af.passes = 1L,
+  cell.weight = if (asp$cytometer == "ID7000") TRUE else FALSE,
+  noise.floor = 125,
+  alpha = 0.5,
+  collinear.threshold = 0.5,
+  joint.pair.resolution = TRUE,
+  refine.af.quantile = 0.5,
   ...
 )
 ```
@@ -193,15 +200,58 @@ unmix.folder(
 
 - pipeline:
 
-  Character, one of `"joint"` (default) or `"legacy"`. Passed to
+  Character, one of `"legacy"` (default) or `"joint"`. Passed to
   `unmix.autospectral.rcpp()`. `"joint"` uses the new
   covariance-weighted joint per-cell pipeline; `"legacy"` reproduces the
   behaviour of AutoSpectral prior to version 1.6.0.
 
 - n.passes:
 
-  Integer, default `2L`. Number of joint optimisation passes per cell.
-  Only used when `pipeline = "joint"`.
+  Integer, default `1L`. Number of joint optimisation passes per cell.
+  Only used when `pipeline = "joint"`. Set higher for some improvement
+  in unmixing with high spillover datasets.
+
+- n.af.passes:
+
+  Integer, default `1L`. Number of autofluorescence extraction passes
+  per cell. Only used when `pipeline = "joint"`. Passed to
+  `unmix.autospectral.rcpp()`.
+
+- cell.weight:
+
+  Logical, default `FALSE`. Applies per-cell detector weighting to the
+  joint unmixing solve. Only used when `pipeline = "joint"`. Passed to
+  `unmix.autospectral.rcpp()`. Useful for ID7000 files.
+
+- noise.floor:
+
+  Numeric, default `125`. Lower clamp on the denominator of the per-cell
+  detector weights when `cell.weight = TRUE`. Only used when
+  `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+
+- alpha:
+
+  Numeric, default `0.5`. Weighting for balancing residual and
+  covariance spillover minimization. Only used when
+  `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+
+- collinear.threshold:
+
+  Numeric, default `0.5`. Cosine similarity value to trigger conflict
+  assessment for collinear fluorophore variants. Only used when
+  `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+
+- joint.pair.resolution:
+
+  Logical, default `TRUE`. Whether to perform conflict-resolution for
+  collinear fluorophore pairs. Only used when `pipeline = "joint"`.
+  Passed to `unmix.autospectral.rcpp()`.
+
+- refine.af.quantile:
+
+  Numeric, default `0.5`. Fraction of cells taken forward for additional
+  AF passes (see `n.af.passes`). Only used when `pipeline = "joint"`.
+  Passed to `unmix.autospectral.rcpp()`.
 
 - ...:
 
