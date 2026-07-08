@@ -88,7 +88,7 @@
 #'   to manage memory when processing large FCS files. As a rough guide, you will
 #'   need approximately 10x the size of the raw FCS file on disk as available
 #'   memory. Default is set at `2e6` events, assuming ~20GB memory available.
-#' @param pipeline Character, one of `"joint"` (default) or `"legacy"`. Passed
+#' @param pipeline Character, one of `"legacy"` (default) or `"joint"`. Passed
 #'   to `unmix.autospectral.rcpp()`. `"joint"` uses the new covariance-weighted
 #'   joint per-cell pipeline; `"legacy"` reproduces the behaviour of
 #'   AutoSpectral prior to version 1.6.0.
@@ -148,7 +148,7 @@ unmix.folder <- function(
     verbose = TRUE,
     n.variants = NULL,
     chunk.size = 2e6,
-    pipeline  = c( "joint", "legacy" ),
+    pipeline  = c( "legacy", "joint" ),
     n.passes  = 1L,
     n.af.passes            = 1L,
     cell.weight            = if (asp$cytometer == "ID7000") TRUE else FALSE,

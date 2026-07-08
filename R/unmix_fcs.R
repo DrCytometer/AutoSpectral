@@ -87,7 +87,7 @@
 #'   to manage memory when processing large FCS files. As a rough guide, you will
 #'   need approximately 10x the size of the raw FCS file on disk as available
 #'   memory. Default is set at `2e6` events, assuming ~20GB memory available.
-#' @param pipeline Character, one of `"joint"` (default) or `"legacy"`. Passed
+#' @param pipeline Character, one of `"legacy"` (default) or `"joint"`. Passed
 #'   to `unmix.autospectral.rcpp()`. `"joint"` uses the new covariance-weighted
 #'   joint per-cell pipeline; `"legacy"` reproduces the behaviour of
 #'   AutoSpectral prior to version 1.6.0.
@@ -145,7 +145,7 @@ unmix.fcs <- function(
     verbose = TRUE,
     n.variants = NULL,
     chunk.size = 2e6,
-    pipeline  = c( "joint", "legacy" ),
+    pipeline  = c( "legacy", "joint" ),
     n.passes  = 1L,
     n.af.passes            = 1L,
     cell.weight            = if (asp$cytometer == "ID7000") TRUE else FALSE,
@@ -437,11 +437,11 @@ unmix.fcs <- function(
               threads          = threads,
               n.variants       = n.variants,
               pipeline         = pipeline.arg,
+              n.af.passes      = n.af.passes,
               n.passes         = n.passes,
-              n.af.passes           = n.af.passes,
-              cell.weight           = cell.weight,
-              noise.floor           = noise.floor,
-              alpha                 = alpha,
+              cell.weight      = cell.weight,
+              noise.floor      = noise.floor,
+              alpha            = alpha,
               collinear.threshold   = collinear.threshold,
               joint.pair.resolution = joint.pair.resolution,
               refine.af.quantile    = refine.af.quantile
@@ -460,9 +460,14 @@ unmix.fcs <- function(
                   asp              = asp,
                   spectra.variants = spectra.variants,
                   n.passes         = n.passes,
-                  n.variants       = n.variants,
                   parallel         = parallel,
                   threads          = threads,
+                  cell.weight      = cell.weight,
+                  noise.floor      = noise.floor,
+                  alpha            = alpha,
+                  collinear.thresh = collinear.threshold,
+                  n.af.passes      = n.af.passes,
+                  refine.af.quantile = refine.af.quantile,
                   verbose          = verbose
                 )
               } else {
@@ -495,9 +500,14 @@ unmix.fcs <- function(
               asp              = asp,
               spectra.variants = spectra.variants,
               n.passes         = n.passes,
-              n.variants       = n.variants,
               parallel         = parallel,
               threads          = threads,
+              cell.weight      = cell.weight,
+              noise.floor      = noise.floor,
+              alpha            = alpha,
+              collinear.thresh = collinear.threshold,
+              n.af.passes      = n.af.passes,
+              refine.af.quantile = refine.af.quantile,
               verbose          = verbose
             )
           } else {

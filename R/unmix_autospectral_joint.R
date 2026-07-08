@@ -26,19 +26,6 @@
 #'      commit is individually verified against the currently accepted RSS
 #'      and reverted if it does not improve it.
 #'
-#' Note: unlike the legacy pipeline, there is no `n.variants` / top-K
-#' candidate pre-filter here — every variant of every active fluorophore is
-#' scored each pass (subject only to the 1.05x residual-ratio fast-reject),
-#' exactly as `unmix_autospectral_joint_cpp` does.
-#'
-#' Parallelisation follows the same pattern as `unmix.autospectral()`, using
-#' `create.parallel.lapply()` to handle platform differences between Windows
-#' (PSOCK cluster) and Linux/Mac (forked `mclapply`). Because a PSOCK cluster
-#' only receives exported globals once (at cluster creation), every quantity
-#' that changes between pipeline stages (per-cell residuals, AF abundances)
-#' is passed explicitly through the `lapply` argument rather than read back
-#' off a mutated global, so results are identical regardless of backend.
-#'
 #' @importFrom parallelly availableCores
 #'
 #' @param raw.data Numeric matrix (cells x detectors). Columns must match
@@ -54,7 +41,7 @@
 #'   The optional `$optimize.recommended` slot is respected: fluorophores
 #'   flagged `FALSE` are excluded from variant optimisation. Pass `NULL` for
 #'   AF-only mode (no variant optimisation).
-#' @param n.passes Integer, default `2L`. Number of joint optimisation passes
+#' @param n.passes Integer, default `1L`. Number of joint optimisation passes
 #'   per cell. Matches `n_passes` in `unmix_autospectral_joint_cpp`.
 #' @param parallel Logical, default `TRUE`. Whether to use parallel processing
 #'   across cells. Uses `create.parallel.lapply()` to handle platform
@@ -108,7 +95,7 @@ unmix.autospectral.joint <- function(
     af.spectra,
     asp,
     spectra.variants     = NULL,
-    n.passes              = 2L,
+    n.passes              = 1L,
     parallel              = TRUE,
     threads               = NULL,
     cell.weight           = FALSE,

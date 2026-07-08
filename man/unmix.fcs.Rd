@@ -28,7 +28,7 @@ unmix.fcs(
   verbose = TRUE,
   n.variants = NULL,
   chunk.size = 2e+06,
-  pipeline = c("joint", "legacy"),
+  pipeline = c("legacy", "joint"),
   n.passes = 1L,
   n.af.passes = 1L,
   cell.weight = if (asp$cytometer == "ID7000") TRUE else FALSE,
@@ -143,7 +143,7 @@ to manage memory when processing large FCS files. As a rough guide, you will
 need approximately 10x the size of the raw FCS file on disk as available
 memory. Default is set at \code{2e6} events, assuming ~20GB memory available.}
 
-\item{pipeline}{Character, one of \code{"joint"} (default) or \code{"legacy"}. Passed
+\item{pipeline}{Character, one of \code{"legacy"} (default) or \code{"joint"}. Passed
 to \code{unmix.autospectral.rcpp()}. \code{"joint"} uses the new covariance-weighted
 joint per-cell pipeline; \code{"legacy"} reproduces the behaviour of
 AutoSpectral prior to version 1.6.0.}

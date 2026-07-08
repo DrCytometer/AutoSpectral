@@ -10,7 +10,7 @@ unmix.autospectral.joint(
   af.spectra,
   asp,
   spectra.variants = NULL,
-  n.passes = 2L,
+  n.passes = 1L,
   parallel = TRUE,
   threads = NULL,
   cell.weight = FALSE,
@@ -42,7 +42,7 @@ The optional \verb{$optimize.recommended} slot is respected: fluorophores
 flagged \code{FALSE} are excluded from variant optimisation. Pass \code{NULL} for
 AF-only mode (no variant optimisation).}
 
-\item{n.passes}{Integer, default \code{2L}. Number of joint optimisation passes
+\item{n.passes}{Integer, default \code{1L}. Number of joint optimisation passes
 per cell. Matches \code{n_passes} in \code{unmix_autospectral_joint_cpp}.}
 
 \item{parallel}{Logical, default \code{TRUE}. Whether to use parallel processing
@@ -121,19 +121,6 @@ retry once the winning partner's own swap has been applied. Each
 commit is individually verified against the currently accepted RSS
 and reverted if it does not improve it.
 }
-
-Note: unlike the legacy pipeline, there is no \code{n.variants} / top-K
-candidate pre-filter here — every variant of every active fluorophore is
-scored each pass (subject only to the 1.05x residual-ratio fast-reject),
-exactly as \code{unmix_autospectral_joint_cpp} does.
-
-Parallelisation follows the same pattern as \code{unmix.autospectral()}, using
-\code{create.parallel.lapply()} to handle platform differences between Windows
-(PSOCK cluster) and Linux/Mac (forked \code{mclapply}). Because a PSOCK cluster
-only receives exported globals once (at cluster creation), every quantity
-that changes between pipeline stages (per-cell residuals, AF abundances)
-is passed explicitly through the \code{lapply} argument rather than read back
-off a mutated global, so results are identical regardless of backend.
 }
 \seealso{
 \code{\link[=unmix.autospectral]{unmix.autospectral()}}, \code{\link[AutoSpectralRcpp:unmix.autospectral.rcpp]{unmix.autospectral.rcpp()}},
