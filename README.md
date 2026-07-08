@@ -111,6 +111,17 @@ What AutoSpectral cannot do:
 
 **Version 1.6.0**
 
+Version 1.6+ provides a new automated approach to extracting spectral
+profiles. Most of the development here has been by Nathan Laniewksi.
+This is fast, highly reproducible, clean and avoids all the issues with
+gating. Try it out with `get.spectra.automated()`.
+
+Version 1.6+ also provides a new unmixing pipeline for per-cell
+fluorophore optimization to eliminate discontinuities that appeared in
+some data sets. To use this approach, call `unmix.fcs()` or
+`unmix.folder()` with `pipeline = "joint"`. Otherwise the unmixing will
+default to the original approach.
+
 Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and
 fluorophores for each cell, identifying likely “best” candidates rather
