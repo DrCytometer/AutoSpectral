@@ -1,5 +1,20 @@
 # AutoSpectral 1.6.0 (2026-06-01)
 
+## Improvements
+
+- Better peak channel assignment handling for the various versions of the Aurora.
+  When an instrument lacks particular channels that would be assigned as the peak,
+  the spectral reference library is used to infer the next best peak, either by
+  looking at the reference for the fluorophore, if available, or by looking at
+  the mean signature for other fluorophores with the same peak emission.
+
+## Bug fixes
+
+- 7-AAD peak channel had a typo for the Aurora.
+
+
+# AutoSpectral 1.6.0 (2026-06-01)
+
 ## New Features
 
 - Automated spectral profile extraction using approaches developed by Nathan
