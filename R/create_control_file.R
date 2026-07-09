@@ -125,6 +125,102 @@ create.control.file <- function(
 
   control.table$channel <- detectors[ detector.idx ]
 
+  # -----------------------------------------------------------------------
+  # Detect laser/channel configuration mismatches and reassign affected
+  # fluorophores to their empirical peak channel among the channels actually
+  # acquired (handles e.g. 4-laser Aurora variants missing YG or UV)
+  # -----------------------------------------------------------------------
+
+  db.col <- switch(
+    asp$cytometer,
+    "Aurora"          = if ( asp$cytometer.version == "NL" ) "NorthernLights" else "Aurora",
+    "ID7000"          = "ID7000",
+    "FACSDiscover A8" = "Discover",
+    "FACSDiscover S8" = "Discover",
+    "Opteon"          = "Opteon",
+    "Mosaic"          = "Mosaic",
+    "Xenith"          = "Xenith",
+    "Symphony"        = "A5SE",
+    stop( "Unsupported cytometer" )
+  )
+
+  # channels actually acquired -- intersection across all control files, in
+  # case files somehow differ; header-only read (end.row = 1) keeps this cheap
+  file.channels <- lapply( control.table$filename, function( fn ) {
+    colnames( readFCS( file.path( control.dir, fn ), end.row = 1 ) )
+  } )
+  available.channels <- Reduce( intersect, file.channels )
+
+  # full reference channel set for this cytometer/version
+  cytometer.db.path <- system.file(
+    "extdata", "cytometer_database.csv", package = "AutoSpectral"
+  )
+  cytometer.reference <- utils::read.csv( cytometer.db.path )
+  ref.channels <- cytometer.reference[[ db.col ]]
+  ref.channels <- ref.channels[ !is.na( ref.channels ) & ref.channels != "" ]
+
+  missing.channels <- setdiff( ref.channels, available.channels )
+
+  if ( length( missing.channels ) > 0 ) {
+
+    message( sprintf(
+      "\033[33mNote: %d expected channel(s) for %s are not present in the acquired data (%s). Reassigning affected fluorophores to their empirical peak among available detectors.\033[0m",
+      length( missing.channels ), asp$cytometer, paste( missing.channels, collapse = ", " )
+    ) )
+
+    ref.mat <- .load.ref.library( db.col, available.channels )
+
+    reassign.idx <- which(
+      !control.table$fluorophore %in% c( "No match", "AF", "Negative", NA ) &
+        !is.na( control.table$channel ) &
+        control.table$channel != "" &
+        !( control.table$channel %in% available.channels )
+    )
+
+    for ( i in reassign.idx ) {
+
+      fluor           <- control.table$fluorophore[ i ]
+      nominal.channel <- control.table$channel[ i ]
+      new.channel     <- NA
+
+      if ( !is.null( ref.mat ) ) {
+
+        if ( fluor %in% rownames( ref.mat ) ) {
+
+          new.channel <- colnames( ref.mat )[ which.max( ref.mat[ fluor, ] ) ]
+
+        } else {
+
+          # fall back to the average spectrum of other dyes sharing the same
+          # nominal peak detector, restricted to those with a reference spectrum
+          same.peak.fluors <- names( detectors )[
+            !is.na( detectors ) & detectors == nominal.channel
+          ]
+          same.peak.fluors <- intersect( same.peak.fluors, rownames( ref.mat ) )
+
+          if ( length( same.peak.fluors ) > 0 ) {
+            avg.spectrum <- colMeans( ref.mat[ same.peak.fluors, , drop = FALSE ] )
+            new.channel  <- colnames( ref.mat )[ which.max( avg.spectrum ) ]
+          }
+        }
+      }
+
+      if ( is.na( new.channel ) ) {
+        control.table$channel[ i ] <- "No match"
+        message( sprintf(
+          "\033[31mNo channel match for %s (expected %s, not present on this instrument configuration)\033[0m",
+          fluor, nominal.channel
+        ) )
+      } else {
+        control.table$channel[ i ] <- new.channel
+        message( sprintf(
+          "\033[33mReassigned %s: %s -> %s\033[0m",
+          fluor, nominal.channel, new.channel
+        ) )
+      }
+    }
+  }
+
   control.table$control.type <- sapply(
     control.table$filename, function( filename ) {
     if ( grepl( "cells", filename, ignore.case = TRUE ) ){
