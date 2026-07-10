@@ -143,10 +143,9 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 BiocManager::install(c("flowWorkspace", "FlowSOM"))
 
-# You'll need devtools or remotes to install from GitHub.
-# install.packages("devtools")
-# install.packages("remotes")
-remotes::install_github("DrCytometer/AutoSpectral")
+# You'll need pak or remotes to install from GitHub.
+install.packages("pak")
+pak::pak("DrCytometer/AutoSpectral")
 ```
 
 As of version 0.8.7, there is a Shiny helper tool to assist you in
@@ -161,7 +160,7 @@ To install a specific release, e.g., a previous one, use the version
 number:
 
 ``` r
-remotes::install_github("DrCytometer/AutoSpectral@v1.0.2")
+pak::pak("DrCytometer/AutoSpectral@v1.5.6")
 ```
 
 ### Dev branch
