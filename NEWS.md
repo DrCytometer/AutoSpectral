@@ -1,4 +1,20 @@
-# AutoSpectral 1.6.0 (2026-06-01)
+# AutoSpectral 1.6.1 (2026-07-19)
+
+## Improvements
+
+- Voltage consistency checks are now applied when reading in the single-stained
+  control files to ensure all samples have been recorded on the same settings.
+  Similarly, the voltages/gains read from the single-stained controls are kept 
+  for checking sample FCS files when performing unmixing, to ensure that the
+  samples were acquired on the same settings. Inconsistencies in this regard will
+  prompt a warning, since AutoSpectral does not have the ability to access 
+  individual instrument linearity or QC information, which would be required to 
+  accurately adjust the unmixing for different acquisition settings.
+  
+## Bug fixes
+
+
+# AutoSpectral 1.6.1 (2026-07-12)
 
 ## Improvements
 
@@ -13,7 +29,7 @@
 - 7-AAD peak channel had a typo for the Aurora.
 
 
-# AutoSpectral 1.6.0 (2026-06-01)
+# AutoSpectral 1.6.0 (2026-07-01)
 
 ## New Features
 
