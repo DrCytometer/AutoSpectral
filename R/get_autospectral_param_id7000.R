@@ -52,6 +52,16 @@ get.autospectral.param.id7000 <- function( autosp.param )
 
   autosp.param$ribbon.breaks <- c( -1e3, 0, 1e3, 1e4, 1e5, 1e6 )
 
+  warning(
+    "The ID7000 does not expose per-channel detector voltage or gain ",
+    "settings ($PnV/$PnG) in its FCS files. AutoSpectral cannot verify ",
+    "voltage/gain consistency between single-stained controls and ",
+    "experiment samples for this cytometer. Please ensure controls and ",
+    "samples are run with matched instrument settings. Samples run using ",
+    "One-Max or All-Max may exhibit inaccurate unmixing.",
+    call. = FALSE
+  )
+
   return( autosp.param )
 
 }
