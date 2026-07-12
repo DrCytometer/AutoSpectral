@@ -81,7 +81,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.6.1**
+**Version 1.6.2**
 
 Version 1.6+ provides a new automated approach to extracting spectral profiles. Most of the development here has been by Nathan Laniewksi. This is fast, highly reproducible, clean and avoids all the issues with gating. Try it out with `get.spectra.automated()`.
 
