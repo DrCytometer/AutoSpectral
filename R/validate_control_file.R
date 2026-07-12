@@ -389,85 +389,73 @@ validate.control.file <- function(
   ref.params   <- valid[[ 1 ]]$parameters
   ref.file     <- valid[[ 1 ]]$file
   if ( FALSE ) {
-    # TBD
-
+    # TBD - parameter name/order consistency check across control files
 
     non.spec.regex <- paste0( asp$non.spectral.channel, collapse = "|" )
     spec.indices   <- which( !grepl( non.spec.regex, ref.params ) )
 
-    # Extract reference voltages for these parameters (first file)
-    ref.h <- readFCSheader( file.path( control.dir, ref.file ) )[[ 1 ]]
+    mismatched.params <- character()
 
-    ref.voltages <- vapply( spec.indices, function( idx ) {
-      v <- ref.h[[ paste0( "$P", idx, "V" ) ]]
-      if ( is.null( v ) ) return( NA_character_ ) else return( as.character( v ) )
-    }, character( 1 ) )
-
-    # Iterate through subsequent files and compare
-    mismatched.params   <- character()
-    mismatched.voltages <- character()
-
-    # skip the first file since we're using it as the reference to check the others
     if ( length( valid ) > 1 ) {
       for ( i in 2:length( valid ) ) {
         curr.file <- valid[[ i ]]$file
         curr.params <- valid[[ i ]]$parameters
 
-        # check parameter name consistency, with filtering for Discover system
-        # we only really care about matching the spectral channels (scatter would be good too)
         check.params <- curr.params
         ref.check.params <- ref.params
         if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8" ) ) {
           nonspec.sub <- asp$non.spectral.channel[ 4:length( asp$non.spectral.channel ) ]
           check.params <- check.params[ !grepl( paste( nonspec.sub, collapse = "|" ), check.params ) ]
-          # filter reference set as well
           ref.check.params <- ref.params[ !grepl( paste( nonspec.sub, collapse = "|" ), ref.params ) ]
         } else {
           nonspec.sub <- asp$non.spectral.channel
           check.params <- check.params[ !grepl( paste( nonspec.sub, collapse = "|" ), check.params ) ]
-          # filter reference set as well
           ref.check.params <- ref.params[ !grepl( paste( nonspec.sub, collapse = "|" ), ref.params ) ]
         }
 
         if ( !identical( ref.check.params, check.params ) ) {
           mismatched.params <- c( mismatched.params, curr.file )
         }
-
-        # check voltage consistency
-        curr.h <- readFCSheader( file.path( control.dir, curr.file ) )[[ 1 ]]
-        curr.n.par <- as.integer( curr.h[[ "$PAR" ]] )
-
-        curr.v.vector <- vapply( spec.indices, function( idx ) {
-          v.key <- paste0( "$P", idx, "V" )
-
-          if ( !v.key %in% names( curr.h ) ) {
-            return( paste( "Unable to locate:", v.key ) )
-          }
-
-          v <- curr.h[[ v.key ]]
-          if ( is.null( v ) ) return( NA_character_ ) else return( as.character( v ) )
-        }, character( 1 ) )
-
-        if ( !identical( ref.voltages, curr.v.vector ) ) {
-          mismatched.voltages <- c( mismatched.voltages, curr.file )
-        }
       }
     }
 
-    # track issues
     if ( length( mismatched.params ) > 0 ) {
       issues[[ length( issues ) + 1 ]] <-
         .new_issue( "error", "parameter_mismatch",
                     filename = mismatched.params,
                     message = "Parameter names or count inconsistent across FCS files" )
     }
+  }
 
-    if ( length( mismatched.voltages ) > 0 ) {
-      issues[[ length( issues ) + 1 ]] <-
-        .new_issue( "error", "voltage_mismatch",
-                    filename = mismatched.voltages,
-                    message = "Spectral channel voltages do not match across all controls" )
-    }
+  ## ---------- voltage/gain consistency across all controls ----------
+  # Users (particularly on the ID7000) sometimes run controls and samples at
+  # different voltages/gains. AutoSpectral cannot currently correct for this,
+  # so we warn (but do not stop) when any spectral channel differs between
+  # single-stained controls. Channels are matched by name, not position.
+  non.spec.regex   <- paste0( asp$non.spectral.channel, collapse = "|" )
+  spectral.channel <- ref.params[ !grepl( non.spec.regex, ref.params ) ]
+
+  if ( grepl( "Discover", asp$cytometer ) ) {
+    spectral.channel <- spectral.channel[ grep( asp$spectral.channel, spectral.channel ) ]
+  }
+
+  valid.files <- vapply( valid, `[[`, character( 1 ), "file" )
+
+  voltage.mismatches <- .check.control.voltages(
+    control.dir, valid.files, spectral.channel, asp
+  )
+
+  if ( nrow( voltage.mismatches ) > 0 ) {
+    issues[[ length( issues ) + 1 ]] <-
+      .new_issue(
+        "warning", "voltage_mismatch",
+        filename = unique( voltage.mismatches$file ),
+        message  = paste0(
+          "Detector voltage/gain settings differ between single-stained ",
+          "controls for channel(s): ",
+          paste( unique( voltage.mismatches$channel ), collapse = ", " ), "."
+        )
+      )
   }
 
 

@@ -61,44 +61,32 @@ reload.flow.control <- function(
   spectral.channel <- check.channels( spectral.channel, asp )
   spectral.channel.n <- length( spectral.channel )
 
-  ## record and store voltages for checks during unmixing
-  # read header from the first file
+  # record and store voltages/gain for checks during unmixing
   header <- readFCSheader( file.path( control.dir, control.table$filename[ 1 ] ) )[[ 1 ]]
 
-  # get parameter names
-  p.names <- unlist( header[ grep( "^\\$P\\d+N$", names( header ) ) ] )
+  # determine which keyword suffix applies for this cytometer
+  voltage.suffix <- .spectral.voltage.suffix( asp, header )
 
-  # initialize with fallback
-  spectral.voltages <- stats::setNames(
-    rep( NA_character_, length( spectral.channel ) ), spectral.channel
-  )
-
-  # ID7000 doesn't store voltage/gain info
-  if ( !grepl( "ID7000", asp$cytometer, ignore.case = TRUE ) ) {
-    spectral.voltages <- tryCatch({
-      vapply( spectral.channel, function( ch ) {
-        # match channel name to header index key (e.g., "$P10N")
-        p.idx.key <- names( p.names )[ which( p.names == ch ) ]
-        if ( length( p.idx.key ) == 0 ) return( NA_character_ )
-
-        # extract the numeric part (the 'n')
-        n <- gsub( "[^0-9]", "", p.idx.key )
-
-        # Mosaic uses $PnG; others $PnV
-        pnv.id <- ifelse( grepl( "Mosaic", asp$cytometer, ignore.case = TRUE ), "G", "V" )
-        val <- header[[ paste0( "$P", n, pnv.id ) ]]
-
-        if ( is.null( val ) ) return( NA_character_ ) else return( as.character( val ) )
-
-      }, character( 1 ) )
-    }, error = function( e ) {
+  spectral.voltages <- tryCatch(
+    .extract.spectral.voltages( header, spectral.channel, voltage.suffix ),
+    error = function( e ) {
       warning( "Failed to extract spectral voltages/gains: ", e$message,
                call. = FALSE )
-      return( spectral.voltages )
-    })
-  }
+      stats::setNames( rep( NA_character_, length( spectral.channel ) ), spectral.channel )
+    }
+  )
 
-  names( spectral.voltages ) <- spectral.channel
+  # check voltage/gain consistency across all control files
+  voltage.mismatches <- .check.control.voltages(
+    control.dir, control.table$filename, spectral.channel, asp
+  )
+
+  if ( nrow( voltage.mismatches ) > 0 ) {
+    warning( sprintf(
+      "Detector voltage/gain settings differ between single-stained controls for channel(s): %s. Unmixing may be inaccurate.",
+      paste( unique( voltage.mismatches$channel ), collapse = ", " )
+    ), call. = FALSE )
+  }
 
   # get fluorophores and markers
   flow.fluorophore <- control.table$fluorophore

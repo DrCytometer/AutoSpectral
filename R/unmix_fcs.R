@@ -284,12 +284,15 @@ unmix.fcs <- function(
   total.events <- as.numeric( fcs.keywords[[ "$TOT" ]] )
   original.param <- colnames( import.meta$data )
 
-  ### check for voltage settings consistency with single-stained controls
+  # check for voltage/gain settings consistency with single-stained controls
   if ( !is.null( flow.control$voltages ) && !all( is.na( flow.control$voltages ) ) ) {
     # map current file keyword keys ($PnN) to channel names
     all.keys <- names( fcs.keywords )
     p.name.keys <- grep( "^\\$P\\d+N$", all.keys, value = TRUE )
     p.names <- vapply( p.name.keys, function( k ) fcs.keywords[[ k ]], character( 1 ) )
+
+    # determine which keyword suffix applies
+    pnv.id <- .spectral.voltage.suffix( asp, fcs.keywords )
 
     # check against each spectral voltage stored in flow.control
     for ( ch.name in names( flow.control$voltages ) ) {
@@ -298,8 +301,10 @@ unmix.fcs <- function(
       matching.key <- names( p.names )[ p.names == ch.name ]
 
       if ( length( matching.key ) > 0 ) {
-        # convert the name key (e.g., $P10N) to voltage key (e.g., $P10V)
-        pnv.id <- ifelse( grepl( "Mosaic", asp$cytometer ), "G", "V" )
+
+        if ( is.na( pnv.id ) ) next  # no usable keyword for this file/cytometer
+
+        # convert the name key (e.g., $P10N) to voltage/gain key (e.g., $P10V)
         v.key <- gsub( "N$", pnv.id, matching.key )
         current.v <- fcs.keywords[[ v.key ]]
         ref.v <- flow.control$voltages[[ ch.name ]]
@@ -307,7 +312,7 @@ unmix.fcs <- function(
         # compare as strings to avoid floating point/type mismatches
         if ( !identical( as.character( current.v ), as.character( ref.v ) ) ) {
           warning( sprintf(
-            "Voltage mismatch for channel %s! Controls: %s, Current: %s. Unmixing may be inaccurate.",
+            "Voltage/gain mismatch for channel %s! Controls: %s, Current: %s. Unmixing may be inaccurate.",
             ch.name, ref.v, current.v
           ),
           call. = FALSE )
