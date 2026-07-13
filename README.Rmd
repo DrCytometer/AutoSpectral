@@ -71,6 +71,7 @@ What AutoSpectral cannot do:
 * Fix non-specific staining. If you're struggling with this, check out the blocking articles on the Colibri blog.
 * Fix instrument errors. If your laser wasn't working, this won't help.
 * Fix all unmixing errors. AutoSpectral currently has some ability to fix unmixing errors, provided the controls are a representation of the sample. You can see some examples of errors being fixed in the pre-print, but you can also see some examples of errors not being fixed in the deliberately poorly designed 42-color Aurora data example. This is something I'm still working on.
+* Adjust for running samples on different voltages/gains. Sony recommends running multi-colour samples on potentially very different voltage settings from the single-colour controls. This means the spectral profiles of your fluorophores will not be accurate except on in Sony's software, where you have access to all the QC, voltage settings and PMT linearity curves needed to make the adjustment. None of this information is in the FCS files, so AutoSpectral can't really do the same adjustment process. This is broadly true for other instruments as well--if you run your controls once a month and run samples later in the month without any new controls, your unmixing may not be very good.
 
 
 ## Installation
