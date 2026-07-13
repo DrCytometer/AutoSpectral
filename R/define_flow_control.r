@@ -357,10 +357,97 @@ define.flow.control <- function(
   flow.sample.n <- length( control.table$sample )
   flow.sample.event.number.max <- 0
 
+  # track negatives that have already been re-gated so we don't rebuild
+  # the same fallback gate twice if two stained samples share one negative
+  fallback.negative.done <- character( 0 )
+  neg.sample.pattern <- "(^AF$)|(\\bAF\\b)|(\\bnegative\\b)|(\\bunstained\\b)"
+
   for ( fs.idx in 1 : flow.sample.n ) {
     flow.sample.event.number <- nrow( flow.expr.data[[ fs.idx ]]  )
 
-    # Guard: skip or warn if gating returned zero events
+    low.events <- is.null( flow.sample.event.number ) ||
+      flow.sample.event.number < asp$min.cell.warning.n
+
+    samp.name <- control.table$sample[ fs.idx ]
+    samp.is.neg <- grepl( neg.sample.pattern, control.table$fluorophore[ fs.idx ],
+                          ignore.case = TRUE )
+
+    # Fallback: give an under-populated stained sample its own landmark gate,
+    # built purely from its own brightest events, rather than relying on the
+    # shared group gate. Unstained/AF controls are skipped here since there's
+    # no peak channel to draw landmarks from.
+    if ( gate && low.events && !samp.is.neg ) {
+
+      if ( verbose ) {
+        message( paste0(
+          "\033[33mSample '", samp.name, "' has fewer than ",
+          asp$min.cell.warning.n, " events after gating (",
+          ifelse( is.null( flow.sample.event.number ), 0, flow.sample.event.number ),
+          "). Defining a sample-specific fallback gate...\033[0m"
+        ) )
+      }
+
+      fallback.gate.name <- paste0( samp.name, "_fallback" )
+
+      # single-row control table so the gate is drawn only from this sample
+      fallback.control.table <- control.table[ fs.idx, ]
+      fallback.control.table$gate.name   <- fallback.gate.name
+      fallback.control.table$gate.define <- TRUE
+
+      fallback.gate <- tryCatch(
+        define.gate.landmarks(
+          control.file = NULL,
+          control.dir = control.dir,
+          asp = asp,
+          gate.name = fallback.gate.name,
+          n.cells = min( 2000, asp$min.cell.warning.n * 4 ),
+          output.dir = asp$figure.gate.dir,
+          verbose = FALSE,
+          control.table = fallback.control.table,
+          check = FALSE,
+          color.palette = if ( is.null( color.palette ) ) "plasma" else color.palette
+        ),
+        error = function( e ) {
+          warning( paste0(
+            "Fallback gate definition failed for '", samp.name, "': ", e$message
+          ), call. = FALSE )
+          NULL
+        }
+      )
+
+      if ( !is.null( fallback.gate ) ) {
+        final.gate.list[[ fallback.gate.name ]] <- fallback.gate
+        args.list$gate.list <- final.gate.list
+
+        # re-gate the stained sample with its own custom gate
+        flow.gate[ samp.name ] <- fallback.gate.name
+        args.list$flow.gate <- flow.gate
+
+        flow.expr.data[[ fs.idx ]] <- do.call(
+          get.gated.flow.expression.data, c( list( samp.name ), args.list )
+        )
+
+        # apply the same fallback gate to the matching unstained/universal
+        # negative sample so the pair stays consistent
+        neg.name <- control.table$universal.negative[ fs.idx ]
+        if ( !is.na( neg.name ) && !( neg.name %in% fallback.negative.done ) ) {
+          neg.idx <- which( control.table$sample == neg.name )
+          if ( length( neg.idx ) == 1 ) {
+            flow.gate[ neg.name ] <- fallback.gate.name
+            args.list$flow.gate <- flow.gate
+
+            flow.expr.data[[ neg.idx ]] <- do.call(
+              get.gated.flow.expression.data, c( list( neg.name ), args.list )
+            )
+            fallback.negative.done <- c( fallback.negative.done, neg.name )
+          }
+        }
+
+        flow.sample.event.number <- nrow( flow.expr.data[[ fs.idx ]] )
+      }
+    }
+
+    # Guard: skip or warn if gating (still) returned zero events
     if ( is.null( flow.sample.event.number ) || flow.sample.event.number == 0 ) {
       warning( paste0(
         "Sample '", control.table$sample[ fs.idx ], "' (", flow.file.name[ fs.idx ],
@@ -370,11 +457,11 @@ define.flow.control <- function(
       next
     }
 
-    # warn if few events
-    if ( flow.sample.event.number < 500 ) {
+    # warn if still few events even after the fallback attempt
+    if ( flow.sample.event.number < asp$min.cell.warning.n ) {
       warning( paste0(
         "\033[31m",
-        "Warning! Fewer than 500 gated events in ",
+        "Warning! Fewer than ", asp$min.cell.warning.n, " gated events in ",
         flow.file.name[ fs.idx ],
         "\033[0m", "\n"
       ) )
