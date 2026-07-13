@@ -1,4 +1,4 @@
-# AutoSpectral 1.6.1 (2026-07-19)
+# AutoSpectral 1.6.2 (2026-07-13)
 
 ## Improvements
 
@@ -10,8 +10,13 @@
   prompt a warning, since AutoSpectral does not have the ability to access 
   individual instrument linearity or QC information, which would be required to 
   accurately adjust the unmixing for different acquisition settings.
-  
-## Bug fixes
+- When loading in the data via `define.flow.control()`, there are now checks for
+  low event counts after applying the gates. If any contrl sample has below 
+  `asp$min.cell.warning.n` (default is 500) events left, a fallback approach is
+  triggered, defining a new gate using `define.gate.landmarks()` for that control
+  sample. This is designed to catch situations where users haven't understood
+  how to use the gating and have not defined gating groups in the control file or
+  provided pre-determined gates.
 
 
 # AutoSpectral 1.6.1 (2026-07-12)
