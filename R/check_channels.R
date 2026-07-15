@@ -71,6 +71,9 @@ check.channels <- function( spectral.channels, asp ) {
 #' - Mosaic uses $PnG (gain) instead of $PnV.
 #' - ID7000 has no per-channel PMT voltage.
 #' - All other supported cytometers use $PnV.
+#' @param asp The AutoSpectral parameter list; `asp$cytometer` is used.
+#' @param header Parsed FCS header/keyword list for the file being checked.
+#' @keywords internal
 .spectral.voltage.suffix <- function( asp, header ) {
   if ( grepl( "ID7000", asp$cytometer, ignore.case = TRUE ) ) return( NA_character_ )
   if ( grepl( "Mosaic", asp$cytometer, ignore.case = TRUE ) ) return( "G" )
@@ -82,6 +85,11 @@ check.channels <- function( spectral.channels, asp ) {
 #' Internal helper. Given an FCS header and a keyword suffix from
 #' `.spectral.voltage.suffix()`, extracts the voltage/gain value for each
 #' named spectral channel (matched by channel name, not position).
+#' @param header Parsed FCS header/keyword list for the file being checked.
+#' @param spectral.channel Character vector of spectral detector/channel names.
+#' @param suffix Character keyword suffix (`"V"`, `"G"`, or `"R"`) from
+#' `.spectral.voltage.suffix()`.
+#' @keywords internal
 .extract.spectral.voltages <- function( header, spectral.channel, suffix ) {
   if ( is.na( suffix ) ) {
     return( stats::setNames(
@@ -109,6 +117,11 @@ check.channels <- function( spectral.channels, asp ) {
 #' channel by channel. Returns a data frame of mismatches (zero rows if
 #' everything is consistent, or if the cytometer/file exposes no usable
 #' voltage/gain keyword).
+#' @param control.dir File path to the single-stained control FCS files.
+#' @param filenames Character vector of filenames for the FCS files.
+#' @param spectral.channel Character vector of spectral detector/channel names.
+#' @param asp The AutoSpectral parameter list
+#' @keywords internal
 .check.control.voltages <- function( control.dir, filenames, spectral.channel, asp ) {
 
   empty <- data.frame(

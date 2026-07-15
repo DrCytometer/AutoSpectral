@@ -6,6 +6,15 @@
 \usage{
 .check.control.voltages(control.dir, filenames, spectral.channel, asp)
 }
+\arguments{
+\item{control.dir}{File path to the single-stained control FCS files.}
+
+\item{filenames}{Character vector of filenames for the FCS files.}
+
+\item{spectral.channel}{Character vector of spectral detector/channel names.}
+
+\item{asp}{The AutoSpectral parameter list}
+}
 \description{
 Internal helper. Compares detector voltage/gain settings for each spectral
 channel across a set of single-stained control FCS files. The first file
@@ -14,3 +23,4 @@ channel by channel. Returns a data frame of mismatches (zero rows if
 everything is consistent, or if the cytometer/file exposes no usable
 voltage/gain keyword).
 }
+\keyword{internal}

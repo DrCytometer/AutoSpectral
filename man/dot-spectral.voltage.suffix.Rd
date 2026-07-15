@@ -6,6 +6,11 @@
 \usage{
 .spectral.voltage.suffix(asp, header)
 }
+\arguments{
+\item{asp}{The AutoSpectral parameter list; \code{asp$cytometer} is used.}
+
+\item{header}{Parsed FCS header/keyword list for the file being checked.}
+}
 \description{
 Internal helper. Determines which FCS keyword suffix ($PnV, $PnG, or
 $PnR) should be compared as the "voltage" for a given cytometer.
@@ -15,3 +20,4 @@ $PnR) should be compared as the "voltage" for a given cytometer.
 \item All other supported cytometers use $PnV.
 }
 }
+\keyword{internal}

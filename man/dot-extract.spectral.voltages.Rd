@@ -6,8 +6,17 @@
 \usage{
 .extract.spectral.voltages(header, spectral.channel, suffix)
 }
+\arguments{
+\item{header}{Parsed FCS header/keyword list for the file being checked.}
+
+\item{spectral.channel}{Character vector of spectral detector/channel names.}
+
+\item{suffix}{Character keyword suffix (\code{"V"}, \code{"G"}, or \code{"R"}) from
+\code{.spectral.voltage.suffix()}.}
+}
 \description{
 Internal helper. Given an FCS header and a keyword suffix from
 \code{.spectral.voltage.suffix()}, extracts the voltage/gain value for each
 named spectral channel (matched by channel name, not position).
 }
+\keyword{internal}

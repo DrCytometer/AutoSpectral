@@ -48,6 +48,10 @@ Imports:
     patchwork,
     viridis,
     hexbin
+Remotes:
+    bioc::FlowSOM,
+    bioc::flowWorkspace,
+    DrCytometer/AutoSpectralRcpp
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/DrCytometer/AutoSpectral,
      https://drcytometer.github.io/AutoSpectral/

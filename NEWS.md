@@ -2,6 +2,17 @@
 
 ## Improvements
 
+- Installation should now be simplified by setting remote install sites.
+
+## Bug fixes
+
+- Add missing documentation for internal functions.
+
+
+# AutoSpectral 1.6.2 (2026-07-13)
+
+## Improvements
+
 - Voltage consistency checks are now applied when reading in the single-stained
   control files to ensure all samples have been recorded on the same settings.
   Similarly, the voltages/gains read from the single-stained controls are kept 
