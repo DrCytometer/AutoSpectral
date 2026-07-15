@@ -134,6 +134,9 @@ some data sets. To use this approach, call `unmix.fcs()` or
 `unmix.folder()` with `pipeline = "joint"`. Otherwise the unmixing will
 default to the original approach.
 
+This has been tested on Windows 11 and on macOS Sequoia 15.2 (Apple
+Silicon).
+
 Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and
 fluorophores for each cell, identifying likely “best” candidates rather
@@ -158,6 +161,8 @@ BiocManager::install(c("flowWorkspace", "FlowSOM"))
 install.packages("pak")
 pak::pak("DrCytometer/AutoSpectral")
 ```
+
+Installation should take less than 5 minutes.
 
 As of version 0.8.7, there is a Shiny helper tool to assist you in
 setting up your AutoSpectral control files. This is an interactive html

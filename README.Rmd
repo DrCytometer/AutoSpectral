@@ -88,6 +88,8 @@ Version 1.6+ provides a new automated approach to extracting spectral profiles. 
 
 Version 1.6+ also provides a new unmixing pipeline for per-cell fluorophore optimization to eliminate discontinuities that appeared in some data sets. To use this approach, call `unmix.fcs()` or `unmix.folder()` with `pipeline = "joint"`. Otherwise the unmixing will default to the original approach.
 
+This has been tested on Windows 11 and on macOS Sequoia 15.2 (Apple Silicon).
+
 Version 1.0+ is intended to greatly speed up the process of unmixing. This is done by pre-screening the variation in autofluorescence and fluorophores for each cell, identifying likely "best" candidates rather than using a brute force approach. If you are using [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp), you will need to update that for compatibility.
 
 To install the latest, hopefully stable version, install using `devtools` or `remotes`. You will need to install the Bioconductor packages separately. As of version 0.9.1, AutoSpectral relies primarily on `FlowSOM` rather than `EmbedSOM`, so you will need to install `FlowSOM` via Bioconductor. That said, if you install `EmbedSOM`, Autospectral will automatically detect and use it for faster processing.
@@ -102,6 +104,8 @@ BiocManager::install(c("flowWorkspace", "FlowSOM"))
 install.packages("pak")
 pak::pak("DrCytometer/AutoSpectral")
 ```
+
+Installation should take less than 5 minutes.
 
 As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, imperfect. To try it, visit [AutoSpectralHelper](https://github.com/DrCytometer/AutoSpectralHelper). If you update AutoSpectral, I recommend downloading a new version of the app to ensure compatibility.
 
@@ -176,7 +180,7 @@ Installation of `AutoSpectralRcpp` will take a couple of minutes because the cod
 
 For more details and benchmarking of specific functions with an example 42-color cell control data set, see the article on [Speed](https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.html).
 
-
+ 
 ## Go Faster
 
 See the article on [Speed](https://drcytometer.github.io/AutoSpectral/articles/14_Speed_It_Up.html) for details on how to improve AutoSpectral's performance on your system.
