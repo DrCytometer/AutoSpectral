@@ -24,7 +24,7 @@ Authors@R: c(
   )
 Description: Isolates and refines clean spectral signatures from 
     single stained controls. Deals with autofluorescence contamination in 
-    controls effectively. Unmix fcs files with ordinary or weighted least squares,
+    controls effectively. Unmix FCS files with ordinary or weighted least squares,
     or with the hallmark AutoSpectral approach to deal with autofluorescence and
     fluorophore variability on a per-cell basis.
 License: AGPL (>= 3)
