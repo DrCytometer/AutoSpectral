@@ -48,16 +48,16 @@ Imports:
     patchwork,
     viridis,
     hexbin
+Suggests: 
+    AutoSpectralRcpp (>= 1.1.0),
+    EmbedSOM
 Remotes:
     bioc::FlowSOM,
     bioc::flowWorkspace,
-    DrCytometer/AutoSpectralRcpp
+    DrCytometer/AutoSpectralRcpp 
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/DrCytometer/AutoSpectral,
      https://drcytometer.github.io/AutoSpectral/
 BugReports: https://github.com/DrCytometer/AutoSpectral/issues
-Suggests: 
-    AutoSpectralRcpp,
-    EmbedSOM
 Config/Needs/website: rmarkdown
 Config/roxygen2/version: 8.0.0
