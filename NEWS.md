@@ -1,8 +1,11 @@
-# AutoSpectral 1.6.2 (2026-07-13)
+# AutoSpectral 1.6.3 (2026-07-19)
 
 ## Improvements
 
 - Installation should now be simplified by setting remote install sites.
+- More fluorophores
+- More markers
+- More spectral references for the Aurora
 
 ## Bug fixes
 
