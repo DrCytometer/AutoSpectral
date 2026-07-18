@@ -959,6 +959,24 @@ get.spectra.automated <- function(
     )
   }
 
+  # -- 8b. Condition number QC on mixing matrix
+  condition.number <- calculate.condition.number( marker.spectra )
+
+  if ( condition.number > nrow( marker.spectra ) ) {
+    warning(
+      sprintf(
+        paste(
+          "Mixing matrix condition number (%.2f) exceeds the number of",
+          "fluorophores (%d). This indicates a poorly conditioned spectral",
+          "panel and may result in inaccurate unmixing. Check for high",
+          "similarity/collinearity between fluorophore spectra."
+        ),
+        condition.number, nrow( marker.spectra )
+      ),
+      call. = FALSE
+    )
+  }
+
   # -- 9. QC summary
   if ( verbose ) {
     ok.n          <- sum( qc.log$Status == "OK" )

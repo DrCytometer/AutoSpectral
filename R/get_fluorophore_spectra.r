@@ -307,6 +307,24 @@ get.fluorophore.spectra <- function(
     message( paste( strwrap( warning.message, width = 80 ), collapse = "\n" ) )
   }
 
+  # condition number QC on mixing matrix
+  condition.number <- calculate.condition.number( marker.spectra )
+
+  if ( condition.number > nrow( marker.spectra ) ) {
+    warning(
+      sprintf(
+        paste(
+          "Mixing matrix condition number (%.2f) exceeds the number of",
+          "fluorophores (%d). This indicates a poorly conditioned spectral",
+          "panel and may result in inaccurate unmixing. Check for high",
+          "similarity/collinearity between fluorophore spectra."
+        ),
+        condition.number, nrow( marker.spectra )
+      ),
+      call. = FALSE
+    )
+  }
+
   # library reference QC
   tryCatch(
     expr = {

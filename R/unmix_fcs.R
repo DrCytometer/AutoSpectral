@@ -273,6 +273,24 @@ unmix.fcs <- function(
       spectra <- spectra[ rownames( spectra ) != "AF", , drop = FALSE ]
   }
 
+  # condition number QC on mixing matrix
+  condition.number <- calculate.condition.number( spectra )
+
+  if ( condition.number > nrow( spectra ) ) {
+    warning(
+      sprintf(
+        paste(
+          "Mixing matrix condition number (%.2f) exceeds the number of",
+          "fluorophores (%d). This indicates a poorly conditioned spectral",
+          "panel and may result in inaccurate unmixing. Check for high",
+          "similarity/collinearity between fluorophore spectra."
+        ),
+        condition.number, nrow( spectra )
+      ),
+      call. = FALSE
+    )
+  }
+
   # create output folder if it doesn't exist
   if ( is.null( output.dir ) ) output.dir <- asp$unmixed.fcs.dir
   if ( !dir.exists( output.dir ) ) dir.create( output.dir )
