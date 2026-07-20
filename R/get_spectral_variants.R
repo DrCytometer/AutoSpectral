@@ -40,7 +40,7 @@
 #' @param n.cells Integer, default \code{10000}. Maximum positive events per
 #'   fluorophore used for SOM clustering. Files with more events above threshold
 #'   are randomly downsampled. Passed to \code{get.fluor.variants}.
-#' @param som.dim Integer, default \code{10}. Side length of the square SOM
+#' @param som.dim Integer, default \code{5}. Side length of the square SOM
 #'   grid; up to \code{som.dim^2} candidate variants per fluorophore before
 #'   cosine QC. Passed to \code{get.fluor.variants}.
 #' @param k.neighbors Integer, default \code{3}. Number of scatter-space
@@ -98,7 +98,7 @@ get.spectral.variants <- function(
     verbose            = TRUE,
     threads            = NULL,
     n.cells            = 10000L,
-    som.dim            = 10L,
+    som.dim            = 5L,
     k.neighbors        = 3L,
     sim.threshold      = 0.985,
     variant.fill.color = "red",
