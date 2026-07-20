@@ -14,7 +14,7 @@
 
 read.bd.spectra <- function( fcs.file ) {
 
-  spill.vector <- readFCSheader( fcs.file, keyword = "SPILL" )[[ 1 ]]
+  spill.vector <- readFCSheader( fcs.file, keyword = "$SPILL" )[[ 1 ]]
   spill.vector <- strsplit( spill.vector, "," )[[ 1 ]]
   n.detectors <- as.numeric( spill.vector[ 1 ] )
   detector.names <- spill.vector[ 2:( n.detectors + 1 ) ]
