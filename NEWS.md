@@ -1,3 +1,18 @@
+# AutoSpectral 1.6.4 (2026-07-20)
+
+## Improvements
+
+- Reduced default number of variants produced by `get.spectral.variants()` by
+dropping `som.dim` from `10` to `5`, which speeds up the unmixing 1.5 - 3x. 
+Profiling suggests the impact on unmixing quality is minimal.
+- More markers.
+
+## Bug fixes
+
+- `get.bd.spectra()` was looking for a `SPILL` keyword, but the newer FCS files
+from the A8 and S8 use `$SPILL`. Fixed.
+
+
 # AutoSpectral 1.6.3 (2026-07-19)
 
 ## Improvements
