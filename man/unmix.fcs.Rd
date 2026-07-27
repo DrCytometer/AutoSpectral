@@ -28,7 +28,7 @@ unmix.fcs(
   verbose = TRUE,
   n.variants = NULL,
   chunk.size = 2e+06,
-  pipeline = c("legacy", "joint"),
+  pipeline = c("joint", "legacy"),
   n.passes = 1L,
   n.af.passes = 1L,
   cell.weight = if (asp$cytometer == "ID7000") TRUE else FALSE,

@@ -145,7 +145,7 @@ unmix.fcs <- function(
     verbose = TRUE,
     n.variants = NULL,
     chunk.size = 2e6,
-    pipeline  = c( "legacy", "joint" ),
+    pipeline  = c( "joint", "legacy" ),
     n.passes  = 1L,
     n.af.passes            = 1L,
     cell.weight            = if (asp$cytometer == "ID7000") TRUE else FALSE,
