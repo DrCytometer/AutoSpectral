@@ -102,8 +102,32 @@ check.channels <- function( spectral.channels, asp ) {
   }
 
   # re-arrange in excitation/emission order
-  common.channels <- intersect( detectors, spectral.channels )
-  extra.channels  <- setdiff( spectral.channels, detectors )
+  common.channels    <- intersect( detectors, spectral.channels )
+  remaining.channels <- setdiff( spectral.channels, detectors )
+
+  # Some cytometers can record more than one acquisition suffix per spectral
+  # detector (e.g. "UV1-A" and "UV1-H" for the same detector). detectors only
+  # ever lists the one suffix this package uses for a given instrument, so a
+  # same-detector duplicate under a different suffix would previously fall
+  # through to "extra.channels" and get silently kept. Drop those redundant
+  # duplicates here; only channels with no matching detector base at all
+  # (genuinely unknown/custom parameters) are retained as extras.
+  detector.base  <- unique( sub( "-[AHW]$", "", detectors ) )
+  remaining.base <- sub( "-[AHW]$", "", remaining.channels )
+
+  is.duplicate.suffix <- remaining.base %in% detector.base
+  extra.channels       <- remaining.channels[ !is.duplicate.suffix ]
+
+  if ( any( is.duplicate.suffix ) )
+    warning(
+      sprintf(
+        "Ignoring %d redundant acquisition-suffix channel(s) not used for this cytometer: %s",
+        sum( is.duplicate.suffix ),
+        paste( remaining.channels[ is.duplicate.suffix ], collapse = ", " )
+      ),
+      call. = FALSE
+    )
+
   spectral.channels <- c( common.channels, extra.channels )
 
   return( spectral.channels )
