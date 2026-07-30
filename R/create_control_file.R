@@ -99,10 +99,7 @@ create.control.file <- function(
   } else if ( asp$cytometer == "ID7000" ) {
     detectors <- stats::setNames(
       fluorophore.database$channel.ID7000, fluorophore.database$fluorophore )
-  } else if ( asp$cytometer == "FACSDiscover A8" ) {
-    detectors <- stats::setNames(
-      fluorophore.database$channel.s8, fluorophore.database$fluorophore )
-  } else if ( asp$cytometer == "FACSDiscover S8" ) {
+  } else if ( asp$cytometer %in% c( "FACSDiscover A8", "FACSDiscover S8", "FACSDiscover" ) ) {
     detectors <- stats::setNames(
       fluorophore.database$channel.s8, fluorophore.database$fluorophore )
   } else if ( asp$cytometer == "Opteon" ) {
@@ -117,6 +114,29 @@ create.control.file <- function(
   } else if ( asp$cytometer == "Symphony" ) {
     detectors <- stats::setNames(
       fluorophore.database$channel.A5SE, fluorophore.database$fluorophore )
+  } else if ( asp$cytometer == "CytoStellar" ) {
+    # channel.cytostellar is stored bare (no -A/-H); resolve the suffix
+    # actually present in these FCS files before building the channel column,
+    # so it matches real $PnN values downstream in define.flow.control().
+    database.path <- system.file(
+      "extdata", "cytometer_database.csv", package = "AutoSpectral"
+    )
+    cytometers <- utils::read.csv( database.path )
+    base.detectors <- cytometers$CytoStellar
+    base.detectors <- base.detectors[ !is.na( base.detectors ) & base.detectors != "" ]
+
+    first.fcs.channels <- colnames( readFCS( file.path( control.dir, control.files[ 1 ] ) ) )
+    suffix <- .resolve.cytostellar.suffix( first.fcs.channels, base.detectors )
+
+    detectors <- stats::setNames(
+      ifelse(
+        is.na( fluorophore.database$channel.cytostellar ) |
+          fluorophore.database$channel.cytostellar == "",
+        NA_character_,
+        paste0( fluorophore.database$channel.cytostellar, suffix )
+      ),
+      fluorophore.database$fluorophore
+    )
   } else {
     stop( "Unsupported cytometer" )
   }
@@ -137,10 +157,12 @@ create.control.file <- function(
     "ID7000"          = "ID7000",
     "FACSDiscover A8" = "Discover",
     "FACSDiscover S8" = "Discover",
+    "FACSDiscover"    = "Discover",
     "Opteon"          = "Opteon",
     "Mosaic"          = "Mosaic",
     "Xenith"          = "Xenith",
     "Symphony"        = "A5SE",
+    "CytoStellar"     = "CytoStellar",
     stop( "Unsupported cytometer" )
   )
 
@@ -158,6 +180,13 @@ create.control.file <- function(
   cytometer.reference <- utils::read.csv( cytometer.db.path )
   ref.channels <- cytometer.reference[[ db.col ]]
   ref.channels <- ref.channels[ !is.na( ref.channels ) & ref.channels != "" ]
+
+  # CytoStellar_database.csv stores bare detector names (no -A/-H); re-express
+  # them with the acquisition suffix actually resolved above so this compares
+  # like-for-like against available.channels (real $PnN values from the FCS)
+  if ( asp$cytometer == "CytoStellar" ) {
+    ref.channels <- paste0( ref.channels, suffix )
+  }
 
   missing.channels <- setdiff( ref.channels, available.channels )
 

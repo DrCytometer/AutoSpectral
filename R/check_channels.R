@@ -1,5 +1,28 @@
 # check_channels.r
 
+## Determine which acquisition suffix (-A or -H) is actually present for a
+## CytoStellar file, given the bare detector names from cytometer_database.csv
+## and the channel names actually seen (either raw FCS colnames, or a
+## spectral.channels vector that already carries one consistent suffix).
+## Prefers "-A" when both are present. Used by check.channels(),
+## .derive.spectral.channels(), and create.control.file().
+##
+## @keywords internal
+.resolve.cytostellar.suffix <- function( channels.present, base.detectors ) {
+  has.a <- any( paste0( base.detectors, "-A" ) %in% channels.present )
+  has.h <- any( paste0( base.detectors, "-H" ) %in% channels.present )
+
+  if ( !has.a && !has.h )
+    stop(
+      "No recognized CytoStellar spectral channels (-A or -H) found. ",
+      "Check that cytometer_database.csv$CytoStellar matches this FCS file's parameters.",
+      call. = FALSE
+    )
+
+  if ( has.a ) "-A" else "-H"
+}
+
+
 #' @title Check Channels
 #'
 #' @description
@@ -19,11 +42,28 @@
 check.channels <- function( spectral.channels, asp ) {
 
   # check for `FJ-Comp`
-  fj.comp <- grepl( "FJ-Comp", spectral.channels )
+  fj.comp <- grepl( "FJ-Comp", spectral.channels, ignore.case = TRUE )
 
   if ( any( fj.comp ) )
-    warning( "FJ-Comp channels have been detected as the `spectral.channels`.
-             This may cause errors in reading FCS files or unmixing due to channel mismatches." )
+    warning(
+      paste(
+        "'FJ-Comp' channels have been detected as the `spectral.channels`.",
+        "Take care when using FlowJo as it may corrupt FCS files.",
+        "This may cause errors in reading FCS files or unmixing due to channel mismatches."
+      )
+    )
+
+  # check for `Comp-`
+  fj.comp <- grepl( "comp-", spectral.channels, ignore.case = TRUE )
+
+  if ( any( fj.comp ) )
+    warning(
+      paste(
+        "'Comp-' channels have been detected as the `spectral.channels`.",
+        "Take care when using FlowJo as it may corrupt FCS files.",
+        "This may cause errors in reading FCS files or unmixing due to channel mismatches."
+      )
+    )
 
   # match against reference channels for this cytometer
   database.path <- system.file(
@@ -52,6 +92,11 @@ check.channels <- function( spectral.channels, asp ) {
     detectors <- cytometers$Xenith
   } else if ( asp$cytometer == "Symphony" ) {
     detectors <- cytometers$A5SE
+  } else if ( asp$cytometer == "CytoStellar" ) {
+    base.detectors <- cytometers$CytoStellar
+    base.detectors <- base.detectors[ !is.na( base.detectors ) & base.detectors != "" ]
+    suffix <- .resolve.cytostellar.suffix( spectral.channels, base.detectors )
+    detectors <- paste0( base.detectors, suffix )
   } else {
     stop( "Unsupported cytometer" )
   }

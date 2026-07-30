@@ -102,14 +102,42 @@ spectral.reference.plot <- function(
 
   # filter to the detectors present (reduce from max)
   detector.names <- colnames( spectra )
-  matched.cols <- match( detector.names, colnames( reference.fluors ) )
-  reference.fluors <- reference.fluors[ , matched.cols ]
 
-  # re-normalize reference fluor spectra
+  # CytoStellar's reference library stores base detector names (no -A/-H
+  # suffix), since users may acquire either or both; match on the base name
+  # for that cytometer instead. Note: match() can return NA for detectors
+  # missing from the reference file, and indexing a data.frame's columns
+  # with an NA-laden vector throws "undefined columns selected" (unlike a
+  # matrix, which tolerates it) -- so the matched matrix is built manually
+  # below rather than by subsetting reference.fluors[, matched.cols].
+  ref.fluor.names <- rownames( reference.fluors )
+  ref.cols        <- colnames( reference.fluors )
+
+  base.detector.names <- if ( identical( cyt, "CytoStellar" ) ) {
+    sub( "-[AH]$", "", detector.names )
+  } else {
+    detector.names
+  }
+
+  matched.idx <- match( base.detector.names, ref.cols )
+
+  reference.fluors <- sapply( matched.idx, function( idx ) {
+    if ( is.na( idx ) ) rep( NA_real_, length( ref.fluor.names ) )
+    else reference.fluors[[ idx ]]
+  } )
+  dimnames( reference.fluors ) <- list( ref.fluor.names, detector.names )
+
+  # re-normalize reference fluor spectra (rows with no matched detectors at
+  # all are left as all-NA -- they'll correctly show as "No Reference
+  # Available" further down, same guard style as .load.ref.library())
   reference.fluors <- t( apply(
     reference.fluors,
     1,
-    function( x ) x / max( x, na.rm = TRUE )
+    function( x ) {
+      mx <- suppressWarnings( max( x, na.rm = TRUE ) )
+      if ( !is.finite( mx ) || mx <= 0 ) return( x )
+      x / mx
+    }
   ) )
 
   # match to fluorophores in spectra, excluding AF

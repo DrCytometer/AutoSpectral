@@ -8,8 +8,10 @@ get.autospectral.param(cytometer = "aurora", figures = TRUE)
 }
 \arguments{
 \item{cytometer}{The type of cytometer, default is \code{aurora}. Supported options
-include \code{aurora}, \code{auroraNL} for Northern Lights, \code{id7000}, \code{a8}, \code{s8}, \code{a5se},
-\code{opteon}, \code{mosaic} and \code{xenith}.}
+include \code{aurora}, \code{auroraNL} for Northern Lights, \code{id7000}, \code{discover} (BD
+FACSDiscover family), \code{a8} and \code{s8} (specific FACSDiscover models), \code{a5se},
+\code{opteon}, \code{mosaic}, \code{xenith} and \code{cytostellar}. Matching is case-insensitive
+and supports unambiguous partial matches (e.g. \code{"aur"} matches \code{"aurora"}).}
 
 \item{figures}{Logical indicating whether to set up directory parameters for
 figures and tables, default is \code{TRUE}}

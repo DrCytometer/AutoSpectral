@@ -23,3 +23,4 @@
 #' - `Xenith_laser`: Laser associated with each channel on the Xenith
 #' - `A5SE`: BD FACSymphony A5 SE channels
 #' - `A5SE_laser`: Laser associated with each channel on the A5 SE
+#' - `CytoStellar_laser`: Laser associated with each channel on the CytoStellar

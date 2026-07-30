@@ -105,10 +105,7 @@ spectral.trace <- function(
   } else if ( asp$cytometer == "ID7000" ) {
     detectors <- stats::setNames(
       cytometer.database$ID7000, cytometer.database$ID7000_laser )
-  } else if ( asp$cytometer == "FACSDiscover A8" ) {
-    detectors <- stats::setNames(
-      cytometer.database$Discover, cytometer.database$Discover_laser )
-  } else if ( asp$cytometer == "FACSDiscover S8" ) {
+  } else if ( asp$cytometer %in% c( "FACSDiscover A8", "FACSDiscover S8", "FACSDiscover" ) ) {
     detectors <- stats::setNames(
       cytometer.database$Discover, cytometer.database$Discover_laser )
   } else if ( asp$cytometer == "Opteon" ) {
@@ -123,6 +120,9 @@ spectral.trace <- function(
   } else if ( asp$cytometer == "Symphony" ) {
     detectors <- stats::setNames(
       cytometer.database$A5SE, cytometer.database$A5SE_laser )
+  } else if ( asp$cytometer == "CytoStellar" ) {
+    detectors <- stats::setNames(
+      cytometer.database$CytoStellar, cytometer.database$CytoStellar_laser )
   } else {
     warning( "Unsupported cytometer" )
     split.lasers <- FALSE
@@ -133,7 +133,17 @@ spectral.trace <- function(
   # organize fluorophores by excitation laser
   laser.order <- unique( names( detectors ) )
 
-  laser.idx <- match( peak.detectors, detectors )
+  # CytoStellar's database column stores base detector names (no -A/-H
+  # suffix), since users may acquire either or both; strip the suffix from
+  # the actual channel names before matching so laser assignment works
+  # regardless of which suffix was acquired.
+  peak.detectors.base <- if ( asp$cytometer == "CytoStellar" ) {
+    sub( "-[AH]$", "", peak.detectors )
+  } else {
+    peak.detectors
+  }
+
+  laser.idx <- match( peak.detectors.base, detectors )
 
   fluor.spectra.plotting$Laser <- names( detectors )[ laser.idx ]
   fluor.spectra.plotting$Laser[ is.na( fluor.spectra.plotting$Laser ) ] <- "Violet"

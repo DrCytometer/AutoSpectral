@@ -192,9 +192,9 @@ unmix.fcs <- function(
     )
     if ( !is.null( af.spectra ) ) {
       method <- "AutoSpectral"
-      if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8", "ID7000" ) )
+      if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8", "FACSDiscover", "ID7000" ) )
         weighted <- TRUE
-    } else if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8", "ID7000" ) ) {
+    } else if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8", "FACSDiscover", "ID7000" ) ) {
       method <- "WLS"
     } else {
       method <- "OLS"
@@ -370,10 +370,12 @@ unmix.fcs <- function(
   spectral.channel <- colnames( spectra )
   other.channels <- setdiff( original.param, spectral.channel )
 
-  # remove height and width if present
-  for ( ch in spectral.channel[ grepl( "-A$", spectral.channel ) ] ) {
-    base <- sub( "-A$", "", ch )
-    other.channels <- setdiff( other.channels, paste0( base, c( "-H", "-W" ) ) )
+  # remove height and width if present (also covers CytoStellar spectra
+  # built on -H rather than -A: strip whichever suffix is present, drop the
+  # other two)
+  for ( ch in spectral.channel[ grepl( "-A$|-H$", spectral.channel ) ] ) {
+    base <- sub( "-A$|-H$", "", ch )
+    other.channels <- setdiff( other.channels, paste0( base, c( "-A", "-H", "-W" ) ) )
   }
   # retain raw spectral data if desired
   if ( include.raw ) other.channels <- c( other.channels, spectral.channel )

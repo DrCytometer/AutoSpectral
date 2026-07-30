@@ -403,7 +403,7 @@ validate.control.file <- function(
 
         check.params <- curr.params
         ref.check.params <- ref.params
-        if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8" ) ) {
+        if ( asp$cytometer %in% c( "FACSDiscover S8", "FACSDiscover A8", "FACSDiscover" ) ) {
           nonspec.sub <- asp$non.spectral.channel[ 4:length( asp$non.spectral.channel ) ]
           check.params <- check.params[ !grepl( paste( nonspec.sub, collapse = "|" ), check.params ) ]
           ref.check.params <- ref.params[ !grepl( paste( nonspec.sub, collapse = "|" ), ref.params ) ]

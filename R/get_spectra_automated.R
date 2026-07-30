@@ -9,8 +9,24 @@
   all.channels         <- colnames( readFCS( fcs.path ) )
   non.spectral.pattern <- paste0( asp$non.spectral.channel, collapse = "|" )
   channels             <- all.channels[ !grepl( non.spectral.pattern, all.channels ) ]
-  if ( grepl( "Discover", asp$cytometer ) )
+
+  if ( grepl( "Discover", asp$cytometer ) ) {
     channels <- channels[ grepl( asp$spectral.channel, channels ) ]
+  } else if ( identical( asp$cytometer, "CytoStellar" ) ) {
+    database.path <- system.file(
+      "extdata", "cytometer_database.csv", package = "AutoSpectral"
+    )
+    cytometers <- utils::read.csv( database.path )
+    base.detectors <- cytometers$CytoStellar
+    base.detectors <- base.detectors[ !is.na( base.detectors ) & base.detectors != "" ]
+
+    suffix <- .resolve.cytostellar.suffix( channels, base.detectors )
+    # keep only the chosen suffix's detector channels; this both selects
+    # from base.detectors and drops the *other* suffix's columns if the
+    # file happens to contain both
+    channels <- channels[ channels %in% paste0( base.detectors, suffix ) ]
+  }
+
   check.channels( channels, asp )
 }
 
@@ -32,10 +48,26 @@
   if ( !file.exists( ref.path ) ) return( NULL )
 
   ref.fluors <- utils::read.csv( ref.path, row.names = 1, check.names = FALSE )
-  common.cols <- intersect( spectral.channels, colnames( ref.fluors ) )
-  if ( length( common.cols ) == 0 ) return( NULL )
 
-  ref.mat <- as.matrix( ref.fluors[ , common.cols, drop = FALSE ] )
+  if ( identical( db.col, "CytoStellar" ) ) {
+    # library columns may be stored with a fixed suffix (e.g. "-A") while
+    # spectral.channels carries whichever suffix was actually acquired;
+    # match on the base name and re-express in spectral.channels' own suffix
+    base.spectral <- sub( "-[AH]$", "", spectral.channels )
+    base.ref      <- sub( "-[AH]$", "", colnames( ref.fluors ) )
+    keep.base     <- intersect( base.spectral, base.ref )
+    if ( length( keep.base ) == 0 ) return( NULL )
+
+    ref.mat <- as.matrix(
+      ref.fluors[ , match( keep.base, base.ref ), drop = FALSE ]
+    )
+    colnames( ref.mat ) <- spectral.channels[ match( keep.base, base.spectral ) ]
+  } else {
+    common.cols <- intersect( spectral.channels, colnames( ref.fluors ) )
+    if ( length( common.cols ) == 0 ) return( NULL )
+    ref.mat <- as.matrix( ref.fluors[ , common.cols, drop = FALSE ] )
+  }
+
   t( apply( ref.mat, 1, function( x ) {
     mx <- max( x, na.rm = TRUE )
     if ( !is.finite( mx ) || mx <= 0 ) return( x )

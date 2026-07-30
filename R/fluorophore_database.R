@@ -19,6 +19,7 @@
 #' - `channel.mosaic`: Peak channels for fluorophores on the Mosaic
 #' - `channel.xenith`: Peak channels for fluorophores on the Xenith
 #' - `channel.A5SE`: Peak channels for fluorophores on the A5 SE
+#' - `channel.cytostellar`: Peak channels for fluorophores on the CytoStellar
 #' - `excitation.laser`: Excitation laser
 #' - `nominal.wavelength`: Numeric; nominal peak emission wavelength
 #' - `is.viability`: Logical; whether the fluorophore is a viability dye

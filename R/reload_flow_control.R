@@ -42,23 +42,11 @@ reload.flow.control <- function(
   if ( anyDuplicated( control.table$filename ) != 0 )
     stop( "duplicated filenames in fcs data", call. = FALSE )
 
-  # read channels from an FCS file
-  all.channels <- colnames(
-    readFCS( file.path( control.dir, control.table$filename[ 1 ] ) )
-  )
-
-  # remove unnecessary channels
-  non.spectral.pattern <- paste0( asp$non.spectral.channel, collapse = "|" )
-  spec.idx <- grep( non.spectral.pattern, all.channels, invert = TRUE )
-  spectral.channel <- all.channels[ spec.idx ]
-
-  if ( grepl( "Discover", asp$cytometer ) ) {
-    spec.idx <- grep( asp$spectral.channel, spectral.channel )
-    spectral.channel <- spectral.channel[ spec.idx ]
-  }
-
-  # reorganize channels if necessary
-  spectral.channel <- check.channels( spectral.channel, asp )
+  # derive and reorder spectral channels (shared with define.flow.control()
+  # and get.spectra.automated() so CytoStellar suffix resolution, and any
+  # future per-cytometer filtering, only needs to be maintained in one place)
+  first.fcs <- file.path( control.dir, control.table$filename[ 1 ] )
+  spectral.channel <- .derive.spectral.channels( first.fcs, asp )
   spectral.channel.n <- length( spectral.channel )
 
   # record and store voltages/gain for checks during unmixing

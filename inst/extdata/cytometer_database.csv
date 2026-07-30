@@ -1,185 +1,185 @@
-Aurora,Aurora_laser,NorthernLights,NorthernLights_laser,ID7000,ID7000_laser,Discover,Discover_laser,Opteon,Opteon_laser,Mosaic,Mosaic_laser,Xenith,Xenith_description,Xenith_laser,A5SE,A5SE_laser
-UV1-A,UV,V1-A,Violet,320CH1-A,DeepUV,UV1 (375)-A,UV,UV380-A,UV,U1-A,UV,FL07-A,349nm - 387/11-A,UV,UV379-A,UV
-UV2-A,UV,V2-A,Violet,320CH2-A,DeepUV,UV2 (390)-A,UV,UV424-A,UV,U2-A,UV,FL08-A,349nm - 420/10-A,UV,UV446-A,UV
-UV3-A,UV,V3-A,Violet,320CH3-A,DeepUV,UV3 (420)-A,UV,UV440-A,UV,U3-A,UV,FL10-A,349nm - 434/17-A,UV,UV515-A,UV
-UV4-A,UV,V4-A,Violet,320CH4-A,DeepUV,UV4 (440)-A,UV,UV455-A,UV,U4-A,UV,FL09-A,349nm - 455/14-A,UV,UV540-A,UV
-UV5-A,UV,V5-A,Violet,320CH5-A,DeepUV,UV5 (460)-A,UV,UV469-A,UV,U5-A,UV,FL11-A,349nm - 473/15-A,UV,UV585-A,UV
-UV6-A,UV,V6-A,Violet,320CH6-A,DeepUV,UV6 (475)-A,UV,UV508-A,UV,U6-A,UV,FL06-A,349nm - 507/19-A,UV,UV610-A,UV
-UV7-A,UV,V7-A,Violet,320CH7-A,DeepUV,UV7 (500)-A,UV,UV525-A,UV,U7-A,UV,FL05-A,349nm - 549/15-A,UV,UV660-A,UV
-UV8-A,UV,V8-A,Violet,320CH8-A,DeepUV,UV8 (515)-A,UV,UV543-A,UV,U8-A,UV,FL04-A,349nm - 575/15-A,UV,UV695-A,UV
-UV9-A,UV,V9-A,Violet,320CH9-A,DeepUV,UV9 (530)-A,UV,UV582-A,UV,U9-A,UV,FL03-A,349nm - 615/24-A,UV,UV736-A,UV
-UV10-A,UV,V10-A,Violet,320CH10-A,DeepUV,UV10 (545)-A,UV,UV600-A,UV,U10-A,UV,FL00-A,349nm - 670/30-A,UV,UV809-A,UV
-UV11-A,UV,V11-A,Violet,320CH11-A,DeepUV,UV11 (575)-A,UV,UV618-A,UV,U11-A,UV,FL01-A,349nm - 728/40-A,UV,V427-A,Violet
-UV12-A,UV,V12-A,Violet,320CH12-A,DeepUV,UV12 (590)-A,UV,UV661-A,UV,U12-A,UV,FL02-A,349nm - 810/25-A,UV,V450-A,Violet
-UV13-A,UV,V13-A,Violet,320CH13-A,DeepUV,UV13 (605)-A,UV,UV681-A,UV,U13-A,UV,FL16-A,405nm - 420/10-A,Violet,V470-A,Violet
-UV14-A,UV,V14-A,Violet,320CH14-A,DeepUV,UV14 (625)-A,UV,UV700-A,UV,U14-A,UV,FL15-A,405nm - 434/17-A,Violet,V510-A,Violet
-UV15-A,UV,V15-A,Violet,320CH15-A,DeepUV,UV15 (655)-A,UV,UV717-A,UV,U15-A,UV,FL17-A,405nm - 455/14-A,Violet,V540-A,Violet
-UV16-A,UV,V16-A,Violet,320CH16-A,DeepUV,UV16 (675)-A,UV,UV735-A,UV,U16-A,UV,FL18-A,405nm - 473/15-A,Violet,V576-A,Violet
-V1-A,Violet,B1-A,Blue,320CH17-A,DeepUV,UV17 (700)-A,UV,UV757-A,UV,U17-A,UV,FL13-A,405nm - 507/19-A,Violet,V595-A,Violet
-V2-A,Violet,B2-A,Blue,320CH18-A,DeepUV,UV18 (725)-A,UV,UV784-A,UV,U18-A,UV,FL14-A,405nm - 549/15-A,Violet,V615-A,Violet
-V3-A,Violet,B3-A,Blue,320CH19-A,DeepUV,UV19 (750)-A,UV,UV815-A,UV,U19-A,UV,FL12-A,405nm - 575/15-A,Violet,V660-A,Violet
-V4-A,Violet,B4-A,Blue,320CH20-A,DeepUV,UV20 (780)-A,UV,V424-A,Violet,U20-A,UV,FL23-A,405nm - 615/24-A,Violet,V680-A,Violet
-V5-A,Violet,B5-A,Blue,320CH21-A,DeepUV,UV21 (810)-A,UV,V440-A,Violet,V1-A,Violet,FL22-A,405nm - 661/20-A,Violet,V710-A,Violet
-V6-A,Violet,B6-A,Blue,320CH22-A,DeepUV,UV22 (845)-A,UV,V455-A,Violet,V2-A,Violet,FL21-A,405nm - 710/20-A,Violet,V750-A,Violet
-V7-A,Violet,B7-A,Blue,320CH23-A,DeepUV,V1 (420)-A,Violet,V469-A,Violet,V3-A,Violet,FL19-A,405nm - 747/33-A,Violet,V785-A,Violet
-V8-A,Violet,B8-A,Blue,320CH24-A,DeepUV,V2 (440)-A,Violet,V508-A,Violet,V4-A,Violet,FL20-A,405nm - 770/LP-A,Violet,V845-A,Violet
-V9-A,Violet,B9-A,Blue,320CH25-A,DeepUV,V3 (460)-A,Violet,V525-A,Violet,V5-A,Violet,FL37-A,488nm - 520/40-A,Blue,B510-A,Blue
-V10-A,Violet,B10-A,Blue,320CH26-A,DeepUV,V4 (475)-A,Violet,V543-A,Violet,V6-A,Violet,FL36-A,488nm - 549/15-A,Blue,B537-A,Blue
-V11-A,Violet,B11-A,Blue,320CH27-A,DeepUV,V5 (500)-A,Violet,V582-A,Violet,V7-A,Violet,FL38-A,488nm - 583/30-A,Blue,B576-A,Blue
-V12-A,Violet,B12-A,Blue,320CH28-A,DeepUV,V6 (515)-A,Violet,V600-A,Violet,V8-A,Violet,FL39-A,488nm - 615/24-A,Blue,B602-A,Blue
-V13-A,Violet,B13-A,Blue,320CH29-A,DeepUV,V7 (530)-A,Violet,V618-A,Violet,V9-A,Violet,FL42-A,488nm - 670/30-A,Blue,B660-A,Blue
-V14-A,Violet,B14-A,Blue,320CH30-A,DeepUV,V8 (545)-A,Violet,V661-A,Violet,V10-A,Violet,FL41-A,488nm - 720/24-A,Blue,B675-A,Blue
-V15-A,Violet,R1-A,Red,320CH31-A,DeepUV,V9 (575)-A,Violet,V681-A,Violet,V11-A,Violet,FL40-A,488nm - 750/LP-A,Blue,B710-A,Blue
-V16-A,Violet,R2-A,Red,320CH32-A,DeepUV,V10 (590)-A,Violet,V700-A,Violet,V12-A,Violet,FL31-A,561nm - 575/15-A,YellowGreen,B750-A,Blue
-B1-A,Blue,R3-A,Red,320CH33-A,DeepUV,V11 (605)-A,Violet,V717-A,Violet,V13-A,Violet,FL32-A,561nm - 589/15-A,YellowGreen,B810-A,Blue
-B2-A,Blue,R4-A,Red,320CH34-A,DeepUV,V12 (625)-A,Violet,V735-A,Violet,V14-A,Violet,FL34-A,561nm - 605/15-A,YellowGreen,YG585-A,YellowGreen
-B3-A,Blue,R5-A,Red,320CH35-A,DeepUV,V13 (655)-A,Violet,V757-A,Violet,V15-A,Violet,FL33-A,561nm - 622/15-A,YellowGreen,YG602-A,YellowGreen
-B4-A,Blue,R6-A,Red,355CH1-A,UV,V14 (675)-A,Violet,V784-A,Violet,V16-A,Violet,FL35-A,561nm - 661/20-A,YellowGreen,YG660-A,YellowGreen
-B5-A,Blue,R7-A,Red,355CH2-A,UV,V15 (700)-A,Violet,V815-A,Violet,V17-A,Violet,FL24-A,561nm - 685/15-A,YellowGreen,YG670-A,YellowGreen
-B6-A,Blue,R8-A,Red,355CH3-A,UV,V16 (725)-A,Violet,B508-A,Blue,V18-A,Violet,FL26-A,561nm - 700/13-A,YellowGreen,YG695-A,YellowGreen
-B7-A,Blue,,,355CH4-A,UV,V17 (750)-A,Violet,B525-A,Blue,V19-A,Violet,FL25-A,561nm - 720/24-A,YellowGreen,YG730-A,YellowGreen
-B8-A,Blue,,,355CH5-A,UV,V18 (780)-A,Violet,B543-A,Blue,V20-A,Violet,FL28-A,561nm - 760/50-A,YellowGreen,YG750-A,YellowGreen
-B9-A,Blue,,,355CH6-A,UV,V19 (810)-A,Violet,B582-A,Blue,B1-A,Blue,FL27-A,561nm - 810/25-A,YellowGreen,YG780-A,YellowGreen
-B10-A,Blue,,,355CH7-A,UV,V20 (845)-A,Violet,B600-A,Blue,B2-A,Blue,FL30-A,561nm - 844/25-A,YellowGreen,YG825-A,YellowGreen
-B11-A,Blue,,,355CH8-A,UV,B1 (500)-A,Blue,B618-A,Blue,B3-A,Blue,FL29-A,561nm - 860/LP-A,YellowGreen,R660-A,Red
-B12-A,Blue,,,355CH9-A,UV,B2 (515)-A,Blue,B661-A,Blue,B4-A,Blue,FL46-A,637nm - 661/20-A,Red,R675-A,Red
-B13-A,Blue,,,355CH10-A,UV,B3 (530)-A,Blue,B681-A,Blue,B5-A,Blue,FL47-A,637nm - 700/13-A,Red,R680-A,Red
-B14-A,Blue,,,355CH11-A,UV,B4 (545)-A,Blue,B700-A,Blue,B6-A,Blue,FL43-A,637nm - 720/24-A,Red,R710-A,Red
-YG1-A,YellowGreen,,,355CH12-A,UV,B5 (575)-A,Blue,B717-A,Blue,B7-A,Blue,FL45-A,637nm - 760/50-A,Red,R730-A,Red
-YG2-A,YellowGreen,,,355CH13-A,UV,B6 (590)-A,Blue,B735-A,Blue,B8-A,Blue,FL44-A,637nm - 785/LP-A,Red,R780-A,Red
-YG3-A,YellowGreen,,,355CH14-A,UV,B7 (605)-A,Blue,B757-A,Blue,B9-A,Blue,FL48-A,781nm - 810/25-A,IR,,
-YG4-A,YellowGreen,,,355CH15-A,UV,B8 (625)-A,Blue,B784-A,Blue,B10-A,Blue,FL49-A,781nm - 844/25-A,IR,,
-YG5-A,YellowGreen,,,355CH16-A,UV,B9 (655)-A,Blue,B815-A,Blue,B11-A,Blue,FL50-A,781nm - 860/LP-A,IR,,
-YG6-A,YellowGreen,,,355CH17-A,UV,B10 (675)-A,Blue,Y582-A,YellowGreen,B12-A,Blue,,,,,
-YG7-A,YellowGreen,,,355CH18-A,UV,B11 (700)-A,Blue,Y600-A,YellowGreen,B13-A,Blue,,,,,
-YG8-A,YellowGreen,,,355CH19-A,UV,B12 (725)-A,Blue,Y618-A,YellowGreen,B14-A,Blue,,,,,
-YG9-A,YellowGreen,,,355CH20-A,UV,B13 (750)-A,Blue,Y661-A,YellowGreen,B15-A,Blue,,,,,
-YG10-A,YellowGreen,,,355CH21-A,UV,B14 (780)-A,Blue,Y681-A,YellowGreen,B16-A,Blue,,,,,
-R1-A,Red,,,355CH22-A,UV,B15 (810)-A,Blue,Y700-A,YellowGreen,Y1-A,YellowGreen,,,,,
-R2-A,Red,,,355CH23-A,UV,B16 (845)-A,Blue,Y717-A,YellowGreen,Y2-A,YellowGreen,,,,,
-R3-A,Red,,,355CH24-A,UV,YG1 (575)-A,YellowGreen,Y735-A,YellowGreen,Y3-A,YellowGreen,,,,,
-R4-A,Red,,,355CH25-A,UV,YG2 (590)-A,YellowGreen,Y757-A,YellowGreen,Y4-A,YellowGreen,,,,,
-R5-A,Red,,,355CH26-A,UV,YG3 (605)-A,YellowGreen,Y784-A,YellowGreen,Y5-A,YellowGreen,,,,,
-R6-A,Red,,,355CH27-A,UV,YG4 (625)-A,YellowGreen,Y815-A,YellowGreen,Y6-A,YellowGreen,,,,,
-R7-A,Red,,,355CH28-A,UV,YG5 (655)-A,YellowGreen,R661-A,Red,Y7-A,YellowGreen,,,,,
-R8-A,Red,,,355CH29-A,UV,YG6 (675)-A,YellowGreen,R681-A,Red,Y8-A,YellowGreen,,,,,
-,,,,355CH30-A,UV,YG7 (700)-A,YellowGreen,R700-A,Red,Y9-A,YellowGreen,,,,,
-,,,,355CH31-A,UV,YG8 (725)-A,YellowGreen,R717-A,Red,Y10-A,YellowGreen,,,,,
-,,,,355CH32-A,UV,YG9 (750)-A,YellowGreen,R735-A,Red,Y11-A,YellowGreen,,,,,
-,,,,355CH33-A,UV,YG10 (780)-A,YellowGreen,R757-A,Red,Y12-A,YellowGreen,,,,,
-,,,,355CH34-A,UV,YG11 (810)-A,YellowGreen,R784-A,Red,R1-A,Red,,,,,
-,,,,355CH35-A,UV,YG12 (845)-A,YellowGreen,R815-A,Red,R2-A,Red,,,,,
-,,,,405CH1-A,Violet,R1 (655)-A,Red,,,R3-A,Red,,,,,
-,,,,405CH2-A,Violet,R2 (675)-A,Red,,,R4-A,Red,,,,,
-,,,,405CH3-A,Violet,R3 (700)-A,Red,,,R5-A,Red,,,,,
-,,,,405CH4-A,Violet,R4 (725)-A,Red,,,R6-A,Red,,,,,
-,,,,405CH5-A,Violet,R5 (750)-A,Red,,,R7-A,Red,,,,,
-,,,,405CH6-A,Violet,R6 (780)-A,Red,,,R8-A,Red,,,,,
-,,,,405CH7-A,Violet,R7 (810)-A,Red,,,R9-A,Red,,,,,
-,,,,405CH8-A,Violet,R8 (845)-A,Red,,,R10-A,Red,,,,,
-,,,,405CH9-A,Violet,,,,,IR1-A,IR,,,,,
-,,,,405CH10-A,Violet,,,,,IR2-A,IR,,,,,
-,,,,405CH11-A,Violet,,,,,IR3-A,IR,,,,,
-,,,,405CH12-A,Violet,,,,,,,,,,,
-,,,,405CH13-A,Violet,,,,,,,,,,,
-,,,,405CH14-A,Violet,,,,,,,,,,,
-,,,,405CH15-A,Violet,,,,,,,,,,,
-,,,,405CH16-A,Violet,,,,,,,,,,,
-,,,,405CH17-A,Violet,,,,,,,,,,,
-,,,,405CH18-A,Violet,,,,,,,,,,,
-,,,,405CH19-A,Violet,,,,,,,,,,,
-,,,,405CH20-A,Violet,,,,,,,,,,,
-,,,,405CH21-A,Violet,,,,,,,,,,,
-,,,,405CH22-A,Violet,,,,,,,,,,,
-,,,,405CH23-A,Violet,,,,,,,,,,,
-,,,,405CH24-A,Violet,,,,,,,,,,,
-,,,,405CH25-A,Violet,,,,,,,,,,,
-,,,,405CH26-A,Violet,,,,,,,,,,,
-,,,,405CH27-A,Violet,,,,,,,,,,,
-,,,,405CH28-A,Violet,,,,,,,,,,,
-,,,,405CH29-A,Violet,,,,,,,,,,,
-,,,,405CH30-A,Violet,,,,,,,,,,,
-,,,,405CH31-A,Violet,,,,,,,,,,,
-,,,,405CH32-A,Violet,,,,,,,,,,,
-,,,,405CH33-A,Violet,,,,,,,,,,,
-,,,,405CH34-A,Violet,,,,,,,,,,,
-,,,,405CH35-A,Violet,,,,,,,,,,,
-,,,,488CH4-A,Blue,,,,,,,,,,,
-,,,,488CH5-A,Blue,,,,,,,,,,,
-,,,,488CH6-A,Blue,,,,,,,,,,,
-,,,,488CH7-A,Blue,,,,,,,,,,,
-,,,,488CH8-A,Blue,,,,,,,,,,,
-,,,,488CH9-A,Blue,,,,,,,,,,,
-,,,,488CH10-A,Blue,,,,,,,,,,,
-,,,,488CH11-A,Blue,,,,,,,,,,,
-,,,,488CH12-A,Blue,,,,,,,,,,,
-,,,,488CH13-A,Blue,,,,,,,,,,,
-,,,,488CH14-A,Blue,,,,,,,,,,,
-,,,,488CH15-A,Blue,,,,,,,,,,,
-,,,,488CH16-A,Blue,,,,,,,,,,,
-,,,,488CH17-A,Blue,,,,,,,,,,,
-,,,,488CH18-A,Blue,,,,,,,,,,,
-,,,,488CH19-A,Blue,,,,,,,,,,,
-,,,,488CH20-A,Blue,,,,,,,,,,,
-,,,,488CH21-A,Blue,,,,,,,,,,,
-,,,,488CH22-A,Blue,,,,,,,,,,,
-,,,,488CH23-A,Blue,,,,,,,,,,,
-,,,,488CH24-A,Blue,,,,,,,,,,,
-,,,,488CH25-A,Blue,,,,,,,,,,,
-,,,,488CH26-A,Blue,,,,,,,,,,,
-,,,,488CH27-A,Blue,,,,,,,,,,,
-,,,,488CH28-A,Blue,,,,,,,,,,,
-,,,,488CH29-A,Blue,,,,,,,,,,,
-,,,,488CH30-A,Blue,,,,,,,,,,,
-,,,,488CH31-A,Blue,,,,,,,,,,,
-,,,,488CH32-A,Blue,,,,,,,,,,,
-,,,,488CH33-A,Blue,,,,,,,,,,,
-,,,,488CH34-A,Blue,,,,,,,,,,,
-,,,,488CH35-A,Blue,,,,,,,,,,,
-,,,,561CH10-A,YellowGreen,,,,,,,,,,,
-,,,,561CH11-A,YellowGreen,,,,,,,,,,,
-,,,,561CH12-A,YellowGreen,,,,,,,,,,,
-,,,,561CH13-A,YellowGreen,,,,,,,,,,,
-,,,,561CH14-A,YellowGreen,,,,,,,,,,,
-,,,,561CH15-A,YellowGreen,,,,,,,,,,,
-,,,,561CH16-A,YellowGreen,,,,,,,,,,,
-,,,,561CH17-A,YellowGreen,,,,,,,,,,,
-,,,,561CH18-A,YellowGreen,,,,,,,,,,,
-,,,,561CH19-A,YellowGreen,,,,,,,,,,,
-,,,,561CH20-A,YellowGreen,,,,,,,,,,,
-,,,,561CH21-A,YellowGreen,,,,,,,,,,,
-,,,,561CH22-A,YellowGreen,,,,,,,,,,,
-,,,,561CH23-A,YellowGreen,,,,,,,,,,,
-,,,,561CH24-A,YellowGreen,,,,,,,,,,,
-,,,,561CH25-A,YellowGreen,,,,,,,,,,,
-,,,,561CH26-A,YellowGreen,,,,,,,,,,,
-,,,,561CH27-A,YellowGreen,,,,,,,,,,,
-,,,,561CH28-A,YellowGreen,,,,,,,,,,,
-,,,,561CH29-A,YellowGreen,,,,,,,,,,,
-,,,,561CH30-A,YellowGreen,,,,,,,,,,,
-,,,,561CH31-A,YellowGreen,,,,,,,,,,,
-,,,,561CH32-A,YellowGreen,,,,,,,,,,,
-,,,,561CH33-A,YellowGreen,,,,,,,,,,,
-,,,,561CH34-A,YellowGreen,,,,,,,,,,,
-,,,,561CH35-A,YellowGreen,,,,,,,,,,,
-,,,,637CH17-A,Red,,,,,,,,,,,
-,,,,637CH18-A,Red,,,,,,,,,,,
-,,,,637CH19-A,Red,,,,,,,,,,,
-,,,,637CH20-A,Red,,,,,,,,,,,
-,,,,637CH21-A,Red,,,,,,,,,,,
-,,,,637CH22-A,Red,,,,,,,,,,,
-,,,,637CH23-A,Red,,,,,,,,,,,
-,,,,637CH24-A,Red,,,,,,,,,,,
-,,,,637CH25-A,Red,,,,,,,,,,,
-,,,,637CH26-A,Red,,,,,,,,,,,
-,,,,637CH27-A,Red,,,,,,,,,,,
-,,,,637CH28-A,Red,,,,,,,,,,,
-,,,,637CH29-A,Red,,,,,,,,,,,
-,,,,637CH30-A,Red,,,,,,,,,,,
-,,,,637CH31-A,Red,,,,,,,,,,,
-,,,,637CH32-A,Red,,,,,,,,,,,
-,,,,637CH33-A,Red,,,,,,,,,,,
-,,,,637CH34-A,Red,,,,,,,,,,,
-,,,,637CH35-A,Red,,,,,,,,,,,
-,,,,808CH36-A,IR,,,,,,,,,,,
-,,,,808CH37-A,IR,,,,,,,,,,,
+Aurora,Aurora_laser,NorthernLights,NorthernLights_laser,ID7000,ID7000_laser,Discover,Discover_laser,Opteon,Opteon_laser,Mosaic,Mosaic_laser,Xenith,Xenith_description,Xenith_laser,A5SE,A5SE_laser,CytoStellar,CytoStellar_laser
+UV1-A,UV,V1-A,Violet,320CH1-A,DeepUV,UV1 (375)-A,UV,UV380-A,UV,U1-A,UV,FL07-A,349nm - 387/11-A,UV,UV379-A,UV,UV1,UV
+UV2-A,UV,V2-A,Violet,320CH2-A,DeepUV,UV2 (390)-A,UV,UV424-A,UV,U2-A,UV,FL08-A,349nm - 420/10-A,UV,UV446-A,UV,UV2,UV
+UV3-A,UV,V3-A,Violet,320CH3-A,DeepUV,UV3 (420)-A,UV,UV440-A,UV,U3-A,UV,FL10-A,349nm - 434/17-A,UV,UV515-A,UV,UV3,UV
+UV4-A,UV,V4-A,Violet,320CH4-A,DeepUV,UV4 (440)-A,UV,UV455-A,UV,U4-A,UV,FL09-A,349nm - 455/14-A,UV,UV540-A,UV,UV4,UV
+UV5-A,UV,V5-A,Violet,320CH5-A,DeepUV,UV5 (460)-A,UV,UV469-A,UV,U5-A,UV,FL11-A,349nm - 473/15-A,UV,UV585-A,UV,UV5,UV
+UV6-A,UV,V6-A,Violet,320CH6-A,DeepUV,UV6 (475)-A,UV,UV508-A,UV,U6-A,UV,FL06-A,349nm - 507/19-A,UV,UV610-A,UV,UV6,UV
+UV7-A,UV,V7-A,Violet,320CH7-A,DeepUV,UV7 (500)-A,UV,UV525-A,UV,U7-A,UV,FL05-A,349nm - 549/15-A,UV,UV660-A,UV,UV7,UV
+UV8-A,UV,V8-A,Violet,320CH8-A,DeepUV,UV8 (515)-A,UV,UV543-A,UV,U8-A,UV,FL04-A,349nm - 575/15-A,UV,UV695-A,UV,UV8,UV
+UV9-A,UV,V9-A,Violet,320CH9-A,DeepUV,UV9 (530)-A,UV,UV582-A,UV,U9-A,UV,FL03-A,349nm - 615/24-A,UV,UV736-A,UV,UV9,UV
+UV10-A,UV,V10-A,Violet,320CH10-A,DeepUV,UV10 (545)-A,UV,UV600-A,UV,U10-A,UV,FL00-A,349nm - 670/30-A,UV,UV809-A,UV,UV10,UV
+UV11-A,UV,V11-A,Violet,320CH11-A,DeepUV,UV11 (575)-A,UV,UV618-A,UV,U11-A,UV,FL01-A,349nm - 728/40-A,UV,V427-A,Violet,UV11,UV
+UV12-A,UV,V12-A,Violet,320CH12-A,DeepUV,UV12 (590)-A,UV,UV661-A,UV,U12-A,UV,FL02-A,349nm - 810/25-A,UV,V450-A,Violet,UV12,UV
+UV13-A,UV,V13-A,Violet,320CH13-A,DeepUV,UV13 (605)-A,UV,UV681-A,UV,U13-A,UV,FL16-A,405nm - 420/10-A,Violet,V470-A,Violet,UV13,UV
+UV14-A,UV,V14-A,Violet,320CH14-A,DeepUV,UV14 (625)-A,UV,UV700-A,UV,U14-A,UV,FL15-A,405nm - 434/17-A,Violet,V510-A,Violet,UV14,UV
+UV15-A,UV,V15-A,Violet,320CH15-A,DeepUV,UV15 (655)-A,UV,UV717-A,UV,U15-A,UV,FL17-A,405nm - 455/14-A,Violet,V540-A,Violet,UV15,UV
+UV16-A,UV,V16-A,Violet,320CH16-A,DeepUV,UV16 (675)-A,UV,UV735-A,UV,U16-A,UV,FL18-A,405nm - 473/15-A,Violet,V576-A,Violet,UV16,UV
+V1-A,Violet,B1-A,Blue,320CH17-A,DeepUV,UV17 (700)-A,UV,UV757-A,UV,U17-A,UV,FL13-A,405nm - 507/19-A,Violet,V595-A,Violet,UV17,UV
+V2-A,Violet,B2-A,Blue,320CH18-A,DeepUV,UV18 (725)-A,UV,UV784-A,UV,U18-A,UV,FL14-A,405nm - 549/15-A,Violet,V615-A,Violet,UV18,UV
+V3-A,Violet,B3-A,Blue,320CH19-A,DeepUV,UV19 (750)-A,UV,UV815-A,UV,U19-A,UV,FL12-A,405nm - 575/15-A,Violet,V660-A,Violet,UV19,UV
+V4-A,Violet,B4-A,Blue,320CH20-A,DeepUV,UV20 (780)-A,UV,V424-A,Violet,U20-A,UV,FL23-A,405nm - 615/24-A,Violet,V680-A,Violet,UV20,UV
+V5-A,Violet,B5-A,Blue,320CH21-A,DeepUV,UV21 (810)-A,UV,V440-A,Violet,V1-A,Violet,FL22-A,405nm - 661/20-A,Violet,V710-A,Violet,UV21,UV
+V6-A,Violet,B6-A,Blue,320CH22-A,DeepUV,UV22 (845)-A,UV,V455-A,Violet,V2-A,Violet,FL21-A,405nm - 710/20-A,Violet,V750-A,Violet,V1,Violet
+V7-A,Violet,B7-A,Blue,320CH23-A,DeepUV,V1 (420)-A,Violet,V469-A,Violet,V3-A,Violet,FL19-A,405nm - 747/33-A,Violet,V785-A,Violet,V2,Violet
+V8-A,Violet,B8-A,Blue,320CH24-A,DeepUV,V2 (440)-A,Violet,V508-A,Violet,V4-A,Violet,FL20-A,405nm - 770/LP-A,Violet,V845-A,Violet,V3,Violet
+V9-A,Violet,B9-A,Blue,320CH25-A,DeepUV,V3 (460)-A,Violet,V525-A,Violet,V5-A,Violet,FL37-A,488nm - 520/40-A,Blue,B510-A,Blue,V4,Violet
+V10-A,Violet,B10-A,Blue,320CH26-A,DeepUV,V4 (475)-A,Violet,V543-A,Violet,V6-A,Violet,FL36-A,488nm - 549/15-A,Blue,B537-A,Blue,V5,Violet
+V11-A,Violet,B11-A,Blue,320CH27-A,DeepUV,V5 (500)-A,Violet,V582-A,Violet,V7-A,Violet,FL38-A,488nm - 583/30-A,Blue,B576-A,Blue,V6,Violet
+V12-A,Violet,B12-A,Blue,320CH28-A,DeepUV,V6 (515)-A,Violet,V600-A,Violet,V8-A,Violet,FL39-A,488nm - 615/24-A,Blue,B602-A,Blue,V7,Violet
+V13-A,Violet,B13-A,Blue,320CH29-A,DeepUV,V7 (530)-A,Violet,V618-A,Violet,V9-A,Violet,FL42-A,488nm - 670/30-A,Blue,B660-A,Blue,V8,Violet
+V14-A,Violet,B14-A,Blue,320CH30-A,DeepUV,V8 (545)-A,Violet,V661-A,Violet,V10-A,Violet,FL41-A,488nm - 720/24-A,Blue,B675-A,Blue,V9,Violet
+V15-A,Violet,R1-A,Red,320CH31-A,DeepUV,V9 (575)-A,Violet,V681-A,Violet,V11-A,Violet,FL40-A,488nm - 750/LP-A,Blue,B710-A,Blue,V10,Violet
+V16-A,Violet,R2-A,Red,320CH32-A,DeepUV,V10 (590)-A,Violet,V700-A,Violet,V12-A,Violet,FL31-A,561nm - 575/15-A,YellowGreen,B750-A,Blue,V11,Violet
+B1-A,Blue,R3-A,Red,320CH33-A,DeepUV,V11 (605)-A,Violet,V717-A,Violet,V13-A,Violet,FL32-A,561nm - 589/15-A,YellowGreen,B810-A,Blue,V12,Violet
+B2-A,Blue,R4-A,Red,320CH34-A,DeepUV,V12 (625)-A,Violet,V735-A,Violet,V14-A,Violet,FL34-A,561nm - 605/15-A,YellowGreen,YG585-A,YellowGreen,V13,Violet
+B3-A,Blue,R5-A,Red,320CH35-A,DeepUV,V13 (655)-A,Violet,V757-A,Violet,V15-A,Violet,FL33-A,561nm - 622/15-A,YellowGreen,YG602-A,YellowGreen,V14,Violet
+B4-A,Blue,R6-A,Red,355CH1-A,UV,V14 (675)-A,Violet,V784-A,Violet,V16-A,Violet,FL35-A,561nm - 661/20-A,YellowGreen,YG660-A,YellowGreen,V15,Violet
+B5-A,Blue,R7-A,Red,355CH2-A,UV,V15 (700)-A,Violet,V815-A,Violet,V17-A,Violet,FL24-A,561nm - 685/15-A,YellowGreen,YG670-A,YellowGreen,V16,Violet
+B6-A,Blue,R8-A,Red,355CH3-A,UV,V16 (725)-A,Violet,B508-A,Blue,V18-A,Violet,FL26-A,561nm - 700/13-A,YellowGreen,YG695-A,YellowGreen,V17,Violet
+B7-A,Blue,,,355CH4-A,UV,V17 (750)-A,Violet,B525-A,Blue,V19-A,Violet,FL25-A,561nm - 720/24-A,YellowGreen,YG730-A,YellowGreen,V18,Violet
+B8-A,Blue,,,355CH5-A,UV,V18 (780)-A,Violet,B543-A,Blue,V20-A,Violet,FL28-A,561nm - 760/50-A,YellowGreen,YG750-A,YellowGreen,V19,Violet
+B9-A,Blue,,,355CH6-A,UV,V19 (810)-A,Violet,B582-A,Blue,B1-A,Blue,FL27-A,561nm - 810/25-A,YellowGreen,YG780-A,YellowGreen,B1,Blue
+B10-A,Blue,,,355CH7-A,UV,V20 (845)-A,Violet,B600-A,Blue,B2-A,Blue,FL30-A,561nm - 844/25-A,YellowGreen,YG825-A,YellowGreen,B2,Blue
+B11-A,Blue,,,355CH8-A,UV,B1 (500)-A,Blue,B618-A,Blue,B3-A,Blue,FL29-A,561nm - 860/LP-A,YellowGreen,R660-A,Red,B3,Blue
+B12-A,Blue,,,355CH9-A,UV,B2 (515)-A,Blue,B661-A,Blue,B4-A,Blue,FL46-A,637nm - 661/20-A,Red,R675-A,Red,B4,Blue
+B13-A,Blue,,,355CH10-A,UV,B3 (530)-A,Blue,B681-A,Blue,B5-A,Blue,FL47-A,637nm - 700/13-A,Red,R680-A,Red,B5,Blue
+B14-A,Blue,,,355CH11-A,UV,B4 (545)-A,Blue,B700-A,Blue,B6-A,Blue,FL43-A,637nm - 720/24-A,Red,R710-A,Red,B6,Blue
+YG1-A,YellowGreen,,,355CH12-A,UV,B5 (575)-A,Blue,B717-A,Blue,B7-A,Blue,FL45-A,637nm - 760/50-A,Red,R730-A,Red,B7,Blue
+YG2-A,YellowGreen,,,355CH13-A,UV,B6 (590)-A,Blue,B735-A,Blue,B8-A,Blue,FL44-A,637nm - 785/LP-A,Red,R780-A,Red,B8,Blue
+YG3-A,YellowGreen,,,355CH14-A,UV,B7 (605)-A,Blue,B757-A,Blue,B9-A,Blue,FL48-A,781nm - 810/25-A,IR,,,B9,Blue
+YG4-A,YellowGreen,,,355CH15-A,UV,B8 (625)-A,Blue,B784-A,Blue,B10-A,Blue,FL49-A,781nm - 844/25-A,IR,,,B10,Blue
+YG5-A,YellowGreen,,,355CH16-A,UV,B9 (655)-A,Blue,B815-A,Blue,B11-A,Blue,FL50-A,781nm - 860/LP-A,IR,,,B11,Blue
+YG6-A,YellowGreen,,,355CH17-A,UV,B10 (675)-A,Blue,Y582-A,YellowGreen,B12-A,Blue,,,,,,B12,Blue
+YG7-A,YellowGreen,,,355CH18-A,UV,B11 (700)-A,Blue,Y600-A,YellowGreen,B13-A,Blue,,,,,,B13,Blue
+YG8-A,YellowGreen,,,355CH19-A,UV,B12 (725)-A,Blue,Y618-A,YellowGreen,B14-A,Blue,,,,,,B14,Blue
+YG9-A,YellowGreen,,,355CH20-A,UV,B13 (750)-A,Blue,Y661-A,YellowGreen,B15-A,Blue,,,,,,B15,Blue
+YG10-A,YellowGreen,,,355CH21-A,UV,B14 (780)-A,Blue,Y681-A,YellowGreen,B16-A,Blue,,,,,,YG1,YellowGreen
+R1-A,Red,,,355CH22-A,UV,B15 (810)-A,Blue,Y700-A,YellowGreen,Y1-A,YellowGreen,,,,,,YG2,YellowGreen
+R2-A,Red,,,355CH23-A,UV,B16 (845)-A,Blue,Y717-A,YellowGreen,Y2-A,YellowGreen,,,,,,YG3,YellowGreen
+R3-A,Red,,,355CH24-A,UV,YG1 (575)-A,YellowGreen,Y735-A,YellowGreen,Y3-A,YellowGreen,,,,,,YG4,YellowGreen
+R4-A,Red,,,355CH25-A,UV,YG2 (590)-A,YellowGreen,Y757-A,YellowGreen,Y4-A,YellowGreen,,,,,,YG5,YellowGreen
+R5-A,Red,,,355CH26-A,UV,YG3 (605)-A,YellowGreen,Y784-A,YellowGreen,Y5-A,YellowGreen,,,,,,YG6,YellowGreen
+R6-A,Red,,,355CH27-A,UV,YG4 (625)-A,YellowGreen,Y815-A,YellowGreen,Y6-A,YellowGreen,,,,,,YG7,YellowGreen
+R7-A,Red,,,355CH28-A,UV,YG5 (655)-A,YellowGreen,R661-A,Red,Y7-A,YellowGreen,,,,,,YG8,YellowGreen
+R8-A,Red,,,355CH29-A,UV,YG6 (675)-A,YellowGreen,R681-A,Red,Y8-A,YellowGreen,,,,,,YG9,YellowGreen
+,,,,355CH30-A,UV,YG7 (700)-A,YellowGreen,R700-A,Red,Y9-A,YellowGreen,,,,,,YG10,YellowGreen
+,,,,355CH31-A,UV,YG8 (725)-A,YellowGreen,R717-A,Red,Y10-A,YellowGreen,,,,,,YG11,YellowGreen
+,,,,355CH32-A,UV,YG9 (750)-A,YellowGreen,R735-A,Red,Y11-A,YellowGreen,,,,,,YG12,YellowGreen
+,,,,355CH33-A,UV,YG10 (780)-A,YellowGreen,R757-A,Red,Y12-A,YellowGreen,,,,,,R1,Red
+,,,,355CH34-A,UV,YG11 (810)-A,YellowGreen,R784-A,Red,R1-A,Red,,,,,,R2,Red
+,,,,355CH35-A,UV,YG12 (845)-A,YellowGreen,R815-A,Red,R2-A,Red,,,,,,R3,Red
+,,,,405CH1-A,Violet,R1 (655)-A,Red,,,R3-A,Red,,,,,,R4,Red
+,,,,405CH2-A,Violet,R2 (675)-A,Red,,,R4-A,Red,,,,,,R5,Red
+,,,,405CH3-A,Violet,R3 (700)-A,Red,,,R5-A,Red,,,,,,R6,Red
+,,,,405CH4-A,Violet,R4 (725)-A,Red,,,R6-A,Red,,,,,,R7,Red
+,,,,405CH5-A,Violet,R5 (750)-A,Red,,,R7-A,Red,,,,,,R8,Red
+,,,,405CH6-A,Violet,R6 (780)-A,Red,,,R8-A,Red,,,,,,,
+,,,,405CH7-A,Violet,R7 (810)-A,Red,,,R9-A,Red,,,,,,,
+,,,,405CH8-A,Violet,R8 (845)-A,Red,,,R10-A,Red,,,,,,,
+,,,,405CH9-A,Violet,,,,,IR1-A,IR,,,,,,,
+,,,,405CH10-A,Violet,,,,,IR2-A,IR,,,,,,,
+,,,,405CH11-A,Violet,,,,,IR3-A,IR,,,,,,,
+,,,,405CH12-A,Violet,,,,,,,,,,,,,
+,,,,405CH13-A,Violet,,,,,,,,,,,,,
+,,,,405CH14-A,Violet,,,,,,,,,,,,,
+,,,,405CH15-A,Violet,,,,,,,,,,,,,
+,,,,405CH16-A,Violet,,,,,,,,,,,,,
+,,,,405CH17-A,Violet,,,,,,,,,,,,,
+,,,,405CH18-A,Violet,,,,,,,,,,,,,
+,,,,405CH19-A,Violet,,,,,,,,,,,,,
+,,,,405CH20-A,Violet,,,,,,,,,,,,,
+,,,,405CH21-A,Violet,,,,,,,,,,,,,
+,,,,405CH22-A,Violet,,,,,,,,,,,,,
+,,,,405CH23-A,Violet,,,,,,,,,,,,,
+,,,,405CH24-A,Violet,,,,,,,,,,,,,
+,,,,405CH25-A,Violet,,,,,,,,,,,,,
+,,,,405CH26-A,Violet,,,,,,,,,,,,,
+,,,,405CH27-A,Violet,,,,,,,,,,,,,
+,,,,405CH28-A,Violet,,,,,,,,,,,,,
+,,,,405CH29-A,Violet,,,,,,,,,,,,,
+,,,,405CH30-A,Violet,,,,,,,,,,,,,
+,,,,405CH31-A,Violet,,,,,,,,,,,,,
+,,,,405CH32-A,Violet,,,,,,,,,,,,,
+,,,,405CH33-A,Violet,,,,,,,,,,,,,
+,,,,405CH34-A,Violet,,,,,,,,,,,,,
+,,,,405CH35-A,Violet,,,,,,,,,,,,,
+,,,,488CH4-A,Blue,,,,,,,,,,,,,
+,,,,488CH5-A,Blue,,,,,,,,,,,,,
+,,,,488CH6-A,Blue,,,,,,,,,,,,,
+,,,,488CH7-A,Blue,,,,,,,,,,,,,
+,,,,488CH8-A,Blue,,,,,,,,,,,,,
+,,,,488CH9-A,Blue,,,,,,,,,,,,,
+,,,,488CH10-A,Blue,,,,,,,,,,,,,
+,,,,488CH11-A,Blue,,,,,,,,,,,,,
+,,,,488CH12-A,Blue,,,,,,,,,,,,,
+,,,,488CH13-A,Blue,,,,,,,,,,,,,
+,,,,488CH14-A,Blue,,,,,,,,,,,,,
+,,,,488CH15-A,Blue,,,,,,,,,,,,,
+,,,,488CH16-A,Blue,,,,,,,,,,,,,
+,,,,488CH17-A,Blue,,,,,,,,,,,,,
+,,,,488CH18-A,Blue,,,,,,,,,,,,,
+,,,,488CH19-A,Blue,,,,,,,,,,,,,
+,,,,488CH20-A,Blue,,,,,,,,,,,,,
+,,,,488CH21-A,Blue,,,,,,,,,,,,,
+,,,,488CH22-A,Blue,,,,,,,,,,,,,
+,,,,488CH23-A,Blue,,,,,,,,,,,,,
+,,,,488CH24-A,Blue,,,,,,,,,,,,,
+,,,,488CH25-A,Blue,,,,,,,,,,,,,
+,,,,488CH26-A,Blue,,,,,,,,,,,,,
+,,,,488CH27-A,Blue,,,,,,,,,,,,,
+,,,,488CH28-A,Blue,,,,,,,,,,,,,
+,,,,488CH29-A,Blue,,,,,,,,,,,,,
+,,,,488CH30-A,Blue,,,,,,,,,,,,,
+,,,,488CH31-A,Blue,,,,,,,,,,,,,
+,,,,488CH32-A,Blue,,,,,,,,,,,,,
+,,,,488CH33-A,Blue,,,,,,,,,,,,,
+,,,,488CH34-A,Blue,,,,,,,,,,,,,
+,,,,488CH35-A,Blue,,,,,,,,,,,,,
+,,,,561CH10-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH11-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH12-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH13-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH14-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH15-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH16-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH17-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH18-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH19-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH20-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH21-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH22-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH23-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH24-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH25-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH26-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH27-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH28-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH29-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH30-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH31-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH32-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH33-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH34-A,YellowGreen,,,,,,,,,,,,,
+,,,,561CH35-A,YellowGreen,,,,,,,,,,,,,
+,,,,637CH17-A,Red,,,,,,,,,,,,,
+,,,,637CH18-A,Red,,,,,,,,,,,,,
+,,,,637CH19-A,Red,,,,,,,,,,,,,
+,,,,637CH20-A,Red,,,,,,,,,,,,,
+,,,,637CH21-A,Red,,,,,,,,,,,,,
+,,,,637CH22-A,Red,,,,,,,,,,,,,
+,,,,637CH23-A,Red,,,,,,,,,,,,,
+,,,,637CH24-A,Red,,,,,,,,,,,,,
+,,,,637CH25-A,Red,,,,,,,,,,,,,
+,,,,637CH26-A,Red,,,,,,,,,,,,,
+,,,,637CH27-A,Red,,,,,,,,,,,,,
+,,,,637CH28-A,Red,,,,,,,,,,,,,
+,,,,637CH29-A,Red,,,,,,,,,,,,,
+,,,,637CH30-A,Red,,,,,,,,,,,,,
+,,,,637CH31-A,Red,,,,,,,,,,,,,
+,,,,637CH32-A,Red,,,,,,,,,,,,,
+,,,,637CH33-A,Red,,,,,,,,,,,,,
+,,,,637CH34-A,Red,,,,,,,,,,,,,
+,,,,637CH35-A,Red,,,,,,,,,,,,,
+,,,,808CH36-A,IR,,,,,,,,,,,,,
+,,,,808CH37-A,IR,,,,,,,,,,,,,
