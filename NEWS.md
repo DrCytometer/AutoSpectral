@@ -1,3 +1,23 @@
+# AutoSpectral 1.7.1 (2026-07-30)
+
+## Improvements
+
+- Replaced `get.autospectral.param.a8` and `s8` individual functions with a new
+generic one for "FACSDiscover" cytometers. This is designed to be future-proof
+for the new FACSDiscover A7 and any variants thereof. Should be backwards
+compatible. You may now call `discover` for any of these, although `a8` and `s8`
+will still work.
+- Cytometer calling in `get.autospectral.param()` is now case-insensitive.
+
+
+# AutoSpectral 1.7.0 (2026-07-25)
+
+## Improvements
+
+- Set "joint" pipeline as the default for AutoSpectral unmixing in `unmix.fcs()`
+and `unmix.folder()`.
+
+
 # AutoSpectral 1.6.4 (2026-07-20)
 
 ## Improvements
