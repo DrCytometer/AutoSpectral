@@ -1,22 +1,26 @@
-# get_autospectral_param_a8.r
+# get_autospectral_param_discover.r
 
-#' @title Get Autospectral Parameters for DiscoverA8 Cytometer
+#' @title Get Autospectral Parameters for BD FACSDiscover Cytometers
 #'
 #' @description
 #' Returns parameters for running a calculation of unmixing with
-#' AutoSpectral, without creating any figures or tables.
+#' AutoSpectral for the BD FACSDiscover family (A8, S8), without creating
+#' any figures or tables. A8 and S8 share identical acquisition parameters;
+#' the caller (`get.autospectral.param()`) sets the specific `cytometer`
+#' label ("FACSDiscover A8" / "FACSDiscover S8" / generic "FACSDiscover")
+#' after this function returns, based on which alias was requested.
 #'
 #' @param autosp.param A list of initial AutoSpectral parameters.
 #'
-#' @return A list of AutoSpectral parameters specific to the DiscoverA8
-#' cytometer.
+#' @return A list of AutoSpectral parameters specific to the FACSDiscover
+#' cytometer family.
 #'
 #' @export
 
-get.autospectral.param.a8 <- function( autosp.param )
+get.autospectral.param.discover <- function( autosp.param )
 {
   # add cytometer-specific parameters
-  autosp.param$cytometer <- "FACSDiscover A8"
+  autosp.param$cytometer <- "FACSDiscover"
 
   autosp.param$scatter.data.min.x <- 0
 
@@ -32,20 +36,20 @@ get.autospectral.param.a8 <- function( autosp.param )
 
   autosp.param$default.scatter.parameter <- c( "FSC-A", "SSC (Violet)-A" )
 
-  autosp.param$default.transformation.param <- list(
-          length = 256,
-          max.range = 2147483648.0,
-          pos = 8.33,
-          neg = 0,
-          width = -500
-        )
-
   autosp.param$time.and.scatter <- c(
     "FSC-A", "FSC-H", "FSC-W",
     "SSC (Violet)-A", "SSC (Violet)-H", "SSC (Violet)-W",
     "SSC (Imaging)-A", "SSC (Imaging)-H", "SSC (Imaging)-W",
     "LightLoss (Imaging)-A", "LightLoss (Imaging)-H","LightLoss (Imaging)-W",
     "LightLoss (Violet)-A", "LightLoss (Violet)-H", "LightLoss (Violet)-W"
+  )
+
+  autosp.param$default.transformation.param <- list(
+    length = 256,
+    max.range = 2147483648.0,
+    pos = 8.33,
+    neg = 0,
+    width = -500
   )
 
   autosp.param$non.spectral.channel <- c(
@@ -75,4 +79,3 @@ get.autospectral.param.a8 <- function( autosp.param )
   return( autosp.param )
 
 }
-
