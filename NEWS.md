@@ -1,5 +1,10 @@
 # AutoSpectral 1.7.1 (2026-07-30)
 
+## New Features
+
+- Support for the CytoStellar cytometer. Call `cytostellar` or any unique string,
+e.g., `cyt` (see below), when calling `get.autospectral.param()`.
+
 ## Improvements
 
 - Replaced `get.autospectral.param.a8` and `s8` individual functions with a new
