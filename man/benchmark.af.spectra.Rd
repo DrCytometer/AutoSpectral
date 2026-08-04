@@ -15,7 +15,10 @@ benchmark.af.spectra(
   seed = 42L,
   n.downsample = 1000L,
   plot.dir = "figure_af_accuracy",
-  filename = "af_accuracy_spectra_benchmark"
+  filename = "af_accuracy_spectra_benchmark",
+  scatter.param = NULL,
+  ref.fcs = NULL,
+  k.scatter = 5L
 )
 }
 \arguments{
@@ -61,6 +64,15 @@ recursively if it does not exist. Default: \code{"figure_af_accuracy"}.}
 \item{filename}{Character scalar. Stem used to name the summary PDF (the
 file will be \code{<plot.dir>/<filename>.pdf}).
 Default: \code{"af_accuracy_spectra_benchmark"}.}
+
+\item{scatter.param}{Character vector. Parameters to use for the scatter-
+matching if using scatter-matched AF extraction.}
+
+\item{ref.fcs}{Character scalar. Path to the unstained FCS file used as a
+reference sample for scatter-matched AF extraction.}
+
+\item{k.scatter}{Numeric, default \code{5L}. Number of neighboring scatter points
+to consider when using scatter-matched AF extraction.}
 }
 \value{
 A named list with three elements:
