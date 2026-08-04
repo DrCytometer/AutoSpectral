@@ -15,7 +15,6 @@
 #' are screened for redundancy against each other and against the base library
 #' before being appended.
 #'
-#' @importFrom FlowSOM SOM
 #' @importFrom parallelly availableCores
 #'
 #' @param unstained.sample Path and file name for an unstained sample FCS file.
@@ -203,23 +202,12 @@ get.af.spectra <- function(
     som.dim <- max( 2, floor( sqrt( cell.n / 3 ) ) )
   }
 
-  set.seed( asp$bird.seed )
-  if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
-    map <- EmbedSOM::SOM(
-      cluster.data,
-      xdim = som.dim,
-      ydim = som.dim,
-      batch = TRUE,
-      parallel = TRUE
-    )
-  } else {
-    map <- FlowSOM::SOM(
-      cluster.data,
-      xdim = som.dim,
-      ydim = som.dim,
-      silent = TRUE
-    )
-  }
+  map <- get.som.codes(
+    data    = cluster.data,
+    som.dim = som.dim,
+    seed    = asp$bird.seed,
+    threads = if ( parallel ) threads else 1L
+  )
 
   # L-infinity normalise SOM node codes
   af.spectra <- t( apply( map$codes[ , spectral.channels ], 1, function( x ) x / max( abs( x ) ) ) )
