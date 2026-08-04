@@ -34,6 +34,18 @@
 #' @param title Character scalar. Stem used to name the output PDF (the file
 #'   will be \code{<plot.dir>/<title>_biplots.pdf}). Default:
 #'   \code{"af_accuracy"}.
+#' @param scatter.param Character vector of scatter channel names (e.g.
+#'   c("FSC-A","SSC-A")). Required only when \code{"assign.af.scatter.match"}
+#'   is included in \code{functions}; ignored otherwise.
+#' @param ref.fcs Character scalar. Optional path to a separate reference
+#'   FCS file for \code{assign.af.scatter.match}'s kNN library. If \code{NULL}
+#'   (default), the same (downsampled) \code{unstained.fcs} pool is used as
+#'   both test and reference set -- note this means each cell's own scatter
+#'   profile is present in its neighbour pool, which will bias the similarity
+#'   estimate optimistically. Supply a distinct \code{ref.fcs} for an
+#'   unbiased comparison.
+#' @param k.scatter Integer. Passed to \code{assign.af.scatter.match}'s
+#'   \code{k}. Default \code{5L}.
 #'
 #' @return A named list with one entry per tested method (including the
 #'   \code{"mean.af"} baseline). Each entry is itself a list with elements:
@@ -56,15 +68,18 @@
 #'
 #' @export
 test.af.accuracy <- function(
-  unstained.fcs,
-  spectra,
-  af.spectra,
-  asp,
-  functions    = c( "assign.af.fluorophores", "assign.af.residuals",
-                    "assign.af.joint.cov" ),
-  n.downsample = 1000L,
-  plot.dir     = "figure_af_accuracy",
-  title        = "af_accuracy"
+    unstained.fcs,
+    spectra,
+    af.spectra,
+    asp,
+    functions     = c( "assign.af.fluorophores", "assign.af.residuals",
+                       "assign.af.joint.cov" ),
+    n.downsample  = 1000L,
+    plot.dir      = "figure_af_accuracy",
+    title         = "af_accuracy",
+    scatter.param = NULL,
+    ref.fcs       = NULL,
+    k.scatter     = 5L
 ) {
 
   # ---- input validation ------------------------------------------------------
@@ -87,12 +102,41 @@ test.af.accuracy <- function(
 
   # ---- read FCS and subset to spectral columns -------------------------------
 
-  raw.data <- readFCS( unstained.fcs )[ , colnames( spectra ) ]
+  fcs.full <- readFCS( unstained.fcs )
+
+  needs.scatter <- "assign.af.scatter.match" %in% functions
+  if ( needs.scatter ) {
+    if ( is.null( scatter.param ) )
+      stop(
+        "scatter.param must be supplied when 'assign.af.scatter.match' ",
+        "is in functions.", call. = FALSE
+      )
+    missing.scatter <- setdiff( scatter.param, colnames( fcs.full ) )
+    if ( length( missing.scatter ) > 0L )
+      stop(
+        "scatter.param columns not found in unstained.fcs: ",
+        paste( missing.scatter, collapse = ", " ), call. = FALSE
+      )
+    raw.data.scatter <- fcs.full[ , union( colnames( spectra ), scatter.param ) ]
+  }
+
+  raw.data <- fcs.full[ , colnames( spectra ) ]
 
   # ---- downsample ------------------------------------------------------------
 
-  if ( is.finite( n.downsample ) && nrow( raw.data ) > n.downsample )
-    raw.data <- raw.data[ sample( nrow( raw.data ), n.downsample ), ]
+  if ( is.finite( n.downsample ) && nrow( raw.data ) > n.downsample ) {
+    keep.idx <- sample( nrow( raw.data ), n.downsample )
+    raw.data <- raw.data[ keep.idx, ]
+    if ( needs.scatter ) raw.data.scatter <- raw.data.scatter[ keep.idx, ]
+  }
+
+  if ( needs.scatter ) {
+    ref.data.scatter <- if ( !is.null( ref.fcs ) ) {
+      readFCS( ref.fcs )[ , union( colnames( spectra ), scatter.param ) ]
+    } else {
+      raw.data.scatter   # self-reference; see ref.fcs caveat above
+    }
+  }
 
   # ---- baseline unmixings (no AF; mean AF) -----------------------------------
 
@@ -155,10 +199,26 @@ test.af.accuracy <- function(
 
     message( paste( "Extracting AF using", f ) )
 
-    is.fit.fn <- grepl( "^fit\\.", f )
-    fn        <- get( f )
+    is.fit.fn     <- grepl( "^fit\\.", f )
+    is.scatter.fn <- identical( f, "assign.af.scatter.match" )
+    if ( !is.scatter.fn ) fn <- get( f )
 
-    if ( is.fit.fn ) {
+    if ( is.scatter.fn ) {
+
+      sm.out <- assign.af.scatter.match(
+        test.data     = raw.data.scatter,
+        ref.data      = ref.data.scatter,
+        scatter.param = scatter.param,
+        spectra       = spectra,
+        k             = k.scatter,
+        af.spectra    = af.spectra,
+        verbose       = FALSE
+      )
+
+      af.idx  <- sm.out$af.assignment
+      unmixed <- sm.out$unmixed[ , rownames( spectra ), drop = FALSE ]
+
+    } else if ( is.fit.fn ) {
 
       # fit-type: returns list( unmixed, AF, af.idx, fitted.af )
       fit.out <- fn(

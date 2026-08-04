@@ -12,7 +12,10 @@ test.af.accuracy(
   functions = c("assign.af.fluorophores", "assign.af.residuals", "assign.af.joint.cov"),
   n.downsample = 1000L,
   plot.dir = "figure_af_accuracy",
-  title = "af_accuracy"
+  title = "af_accuracy",
+  scatter.param = NULL,
+  ref.fcs = NULL,
+  k.scatter = 5L
 )
 }
 \arguments{
@@ -50,6 +53,21 @@ Created recursively if it does not exist. Default: \code{"figure_af_accuracy"}.}
 \item{title}{Character scalar. Stem used to name the output PDF (the file
 will be \code{<plot.dir>/<title>_biplots.pdf}). Default:
 \code{"af_accuracy"}.}
+
+\item{scatter.param}{Character vector of scatter channel names (e.g.
+c("FSC-A","SSC-A")). Required only when \code{"assign.af.scatter.match"}
+is included in \code{functions}; ignored otherwise.}
+
+\item{ref.fcs}{Character scalar. Optional path to a separate reference
+FCS file for \code{assign.af.scatter.match}'s kNN library. If \code{NULL}
+(default), the same (downsampled) \code{unstained.fcs} pool is used as
+both test and reference set -- note this means each cell's own scatter
+profile is present in its neighbour pool, which will bias the similarity
+estimate optimistically. Supply a distinct \code{ref.fcs} for an
+unbiased comparison.}
+
+\item{k.scatter}{Integer. Passed to \code{assign.af.scatter.match}'s
+\code{k}. Default \code{5L}.}
 }
 \value{
 A named list with one entry per tested method (including the
