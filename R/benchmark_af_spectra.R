@@ -38,6 +38,12 @@
 #' @param filename Character scalar. Stem used to name the summary PDF (the
 #'   file will be \code{<plot.dir>/<filename>.pdf}).
 #'   Default: \code{"af_accuracy_spectra_benchmark"}.
+#' @param scatter.param Character vector. Parameters to use for the scatter-
+#'   matching if using scatter-matched AF extraction.
+#' @param ref.fcs Character scalar. Path to the unstained FCS file used as a
+#'   reference sample for scatter-matched AF extraction.
+#' @param k.scatter Numeric, default `5L`. Number of neighboring scatter points
+#'   to consider when using scatter-matched AF extraction.
 #'
 #' @return A named list with three elements:
 #'   \describe{
@@ -60,18 +66,21 @@
 #'
 #' @export
 benchmark.af.spectra <- function(
-  unstained.fcs,
-  spectra,
-  af.spectra,
-  asp,
-  functions    = c("assign.af.joint.cov", "assign.af.fluorophores",
-                   "assign.af.residuals"),
-  n.fluors     = c(5, 10, 15, 20, 25, 30, 35, 40),
-  n.draws      = 5L,
-  seed         = 42L,
-  n.downsample = 1000L,
-  plot.dir     = "figure_af_accuracy",
-  filename     = "af_accuracy_spectra_benchmark"
+    unstained.fcs,
+    spectra,
+    af.spectra,
+    asp,
+    functions     = c("assign.af.joint.cov", "assign.af.fluorophores",
+                      "assign.af.residuals"),
+    n.fluors      = c(5, 10, 15, 20, 25, 30, 35, 40),
+    n.draws       = 5L,
+    seed          = 42L,
+    n.downsample  = 1000L,
+    plot.dir      = "figure_af_accuracy",
+    filename      = "af_accuracy_spectra_benchmark",
+    scatter.param = NULL,
+    ref.fcs       = NULL,
+    k.scatter     = 5L
 ) {
 
   # ---- input validation ------------------------------------------------------
@@ -136,7 +145,10 @@ benchmark.af.spectra <- function(
           functions     = functions,
           n.downsample  = n.downsample,
           plot.dir      = tmp.dir,
-          title         = sprintf( "n%02d_draw%02d", n, draw )
+          title         = sprintf( "n%02d_draw%02d", n, draw ),
+          scatter.param = scatter.param,
+          ref.fcs       = ref.fcs,
+          k.scatter     = k.scatter
         ),
         error = function( e ) {
           message( sprintf( "  Draw %d failed: %s", draw, e$message ) )
