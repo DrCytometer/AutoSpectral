@@ -22,7 +22,7 @@ sim.flow.data(
   ssc.sd.log = 0.5,
   fsc.ssc.cor = 0.6,
   shot.noise = TRUE,
-  counts.per.unit = 0.5,
+  counts.per.unit = NULL,
   spillover.noise = TRUE,
   detector.noise = TRUE,
   af.variation = TRUE,
@@ -93,8 +93,8 @@ and log(SSC) in the synthetic scatter population. Default \code{0.6}.}
 \item{shot.noise}{Logical. Whether to apply Poisson shot noise. Default
 \code{TRUE}.}
 
-\item{counts.per.unit}{Numeric scalar for \code{shot.noise}. Default \code{0.5}. Works
-inversely; higher numbers will decrease shot noise-driven spread.}
+\item{counts.per.unit}{Numeric scalar for \code{shot.noise}. Default NULL, which
+uses the cytometer-specific preset. Supply a value to override.}
 
 \item{spillover.noise}{Logical. Whether to apply binomial spillover sampling.
 Default \code{TRUE}.}

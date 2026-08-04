@@ -60,8 +60,8 @@
 #'   and log(SSC) in the synthetic scatter population. Default `0.6`.
 #' @param shot.noise Logical. Whether to apply Poisson shot noise. Default
 #'   `TRUE`.
-#' @param counts.per.unit Numeric scalar for `shot.noise`. Default `0.5`. Works
-#'   inversely; higher numbers will decrease shot noise-driven spread.
+#' @param counts.per.unit Numeric scalar for `shot.noise`. Default NULL, which
+#'   uses the cytometer-specific preset. Supply a value to override.
 #' @param spillover.noise Logical. Whether to apply binomial spillover sampling.
 #'   Default `TRUE`.
 #' @param detector.noise Logical. Whether to apply detector readout noise
@@ -120,7 +120,7 @@ sim.flow.data <- function(
     ssc.sd.log           = 0.5,
     fsc.ssc.cor          = 0.6,
     shot.noise           = TRUE,
-    counts.per.unit      = 0.5,
+    counts.per.unit      = NULL,
     spillover.noise      = TRUE,
     detector.noise       = TRUE,
     af.variation         = TRUE,
