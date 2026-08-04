@@ -61,7 +61,9 @@ writeFCS <- function(mat, keys, file.name, output.dir) {
 
   TEXT.start <- 58
   TEXT.end <- nchar(text.segment, "bytes") + TEXT.start - 1
-  data.stream.bytes <- nrow(mat) * ncol(mat) * 4
+  # Force double arithmetic explicitly rather than relying on nrow()*ncol()
+  # happening to stay under 2^31 before the final *4 promotes to double
+  data.stream.bytes <- as.double(nrow(mat)) * as.double(ncol(mat)) * 4
 
   # copying flowstate here since it works
   kw.len.old <- 2
