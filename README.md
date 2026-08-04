@@ -61,6 +61,7 @@ At the moment, the following cytometers are supported:
 - Agilent NovoCyte Opteon (“opteon”)
 - Beckman Coulter CytoFLEX mosaic (“mosaic”)
 - ThermoFisher Attune Xenith (“xenith”)
+- ChallenBio CytoStellar (“cytostellar”)
 
 If you have data from a different instrument and are willing to share
 files, contact the author/maintainer.
@@ -121,7 +122,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.6.3**
+**Version 1.7.1**
 
 Version 1.6+ provides a new automated approach to extracting spectral
 profiles. Most of the development here has been by Nathan Laniewksi.
