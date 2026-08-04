@@ -18,6 +18,8 @@ level of the SOM rather than via a memory-intensive `parLapply` loop. Should be
 faster.
 - SOM mapping is now available via an in-house port of EmbedSOM's batched SOM if
 you install `AutoSpectralRcpp`.
+- When calling `get.spectra.automated()`, you may elect not to gate on the
+singlets by setting `remove.doublets = FALSE`. Default behaviour is unchanged.
 
 ## Bug fixes
 
