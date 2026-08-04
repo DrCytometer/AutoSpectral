@@ -12,6 +12,7 @@ get.spectra.automated(
   n.spectral = 200L,
   k.neighbors = 2L,
   singlet.quantiles = c(0.85, 0.975),
+  remove.doublets = TRUE,
   cosine.threshold = 0.9,
   peak.signal.threshold = 0.5,
   legacy.refinement = TRUE,
@@ -44,7 +45,13 @@ retained after filtering for low AF cosine similarity.}
 scatter space used for per-event AF subtraction.}
 
 \item{singlet.quantiles}{Numeric, default \code{c( 0.85, 0.975 )}. Range of
-quantiles to use for doublet discrimination.}
+quantiles to use for doublet discrimination. Ignored if
+\code{remove.doublets = FALSE}.}
+
+\item{remove.doublets}{Logical, default \code{TRUE}. Whether to apply the
+two-pass scatter-ratio (FSC-A/FSC-H, SSC-A/SSC-H) doublet-removal step
+during FCS cleaning. Set to \code{FALSE} to skip singlet gating entirely,
+e.g. for cytometers or panels lacking usable height parameters.}
 
 \item{cosine.threshold}{Numeric, default \code{0.9}. Minimum cosine similarity
 against the spectral reference library to accept the automated spectrum;

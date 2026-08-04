@@ -233,6 +233,7 @@
     scatter.channels,
     sat.value,
     singlet.quantiles,
+    remove.doublets = TRUE,
     asp,
     verbose = TRUE
 ) {
@@ -262,7 +263,7 @@
     mat <- mat[ mat[ , ssc.a ] < asp$scatter.data.max.y, , drop = FALSE ]
 
   # -- remove doublets (two-pass scatter-ratio, mirrors flowstate::select_singlets)
-  if ( all( c( fsc.a, fsc.h ) %in% colnames( mat ) ) ) {
+  if ( remove.doublets && all( c( fsc.a, fsc.h ) %in% colnames( mat ) ) ) {
     fsc.ratio <- mat[ , fsc.a ] / ( mat[ , fsc.h ] + 1e-9 )
     mat       <- mat[ fsc.ratio < stats::quantile( fsc.ratio, probs = singlet.quantiles[ 1L ] ), ,
                       drop = FALSE ]
@@ -334,7 +335,12 @@
 #' @param k.neighbors Integer, default `2`. Number of nearest neighbours in
 #'   scatter space used for per-event AF subtraction.
 #' @param singlet.quantiles Numeric, default `c( 0.85, 0.975 )`. Range of
-#'   quantiles to use for doublet discrimination.
+#'   quantiles to use for doublet discrimination. Ignored if
+#'   `remove.doublets = FALSE`.
+#' @param remove.doublets Logical, default `TRUE`. Whether to apply the
+#'   two-pass scatter-ratio (FSC-A/FSC-H, SSC-A/SSC-H) doublet-removal step
+#'   during FCS cleaning. Set to `FALSE` to skip singlet gating entirely,
+#'   e.g. for cytometers or panels lacking usable height parameters.
 #' @param cosine.threshold Numeric, default `0.9`. Minimum cosine similarity
 #'   against the spectral reference library to accept the automated spectrum;
 #'   values below this threshold trigger legacy pipeline refinement.
@@ -378,6 +384,7 @@ get.spectra.automated <- function(
     n.spectral              = 200L,
     k.neighbors             = 2L,
     singlet.quantiles       = c( 0.85, 0.975 ),
+    remove.doublets         = TRUE,
     cosine.threshold        = 0.9,
     peak.signal.threshold   = 0.5,
     legacy.refinement       = TRUE,
@@ -496,7 +503,8 @@ get.spectra.automated <- function(
     }
     unstained.cache[[ uf ]] <- .read.fcs.clean(
       uf.path, paste0( "Unstained (", uf, ")" ),
-      spectral.channels, scatter.channels, sat.value, singlet.quantiles, asp, verbose
+      spectral.channels, scatter.channels, sat.value, singlet.quantiles,
+      remove.doublets, asp, verbose
     )
   }
 
@@ -526,7 +534,8 @@ get.spectra.automated <- function(
         if ( file.exists( uf.af.path ) ) {
           ust.af       <- .read.fcs.clean(
             uf.af.path, paste0( "AF (", uf.af, ")" ),
-            spectral.channels, scatter.channels, sat.value, singlet.quantiles, asp, verbose
+            spectral.channels, scatter.channels, sat.value, singlet.quantiles,
+            remove.doublets, asp, verbose
           )
           spec.in.af   <- intersect( spectral.channels, colnames( ust.af ) )
           af.spec.af   <- ust.af[ , spec.in.af, drop = FALSE ]
@@ -550,7 +559,8 @@ get.spectra.automated <- function(
     fcs.path.i        <- file.path( control.dir, fluor.files[ i ] )
     fluor.data[[ i ]] <- .read.fcs.clean(
       fcs.path.i, fluor.names[ i ],
-      spectral.channels, scatter.channels, sat.value, singlet.quantiles, asp, verbose
+      spectral.channels, scatter.channels, sat.value, singlet.quantiles,
+      remove.doublets, asp, verbose
     )
   }
 
