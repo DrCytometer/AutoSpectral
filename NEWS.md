@@ -19,12 +19,13 @@ faster.
 - SOM mapping is now available via an in-house port of EmbedSOM's batched SOM if
 you install `AutoSpectralRcpp`.
 - When calling `get.spectra.automated()`, you may elect not to gate on the
-singlets by setting `remove.doublets = FALSE`. Default behaviour is unchanged.
+singlets by setting `remove.doublets = FALSE`. Default behavior is unchanged.
 
 ## Bug fixes
 
 - Some patches and improvements to `test.af.accuracy()` and `sim.flow.data`, the
 testing functions for unmixing algorithm accuracy and development.
+- Patch for issue causing a crash when reading or writing large FCS files
 
 
 # AutoSpectral 1.7.0 (2026-07-25)
