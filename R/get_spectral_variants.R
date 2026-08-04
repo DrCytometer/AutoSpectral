@@ -31,8 +31,8 @@
 #'   plots.
 #' @param output.dir Character or \code{NULL}. Directory for figures and the
 #'   .rds output file. Defaults to \code{asp$variant.dir}.
-#' @param parallel Logical, default \code{FALSE}. Enable parallel processing
-#'   across fluorophores.
+#' @param parallel Logical, default \code{TRUE}. Enable parallel processing
+#'   for SOM clustering (requires AutoSpectralRcpp).
 #' @param verbose Logical, default \code{TRUE}. Set to \code{FALSE} to suppress
 #'   messages.
 #' @param threads Numeric or \code{NULL}. Number of parallel workers. Defaults
@@ -94,7 +94,7 @@ get.spectral.variants <- function(
     spectra,
     figures            = TRUE,
     output.dir         = NULL,
-    parallel           = FALSE,
+    parallel           = TRUE,
     verbose            = TRUE,
     threads            = NULL,
     n.cells            = 10000L,
@@ -335,7 +335,9 @@ get.spectral.variants <- function(
     som.dim = 10,
     figures = FALSE,
     save = FALSE,
-    refine = FALSE
+    refine = FALSE,
+    parallel = parallel,
+    threads = threads
   )
 
   # derive per-file AF PCs for all unique unstained cell files used as negatives
@@ -379,7 +381,11 @@ get.spectral.variants <- function(
   # Parallel setup
   # ---------------------------------------------------------------------------
 
-  if ( is.null( threads ) ) threads <- asp$worker.process.n
+  threads <- if ( isTRUE( parallel ) ) {
+    if ( is.null( threads ) ) 0L else as.integer( threads )
+  } else {
+    1L
+  }
 
   args.list <- list(
     file.name          = flow.file.name,
@@ -404,31 +410,10 @@ get.spectral.variants <- function(
     variant.fill.color = variant.fill.color,
     variant.fill.alpha = variant.fill.alpha,
     median.line.color  = median.line.color,
-    median.linewidth   = median.linewidth
+    median.linewidth   = median.linewidth,
+    parallel           = parallel,
+    threads            = threads
   )
-
-  if ( parallel ) {
-    internal.functions <- c(
-      "get.fluor.variants",
-      "cosine.similarity",
-      "spectral.variant.plot.dens",
-      "unmix.ols",
-      ".cosine.sim.rows"
-    )
-    exports <- c( "args.list", "table.fluors", internal.functions )
-
-    result <- create.parallel.lapply(
-      asp,
-      exports,
-      parallel   = parallel,
-      threads    = threads,
-      export.env = environment()
-    )
-    lapply.function <- result$lapply
-  } else {
-    lapply.function <- lapply
-    result <- list( cleanup = NULL )
-  }
 
   # ---------------------------------------------------------------------------
   # Main loop
@@ -442,25 +427,18 @@ get.spectral.variants <- function(
     spectra[ fl, , drop = FALSE ] )
   names( spectral.variants ) <- table.fluors
 
-  updated.variants <- tryCatch(
-    expr = {
-      lapply.function( table.fluors, function( f ) {
-        tryCatch(
-          expr = {
-            if ( is.na( args.list$flow.channel[ f ] ) )
-              stop( paste( "No flow channel mapped for", f ) )
-            do.call( get.fluor.variants, c( list( f ), args.list ) )
-          },
-          error = function( e ) {
-            list( is.error = TRUE, msg = conditionMessage( e ) )
-          }
-        )
-      } )
-    },
-    finally = {
-      if ( !is.null( result$cleanup ) ) result$cleanup()
-    }
-  )
+  updated.variants <- lapply( table.fluors, function( f ) {
+    tryCatch(
+      expr = {
+        if ( is.na( args.list$flow.channel[ f ] ) )
+          stop( paste( "No flow channel mapped for", f ) )
+        do.call( get.fluor.variants, c( list( f ), args.list ) )
+      },
+      error = function( e ) {
+        list( is.error = TRUE, msg = conditionMessage( e ) )
+      }
+    )
+  } )
 
   names( updated.variants ) <- table.fluors
 

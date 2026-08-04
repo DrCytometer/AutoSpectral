@@ -28,7 +28,9 @@ get.fluor.variants(
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
-  median.linewidth = 1
+  median.linewidth = 1,
+  parallel = TRUE,
+  threads = NULL
 )
 }
 \arguments{
@@ -107,6 +109,12 @@ Default \code{"red"}.}
 
 \item{median.linewidth}{Width of the reference-spectrum line. Default
 \code{1}.}
+
+\item{parallel}{Logical, default \code{TRUE}. Enable OpenMP multi-threading
+for this call's batch SOM (\code{get.som.codes()}).}
+
+\item{threads}{Numeric or \code{NULL}. OpenMP threads for the batch SOM.
+\code{NULL} defaults to \code{0} (all available cores) when \code{parallel = TRUE}.}
 }
 \value{
 A numeric matrix; variants in rows, detectors in columns, values

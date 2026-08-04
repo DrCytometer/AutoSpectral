@@ -23,7 +23,6 @@
 #' sufficiently similar to the reference spectrum, followed by off-peak
 #' smoothing.
 #'
-#' @importFrom FlowSOM SOM
 #' @importFrom FNN knnx.index
 #'
 #' @param fluor Character. Name of the fluorophore.
@@ -78,6 +77,10 @@
 #'   \code{"black"}.
 #' @param median.linewidth Width of the reference-spectrum line. Default
 #'   \code{1}.
+#' @param parallel Logical, default `TRUE`. Enable OpenMP multi-threading
+#'   for this call's batch SOM (`get.som.codes()`).
+#' @param threads Numeric or `NULL`. OpenMP threads for the batch SOM.
+#'   `NULL` defaults to `0` (all available cores) when `parallel = TRUE`.
 #'
 #' @return A numeric matrix; variants in rows, detectors in columns, values
 #'   normalised to \eqn{[0, 1]}. When no centroids survive cosine QC the
@@ -111,7 +114,9 @@ get.fluor.variants <- function(
     variant.fill.color = "red",
     variant.fill.alpha = 0.7,
     median.line.color  = "black",
-    median.linewidth   = 1
+    median.linewidth   = 1,
+    parallel           = TRUE,
+    threads            = NULL
 ) {
 
   if ( verbose )
@@ -240,23 +245,18 @@ get.fluor.variants <- function(
     som.dim <- max( 2L, floor( sqrt( event.n / 3 ) ) )
 
   # cluster on the cleaned-up positive fluorophore data
-  set.seed( asp$bird.seed )
-  if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
-    map <- EmbedSOM::SOM(
-      som.input,
-      xdim = som.dim,
-      ydim = som.dim,
-      batch = TRUE,
-      parallel = TRUE
-    )
+  som.threads <- if ( isTRUE( parallel ) ) {
+    if ( is.null( threads ) ) 0L else as.integer( threads )
   } else {
-    map <- FlowSOM::SOM(
-      som.input,
-      xdim = som.dim,
-      ydim = som.dim,
-      silent = TRUE
-    )
+    1L
   }
+
+  map <- get.som.codes(
+    data    = som.input,
+    som.dim = som.dim,
+    seed    = asp$bird.seed,
+    threads = som.threads
+  )
 
   # get spectra: SOM centroids are new profiles, normalize (L-inf)
   variant.spectra <- t(

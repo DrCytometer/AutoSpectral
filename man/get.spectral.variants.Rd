@@ -11,7 +11,7 @@ get.spectral.variants(
   spectra,
   figures = TRUE,
   output.dir = NULL,
-  parallel = FALSE,
+  parallel = TRUE,
   verbose = TRUE,
   threads = NULL,
   n.cells = 10000L,
@@ -44,8 +44,8 @@ plots.}
 \item{output.dir}{Character or \code{NULL}. Directory for figures and the
 .rds output file. Defaults to \code{asp$variant.dir}.}
 
-\item{parallel}{Logical, default \code{FALSE}. Enable parallel processing
-across fluorophores.}
+\item{parallel}{Logical, default \code{TRUE}. Enable parallel processing
+for SOM clustering (requires AutoSpectralRcpp).}
 
 \item{verbose}{Logical, default \code{TRUE}. Set to \code{FALSE} to suppress
 messages.}
