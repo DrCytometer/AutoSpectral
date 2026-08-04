@@ -436,6 +436,7 @@ benchmark.af.scatter.match <- function(
     test.data     = test.data,
     ref.data      = ref.data,
     scatter.param = scatter.param,
+    spectra       = spectra,
     k             = k,
     af.spectra    = af.spectra,
     verbose       = verbose
