@@ -2,8 +2,8 @@
 
 ## New Features
 
-- Support for the CytoStellar cytometer. Call `cytostellar` or any unique string,
-e.g., `cyt` (see below), when calling `get.autospectral.param()`.
+- Support for the ChallenBio CytoStellar cytometer. Call `cytostellar` or any 
+unique string, e.g., `cyt` (see below), when calling `get.autospectral.param()`.
 
 ## Improvements
 
@@ -13,6 +13,16 @@ for the new FACSDiscover A7 and any variants thereof. Should be backwards
 compatible. You may now call `discover` for any of these, although `a8` and `s8`
 will still work.
 - Cytometer calling in `get.autospectral.param()` is now case-insensitive.
+- Variant extraction via `get.spectral.variants()` is now parallelized at the
+level of the SOM rather than via a memory-intensive `parLapply` loop. Should be
+faster.
+- SOM mapping is now available via an in-house port of EmbedSOM's batched SOM if
+you install `AutoSpectralRcpp`.
+
+## Bug fixes
+
+- Some patches and improvements to `test.af.accuracy()` and `sim.flow.data`, the
+testing functions for unmixing algorithm accuracy and development.
 
 
 # AutoSpectral 1.7.0 (2026-07-25)
