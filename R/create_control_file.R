@@ -8,8 +8,12 @@
 #' Given a set of single stained control fcs files, `create.control.file` will
 #' produce a csv file listing the matching peak detector channels for your
 #' fluorophores (if known). If your files contain bead or cell tags in the filename,
-#' it will assign your controls as cells or beads. You will need to fill in any
-#' "No Match" results manually. You will need to set universal negatives manually.
+#' it will assign your controls as cells or beads, and will automatically fill in
+#' the matching `universal.negative` filename when exactly one unstained/negative
+#' control shares that control.type. `universal.negative` is left blank when
+#' `control.type` could not be determined or when more than one unstained/negative
+#' control of that type exists (in which case you will need to set it manually).
+#' You will need to fill in any "No Match" results manually.
 #' You will need to add marker names manually.
 #'
 #' @param control.dir file path to the single stained control fcs files
@@ -303,10 +307,34 @@ create.control.file <- function(
   control.table$fluorophore[
     grepl( "Negative", control.table$filename ) ] <- "Negative"
 
+  # fill universal.negative: match each stained control to the single
+  # unstained/negative control sharing its control.type. Left blank if
+  # control.type could not be determined, or if more than one candidate
+  # unstained/negative control shares that control.type (ambiguous match)
+  is.neg.control <- control.table$fluorophore %in% c( "AF", "Negative" )
+
+  control.table$universal.negative <- vapply(
+    seq_len( nrow( control.table ) ), function( i ) {
+
+      if ( is.neg.control[ i ] ||
+           is.na( control.table$control.type[ i ] ) ||
+           control.table$control.type[ i ] == "" ) {
+        return( NA_character_ )
+      }
+
+      candidates <- control.table$filename[
+        is.neg.control &
+          control.table$control.type == control.table$control.type[ i ]
+      ]
+
+      if ( length( candidates ) == 1 ) candidates else NA_character_
+
+    }, character( 1 )
+  )
+
   # replace any NAs
   control.table[ is.na( control.table ) ] <- ""
   control.table[ control.table == "NA" ] <- ""
-
 
   utils::write.csv(
     control.table,
@@ -339,9 +367,11 @@ create.control.file <- function(
       "\033[31m",
       "Duplicated fluorophore names appear in the control file.",
       "\n\n",
-      "Inspect and remove any extra single color control files or edit the control",
-      "file to be accurate.",
-      "Only one control may be used per fluorophore.",
+      "By default this will be rejected when the control file is used.",
+      "If this is intentional -- e.g. comparing two preparations of the",
+      "same conjugate -- pass `allow.duplicate.controls = TRUE` to",
+      "`define.flow.control()` / `get.spectra.automated()`. Otherwise,",
+      "inspect and remove any extra single-color control files.",
       "\033[0m"
     )
     warning(
