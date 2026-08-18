@@ -18,7 +18,8 @@ remove.af(
   k.neighbors = 3L,
   main.figures = TRUE,
   intermediate.figures = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  diagnostics.env = NULL
 )
 }
 \arguments{
@@ -60,6 +61,15 @@ gates on the PCA-unmixed unstained and spectral ribbon plots of the AF
 exclusion from the unstained.}
 
 \item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
+
+\item{diagnostics.env}{Optional environment, default \code{NULL}. If supplied,
+\code{remove.af()} populates it (keyed by sample name) with the objects used to
+identify and exclude intrusive autofluorescence for each cell-based
+AF-removal sample: \code{af.peak.channel}, \code{fluor.peak}, \code{af.boundaries},
+\code{expr.data.pos}/\code{expr.data.neg} (spectral channels only), and the
+resulting gate indices. Intended for diagnostic/manuscript figures (see
+\code{plot.spectra.legacy.steps()}); has no effect on the cleaning result.
+Capture is unreliable when \code{parallel = TRUE}.}
 }
 \value{
 A matrix containing the expression data with autofluorescent events
