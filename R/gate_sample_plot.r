@@ -134,7 +134,7 @@ gate.sample.plot <- function(
   density.breaks <- NULL
 
   if ( n.points >= switch.n ) {
-    bw <- apply( gate.data, 2, MASS::bandwidth.nrd )
+    bw <- .safe.bandwidth( gate.data )
 
     gate.bound.density <- if (
       requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
@@ -168,6 +168,9 @@ gate.sample.plot <- function(
 
     max.z          <- max( density.df$z )
     density.breaks <- seq( 0.05 * max.z, max.z, length.out = 11 )
+    if ( diff( range( density.breaks ) ) == 0 ) {
+      density.breaks <- seq( 0, max.z + 0.1, length.out = 11 )
+    }
   }
 
   # ---------------------------------------------------------------------------

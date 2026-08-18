@@ -100,8 +100,7 @@ do.gate <- function(
     )
   }
 
-  bw <- apply( gate.data[ gate.bound.data.idx, ], 2, bandwidth.nrd )
-  bw[ bw == 0 ] <- 0.1
+  bw <- .safe.bandwidth( gate.data[ gate.bound.data.idx, ] )
 
   # locate target maxima
   if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
@@ -261,8 +260,7 @@ do.gate <- function(
   gate.region.data.idx <- gate.bound.density.max.data.idx[ spatial.mask ]
 
   # re-define density in the region
-  bw <- apply( gate.data[ gate.region.data.idx, ], 2, bandwidth.nrd )
-  bw[ bw == 0 ] <- 0.1
+  bw <- .safe.bandwidth( gate.data[ gate.region.data.idx, ] )
 
   if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
        "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&

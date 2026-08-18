@@ -54,7 +54,7 @@ do.gate.af <- function(
 
   grid.n <- asp$af.gate.bound.density.grid.n
   neighbor.n <- asp$af.gate.bound.density.neigh.size
-  bw <- apply( gate.data, 2, bandwidth.nrd )
+  bw <- .safe.bandwidth( gate.data )
 
   if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
        "find_local_maxima" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&

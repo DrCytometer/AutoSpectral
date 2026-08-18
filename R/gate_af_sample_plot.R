@@ -123,7 +123,7 @@ gate.af.sample.plot <- function(
   # ---------------------------------------------------------------------------
 
   plot.data.ggp <- data.frame( x.trans = trans.mat[ , 1 ], y.trans = trans.mat[ , 2 ] )
-  bw <- apply( plot.data.ggp, 2, MASS::bandwidth.nrd )
+  bw <- .safe.bandwidth( plot.data.ggp )
 
   gate.bound.density <- if (
     requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&

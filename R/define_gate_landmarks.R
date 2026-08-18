@@ -233,7 +233,7 @@ define.gate.landmarks <- function(
   # find dense region, with error handling for exceptions
   tryCatch({
     # calculate bandwidth for kernel density estimation
-    bw <- apply( pooled.scatter.data, 2, bandwidth.nrd )
+    bw <- .safe.bandwidth( pooled.scatter.data )
 
     # kernel density estimation, use Rcpp if lots of data
     if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
@@ -272,16 +272,10 @@ define.gate.landmarks <- function(
     )
   })
 
-  # find the density threshold
-  z.sort <- sort( dens$z, decreasing = TRUE)
-  cumulative.dens <- cumsum( z.sort ) / sum( z.sort )
-  threshold <- z.sort[ which.min( abs( cumulative.dens - percentile ) ) ]
-
-  # extract the contour line at that threshold
-  contour.lines <- grDevices::contourLines( dens$x, dens$y, dens$z, levels = threshold )
-
-  # take the longest contour (in case there are multiple)
-  main.contour <- contour.lines[[ which.max( sapply( contour.lines, function(l) length( l$x ) ) ) ]]
+  # find the density contour at the requested percentile, relaxing towards a
+  # looser threshold if the requested percentile yields a degenerate (empty)
+  # contour (e.g., a very tightly clustered bead population)
+  main.contour <- .find.main.contour( dens, percentile )
   gate.coords <- cbind( main.contour$x, main.contour$y )
 
   # define a smooth convex hull around those coordinates
