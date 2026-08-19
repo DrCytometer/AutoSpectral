@@ -13,8 +13,7 @@ utils::globalVariables( c(
 #' is drawn on top as a solid reference trace.
 #'
 #' @importFrom ggplot2 ggplot aes geom_line scale_x_continuous labs
-#' @importFrom ggplot2 theme_minimal theme element_text ggsave
-#' @importFrom stats reshape
+#' @importFrom ggplot2 theme_minimal theme element_text ggsave coord_cartesian
 #' @importFrom ragg agg_jpeg
 #'
 #' @param spectra.variants Matrix of spectral variants; rows are variants,
@@ -83,6 +82,15 @@ spectral.variant.plot.dens <- function(
     intensity    = as.numeric( median.spectrum )
   )
 
+  y.upper <- max(
+    1,
+    max( c( as.matrix( spectra.variants ), median.spectrum ), na.rm = TRUE )
+  )
+  y.lower <- max(
+    -1,
+    min( c( as.matrix( spectra.variants ), median.spectrum ), na.rm = TRUE )
+  )
+
   variant.plot <- ggplot2::ggplot() +
     ggplot2::geom_line(
       data = long_variants,
@@ -106,6 +114,7 @@ spectral.variant.plot.dens <- function(
       y     = "Intensity",
       title = title
     ) +
+    ggplot2::coord_cartesian( ylim = c( y.lower, y.upper ) ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text( angle = 45, hjust = 1 )
