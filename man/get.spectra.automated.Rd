@@ -21,6 +21,7 @@ get.spectra.automated(
   figures = TRUE,
   plot.cosine.filter = TRUE,
   plot.scatter.match = TRUE,
+  allow.duplicate.controls = FALSE,
   verbose = TRUE
 )
 }
@@ -38,7 +39,7 @@ candidate events selected per fluorophore before cosine-similarity
 filtering. Ignored in internal-negative mode, where the top 5\%\% of
 events by peak channel are used directly.}
 
-\item{n.spectral}{Integer, default \code{200}. Number of spectral events
+\item{n.spectral}{Integer, default \code{50}. Number of spectral events
 retained after filtering for low AF cosine similarity.}
 
 \item{k.neighbors}{Integer, default \code{2}. Number of nearest neighbours in
@@ -84,6 +85,13 @@ to most AF-like). Set to \code{FALSE} to skip.}
 produce a multi-panel PDF showing the KNN scatter-matched AF subtraction
 for each fluorophore (unstained background, selected spectral events, and
 their matched AF events). Set to \code{FALSE} to skip.}
+
+\item{allow.duplicate.controls}{Logical, default \code{FALSE}. Set \code{TRUE} to
+permit multiple single-stained controls for the same fluorophore
+(diagnostic/QC use only). Each is tracked internally under a unique
+\code{sample} identifier and carried through to \code{marker.spectra}'s rownames;
+the true fluorophore identity is preserved as a \code{"fluorophore"} attribute
+for reference-library matching and for \code{check.spectra.duplicates()}.}
 
 \item{verbose}{Logical, default \code{TRUE}. Print progress messages.}
 }

@@ -330,7 +330,7 @@
 #'   candidate events selected per fluorophore before cosine-similarity
 #'   filtering. Ignored in internal-negative mode, where the top 5%% of
 #'   events by peak channel are used directly.
-#' @param n.spectral Integer, default `200`. Number of spectral events
+#' @param n.spectral Integer, default `50`. Number of spectral events
 #'   retained after filtering for low AF cosine similarity.
 #' @param k.neighbors Integer, default `2`. Number of nearest neighbours in
 #'   scatter space used for per-event AF subtraction.
@@ -365,6 +365,12 @@
 #'   produce a multi-panel PDF showing the KNN scatter-matched AF subtraction
 #'   for each fluorophore (unstained background, selected spectral events, and
 #'   their matched AF events). Set to `FALSE` to skip.
+#' @param allow.duplicate.controls Logical, default `FALSE`. Set `TRUE` to
+#' permit multiple single-stained controls for the same fluorophore
+#' (diagnostic/QC use only). Each is tracked internally under a unique
+#' `sample` identifier and carried through to `marker.spectra`'s rownames;
+#' the true fluorophore identity is preserved as a `"fluorophore"` attribute
+#' for reference-library matching and for `check.spectra.duplicates()`.
 #' @param verbose Logical, default `TRUE`. Print progress messages.
 #'
 #' @return A numeric matrix with fluorophores in rows and spectral detector
@@ -393,6 +399,7 @@ get.spectra.automated <- function(
     figures                 = TRUE,
     plot.cosine.filter      = TRUE,
     plot.scatter.match      = TRUE,
+    allow.duplicate.controls = FALSE,
     verbose                 = TRUE
 ) {
 
@@ -403,7 +410,23 @@ get.spectra.automated <- function(
   if ( verbose )
     message( "\033[34m-- Checking control file --\033[0m" )
 
-  check.control.file( control.dir, control.def.file, asp, legacy = FALSE )
+  ctrl.issues <- check.control.file(
+    control.dir, control.def.file, asp, legacy = FALSE,
+    allow.duplicate.controls = allow.duplicate.controls
+  )
+
+  if ( !isTRUE( ctrl.issues ) && !allow.duplicate.controls &&
+       any( ctrl.issues$rule == "duplicate_fluorophore" ) ) {
+    stop(
+      paste(
+        "Duplicate fluorophore names detected in the control file.",
+        "Set `allow.duplicate.controls = TRUE` to permit multiple controls",
+        "per fluorophore for diagnostic/QC use. The resulting spectral",
+        "matrix will still need to be reduced to one row per fluorophore",
+        "before unmixing (see `check.spectra.duplicates()`)."
+      ), call. = FALSE
+    )
+  }
 
   # -- 1. Read control table
   ctrl.path <- if ( file.exists( control.def.file ) ) {
@@ -435,6 +458,17 @@ get.spectra.automated <- function(
   fluor.names    <- ctrl.tbl$fluorophore[ fluor.rows ]
   fluor.channels <- ctrl.tbl$channel[     fluor.rows ]
   fluor.files    <- ctrl.tbl$filename[    fluor.rows ]
+
+  # unique per-control identifier, used for internal bookkeeping (list names,
+  # matrix rownames) wherever multiple controls share a fluorophore.
+  # `fluor.names` remains the true dye identity, used for reference-library
+  # matching and display
+  fluor.samples <- .build.control.sample.names(
+    ctrl.tbl$fluorophore, ctrl.tbl$control.type, ctrl.tbl$marker
+  )[ fluor.rows ]
+
+  if ( anyDuplicated( fluor.samples ) != 0 )
+    stop( "Internal error: fluor.samples is not unique.", call. = FALSE )
 
   # parse per-fluorophore unstained source
   unstained.sources <- lapply( fluor.rows, function( i ) {
@@ -553,7 +587,7 @@ get.spectra.automated <- function(
 
   # read fluorophore FCS files
   fluor.data <- vector( "list", length( fluor.rows ) )
-  names( fluor.data ) <- fluor.names
+  names( fluor.data ) <- fluor.samples
 
   for ( i in seq_along( fluor.rows ) ) {
     fcs.path.i        <- file.path( control.dir, fluor.files[ i ] )
@@ -571,12 +605,13 @@ get.spectra.automated <- function(
   ref.lib <- .load.ref.library( db.col, spectral.channels )
 
   spectra.list         <- vector( "list", length( fluor.names ) )
-  names( spectra.list ) <- fluor.names
+  names( spectra.list ) <- fluor.samples
 
   cosine.filter.data <- vector( "list", length( fluor.names ) )
 
   qc.log <- data.frame(
     Fluorophore   = fluor.names,
+    Sample        = fluor.samples,
     EmpiricalPeak = NA_character_,
     ExpectedPeak  = fluor.channels,
     PeakSignal    = NA_real_,
@@ -883,7 +918,8 @@ get.spectra.automated <- function(
         fc.legacy <- define.flow.control(
           control.dir      = control.dir,
           control.def.file = legacy.ctrl.path,
-          asp              = asp
+          asp              = asp,
+          allow.duplicate.controls = allow.duplicate.controls
         )
         fc.legacy  <- clean.controls( fc.legacy, asp )
         get.fluorophore.spectra( fc.legacy, asp )
@@ -897,11 +933,27 @@ get.spectra.automated <- function(
     unlink( legacy.ctrl.path )
 
     if ( !is.null( legacy.spectra.mat ) ) {
-      for ( ii in legacy.rows ) {
-        fluor.ii <- fluor.names[ ii ]
-        if ( !( fluor.ii %in% rownames( legacy.spectra.mat ) ) ) next
+      # Match rows back by filename (always globally unique), rather than by
+      # fluorophore or sample name. This temporary subset of the control
+      # table can legitimately disambiguate duplicate fluorophores
+      # differently than the full table would, so name-based matching is
+      # not reliable here.
+      legacy.non.neg.idx <- which(
+        !grepl( "negative", fc.legacy$fluorophore, ignore.case = TRUE )
+      )
+      legacy.file.by.sample <- stats::setNames(
+        fc.legacy$filename[ legacy.non.neg.idx ],
+        fc.legacy$sample[ legacy.non.neg.idx ]
+      )
+      legacy.file.by.row <- legacy.file.by.sample[ rownames( legacy.spectra.mat ) ]
 
-        legacy.spec.ii <- legacy.spectra.mat[ fluor.ii, ]
+      for ( ii in legacy.rows ) {
+        fluor.ii  <- fluor.names[ ii ]
+        file.ii   <- fluor.files[ ii ]
+        match.row <- which( legacy.file.by.row == file.ii )
+        if ( length( match.row ) == 0 ) next
+
+        legacy.spec.ii <- legacy.spectra.mat[ match.row[ 1L ], ]
 
         # Expand to full spectral.channels vector
         full.legacy <- stats::setNames( rep( 0, length( spectral.channels ) ),
@@ -979,11 +1031,13 @@ get.spectra.automated <- function(
 
   # Final (best-choice) matrix — may contain legacy spectra for some fluorophores
   marker.spectra <- do.call( rbind, spectra.list )
-  rownames( marker.spectra ) <- make.unique( fluor.names )
+  rownames( marker.spectra ) <- fluor.samples
+  attr( marker.spectra, "fluorophore" ) <- fluor.names
 
   # Original automated matrix (always all-automated, preserved for CSV output)
   automated.spectra <- do.call( rbind, automated.spectra.list )
-  rownames( automated.spectra ) <- make.unique( fluor.names )
+  rownames( automated.spectra ) <- fluor.samples
+  attr( automated.spectra, "fluorophore" ) <- fluor.names
 
   # -- 8. Pairwise cosine similarity warning
   sim.mat  <- cosine.similarity( marker.spectra )
@@ -1037,8 +1091,8 @@ get.spectra.automated <- function(
         ok.n, leg.used.n, leg.rej.n, fail.n, nodat.n
       )
     )
-    print( qc.log[ , c( "Fluorophore", "EmpiricalPeak", "ExpectedPeak",
-                         "PeakSignal", "CosineSim", "Status" ) ] )
+    print( qc.log[ , c( "Fluorophore", "Sample", "EmpiricalPeak", "ExpectedPeak",
+                        "PeakSignal", "CosineSim", "Status" ) ] )
   }
 
   # add AF if requested
@@ -1052,7 +1106,10 @@ get.spectra.automated <- function(
         af.norm.mat              <- matrix( af.norm, nrow = 1L )
         rownames( af.norm.mat )  <- "AF"
         colnames( af.norm.mat )  <- names( af.mean )
+        # rbind() does not preserve custom attributes, so the "fluorophore"
+        # identity attribute has to be rebuilt after combining rows
         marker.spectra <- rbind( marker.spectra, af.norm.mat )
+        attr( marker.spectra, "fluorophore" ) <- c( fluor.names, "AF" )
       } else {
         warning(
           "return.af = TRUE but the AF file ('", uf, "') was not loaded into the ",
@@ -1128,14 +1185,19 @@ get.spectra.automated <- function(
           figure.height = asp$figure.similarity.height
         )
 
-        # Identify which fluorophores had legacy refinement run
-        legacy.used.fluors <- fluor.names[ qc.log$Status == "LEGACY_USED" ]
-        legacy.rej.fluors  <- fluor.names[ qc.log$Status == "LEGACY_REJECTED" ]
+        # Identify which controls had legacy refinement run. `marker.spectra`
+        # and `automated.spectra` are both keyed by `sample`, so the
+        # highlight/comparison lookups need `sample`, not the raw fluorophore
+        # name (which is passed separately via `fluorophore`, for the
+        # external reference-library lookup)
+        legacy.used.fluors <- fluor.samples[ qc.log$Status == "LEGACY_USED" ]
+        legacy.rej.fluors  <- fluor.samples[ qc.log$Status == "LEGACY_REJECTED" ]
         refined.fluors     <- union( legacy.used.fluors, legacy.rej.fluors )
 
         spectral.reference.plot(
           spectra           = marker.spectra,
           asp               = asp,
+          fluorophore       = attr( marker.spectra, "fluorophore" ),
           plot.dir          = asp$figure.spectra.dir,
           filename          = "Automated_spectral_qc_report.pdf",
           comparison.spectra = if ( length( refined.fluors ) > 0 ) automated.spectra else NULL,
@@ -1176,22 +1238,25 @@ get.spectra.automated <- function(
     )
   )
 
-  # Secondary output: all-automated spectra (always written)
-  utils::write.csv(
-    automated.spectra,
-    file = file.path(
-      asp$table.spectra.dir,
-      paste0( "Automated_original_", asp$spectra.file.name, ".csv" )
+  # Secondary output: all-automated spectra (only written when legacy
+  # refinement ran, since otherwise it is identical to the primary CSV)
+  if ( legacy.refinement && length( legacy.rows ) > 0 ) {
+    utils::write.csv(
+      automated.spectra,
+      file = file.path(
+        asp$table.spectra.dir,
+        paste0( "Automated_original_", asp$spectra.file.name, ".csv" )
+      )
     )
-  )
 
-  if ( length( legacy.rows ) > 0 && legacy.refinement && verbose )
-    message(
-      "\033[33mNote: Legacy refinement was run for ",
-      paste( fluor.names[ legacy.rows ], collapse = ", " ),
-      ".\n  Primary CSV contains best-choice spectra; ",
-      "'Automated_original_...' CSV contains all-automated spectra.\033[0m"
-    )
+    if ( verbose )
+      message(
+        "\033[33mNote: Legacy refinement was run for ",
+        paste( fluor.names[ legacy.rows ], collapse = ", " ),
+        ".\n  Primary CSV contains best-choice spectra; ",
+        "'Automated_original_...' CSV contains all-automated spectra.\033[0m"
+      )
+  }
 
   if ( verbose )
     message( "\033[32m-- Automated spectra extraction complete --\033[0m" )
