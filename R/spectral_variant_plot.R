@@ -7,7 +7,7 @@
 #' signature with the range of variation from the spectral variants.
 #'
 #' @importFrom ggplot2 ggplot aes geom_ribbon geom_line scale_x_continuous labs
-#' @importFrom ggplot2 theme_minimal theme ggsave
+#' @importFrom ggplot2 theme_minimal theme ggsave coord_cartesian
 #' @importFrom ragg agg_jpeg
 #'
 #' @param spectra.variants A matrix of variations in the normalized spectra
@@ -64,7 +64,16 @@ spectral.variant.plot <- function(
     max = apply( spectra.variants, 2, max, na.rm = TRUE )
   )
 
-  variant.plot <- ggplot( variant.data, aes( x = detector.n ) ) +
+  y.upper <- 1
+  y.lower <- max(
+    -1,
+    min( c( as.matrix( spectra.variants ), median.spectrum ), na.rm = TRUE )
+  )
+
+  variant.plot <- ggplot(
+    data = variant.data,
+    aes( x = detector.n )
+    ) +
     geom_ribbon(
       aes( ymin = min, ymax = max ),
       fill = variant.fill.color,
@@ -84,6 +93,7 @@ spectral.variant.plot <- function(
       y = "Intensity",
       title = title
     ) +
+    coord_cartesian( ylim = c( y.lower, y.upper ) ) +
     theme_minimal() +
     theme( axis.text.x = element_text( angle = 45, hjust = 1 ) )
 
