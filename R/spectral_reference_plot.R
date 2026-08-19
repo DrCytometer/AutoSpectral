@@ -12,8 +12,15 @@
 #' @importFrom ggplot2 theme_minimal theme element_text scale_color_manual
 #'
 #' @param spectra Matrix or dataframe containing spectral data. This
-#' should be in format fluorophores x detectors. Row names will be used as the
-#' fluorophore names. Column names will be used as the detectors (channels).
+#' should be in format fluorophores x detectors. Row names are used to label
+#' each trace (e.g. `sample` identifiers, which may disambiguate multiple
+#' controls for the same fluorophore) and column names will be used as the
+#' detectors (channels).
+#' @param fluorophore Optional character vector, the same length and order as
+#' `nrow(spectra)`, giving the true fluorophore identity of each row. Used to
+#' look up the library reference spectrum and any `comparison.spectra`.
+#' Defaults to `rownames(spectra)`, matching the previous behavior when each
+#' row already corresponds to a single, uniquely-named fluorophore.
 #' @param asp The AutoSpectral parameter list. Used to determine which cytometer
 #' produced the data.
 #' @param qc.threshold.warn Numeric, default `0.98`. The similarity value to trigger
@@ -57,25 +64,26 @@
 #' @export
 
 spectral.reference.plot <- function(
-  spectra,
-  asp,
-  qc.threshold.warn = 0.98,
-  qc.threshold.fail = 0.90,
-  experiment.control.color = "black",
-  library.reference.color = "blue",
-  comparison.color = "red",
-  experiment.line.type = "solid",
-  library.line.type = "dotted",
-  comparison.line.type = "dashed",
-  pass.color = "darkgreen",
-  warn.color = "darkorange",
-  fail.color = "red",
-  linewidth = 1,
-  plot.dir = "./figure_spectra",
-  filename = "spectral_qc_report.pdf",
-  comparison.spectra = NULL,
-  comparison.label = "Pre-refinement",
-  highlight.fluors = character( 0L )
+    spectra,
+    asp,
+    fluorophore = rownames( spectra ),
+    qc.threshold.warn = 0.98,
+    qc.threshold.fail = 0.90,
+    experiment.control.color = "black",
+    library.reference.color = "blue",
+    comparison.color = "red",
+    experiment.line.type = "solid",
+    library.line.type = "dotted",
+    comparison.line.type = "dashed",
+    pass.color = "darkgreen",
+    warn.color = "darkorange",
+    fail.color = "red",
+    linewidth = 1,
+    plot.dir = "./figure_spectra",
+    filename = "spectral_qc_report.pdf",
+    comparison.spectra = NULL,
+    comparison.label = "Pre-refinement",
+    highlight.fluors = character( 0L )
 ) {
 
   # which cytometer is being used?
@@ -140,8 +148,14 @@ spectral.reference.plot <- function(
     }
   ) )
 
-  # match to fluorophores in spectra, excluding AF
-  fluorophores <- rownames( spectra )[ rownames( spectra ) != "AF" ]
+  # match to fluorophores in spectra, excluding AF. `fluorophores` (sample
+  # identifiers) are used for display and to index `spectra`; `ref.lookup`
+  # (true dye identity) is used to find the matching library/comparison
+  # spectrum, so multiple controls sharing a fluorophore each compare against
+  # the same reference
+  keep.row     <- rownames( spectra ) != "AF"
+  fluorophores <- rownames( spectra )[ keep.row ]
+  ref.lookup   <- fluorophore[ keep.row ]
   ref.plots <- list()
 
   # summary data frame of cosine similarity QC values
@@ -156,13 +170,14 @@ spectral.reference.plot <- function(
   for ( i in seq_along( fluorophores ) ) {
 
     f <- fluorophores[ i ]
+    ref.f <- ref.lookup[ i ]
     simil.value <- NA
     simil.color <- "black"
     lib.spec <- rep( NA, ncol( spectra ) )
 
     # check if we have a reference for this fluor on this cytometer
-    if ( f %in% rownames( reference.fluors ) ) {
-      lib.spec <- reference.fluors[f, ]
+    if ( ref.f %in% rownames( reference.fluors ) ) {
+      lib.spec <- reference.fluors[ref.f, ]
 
       simil.value <- cosine.similarity( rbind( spectra[ f, ], lib.spec ) )[ 1, 2 ]
 
@@ -183,10 +198,10 @@ spectral.reference.plot <- function(
 
     # Optional: comparison (automated pre-legacy) spectrum for this fluorophore
     has.comparison <- !is.null( comparison.spectra ) &&
-      f %in% rownames( comparison.spectra ) &&
-      f %in% highlight.fluors
+      ref.f %in% rownames( comparison.spectra ) &&
+      ref.f %in% highlight.fluors
 
-    comp.spec <- if ( has.comparison ) comparison.spectra[ f, ] else rep( NA_real_, ncol( spectra ) )
+    comp.spec <- if ( has.comparison ) comparison.spectra[ ref.f, ] else rep( NA_real_, ncol( spectra ) )
 
     plot.df <- data.frame(
       detector.n  = seq_len( ncol( spectra ) ),

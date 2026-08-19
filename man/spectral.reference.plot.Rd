@@ -7,6 +7,7 @@
 spectral.reference.plot(
   spectra,
   asp,
+  fluorophore = rownames(spectra),
   qc.threshold.warn = 0.98,
   qc.threshold.fail = 0.9,
   experiment.control.color = "black",
@@ -28,11 +29,19 @@ spectral.reference.plot(
 }
 \arguments{
 \item{spectra}{Matrix or dataframe containing spectral data. This
-should be in format fluorophores x detectors. Row names will be used as the
-fluorophore names. Column names will be used as the detectors (channels).}
+should be in format fluorophores x detectors. Row names are used to label
+each trace (e.g. \code{sample} identifiers, which may disambiguate multiple
+controls for the same fluorophore) and column names will be used as the
+detectors (channels).}
 
 \item{asp}{The AutoSpectral parameter list. Used to determine which cytometer
 produced the data.}
+
+\item{fluorophore}{Optional character vector, the same length and order as
+\code{nrow(spectra)}, giving the true fluorophore identity of each row. Used to
+look up the library reference spectrum and any \code{comparison.spectra}.
+Defaults to \code{rownames(spectra)}, matching the previous behavior when each
+row already corresponds to a single, uniquely-named fluorophore.}
 
 \item{qc.threshold.warn}{Numeric, default \code{0.98}. The similarity value to trigger
 a QC warning.}
