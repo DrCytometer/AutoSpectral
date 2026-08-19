@@ -49,6 +49,21 @@
 #' @param sim.threshold Numeric, default \code{0.99}. Minimum cosine similarity
 #'   to the reference spectrum for a SOM centroid to be retained as a variant.
 #'   Passed to \code{get.fluor.variants}.
+#' @param sim.threshold.floor Numeric, default \code{0.90}. Lower bound for
+#'   adaptive relaxation of \code{sim.threshold} when the initial cutoff
+#'   retains fewer than 20 events. Relaxation is logged via \code{warning()}
+#'   and the threshold actually used is returned as the
+#'   \code{"cosine.threshold.used"} attribute.
+#' @param af.collinear.threshold Numeric, default \code{0.95}. Minimum
+#'   cosine similarity between \code{fluor}'s reference spectrum and any of
+#'   its paired unstained file's AF principal directions (\code{af.pcs}) at
+#'   or above which the AF-component projection step is skipped, since a
+#'   joint OLS fit against near-collinear AF and fluorophore directions can
+#'   push real fluorophore signal into the AF term. Recorded as the
+#'   \code{"af.collinear"} attribute.
+#' @param noise.floor.tail.fraction Numeric in (0, 1), default \code{0.20}.
+#'   Fraction of each detector's raw values (lowest end) used to estimate the
+#'   per-control noise floor. Passed to \code{get.fluor.variants}.
 #' @param variant.fill.color Color for the shaded ribbon in variant plots.
 #'   Default \code{"red"}.
 #' @param variant.fill.alpha Alpha for \code{variant.fill.color}. Default
@@ -57,6 +72,18 @@
 #'   \code{"black"}.
 #' @param median.linewidth Width of the reference-spectrum line. Default
 #'   \code{1}.
+#' @param use.unmixed Logical, default \code{TRUE}. Whether AF extraction
+#'   (\code{get.af.spectra()}) and fluorophore variant assessment
+#'   (\code{get.fluor.variants()}) may use full-spectra OLS unmixing as part
+#'   of their SOM clustering input, positivity selection, and Spillover
+#'   Spreading Matrix construction. Set to \code{FALSE} when \code{spectra}
+#'   contains several similar or collinear fluorophores (e.g. a bead-cell
+#'   comparison panel), where a full-spectra unmix is itself unstable or
+#'   unsolvable and would corrupt rather than inform those steps. When
+#'   \code{FALSE}, clustering falls back to raw detector space only, the
+#'   unstained-sample positivity thresholds used internally by
+#'   \code{get.fluor.variants()} are not computed, and the returned
+#'   \code{spillover.spread} is always \code{NULL}.
 #' @param stained.sample Optional file path to a representative stained FCS
 #'   file. When supplied, it is read and unmixed to obtain per-fluorophore
 #'   median positive signal (MFI), which weights the optimization necessity
@@ -82,6 +109,18 @@
 #'     reference spectrum), one per fluorophore.}
 #'   \item{\code{delta.norms}}{Named list of Euclidean norms of the deltas,
 #'     one numeric vector per fluorophore.}
+#'   \item{\code{noise.floor}}{Named numeric vector, per-detector electronic
+#'     noise floor in signal units (SD), pooled by minimum across controls.
+#'     Matches the units of `noise.floor` elsewhere in the package
+#'     (`unmix.fcs()`, the C++ pipeline). Square it before passing to
+#'     `estimate.noise.model(read.var.floor = ...)`, which expects a
+#'     variance.}
+#'   \item{\code{spillover.spread}}{Matrix (source fluorophore x target
+#'     channel), the Spillover Spreading Matrix: increase in unmixed
+#'     variance a source fluorophore's positive population contributes to
+#'     each other channel, per unit of its own on-channel signal. Diagonal
+#'     entries are `NA`. `NULL` if no control supplied enough positive
+#'     events. Saved as a heatmap when `figures = TRUE`.}
 #' }
 #' The list is also saved as an .rds file in \code{output.dir}.
 #'
@@ -101,10 +140,14 @@ get.spectral.variants <- function(
     som.dim            = 5L,
     k.neighbors        = 3L,
     sim.threshold      = 0.985,
+    sim.threshold.floor    = 0.90,
+    af.collinear.threshold = 0.95,
+    noise.floor.tail.fraction = 0.20,
     variant.fill.color = "red",
     variant.fill.alpha = 0.7,
     median.line.color  = "black",
     median.linewidth   = 1,
+    use.unmixed                  = TRUE,
     stained.sample               = NULL,
     optimize.necessity.threshold = 0.01,
     ...
@@ -173,10 +216,78 @@ get.spectral.variants <- function(
 
   if ( !is.matrix( spectra ) && !is.data.frame( spectra ) )
     .type.err( "spectra", "a numeric matrix (fluorophores in rows, detectors in columns)", spectra )
+  # captured before any coercion below, since as.matrix()/storage.mode<- are
+  # not guaranteed to preserve the "fluorophore" attribute
+  spectra.fluorophore <- attr( spectra, "fluorophore" )
   spectra <- as.matrix( spectra )
   storage.mode( spectra ) <- "double"
+  attr( spectra, "fluorophore" ) <- spectra.fluorophore
   if ( is.null( rownames( spectra ) ) )
     stop( "`spectra` must have rownames giving fluorophore names (including \"AF\").", call. = FALSE )
+
+  # `spectra` must contain exactly one row per fluorophore. Checked here,
+  # independently of the control-file check below, since `spectra` is a
+  # separate argument that may have been built earlier, cached, or loaded
+  # from a CSV, and so is not guaranteed to correspond to `control.def.file`.
+  # Unlike check.spectra.duplicates() elsewhere, the fallback path here (used
+  # when `spectra` carries no "fluorophore" attribute) is a hard stop, not a
+  # warning: unmixing against two near-duplicate reference rows lets a solve
+  # push arbitrarily large, opposite-signed signal into each of them, and the
+  # resulting per-fluorophore "variance" this function computes would be
+  # numerical noise rather than biology -- there's no safe way to proceed.
+  if ( !is.null( spectra.fluorophore ) ) {
+
+    check.spectra.duplicates( spectra )
+
+  } else {
+
+    # No identity attribute (e.g. `spectra` was loaded via read.spectra()).
+    # A `sample`-disambiguated rowname (e.g. "PE (cells)", "PE (cells) (CD4)")
+    # is unique by construction and so cannot reveal a duplicate directly;
+    # recover true identity instead by matching the leading fluorophore name
+    # in each rowname against the fluorophore database.
+    non.af.rows <- rownames( spectra )[ rownames( spectra ) != "AF" ]
+    fluor.db.path <- system.file(
+      "extdata", "fluorophore_database.csv", package = "AutoSpectral"
+    )
+    fluor.db <- utils::read.csv( fluor.db.path, stringsAsFactors = FALSE )
+
+    check.fluor <- if ( verbose ) {
+      match.fluorophores( non.af.rows, fluor.db )
+    } else {
+      suppressMessages( match.fluorophores( non.af.rows, fluor.db ) )
+    }
+    names( check.fluor ) <- NULL
+
+    unmatched <- non.af.rows[ check.fluor == "No match" ]
+    if ( length( unmatched ) > 0 )
+      warning(
+        paste0(
+          "Could not resolve a fluorophore identity for the following ",
+          "`spectra` row(s) against the fluorophore database, so they ",
+          "could not be checked for duplicate controls: ",
+          paste( unmatched, collapse = ", " ), "."
+        ),
+        call. = FALSE
+      )
+
+    dup.fluor <- unique(
+      check.fluor[ duplicated( check.fluor ) & check.fluor != "No match" ]
+    )
+
+    if ( length( dup.fluor ) > 0 )
+      stop(
+        paste0(
+          "get.spectral.variants() does not support multiple controls per ",
+          "fluorophore. `spectra` appears to contain more than one row for: ",
+          paste( dup.fluor, collapse = ", " ), " (rows: ",
+          paste( non.af.rows[ check.fluor %in% dup.fluor ], collapse = ", " ),
+          "). Reduce `spectra` to a single row per fluorophore before ",
+          "calling get.spectral.variants()."
+        ),
+        call. = FALSE
+      )
+  }
 
   if ( !is.logical( figures ) || length( figures ) != 1 || is.na( figures ) )
     .type.err( "figures", "a single TRUE/FALSE value", figures )
@@ -205,6 +316,18 @@ get.spectral.variants <- function(
   if ( !is.numeric( sim.threshold ) || length( sim.threshold ) != 1 ||
        sim.threshold < 0 || sim.threshold > 1 )
     .type.err( "sim.threshold", "a single number in [0, 1]", sim.threshold )
+
+  if ( !is.numeric( sim.threshold.floor ) || length( sim.threshold.floor ) != 1 ||
+       sim.threshold.floor < 0 || sim.threshold.floor > sim.threshold )
+    .type.err( "sim.threshold.floor",
+               "a single number in [0, sim.threshold]", sim.threshold.floor )
+
+  if ( !is.numeric( af.collinear.threshold ) || length( af.collinear.threshold ) != 1 ||
+       af.collinear.threshold < 0 || af.collinear.threshold > 1 )
+    .type.err( "af.collinear.threshold", "a single number in [0, 1]", af.collinear.threshold )
+
+  if ( !is.logical( use.unmixed ) || length( use.unmixed ) != 1 || is.na( use.unmixed ) )
+    .type.err( "use.unmixed", "a single TRUE/FALSE value", use.unmixed )
 
   if ( !is.null( stained.sample ) && ( !is.character( stained.sample ) || length( stained.sample ) != 1 ) )
     .type.err( "stained.sample", "NULL or a single character path", stained.sample )
@@ -247,7 +370,13 @@ get.spectral.variants <- function(
           call. = FALSE )
 
   if ( verbose ) message( "\033[32mChecking control file for errors \033[0m" )
-  check.control.file( control.dir, control.def.file, asp, strict = TRUE )
+  # get.spectral.variants() does not support multiple controls per
+  # fluorophore (see the `table.fluors` duplicate check below for why), so
+  # this is always strict regardless of what the rest of the pipeline allows
+  check.control.file(
+    control.dir, control.def.file, asp, strict = TRUE,
+    allow.duplicate.controls = FALSE
+  )
 
   control.table <- utils::read.csv(
     control.def.file, stringsAsFactors = FALSE, strip.white = TRUE
@@ -263,9 +392,27 @@ get.spectral.variants <- function(
   if ( grepl( "Discover", asp$cytometer ) )
     spectral.channel <- spectral.channel[ grep( asp$spectral.channel, spectral.channel ) ]
 
-  # per-sample metadata
-  table.fluors       <- control.table$fluorophore
-  table.fluors       <- table.fluors[ !is.na( table.fluors ) ]
+  # per-sample metadata. get.spectral.variants() unmixes against `spectra`
+  # and computes per-fluorophore variance from the result, so two controls
+  # for the same fluorophore is not just a labeling ambiguity here: unmixing
+  # against two near-identical reference rows lets a solve push arbitrarily
+  # large, opposite-signed signal into each of them, and the resulting
+  # "variance" is numerical noise, not biology. `sample`-level disambiguation
+  # (used elsewhere in the package to permit multiple controls) is
+  # deliberately not applied here.
+  table.fluors <- control.table$fluorophore
+  table.fluors <- table.fluors[ !is.na( table.fluors ) ]
+
+  if ( anyDuplicated( table.fluors ) != 0 )
+    stop(
+      paste0(
+        "get.spectral.variants() does not support multiple controls per ",
+        "fluorophore. Duplicated in `control.def.file`: ",
+        paste( unique( table.fluors[ duplicated( table.fluors ) ] ), collapse = ", " ), "."
+      ),
+      call. = FALSE
+    )
+
   universal.negative <- control.table$universal.negative
   universal.negative[ is.na( universal.negative ) ] <- "FALSE"
   names( universal.negative ) <- table.fluors
@@ -335,6 +482,7 @@ get.spectral.variants <- function(
     som.dim = 10,
     figures = FALSE,
     save = FALSE,
+    use.unmixed = use.unmixed,
     refine = FALSE,
     parallel = parallel,
     threads = threads
@@ -363,29 +511,60 @@ get.spectral.variants <- function(
   } )
   names( af.pcs.list ) <- univ.neg.files
 
-  # find the likely positivity thresholds for determining what needs refinement
-  unstained.unmixed <- unmix.autospectral(
-    unstained,
-    spectra,
-    af.spectra,
-    verbose = FALSE
-  )
-  unmixed.thresholds <- apply(
-    unstained.unmixed[ , fluorophores, drop = FALSE ], 2, function( col )
-      stats::quantile( col, 0.995 )
-  )
-
-  if ( is.null( names( table.fluors ) ) ) names( table.fluors ) <- table.fluors
-
-  # ---------------------------------------------------------------------------
   # Parallel setup
-  # ---------------------------------------------------------------------------
-
   threads <- if ( isTRUE( parallel ) ) {
     if ( is.null( threads ) ) 0L else as.integer( threads )
   } else {
     1L
   }
+
+  # find the likely positivity thresholds for determining what needs
+  # refinement. Skipped when `use.unmixed = FALSE`: a full-pipeline unmix
+  # against several similar or collinear fluorophores is exactly the
+  # operation `use.unmixed = FALSE` is meant to avoid, and the resulting
+  # thresholds are unused downstream in that mode -- get.fluor.variants()
+  # falls back to raw-threshold selection instead.
+  if ( use.unmixed ) {
+
+    unstained.unmixed <- if (
+      requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+      "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) )
+    ) {
+      unmix.autospectral.rcpp(
+        raw.data = unstained,
+        spectra = spectra,
+        af.spectra = af.spectra,
+        verbose = FALSE,
+        parallel = TRUE,
+        threads = threads
+      )
+    } else {
+      unmix.autospectral(
+        raw.data = unstained,
+        spectra = spectra,
+        af.spectra = af.spectra,
+        asp = asp,
+        verbose = FALSE,
+        parallel = TRUE,
+        threads = threads
+      )
+    }
+
+    unmixed.thresholds <- apply(
+      unstained.unmixed[ , fluorophores, drop = FALSE ], 2, function( col )
+        stats::quantile( col, 0.995 )
+    )
+
+  } else {
+
+    unstained.unmixed  <- NULL
+    unmixed.thresholds <- stats::setNames(
+      rep( NA_real_, length( fluorophores ) ), fluorophores )
+
+  }
+
+  # set up main loop call
+  if ( is.null( names( table.fluors ) ) ) names( table.fluors ) <- table.fluors
 
   args.list <- list(
     file.name          = flow.file.name,
@@ -403,10 +582,14 @@ get.spectral.variants <- function(
     unmixed.thresholds = unmixed.thresholds,
     flow.channel       = flow.channel,
     af.pcs             = af.pcs.list,
+    use.unmixed        = use.unmixed,
     n.cells            = n.cells,
     som.dim            = som.dim,
     k.neighbors        = k.neighbors,
     sim.threshold      = sim.threshold,
+    sim.threshold.floor    = sim.threshold.floor,
+    af.collinear.threshold = af.collinear.threshold,
+    noise.floor.tail.fraction = noise.floor.tail.fraction,
     variant.fill.color = variant.fill.color,
     variant.fill.alpha = variant.fill.alpha,
     median.line.color  = median.line.color,
@@ -468,6 +651,103 @@ get.spectral.variants <- function(
   delta.norms <- lapply( delta.list, function( d ) sqrt( rowSums( d^2 ) ) )
   names( delta.norms ) <- names( spectral.variants )
 
+  # ---------------------------------------------------------------------------
+  # Noise floor, pooled across controls
+  # ---------------------------------------------------------------------------
+  # Each control supplies an upper bound per detector, in signal units (SD),
+  # matching every other `noise.floor` in this package. Every detector is far
+  # from SOME control's emission, so the minimum across controls is the
+  # tightest available bound. With few controls the minimum is noisy; with
+  # many, consider a low quantile instead of the strict minimum.
+
+  noise.floor <- NULL
+  floor.list  <- lapply( spectral.variants, function( v ) attr( v, "noise.floor" ) )
+  floor.list  <- floor.list[ !vapply( floor.list, is.null, logical( 1 ) ) ]
+
+  if ( length( floor.list ) > 0 ) {
+
+    floor.mat   <- do.call( rbind, floor.list )
+    noise.floor <- apply( floor.mat, 2, function( v ) {
+      v <- v[ is.finite( v ) & v > 0 ]
+      if ( length( v ) == 0 ) NA_real_ else min( v )
+    } )
+
+    if ( anyNA( noise.floor ) )
+      warning( "Noise floor could not be estimated at ",
+               sum( is.na( noise.floor ) ), " detector(s).", call. = FALSE )
+
+    if ( verbose )
+      message( sprintf(
+        "Noise floor from %d control(s): median SD %.1f (range %.1f - %.1f)",
+        nrow( floor.mat ),
+        stats::median( noise.floor, na.rm = TRUE ),
+        min( noise.floor, na.rm = TRUE ),
+        max( noise.floor, na.rm = TRUE ) ) )
+  }
+
+  # ---------------------------------------------------------------------------
+  # Spillover Spreading Matrix
+  # ---------------------------------------------------------------------------
+  # For source fluorophore a and target channel b, the increase in unmixed
+  # variance that a's positive population contributes to channel b, per unit
+  # of a's own on-channel signal:
+  #
+  #   SS(a, b) = ( mad(pos_a(b))^2 - mad(neg(b))^2 ) / ( median(pos_a(a)) - median(neg(a)) )
+  #
+  # Computed in unmixed (compensated) units, so it reflects what actually
+  # limits resolution after spectral unmixing rather than raw detector
+  # crosstalk. Diagonal entries (a source fluorophore against its own
+  # channel) are set to NA -- that is the width of the positive peak itself,
+  # not spillover, and left in it dominates the colour scale.
+
+  spillover.spread <- NULL
+  spread.list <- lapply( spectral.variants, function( v ) attr( v, "spillover.spread" ) )
+  mfi.list    <- lapply( spectral.variants, function( v ) attr( v, "on.channel.mfi" ) )
+  have.spread <- !vapply( spread.list, is.null, logical( 1 ) )
+
+  if ( any( have.spread ) ) {
+
+    spread.fluors <- names( spectral.variants )[ have.spread ]
+    neg.mad       <- apply( unstained.unmixed[ , fluorophores, drop = FALSE ], 2, stats::mad )
+    neg.median    <- apply( unstained.unmixed[ , fluorophores, drop = FALSE ], 2, stats::median )
+
+    spillover.spread <- matrix(
+      NA_real_, nrow = length( spread.fluors ), ncol = length( fluorophores ),
+      dimnames = list( spread.fluors, fluorophores )
+    )
+
+    for ( a in spread.fluors ) {
+      pos.mad <- spread.list[[ a ]][ fluorophores ]
+      denom   <- mfi.list[[ a ]] - neg.median[ a ]
+      if ( !is.finite( denom ) || denom <= 0 ) next
+      spillover.spread[ a, ] <- ( pos.mad^2 - neg.mad^2 ) / denom
+      if ( a %in% colnames( spillover.spread ) ) spillover.spread[ a, a ] <- NA_real_
+    }
+
+    if ( verbose )
+      message( sprintf(
+        "Spillover spread matrix computed for %d of %d fluorophore(s)",
+        length( spread.fluors ), length( fluorophores ) ) )
+
+    if ( figures ) {
+      tryCatch(
+        expr = {
+          create.heatmap(
+            matrix        = spillover.spread,
+            title         = "spillover_spread",
+            legend.label  = "Spread (var / on-channel MFI)",
+            plot.dir      = output.dir,
+            color.palette = "viridis"
+          )
+        },
+        error = function( e ) {
+          warning( "Spillover spread heatmap failed: ", conditionMessage( e ),
+                   call. = FALSE )
+        }
+      )
+    }
+  }
+
   ### calculate optimization necessity scores ###
 
   # spectra matrix without AF row for scoring
@@ -505,13 +785,30 @@ get.spectral.variants <- function(
       } else {
         stained.raw <- stained.raw[ , spectral.channel, drop = FALSE ]
       }
-      # TBD: add autospectralRcpp option here
-      stained.unmixed <- unmix.autospectral(
-        stained.raw,
-        spectra,
-        af.spectra,
-        verbose = FALSE
-      )
+
+      stained.unmixed <- if (
+        requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+        "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) )
+      ) {
+        unmix.autospectral.rcpp(
+          raw.data = stained.raw,
+          spectra = spectra,
+          af.spectra = af.spectra,
+          verbose = FALSE,
+          parallel = TRUE,
+          threads = threads
+        )
+      } else {
+        unmix.autospectral(
+          raw.data = stained.raw,
+          spectra = spectra,
+          af.spectra = af.spectra,
+          asp = asp,
+          verbose = FALSE,
+          parallel = TRUE,
+          threads = threads
+        )
+      }
 
       fluor.cols <- rownames( spectra.no.af )
 
@@ -542,6 +839,8 @@ get.spectral.variants <- function(
     variants    = spectral.variants,
     delta.list  = delta.list,
     delta.norms = delta.norms,
+    noise.floor = noise.floor,
+    spillover.spread  = spillover.spread,
     optimize.scores      = necessity$scores.norm,
     optimize.recommended = necessity$optimize.recommended
   )

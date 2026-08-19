@@ -21,10 +21,14 @@ get.fluor.variants(
   unmixed.thresholds,
   flow.channel,
   af.pcs,
+  use.unmixed = TRUE,
   n.cells = 10000L,
   som.dim = 10L,
   k.neighbors = 3L,
   sim.threshold = 0.985,
+  sim.threshold.floor = 0.9,
+  af.collinear.threshold = 0.95,
+  noise.floor.tail.fraction = 0.2,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
@@ -82,6 +86,18 @@ one per fluorophore.}
 matrices, one per unique unstained FCS file. Names are FCS filenames
 matching entries in \code{universal.negative}.}
 
+\item{use.unmixed}{Logical, default \code{TRUE}. Whether to unmix
+background-corrected positive events against the full \code{spectra}
+matrix and use that unmixed-space projection for positivity selection,
+the Spillover Spreading Matrix inputs, and as additional SOM clustering
+features. Set to \code{FALSE} when \code{spectra} contains several
+similar or collinear fluorophores (e.g. a bead-cell comparison panel),
+where the full-spectra unmix is itself unstable or unsolvable. When
+\code{FALSE}, positivity selection falls back to the raw-threshold
+events already identified via \code{raw.thresholds}, SOM clustering uses
+raw detector space only, and the \code{"spillover.spread"} /
+\code{"on.channel.mfi"} attributes are not computed (see Value).}
+
 \item{n.cells}{Integer, default \code{10000}. Maximum number of positive
 events used for SOM clustering. Files with more events above threshold
 are randomly downsampled to this number.}
@@ -97,6 +113,27 @@ background estimate.}
 \item{sim.threshold}{Numeric, default \code{0.985}. Minimum cosine
 similarity between a SOM centroid and the reference spectrum for the
 centroid to be retained as a variant.}
+
+\item{sim.threshold.floor}{Numeric, default \code{0.90}. Lower bound for
+adaptive relaxation of \code{sim.threshold} when the initial cutoff
+retains fewer than 20 events. Relaxation is logged via \code{warning()}
+and the threshold actually used is returned as the
+\code{"cosine.threshold.used"} attribute.}
+
+\item{af.collinear.threshold}{Numeric, default \code{0.95}. Minimum
+cosine similarity between \code{fluor}'s reference spectrum and any of
+its paired unstained file's AF principal directions (\code{af.pcs}) at
+or above which the AF-component projection step is skipped, since a
+joint OLS fit against near-collinear AF and fluorophore directions can
+push real fluorophore signal into the AF term. Recorded as the
+\code{"af.collinear"} attribute.}
+
+\item{noise.floor.tail.fraction}{Numeric in (0, 1), default \code{0.20}.
+Per-detector noise floor is the MAD (scaled to a Gaussian-equivalent
+variance) of the lowest fraction of raw values in that detector's
+column, using every event in the control file. Lower values isolate a
+purer background tail but with fewer events to estimate from; higher
+values are more stable but risk pulling in dim positive events.}
 
 \item{variant.fill.color}{Color for the shaded ribbon in the variant plot.
 Default \code{"red"}.}
@@ -118,8 +155,17 @@ for this call's batch SOM (\code{get.som.codes()}).}
 }
 \value{
 A numeric matrix; variants in rows, detectors in columns, values
-normalised to \eqn{[0, 1]}. When no centroids survive cosine QC the
-single reference spectrum is returned (one row).
+normalised to \eqn{[0, 1]}. Row 1 is always the library reference
+spectrum for \code{fluor}; subsequent rows are SOM-derived variants that
+passed cosine QC. When too few positive events are available, or no
+centroids survive cosine QC, the single reference spectrum is returned
+(one row). Carries three attributes: \code{"noise.floor"} (per-detector
+background SD, described above), \code{"spillover.spread"} (named
+numeric vector, per-detector MAD of this control's unmixed positive
+population, or \code{NULL} if fewer than 20 positive events were found or
+if \code{use.unmixed = FALSE}), and \code{"on.channel.mfi"} (this
+control's own median unmixed abundance, \code{NA} if
+\code{use.unmixed = FALSE}).
 }
 \description{
 Assesses variation in the spectral signature of a single-stained flow

@@ -57,6 +57,17 @@
 #' @param af.pcs Named list of autofluorescence-defining principal component
 #'   matrices, one per unique unstained FCS file. Names are FCS filenames
 #'   matching entries in \code{universal.negative}.
+#' @param use.unmixed Logical, default \code{TRUE}. Whether to unmix
+#'   background-corrected positive events against the full \code{spectra}
+#'   matrix and use that unmixed-space projection for positivity selection,
+#'   the Spillover Spreading Matrix inputs, and as additional SOM clustering
+#'   features. Set to \code{FALSE} when \code{spectra} contains several
+#'   similar or collinear fluorophores (e.g. a bead-cell comparison panel),
+#'   where the full-spectra unmix is itself unstable or unsolvable. When
+#'   \code{FALSE}, positivity selection falls back to the raw-threshold
+#'   events already identified via \code{raw.thresholds}, SOM clustering uses
+#'   raw detector space only, and the \code{"spillover.spread"} /
+#'   \code{"on.channel.mfi"} attributes are not computed (see Value).
 #' @param n.cells Integer, default \code{10000}. Maximum number of positive
 #'   events used for SOM clustering. Files with more events above threshold
 #'   are randomly downsampled to this number.
@@ -69,6 +80,24 @@
 #' @param sim.threshold Numeric, default \code{0.985}. Minimum cosine
 #'   similarity between a SOM centroid and the reference spectrum for the
 #'   centroid to be retained as a variant.
+#' @param sim.threshold.floor Numeric, default \code{0.90}. Lower bound for
+#'   adaptive relaxation of \code{sim.threshold} when the initial cutoff
+#'   retains fewer than 20 events. Relaxation is logged via \code{warning()}
+#'   and the threshold actually used is returned as the
+#'   \code{"cosine.threshold.used"} attribute.
+#' @param af.collinear.threshold Numeric, default \code{0.95}. Minimum
+#'   cosine similarity between \code{fluor}'s reference spectrum and any of
+#'   its paired unstained file's AF principal directions (\code{af.pcs}) at
+#'   or above which the AF-component projection step is skipped, since a
+#'   joint OLS fit against near-collinear AF and fluorophore directions can
+#'   push real fluorophore signal into the AF term. Recorded as the
+#'   \code{"af.collinear"} attribute.
+#' @param noise.floor.tail.fraction Numeric in (0, 1), default \code{0.20}.
+#'   Per-detector noise floor is the MAD (scaled to a Gaussian-equivalent
+#'   variance) of the lowest fraction of raw values in that detector's
+#'   column, using every event in the control file. Lower values isolate a
+#'   purer background tail but with fewer events to estimate from; higher
+#'   values are more stable but risk pulling in dim positive events.
 #' @param variant.fill.color Color for the shaded ribbon in the variant plot.
 #'   Default \code{"red"}.
 #' @param variant.fill.alpha Alpha for \code{variant.fill.color}. Default
@@ -83,8 +112,17 @@
 #'   `NULL` defaults to `0` (all available cores) when `parallel = TRUE`.
 #'
 #' @return A numeric matrix; variants in rows, detectors in columns, values
-#'   normalised to \eqn{[0, 1]}. When no centroids survive cosine QC the
-#'   single reference spectrum is returned (one row).
+#' normalised to \eqn{[0, 1]}. Row 1 is always the library reference
+#' spectrum for \code{fluor}; subsequent rows are SOM-derived variants that
+#' passed cosine QC. When too few positive events are available, or no
+#' centroids survive cosine QC, the single reference spectrum is returned
+#' (one row). Carries three attributes: \code{"noise.floor"} (per-detector
+#' background SD, described above), \code{"spillover.spread"} (named
+#' numeric vector, per-detector MAD of this control's unmixed positive
+#' population, or \code{NULL} if fewer than 20 positive events were found or
+#' if \code{use.unmixed = FALSE}), and \code{"on.channel.mfi"} (this
+#' control's own median unmixed abundance, \code{NA} if
+#' \code{use.unmixed = FALSE}).
 #'
 #' @references
 #' Van Gassen S et al. (2015). FlowSOM. \emph{Cytometry Part A}, 87(7),
@@ -107,10 +145,14 @@ get.fluor.variants <- function(
     unmixed.thresholds,
     flow.channel,
     af.pcs,
+    use.unmixed        = TRUE,
     n.cells            = 10000L,
     som.dim            = 10L,
     k.neighbors        = 3L,
     sim.threshold      = 0.985,
+    sim.threshold.floor    = 0.90,
+    af.collinear.threshold = 0.95,
+    noise.floor.tail.fraction = 0.20,
     variant.fill.color = "red",
     variant.fill.alpha = 0.7,
     median.line.color  = "black",
@@ -125,6 +167,7 @@ get.fluor.variants <- function(
   # reference spectrum for this fluorophore
   original.spectrum <- spectra[ fluor, , drop = FALSE ]
   orig.vec <- as.numeric( original.spectrum )
+  af.collinear <- FALSE
 
   pos.data <- readFCS( file.path( control.dir, file.name[ fluor ] ) )
   # remove saturated events
@@ -136,6 +179,44 @@ get.fluor.variants <- function(
   peak.channel <- flow.channel[ fluor ]
   pos.idx <- which( pos.spectral[ , peak.channel ] > raw.thresholds[ peak.channel ] )
   neg.idx <- setdiff( seq_len( nrow( pos.spectral ) ), pos.idx )
+
+  # ---------------------------------------------------------------------------
+  # Noise floor upper bound (per detector)
+  # ---------------------------------------------------------------------------
+  # Estimated from the lowest noise.floor.tail.fraction of raw values in each
+  # detector column, using every event in the control file rather than a
+  # row-wise positive/negative split. A row-wise split (thresholding on the
+  # peak channel) still leaves a continuum of dim/AF-positive events inside
+  # the "negative" bucket, which pulls the spread estimate up; taking the
+  # lowest fraction of each column directly is robust to that, because it is
+  # anchored at the bottom of the distribution regardless of how the rest of
+  # the population is shaped. MAD is used rather than a quantile difference
+  # for the same reason: it is insensitive to the exact tail cutoff and to
+  # occasional near-zero outliers.
+  #
+  # Returned in SIGNAL units (an SD), matching every other `noise.floor` in
+  # this package (`unmix.fcs()`, `unmix.folder()`, `unmix.autospectral.rcpp()`,
+  # the C++ pipeline's `noise_floor` clamp, default 125). Callers that need a
+  # variance -- `estimate.noise.model(read.var.floor = ...)` -- must square
+  # it explicitly. Pooled across controls by minimum in
+  # get.spectral.variants().
+
+  noise.floor.est <- stats::setNames(
+    rep( NA_real_, length( spectral.channel ) ), spectral.channel )
+
+  if ( nrow( pos.spectral ) >= 200 ) {
+    noise.floor.est <- apply(
+      pos.spectral, 2,
+      function( v ) {
+        v <- v[ is.finite( v ) ]
+        if ( length( v ) < 200 ) return( NA_real_ )
+        cutoff   <- stats::quantile( v, noise.floor.tail.fraction, names = FALSE )
+        low.tail <- v[ v <= cutoff ]
+        if ( length( low.tail ) < 20 ) return( NA_real_ )
+        stats::mad( low.tail, constant = 1.4826 )
+      } )
+    names( noise.floor.est ) <- spectral.channel
+  }
 
   # restrict to top n events
   if ( length( pos.idx ) > n.cells * 2 ) {
@@ -150,6 +231,7 @@ get.fluor.variants <- function(
       paste0( "Insufficient positive events found for ",
               fluor, ". Skipping spectral variation." )
     )
+    attr( original.spectrum, "noise.floor" ) <- noise.floor.est
     return( original.spectrum )
   }
 
@@ -207,38 +289,133 @@ get.fluor.variants <- function(
     } else {
       af.pcs.mat <- af.pcs
     }
-    # unmix with this fluor + AF components
-    pos.unmixed <- unmix.ols( pos.corrected, rbind( af.pcs.mat, original.spectrum ) )
-    # back-project the AF components into raw space
-    af.pc.n <- nrow( af.pcs.mat )
-    af.projection <- pos.unmixed[ , 1:af.pc.n, drop = FALSE ] %*% af.pcs.mat
-    # subtract the projected AF
-    pos.corrected <- pos.corrected - af.projection
+
+    # a fluorophore whose reference spectrum is nearly collinear with one of
+    # the AF principal directions cannot have AF safely partitioned out by a
+    # joint OLS fit against both: the fit is free to push real fluorophore
+    # signal into the AF term and vice versa, and the more collinear the two
+    # are the more of the fluorophore's own on-peak signal gets absorbed by
+    # the AF term instead. Detect that case up front and skip the
+    # projection rather than risk silently distorting the reference shape.
+    af.pc.cosine <- max( abs( .cosine.sim.rows( af.pcs.mat, orig.vec ) ) )
+    af.collinear <- af.pc.cosine >= af.collinear.threshold
+
+    if ( af.collinear ) {
+
+      if ( verbose )
+        message( paste0(
+          "  ", fluor, " is highly collinear with autofluorescence (cosine = ",
+          round( af.pc.cosine, 3 ), " >= af.collinear.threshold = ",
+          af.collinear.threshold, "). Skipping AF-component projection; ",
+          "relying on scatter-matched background subtraction only."
+        ) )
+
+    } else {
+
+      # unmix with this fluor + AF components
+      pos.unmixed <- unmix.ols( pos.corrected, rbind( af.pcs.mat, original.spectrum ) )
+      # back-project the AF components into raw space
+      af.pc.n <- nrow( af.pcs.mat )
+      af.projection <- pos.unmixed[ , 1:af.pc.n, drop = FALSE ] %*% af.pcs.mat
+      # subtract the projected AF
+      pos.corrected <- pos.corrected - af.projection
+
+    }
   }
 
-  # unmix background-corrected data in full fluorophore space
-  pos.unmixed <- unmix.ols( pos.corrected, spectra )
+  # unmix background-corrected data in full fluorophore space. Skipped when
+  # `use.unmixed = FALSE`, since a full-spectra OLS unmix against several
+  # similar or collinear fluorophores (e.g. a bead-cell comparison panel) is
+  # itself unstable and would corrupt rather than inform the selection and
+  # clustering steps that follow.
+  if ( use.unmixed ) {
 
-  # select up to n.cells that are still positive
-  keep.idx <- which( pos.unmixed[ , fluor ] > unmixed.thresholds[ fluor ] * 2 )
+    pos.unmixed <- unmix.ols( pos.corrected, spectra )
 
-  # cosine screening
+    # select up to n.cells that are still positive
+    keep.idx <- which( pos.unmixed[ , fluor ] > unmixed.thresholds[ fluor ] * 2 )
+
+  } else {
+
+    pos.unmixed <- NULL
+    # already thresholded on the raw peak channel above (`pos.idx`); retain
+    # every background-corrected event
+    keep.idx <- seq_len( nrow( pos.corrected ) )
+
+  }
+
+  # ---------------------------------------------------------------------------
+  # Spillover spread (per detector)
+  # ---------------------------------------------------------------------------
+  # Per-channel MAD of this control's unmixed positive population, plus its
+  # own median on-channel abundance. Pooled across fluorophores in
+  # get.spectral.variants() into the Spillover Spreading Matrix, against the
+  # unstained population's per-channel MAD as the negative-population
+  # reference. Computed from the unmixed-threshold positive set (`keep.idx`),
+  # not the post-QC SOM variants, so a control that fails cosine QC below
+  # still contributes a spread estimate.
+
+  spread.mad     <- if ( use.unmixed && length( keep.idx ) >= 20 )
+    apply( pos.unmixed[ keep.idx, , drop = FALSE ], 2, stats::mad ) else NULL
+  on.channel.mfi <- if ( use.unmixed && length( keep.idx ) >= 20 )
+    stats::median( pos.unmixed[ keep.idx, fluor ] ) else NA_real_
+
+  # cosine screening. Cosine similarity is scale-invariant, so per-event
+  # rescaling before the comparison has no effect on the result -- compare
+  # directly against the reference spectrum.
   pos.corrected.keep <- pos.corrected[ keep.idx, , drop = FALSE ]
-  ev.max  <- apply( pos.corrected.keep, 1, max )
-  ev.max[ ev.max <= 0 ] <- 1
-  ev.norm <- pos.corrected.keep / ev.max
-  ev.cosine <- .cosine.sim.rows( ev.norm, orig.vec )
-  cosine.keep <- which( ev.cosine >= sim.threshold )
+  ev.cosine <- .cosine.sim.rows( pos.corrected.keep, orig.vec )
+  cosine.keep    <- which( ev.cosine >= sim.threshold )
+  threshold.used <- sim.threshold
+
+  # Fall back to a relaxed threshold when too few events pass. A fluorophore
+  # collinear with AF can have its whole event population sit just under
+  # sim.threshold rather than a handful of true outliers -- in that regime a
+  # fixed cutoff throws away a real, if noisier, population instead of
+  # screening genuine contaminants. Relax in fixed steps down to
+  # sim.threshold.floor, logging the threshold actually used so this is
+  # visible rather than silent.
+  if ( length( cosine.keep ) < 20 && sim.threshold > sim.threshold.floor ) {
+
+    relaxed.grid <- seq( sim.threshold - 0.01, sim.threshold.floor, by = -0.01 )
+
+    for ( relaxed in relaxed.grid ) {
+      candidate.keep <- which( ev.cosine >= relaxed )
+      if ( length( candidate.keep ) >= 20 ) {
+        cosine.keep    <- candidate.keep
+        threshold.used <- relaxed
+        warning( paste0(
+          "Cosine QC for ", fluor, " retained fewer than 20 events at ",
+          "sim.threshold = ", sim.threshold, "; relaxed to ",
+          round( relaxed, 3 ), " to retain ", length( cosine.keep ),
+          " event(s). Inspect this fluorophore's variant plot and ",
+          "spillover spread -- it is likely collinear with autofluorescence."
+        ), call. = FALSE )
+        break
+      }
+    }
+  }
 
   if ( length( cosine.keep ) < 20 ) {
-    warning( paste0( "Insufficient events passed pre-SOM cosine QC for ",
-                     fluor, ". Returning reference spectrum." ) )
+    warning( paste0( "Insufficient events passed cosine QC for ", fluor,
+                     " even after relaxing to sim.threshold.floor = ",
+                     sim.threshold.floor, ". Returning reference spectrum." ) )
+    attr( original.spectrum, "noise.floor" )           <- noise.floor.est
+    attr( original.spectrum, "spillover.spread" )      <- spread.mad
+    attr( original.spectrum, "on.channel.mfi" )        <- on.channel.mfi
+    attr( original.spectrum, "cosine.threshold.used" ) <- NA_real_
+    attr( original.spectrum, "af.collinear" )          <- af.collinear
     return( original.spectrum )
   }
 
-  som.input <- cbind( pos.unmixed[ keep.idx[ cosine.keep ], , drop = FALSE ],
-                      pos.corrected[ keep.idx[ cosine.keep ], , drop = FALSE ] )
-  colnames( som.input ) <- c( colnames( pos.unmixed ), spectral.channel )
+  if ( use.unmixed ) {
+    som.input <- cbind( pos.unmixed[ keep.idx[ cosine.keep ], , drop = FALSE ],
+                        pos.corrected[ keep.idx[ cosine.keep ], , drop = FALSE ] )
+    colnames( som.input ) <- c( colnames( pos.unmixed ), spectral.channel )
+  } else {
+    som.input <- pos.corrected[ keep.idx[ cosine.keep ], , drop = FALSE ]
+    colnames( som.input ) <- spectral.channel
+  }
   event.n   <- length( cosine.keep )
 
   if ( event.n < 500L )
@@ -283,6 +460,11 @@ get.fluor.variants <- function(
     y
   } ) )
 
+  variant.spectra <- rbind(
+    original.spectrum,
+    variant.spectra
+  )
+
   rownames( variant.spectra ) <- paste0( fluor, "_", seq_len( nrow( variant.spectra ) ) )
 
   # Plotting
@@ -311,5 +493,10 @@ get.fluor.variants <- function(
     )
   }
 
+  attr( variant.spectra, "noise.floor" )           <- noise.floor.est
+  attr( variant.spectra, "spillover.spread" )      <- spread.mad
+  attr( variant.spectra, "on.channel.mfi" )        <- on.channel.mfi
+  attr( variant.spectra, "cosine.threshold.used" ) <- threshold.used
+  attr( variant.spectra, "af.collinear" )          <- af.collinear
   return( variant.spectra )
 }

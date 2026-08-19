@@ -18,10 +18,14 @@ get.spectral.variants(
   som.dim = 5L,
   k.neighbors = 3L,
   sim.threshold = 0.985,
+  sim.threshold.floor = 0.9,
+  af.collinear.threshold = 0.95,
+  noise.floor.tail.fraction = 0.2,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
   median.linewidth = 1,
+  use.unmixed = TRUE,
   stained.sample = NULL,
   optimize.necessity.threshold = 0.01,
   ...
@@ -69,6 +73,24 @@ background. Passed to \code{get.fluor.variants}.}
 to the reference spectrum for a SOM centroid to be retained as a variant.
 Passed to \code{get.fluor.variants}.}
 
+\item{sim.threshold.floor}{Numeric, default \code{0.90}. Lower bound for
+adaptive relaxation of \code{sim.threshold} when the initial cutoff
+retains fewer than 20 events. Relaxation is logged via \code{warning()}
+and the threshold actually used is returned as the
+\code{"cosine.threshold.used"} attribute.}
+
+\item{af.collinear.threshold}{Numeric, default \code{0.95}. Minimum
+cosine similarity between \code{fluor}'s reference spectrum and any of
+its paired unstained file's AF principal directions (\code{af.pcs}) at
+or above which the AF-component projection step is skipped, since a
+joint OLS fit against near-collinear AF and fluorophore directions can
+push real fluorophore signal into the AF term. Recorded as the
+\code{"af.collinear"} attribute.}
+
+\item{noise.floor.tail.fraction}{Numeric in (0, 1), default \code{0.20}.
+Fraction of each detector's raw values (lowest end) used to estimate the
+per-control noise floor. Passed to \code{get.fluor.variants}.}
+
 \item{variant.fill.color}{Color for the shaded ribbon in variant plots.
 Default \code{"red"}.}
 
@@ -80,6 +102,19 @@ Default \code{"red"}.}
 
 \item{median.linewidth}{Width of the reference-spectrum line. Default
 \code{1}.}
+
+\item{use.unmixed}{Logical, default \code{TRUE}. Whether AF extraction
+(\code{get.af.spectra()}) and fluorophore variant assessment
+(\code{get.fluor.variants()}) may use full-spectra OLS unmixing as part
+of their SOM clustering input, positivity selection, and Spillover
+Spreading Matrix construction. Set to \code{FALSE} when \code{spectra}
+contains several similar or collinear fluorophores (e.g. a bead-cell
+comparison panel), where a full-spectra unmix is itself unstable or
+unsolvable and would corrupt rather than inform those steps. When
+\code{FALSE}, clustering falls back to raw detector space only, the
+unstained-sample positivity thresholds used internally by
+\code{get.fluor.variants()} are not computed, and the returned
+\code{spillover.spread} is always \code{NULL}.}
 
 \item{stained.sample}{Optional file path to a representative stained FCS
 file. When supplied, it is read and unmixed to obtain per-fluorophore
@@ -109,6 +144,18 @@ fluorophore. Each matrix has variants in rows and detectors in columns.}
 reference spectrum), one per fluorophore.}
 \item{\code{delta.norms}}{Named list of Euclidean norms of the deltas,
 one numeric vector per fluorophore.}
+\item{\code{noise.floor}}{Named numeric vector, per-detector electronic
+noise floor in signal units (SD), pooled by minimum across controls.
+Matches the units of \code{noise.floor} elsewhere in the package
+(\code{unmix.fcs()}, the C++ pipeline). Square it before passing to
+\code{estimate.noise.model(read.var.floor = ...)}, which expects a
+variance.}
+\item{\code{spillover.spread}}{Matrix (source fluorophore x target
+channel), the Spillover Spreading Matrix: increase in unmixed
+variance a source fluorophore's positive population contributes to
+each other channel, per unit of its own on-channel signal. Diagonal
+entries are \code{NA}. \code{NULL} if no control supplied enough positive
+events. Saved as a heatmap when \code{figures = TRUE}.}
 }
 The list is also saved as an .rds file in \code{output.dir}.
 }
