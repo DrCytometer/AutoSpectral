@@ -236,7 +236,7 @@ tune.gate <- function(
   # find dense region, with error handling for exceptions
   tryCatch({
     # calculate density once for plotting
-    bw <- apply( plot.data, 2, bandwidth.nrd ) * bandwidth.factor
+    bw <- .safe.bandwidth( plot.data ) * bandwidth.factor
 
     if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
          "fast_kde2d_cpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) &&
@@ -389,16 +389,10 @@ tune.gate <- function(
         n = 60
       )
 
-      # find the density threshold
-      z.sort <- sort( dens$z, decreasing = TRUE )
-      cumulative.dens <- cumsum( z.sort ) / sum( z.sort )
-      threshold <- z.sort[ which.min( abs( cumulative.dens - p/100 ) ) ]
-
-      # extract the contour line at that threshold
-      contour.lines <- grDevices::contourLines( dens$x, dens$y, dens$z, levels = threshold )
-
-      # take the longest contour (in case there are multiple)
-      main.contour <- contour.lines[[ which.max( sapply( contour.lines, function(l) length( l$x ) ) ) ]]
+      # find the density contour at the requested percentile, relaxing towards
+      # a looser threshold if the requested percentile yields a degenerate
+      # (empty) contour (e.g., a very tightly clustered bead population)
+      main.contour <- .find.main.contour( dens, p / 100 )
       gate.coords <- cbind( main.contour$x, main.contour$y )
 
       # define a smooth convex hull around those coordinates
