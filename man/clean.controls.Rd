@@ -19,6 +19,7 @@ clean.controls(
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
+  diagnostics.env = NULL,
   ...
 )
 }
@@ -72,6 +73,15 @@ accelerate the process much.}
 \item{threads}{Numeric, number of threads to use for parallel processing.
 Default is \code{NULL} which will revert to \code{asp$worker.process.n} if
 \code{parallel=TRUE}.}
+
+\item{diagnostics.env}{Optional environment, default \code{NULL}. If supplied,
+\code{remove.af()} populates it (keyed by sample name) with the objects used to
+identify and exclude intrusive autofluorescence for each cell-based
+AF-removal sample: \code{af.peak.channel}, \code{fluor.peak}, \code{af.boundaries},
+\code{expr.data.pos}/\code{expr.data.neg} (spectral channels only), and the
+resulting gate indices. Intended for diagnostic/manuscript figures (see
+\code{plot.spectra.legacy.steps()}); has no effect on the cleaning result.
+Capture is unreliable when \code{parallel = TRUE}.}
 
 \item{...}{Ignored. Used to catch deprecated arguments.}
 }

@@ -20,7 +20,8 @@ run.af.removal(
   main.figures = TRUE,
   parallel = FALSE,
   threads = 1,
-  verbose = TRUE
+  verbose = TRUE,
+  diagnostics.env = NULL
 )
 }
 \arguments{
@@ -67,6 +68,15 @@ will not be used. Set to \code{TRUE} to run in parallel.}
 \item{threads}{Number of cores to use for parallel processing, default is \code{1}.}
 
 \item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
+
+\item{diagnostics.env}{Optional environment, default \code{NULL}. If supplied,
+\code{remove.af()} populates it (keyed by sample name) with the objects used to
+identify and exclude intrusive autofluorescence for each cell-based
+AF-removal sample: \code{af.peak.channel}, \code{fluor.peak}, \code{af.boundaries},
+\code{expr.data.pos}/\code{expr.data.neg} (spectral channels only), and the
+resulting gate indices. Intended for diagnostic/manuscript figures (see
+\code{plot.spectra.legacy.steps()}); has no effect on the cleaning result.
+Capture is unreliable when \code{parallel = TRUE}.}
 }
 \value{
 A list containing the expression data with autofluorescent events

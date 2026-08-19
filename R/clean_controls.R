@@ -49,6 +49,14 @@
 #' @param threads Numeric, number of threads to use for parallel processing.
 #' Default is `NULL` which will revert to `asp$worker.process.n` if
 #' `parallel=TRUE`.
+#' @param diagnostics.env Optional environment, default `NULL`. If supplied,
+#' `remove.af()` populates it (keyed by sample name) with the objects used to
+#' identify and exclude intrusive autofluorescence for each cell-based
+#' AF-removal sample: `af.peak.channel`, `fluor.peak`, `af.boundaries`,
+#' `expr.data.pos`/`expr.data.neg` (spectral channels only), and the
+#' resulting gate indices. Intended for diagnostic/manuscript figures (see
+#' `plot.spectra.legacy.steps()`); has no effect on the cleaning result.
+#' Capture is unreliable when `parallel = TRUE`.
 #' @param ... Ignored. Used to catch deprecated arguments.
 #'
 #' @return
@@ -72,8 +80,9 @@ clean.controls <- function(
     parallel = FALSE,
     verbose = TRUE,
     threads = NULL,
+    diagnostics.env = NULL,
     ...
-  ) {
+) {
 
   if ( intermediate.figures & !main.figures ) main.figures <- TRUE
 
@@ -182,7 +191,7 @@ clean.controls <- function(
       # check that we have samples to work with
       if ( length( af.removal.sample ) > 0 ) {
         af.remove.peak.channels <- flow.control$channel[
-          flow.control$fluorophore %in% af.removal.sample ]
+          flow.control$sample %in% af.removal.sample ]
 
         execution <- try({
           # remove identified AF from single-color controls
@@ -202,7 +211,8 @@ clean.controls <- function(
             main.figures = main.figures,
             parallel = parallel,
             threads = threads,
-            verbose = verbose
+            verbose = verbose,
+            diagnostics.env = diagnostics.env
           )
 
           # store cleaned data
@@ -284,8 +294,10 @@ clean.controls <- function(
     else
       flow.negative
 
-    # select fluorophore samples to be used
-    univ.sample <- flow.control$fluorophore[
+    # select fluorophore samples to be used. Filtering is still done against
+    # `fluorophore` (the dye identity), but the values kept are `sample` (the
+    # unique per-control identifier used to key `clean.expr`)
+    univ.sample <- flow.control$sample[
       !grepl(
         "negative",
         flow.control$fluorophore,
@@ -306,7 +318,7 @@ clean.controls <- function(
     if ( length( univ.sample ) != 0 ) {
 
       univ.peak.channels <- flow.control$channel[
-        flow.control$fluorophore %in% univ.sample ]
+        flow.control$sample %in% univ.sample ]
 
       execution <- try({
         univ.neg.expr <- run.universal.negative(
@@ -360,11 +372,11 @@ clean.controls <- function(
     }
 
     # select fluorophore samples to be used
-    downsample.sample <- flow.control$fluorophore[
+    downsample.sample <- flow.control$sample[
       !grepl( "AF|negative", flow.control$fluorophore, ignore.case = TRUE ) ]
 
     downsample.peak.channels <- flow.control$channel[
-      flow.control$fluorophore %in% downsample.sample ]
+      flow.control$sample %in% downsample.sample ]
 
     execution <- try({
       downsample.expr <- run.downsample(

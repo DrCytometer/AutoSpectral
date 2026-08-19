@@ -34,6 +34,14 @@
 #' will not be used. Set to `TRUE` to run in parallel.
 #' @param threads Number of cores to use for parallel processing, default is `1`.
 #' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+#' @param diagnostics.env Optional environment, default `NULL`. If supplied,
+#' `remove.af()` populates it (keyed by sample name) with the objects used to
+#' identify and exclude intrusive autofluorescence for each cell-based
+#' AF-removal sample: `af.peak.channel`, `fluor.peak`, `af.boundaries`,
+#' `expr.data.pos`/`expr.data.neg` (spectral channels only), and the
+#' resulting gate indices. Intended for diagnostic/manuscript figures (see
+#' `plot.spectra.legacy.steps()`); has no effect on the cleaning result.
+#' Capture is unreliable when `parallel = TRUE`.
 #'
 #' @return A list containing the expression data with autofluorescent events
 #' removed for each sample.
@@ -54,8 +62,17 @@ run.af.removal <- function(
     main.figures = TRUE,
     parallel = FALSE,
     threads = 1,
-    verbose = TRUE
-  ) {
+    verbose = TRUE,
+    diagnostics.env = NULL
+) {
+
+  if ( parallel && !is.null( diagnostics.env ) )
+    warning(
+      "diagnostics.env capture is unreliable under parallel = TRUE (forked ",
+      "worker processes do not propagate environment mutations back to the ",
+      "caller); diagnostics may be incomplete. Use parallel = FALSE for ",
+      "guaranteed-complete diagnostics.", call. = FALSE
+    )
 
   # construct arguments list
   args.list <- list(
@@ -71,7 +88,8 @@ run.af.removal <- function(
     k.neighbors = k.neighbors,
     main.figures = main.figures,
     intermediate.figures = intermediate.figures,
-    verbose = verbose
+    verbose = verbose,
+    diagnostics.env = diagnostics.env
   )
 
   # set up parallel processing
