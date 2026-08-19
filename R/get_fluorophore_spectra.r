@@ -42,12 +42,25 @@ get.fluorophore.spectra <- function(
   else if ( is.null( title ) )
     title <- "Initial"
 
-  # iterate only over non-negative samples
-  fluorophore.samples <- flow.control$fluorophore[
+  # iterate only over non-negative samples. Filtering is done against
+  # `fluorophore` (the dye identity), but the values iterated over are
+  # `sample` (the unique per-control identifier), since a single fluorophore
+  # may now have more than one control
+  fluorophore.samples <- flow.control$sample[
     !grepl( "negative", flow.control$fluorophore, ignore.case = TRUE ) ]
 
   fluorophore.channels <- flow.control$channel[
     !grepl( "negative", flow.control$fluorophore, ignore.case = TRUE ) ]
+
+  # true dye identity per row, aligned with fluorophore.samples -- carried as
+  # an attribute on the output matrix so check.spectra.duplicates() can catch
+  # duplicate fluorophores before unmixing, independent of the `sample` label
+  fluorophore.identity <- flow.control$fluorophore[
+    !grepl( "negative", flow.control$fluorophore, ignore.case = TRUE ) ]
+
+  if ( anyDuplicated( fluorophore.samples ) != 0 )
+    stop( "flow.control$sample is not unique; cannot extract fluorophore spectra.",
+          call. = FALSE )
 
   # check for data
   if ( use.clean.expr ) {
@@ -114,7 +127,8 @@ get.fluorophore.spectra <- function(
     } )
 
     marker.spectra <- do.call( rbind, marker.spectra )
-    rownames( marker.spectra ) <- make.unique( fluorophore.samples )
+    rownames( marker.spectra ) <- fluorophore.samples
+    attr( marker.spectra, "fluorophore" ) <- fluorophore.identity
 
   } else {
     # extract fluorophore spectra using "cleaned" data
@@ -171,7 +185,8 @@ get.fluorophore.spectra <- function(
     } )
 
     marker.spectra <- do.call( rbind, marker.spectra )
-    rownames( marker.spectra ) <- make.unique( fluorophore.samples )
+    rownames( marker.spectra ) <- fluorophore.samples
+    attr( marker.spectra, "fluorophore" ) <- fluorophore.identity
   }
 
   # plot spectra
@@ -328,7 +343,10 @@ get.fluorophore.spectra <- function(
   # library reference QC
   tryCatch(
     expr = {
-      spectral.reference.plot( marker.spectra, asp )
+      spectral.reference.plot(
+        marker.spectra, asp,
+        fluorophore = attr( marker.spectra, "fluorophore" )
+      )
     },
     error = function( e ) {
       message( "Error in plotting fluorophore spectra: ", e$message )
