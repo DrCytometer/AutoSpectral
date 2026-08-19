@@ -178,7 +178,7 @@ define.keywords <- function(
 
       # Map Marker/Stain from flow.control
       clean.name <- sub("-A$", "", p.name)
-      f.idx <- match(clean.name, flow.control$fluorophore)
+      f.idx <- match(clean.name, flow.control$sample)
       marker <- if (!is.na(f.idx)) as.character(flow.control$antigen[f.idx]) else p.name
       param.keywords[[paste0(p.prefix, "S")]] <- marker
     }

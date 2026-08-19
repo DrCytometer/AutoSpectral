@@ -10,7 +10,8 @@ validate.control.file(
   asp,
   min.event.warning,
   min.event.error,
-  legacy = FALSE
+  legacy = FALSE,
+  allow.duplicate.controls = FALSE
 )
 }
 \arguments{
@@ -32,6 +33,14 @@ and the control file will be suitable only for the new automated spectral
 extraction pipeline using \code{get.spectra.automated()}. To use the version 1
 "legacy" pipeline for the extraction of fluorophore spectra, using gating and
 \code{define.flow.control()}, set \code{legacy=TRUE}.}
+
+\item{allow.duplicate.controls}{Logical, default \code{FALSE}. If \code{FALSE},
+multiple controls for the same fluorophore are flagged as an error. Set to
+\code{TRUE} to permit them for diagnostic/QC use (e.g. comparing two preparations
+of the same conjugate); each will be assigned a unique \code{sample} identifier.
+The resulting reference library still must be reduced to one row per
+fluorophore before it can be used for unmixing -- see
+\code{check.spectra.duplicates()}.}
 }
 \value{
 A dataframe of errors and warnings intended to help the user fix

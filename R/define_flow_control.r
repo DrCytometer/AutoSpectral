@@ -50,10 +50,18 @@
 #' to be similar to FlowJo or SpectroFlo. Other options are the viridis color
 #' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
 #' and `turbo`.
+#' @param allow.duplicate.controls Logical, default `FALSE`. Set `TRUE` to
+#' permit multiple single-stained controls for the same fluorophore
+#' (diagnostic/QC use only). Each is tracked internally under a unique
+#' `sample` identifier. The resulting spectral reference library still needs
+#' to be reduced to one row per fluorophore before unmixing --
+#' see `check.spectra.duplicates()`.
 #'
 #' @return A list (`flow.control`) with the following components:
 #' - `filename`: Names of the single-color control files.
-#' - `fluorophore`: Corresponding fluorophores used in the experiment.
+#' - `fluorophore`: Corresponding fluorophores used in the experiment. May
+#' contain duplicates if multiple controls were run for the same fluorophore;
+#' see `sample` for the unique per-control identifier.
 #' - `antigen`: Corresponding markers used in the experiment.
 #' - `control.type`: Type of control used (beads or cells).
 #' - `universal.negative`: Corresponding universal negative for each control.
@@ -68,7 +76,9 @@
 #' - `channel.n`: Number of channels.
 #' - `spectral.channel`: Spectral channel information.
 #' - `spectral.channel.n`: Number of spectral channels.
-#' - `sample`: Sample names (fluorophores).
+#' - `sample`: Unique per-control identifier. Equal to `fluorophore` unless
+#' multiple controls share a fluorophore, in which case it is disambiguated
+#' (e.g. `"PE (cells)"`, `"PE (cells) (CD4)"`).
 #' - `scatter.and.channel`: FSC, SSC, and peak channel information.
 #' - `scatter.and.channel.label`: Labels for scatter and channel.
 #' - `scatter.and.channel.spectral`: FSC, SSC, and spectral channels.
@@ -102,11 +112,15 @@ define.flow.control <- function(
     parallel = FALSE,
     verbose = TRUE,
     threads = NULL,
-    color.palette = NULL
-  ) {
+    color.palette = NULL,
+    allow.duplicate.controls = FALSE
+) {
 
   if ( verbose ) message( "\033[34mChecking control file for errors \033[0m" )
-  check.control.file( control.dir, control.def.file, asp, strict = TRUE )
+  check.control.file(
+    control.dir, control.def.file, asp, strict = TRUE,
+    allow.duplicate.controls = allow.duplicate.controls
+  )
 
   # read control info
   if ( verbose ) message( "\033[34mReading control information \033[0m" )
@@ -149,10 +163,19 @@ define.flow.control <- function(
     }
   )
 
-  # set samples and gate combos
-  control.table$sample <- control.table$fluorophore
+  # set samples and gate combos. Multiple controls are permitted for the same
+  # fluorophore (validate.control.file() only warns on this); `sample` is the
+  # unique per-control identifier used everywhere downstream instead of the
+  # (possibly duplicated) `fluorophore` column.
+  control.table$sample <- .build.control.sample.names(
+    control.table$fluorophore, control.table$control.type, control.table$marker
+  )
   gating.system <- match.arg( gating.system )
   control.table <- assign.gates( control.table, gating.system, gate, verbose )
+
+  if ( anyDuplicated( control.table$sample ) != 0 )
+    stop( "Internal error: control.table$sample is not unique after assign.gates()",
+          call. = FALSE )
 
   # set factors and fill in missing data
   flow.fluorophore <- control.table$fluorophore
@@ -428,11 +451,15 @@ define.flow.control <- function(
         )
 
         # apply the same fallback gate to the matching unstained/universal
-        # negative sample so the pair stays consistent
-        neg.name <- control.table$universal.negative[ fs.idx ]
-        if ( !is.na( neg.name ) && !( neg.name %in% fallback.negative.done ) ) {
-          neg.idx <- which( control.table$sample == neg.name )
-          if ( length( neg.idx ) == 1 ) {
+        # negative sample so the pair stays consistent. universal.negative
+        # stores the negative control's filename, so resolve that to its row
+        # first, then use the row's sample name for gate/expression indexing
+        neg.filename <- control.table$universal.negative[ fs.idx ]
+        if ( !is.na( neg.filename ) ) {
+          neg.idx <- which( control.table$filename == neg.filename )
+          neg.name <- control.table$sample[ neg.idx ]
+
+          if ( length( neg.idx ) == 1 && !( neg.name %in% fallback.negative.done ) ) {
             flow.gate[ neg.name ] <- fallback.gate.name
             args.list$flow.gate <- flow.gate
 
@@ -503,7 +530,7 @@ define.flow.control <- function(
     flow.event.sample,
     levels = event.type.factor,
     labels = names( event.type.factor ) )
-  names( flow.control.type ) <- flow.fluorophore
+  names( flow.control.type ) <- control.table$sample
 
   # quickly re-determine peak AF channel empirically
   if ( any( flow.fluorophore == "AF" ) ) {

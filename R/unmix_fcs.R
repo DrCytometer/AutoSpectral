@@ -179,6 +179,10 @@ unmix.fcs <- function(
     )
   }
 
+  # spectral reference matrix must contain exactly one row per fluorophore
+  # before any unmixing method runs
+  check.spectra.duplicates( spectra )
+
   # handle deprecated "Automatic" method
   if ( identical( method, "Automatic" ) ) {
     lifecycle::deprecate_warn(

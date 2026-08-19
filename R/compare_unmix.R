@@ -159,6 +159,12 @@ compare.unmix <- function(
     }
   }
 
+  # spectral reference matrices actually used for unmixing must contain
+  # exactly one row per fluorophore -- check whichever were used (constructed
+  # above, or supplied directly via ref.spectra/test.spectra)
+  check.spectra.duplicates( ref.spectra )
+  check.spectra.duplicates( test.spectra )
+
   # --- condition numbers ---
   ref.cn  <- calculate.condition.number( ref.spectra )
   test.cn <- calculate.condition.number( test.spectra )

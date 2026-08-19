@@ -8,7 +8,9 @@ read.spectra(
   spectra.file,
   spectra.dir = "./table_spectra",
   remove.af = FALSE,
-  af.param = "AF"
+  af.param = "AF",
+  check.collinearity = TRUE,
+  collinearity.threshold = 0.95
 )
 }
 \arguments{
@@ -23,6 +25,18 @@ matrix without the default autofluorescence spectrum.}
 \item{af.param}{Name of the autofluorescence parameter. Default is \code{AF}. Note
 that any fluorophores can be removed from the matrix by supplying a character
 vector, e.g., \code{c("BUV395", "PE")}, if desired.}
+
+\item{check.collinearity}{Logical, default \code{TRUE}. CSV files cannot carry
+the \code{"fluorophore"} identity attribute that \code{check.spectra.duplicates()}
+checks exactly elsewhere, and a \code{sample}-disambiguated rowname (e.g.
+\code{"PE (cells)"} / \code{"PE (cells) (CD4)"}) is unique by construction, so a
+rownames-only check would never catch two controls for the same dye. When
+\code{TRUE}, screens for suspiciously similar rows as an early, load-time
+warning (the same screen \code{check.spectra.duplicates()} falls back to later).}
+
+\item{collinearity.threshold}{Numeric, default \code{0.95}. Cosine similarity
+above which two rows trigger the warning. Matches the package default for
+\code{asp$similarity.warning.n}.}
 }
 \value{
 A matrix containing the fluorophore spectra (fluorophore x detectors).

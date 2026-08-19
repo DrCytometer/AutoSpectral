@@ -39,7 +39,11 @@ files such that AutoSpectral can understand and process them correctly.
 Given a set of single stained control fcs files, \code{create.control.file} will
 produce a csv file listing the matching peak detector channels for your
 fluorophores (if known). If your files contain bead or cell tags in the filename,
-it will assign your controls as cells or beads. You will need to fill in any
-"No Match" results manually. You will need to set universal negatives manually.
+it will assign your controls as cells or beads, and will automatically fill in
+the matching \code{universal.negative} filename when exactly one unstained/negative
+control shares that control.type. \code{universal.negative} is left blank when
+\code{control.type} could not be determined or when more than one unstained/negative
+control of that type exists (in which case you will need to set it manually).
+You will need to fill in any "No Match" results manually.
 You will need to add marker names manually.
 }

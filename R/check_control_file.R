@@ -22,6 +22,9 @@
 #' extraction pipeline using `get.spectra.automated()`. To use the version 1
 #' "legacy" pipeline for the extraction of fluorophore spectra, using gating and
 #' `define.flow.control()`, set `legacy=TRUE`.
+#' @param allow.duplicate.controls Logical, default `FALSE`. Passed through to
+#' `validate.control.file()`. Set `TRUE` to permit multiple controls for the
+#' same fluorophore (diagnostic/QC use only).
 #'
 #' @return A dataframe of errors and warnings intended to help the user fix
 #' problems with the `control.def.file`.
@@ -35,7 +38,8 @@ check.control.file <- function(
     strict = FALSE,
     min.event.warning = 5000,
     min.event.error = 1000,
-    legacy = FALSE
+    legacy = FALSE,
+    allow.duplicate.controls = FALSE
 ) {
 
   issues <- validate.control.file(
@@ -44,7 +48,8 @@ check.control.file <- function(
     asp,
     min.event.warning,
     min.event.error,
-    legacy = legacy
+    legacy = legacy,
+    allow.duplicate.controls = allow.duplicate.controls
   )
 
   # In automated mode, demote missing_channel from error to warning
@@ -109,6 +114,21 @@ check.control.file <- function(
         "AutoSpectral does not currently correct for voltage/gain differences;",
         "unmixing accuracy may be reduced. On the ID7000, Sony does not adhere
         to FCS standards, so this cannot be checked..",
+        "\033[0m"
+      )
+    },
+
+    duplicate_fluorophore = function( x ) {
+      paste(
+        "\033[31m",
+        "Multiple controls were supplied for the same fluorophore.",
+        "By default this is rejected. If intentional -- e.g. comparing two",
+        "preparations of the same conjugate for QC -- pass",
+        "`allow.duplicate.controls = TRUE`. Each control will then be",
+        "tracked under a unique `sample` identifier (e.g. 'PE (cells)' vs",
+        "'PE (beads)'). The reference library will still need to be reduced",
+        "to one row per fluorophore before unmixing;",
+        "`check.spectra.duplicates()` enforces this automatically.",
         "\033[0m"
       )
     }

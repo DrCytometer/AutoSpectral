@@ -182,6 +182,11 @@ unmix.folder <- function(
     )
   }
 
+  # spectral reference matrix must contain exactly one row per fluorophore --
+  # check once up front so a bad reference library fails before any FCS files
+  # in the folder are opened, rather than partway through the batch
+  check.spectra.duplicates( spectra )
+
   # handle deprecated "Automatic" method
   if ( identical( method, "Automatic" ) ) {
     lifecycle::deprecate_warn(

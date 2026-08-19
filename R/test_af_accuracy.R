@@ -95,6 +95,10 @@ test.af.accuracy <- function(
     length( n.downsample ) == 1L, n.downsample >= 1L
   )
 
+  # spectral reference matrix must contain exactly one row per fluorophore
+  # for the accuracy comparison to be meaningful
+  check.spectra.duplicates( spectra )
+
   # ---- remove AF row from spectra if present ---------------------------------
 
   if ( "AF" %in% rownames( spectra ) )

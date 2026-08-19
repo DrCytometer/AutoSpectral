@@ -80,8 +80,15 @@ reload.flow.control <- function(
   flow.fluorophore <- control.table$fluorophore
   flow.fluorophore[ is.na( flow.fluorophore ) ] <- "Negative"
 
+  # unique per-control identifier; mirrors define.flow.control() so a
+  # reloaded flow.control matches one built the normal way, even when
+  # multiple controls were run for the same fluorophore
+  control.table$sample <- .build.control.sample.names(
+    flow.fluorophore, control.table$control.type, control.table$marker
+  )
+
   flow.control.type <- control.table$control.type
-  names( flow.control.type ) <- flow.fluorophore
+  names( flow.control.type ) <- control.table$sample
 
   flow.antigen <- control.table$marker
   flow.channel <- control.table$channel

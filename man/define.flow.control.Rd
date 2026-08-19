@@ -14,7 +14,8 @@ define.flow.control(
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
-  color.palette = NULL
+  color.palette = NULL,
+  allow.duplicate.controls = FALSE
 )
 }
 \arguments{
@@ -64,12 +65,21 @@ palette to be used for the fluorophore traces. Use \code{rainbow}
 to be similar to FlowJo or SpectroFlo. Other options are the viridis color
 options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
 and \code{turbo}.}
+
+\item{allow.duplicate.controls}{Logical, default \code{FALSE}. Set \code{TRUE} to
+permit multiple single-stained controls for the same fluorophore
+(diagnostic/QC use only). Each is tracked internally under a unique
+\code{sample} identifier. The resulting spectral reference library still needs
+to be reduced to one row per fluorophore before unmixing --
+see \code{check.spectra.duplicates()}.}
 }
 \value{
 A list (\code{flow.control}) with the following components:
 \itemize{
 \item \code{filename}: Names of the single-color control files.
-\item \code{fluorophore}: Corresponding fluorophores used in the experiment.
+\item \code{fluorophore}: Corresponding fluorophores used in the experiment. May
+contain duplicates if multiple controls were run for the same fluorophore;
+see \code{sample} for the unique per-control identifier.
 \item \code{antigen}: Corresponding markers used in the experiment.
 \item \code{control.type}: Type of control used (beads or cells).
 \item \code{universal.negative}: Corresponding universal negative for each control.
@@ -84,7 +94,9 @@ A list (\code{flow.control}) with the following components:
 \item \code{channel.n}: Number of channels.
 \item \code{spectral.channel}: Spectral channel information.
 \item \code{spectral.channel.n}: Number of spectral channels.
-\item \code{sample}: Sample names (fluorophores).
+\item \code{sample}: Unique per-control identifier. Equal to \code{fluorophore} unless
+multiple controls share a fluorophore, in which case it is disambiguated
+(e.g. \code{"PE (cells)"}, \code{"PE (cells) (CD4)"}).
 \item \code{scatter.and.channel}: FSC, SSC, and peak channel information.
 \item \code{scatter.and.channel.label}: Labels for scatter and channel.
 \item \code{scatter.and.channel.spectral}: FSC, SSC, and spectral channels.

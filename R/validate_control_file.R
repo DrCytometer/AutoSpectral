@@ -19,6 +19,13 @@
 #' extraction pipeline using `get.spectra.automated()`. To use the version 1
 #' "legacy" pipeline for the extraction of fluorophore spectra, using gating and
 #' `define.flow.control()`, set `legacy=TRUE`.
+#' @param allow.duplicate.controls Logical, default `FALSE`. If `FALSE`,
+#' multiple controls for the same fluorophore are flagged as an error. Set to
+#' `TRUE` to permit them for diagnostic/QC use (e.g. comparing two preparations
+#' of the same conjugate); each will be assigned a unique `sample` identifier.
+#' The resulting reference library still must be reduced to one row per
+#' fluorophore before it can be used for unmixing -- see
+#' `check.spectra.duplicates()`.
 #'
 #' @return A dataframe of errors and warnings intended to help the user fix
 #' problems with the `control.def.file`.
@@ -29,8 +36,9 @@ validate.control.file <- function(
     asp,
     min.event.warning,
     min.event.error,
-    legacy = FALSE
-  ) {
+    legacy = FALSE,
+    allow.duplicate.controls = FALSE
+) {
 
   issues <- list()
 
@@ -152,9 +160,23 @@ validate.control.file <- function(
 
   if ( any( duplicated( ct$fluorophore ) ) ) {
     issues[[ length( issues ) + 1 ]] <-
-      .new_issue( "error", "duplicate_fluorophore",
-                  column = "fluorophore",
-                  message = "Duplicate fluorophore names detected" )
+      .new_issue(
+        if ( allow.duplicate.controls ) "warning" else "error",
+        "duplicate_fluorophore",
+        column = "fluorophore",
+        message = if ( allow.duplicate.controls )
+          paste(
+            "Duplicate fluorophore names detected.",
+            "Multiple controls per fluorophore are permitted;",
+            "each will be assigned a unique `sample` identifier",
+            "automatically. The final reference library must still contain",
+            "only one row per fluorophore before unmixing." )
+        else
+          paste(
+            "Duplicate fluorophore names detected.",
+            "Set `allow.duplicate.controls = TRUE` to permit multiple",
+            "controls per fluorophore for diagnostic/QC use." )
+      )
   }
 
   no.match <- grepl( "No match", ct$fluorophore, ignore.case = TRUE )
