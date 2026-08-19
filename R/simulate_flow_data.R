@@ -145,6 +145,11 @@ sim.flow.data <- function(
   )
 
   spectra     <- as.matrix( spectra )
+
+  # ground-truth spectral panel must contain exactly one row per fluorophore,
+  # or per-cell abundances/labels below become ambiguous
+  check.spectra.duplicates( spectra )
+
   n.fluors    <- nrow( spectra )
   n.detectors <- ncol( spectra )
   fluor.names <- rownames( spectra )
