@@ -17,12 +17,18 @@ get.af.spectra(
   verbose = TRUE,
   deduplicate = FALSE,
   duplication.threshold = 0.99,
+  use.unmixed = TRUE,
   refine = TRUE,
   problem.quantile = 0.99,
   remove.contaminants = TRUE,
   contaminant.threshold = 0.99,
   parallel = TRUE,
   threads = if (parallel) 0 else 1,
+  return.model = FALSE,
+  model.rank = 6L,
+  model.var.explained = 0.95,
+  model.min.events = 50L,
+  model.shrinkage = 0.1,
   heatmap.color.palette = "viridis",
   spectral.trace.color.palette = NULL,
   af.fill.color = "red",
@@ -71,6 +77,17 @@ threshold used for deduplication. A spectrum is dropped if its cosine
 similarity to any already-retained spectrum meets or exceeds this value.
 Only used when \code{deduplicate = TRUE}.}
 
+\item{use.unmixed}{Logical, default \code{TRUE}. Whether to include an OLS
+unmixed-space projection (\code{unmix.ols.fast(unstained.exprs, spectra)})
+alongside the raw detector data as SOM clustering input. Set to \code{FALSE}
+to cluster on raw detector space only, which is appropriate when
+\code{spectra} contains several similar or collinear fluorophores (e.g. a
+bead-cell comparison panel), where an OLS unmix is itself unstable and
+would corrupt the clustering features rather than enrich them.
+\code{use.unmixed = FALSE} also forces \code{refine = FALSE}, since the
+second-pass refinement identifies "problem cells" from per-cell
+unmixing residuals and is subject to the same instability.}
+
 \item{refine}{Logical, default \code{FALSE}. Controls whether to perform a second
 round of autofluorescence measurement on "problem cells": those with the
 highest residual fluorophore signal after the first-pass per-cell AF
@@ -105,6 +122,26 @@ for per-cell AF identification. Used when \code{refine = TRUE}.}
 \item{threads}{Numeric, defaults to a single thread for sequential processing
 (\code{parallel = FALSE}) or all available cores if \code{parallel = TRUE}. Used when
 \code{refine = TRUE}.}
+
+\item{return.model}{Logical. When \code{TRUE}, attaches an \code{"af.model"} attribute
+to the returned spectra containing per-node covariance, occupancy priors,
+abundance priors and scatter statistics, for use by \code{unmix.af.gls()}. The
+return value is still a matrix, so existing callers are unaffected.
+Default \code{FALSE}. Requires refine = FALSE for well-populated per-node
+covariances.}
+
+\item{model.rank}{Integer, maximum rank retained for each node's spectral
+covariance. Default \code{6}.}
+
+\item{model.var.explained}{Numeric, fraction of within-node variance to
+retain. Default \code{0.95}.}
+
+\item{model.min.events}{Integer, minimum events for a node to receive a
+covariance estimate. Nodes below this get the pooled covariance.
+Default \code{50}.}
+
+\item{model.shrinkage}{Numeric in \verb{[0, 1]}, shrinkage of each node covariance
+toward the pooled covariance. Guards nodes with few events. Default \code{0.10}.}
 
 \item{heatmap.color.palette}{Optional character string defining the viridis
 color palette for the fluorophore heatmap. Default is \code{"viridis"}. Options:
@@ -142,7 +179,6 @@ before being appended.
 }
 \references{
 Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-visualization and interpretation of cytometry data." \emph{Cytometry Part A},
 87(7), 636-645. \doi{10.1002/cyto.a.22625}
 Wehrens R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen
 3.0." \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.

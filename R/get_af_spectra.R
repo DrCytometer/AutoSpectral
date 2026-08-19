@@ -46,6 +46,16 @@
 #'   threshold used for deduplication. A spectrum is dropped if its cosine
 #'   similarity to any already-retained spectrum meets or exceeds this value.
 #'   Only used when `deduplicate = TRUE`.
+#' @param use.unmixed Logical, default `TRUE`. Whether to include an OLS
+#'   unmixed-space projection (`unmix.ols.fast(unstained.exprs, spectra)`)
+#'   alongside the raw detector data as SOM clustering input. Set to `FALSE`
+#'   to cluster on raw detector space only, which is appropriate when
+#'   `spectra` contains several similar or collinear fluorophores (e.g. a
+#'   bead-cell comparison panel), where an OLS unmix is itself unstable and
+#'   would corrupt the clustering features rather than enrich them.
+#'   `use.unmixed = FALSE` also forces `refine = FALSE`, since the
+#'   second-pass refinement identifies "problem cells" from per-cell
+#'   unmixing residuals and is subject to the same instability.
 #' @param refine Logical, default `FALSE`. Controls whether to perform a second
 #'   round of autofluorescence measurement on "problem cells": those with the
 #'   highest residual fluorophore signal after the first-pass per-cell AF
@@ -75,6 +85,21 @@
 #' @param threads Numeric, defaults to a single thread for sequential processing
 #'   (`parallel = FALSE`) or all available cores if `parallel = TRUE`. Used when
 #'   `refine = TRUE`.
+#' @param return.model Logical. When `TRUE`, attaches an `"af.model"` attribute
+#'   to the returned spectra containing per-node covariance, occupancy priors,
+#'   abundance priors and scatter statistics, for use by `unmix.af.gls()`. The
+#'   return value is still a matrix, so existing callers are unaffected.
+#'   Default `FALSE`. Requires refine = FALSE for well-populated per-node
+#'   covariances.
+#' @param model.rank Integer, maximum rank retained for each node's spectral
+#'   covariance. Default `6`.
+#' @param model.var.explained Numeric, fraction of within-node variance to
+#'   retain. Default `0.95`.
+#' @param model.min.events Integer, minimum events for a node to receive a
+#'   covariance estimate. Nodes below this get the pooled covariance.
+#'   Default `50`.
+#' @param model.shrinkage Numeric in `[0, 1]`, shrinkage of each node covariance
+#'   toward the pooled covariance. Guards nodes with few events. Default `0.10`.
 #' @param heatmap.color.palette Optional character string defining the viridis
 #'   color palette for the fluorophore heatmap. Default is `"viridis"`. Options:
 #'   `"magma"`, `"inferno"`, `"plasma"`, `"viridis"`, `"cividis"`, `"rocket"`,
@@ -96,7 +121,6 @@
 #'
 #' @references
 #' Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-#' visualization and interpretation of cytometry data." \emph{Cytometry Part A},
 #' 87(7), 636-645. \doi{10.1002/cyto.a.22625}
 #' Wehrens R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen
 #' 3.0." \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
@@ -115,12 +139,18 @@ get.af.spectra <- function(
     verbose              = TRUE,
     deduplicate          = FALSE,
     duplication.threshold = 0.99,
+    use.unmixed          = TRUE,
     refine               = TRUE,
     problem.quantile     = 0.99,
     remove.contaminants  = TRUE,
     contaminant.threshold = 0.99,
     parallel             = TRUE,
     threads              = if ( parallel ) 0 else 1,
+    return.model         = FALSE,
+    model.rank           = 6L,
+    model.var.explained  = 0.95,
+    model.min.events     = 50L,
+    model.shrinkage      = 0.10,
     heatmap.color.palette         = "viridis",
     spectral.trace.color.palette  = NULL,
     af.fill.color        = "red",
@@ -140,6 +170,23 @@ get.af.spectra <- function(
   if ( is.null( threads ) ) threads <- asp$worker.process.n
   if ( parallel & threads == 0 ) threads <- parallelly::availableCores()
 
+  if ( !use.unmixed && refine ) {
+    warning(
+      "`use.unmixed = FALSE` forces `refine = FALSE`: the refinement stage ",
+      "identifies problem cells from per-cell OLS unmixing residuals against ",
+      "`spectra`, which is exactly the instability `use.unmixed = FALSE` is ",
+      "meant to avoid.",
+      call. = FALSE
+    )
+    refine <- FALSE
+  }
+
+  # spectral reference matrix must contain exactly one row per fluorophore
+  # before any unmixing method runs. Checked before the "AF" row is stripped
+  # below, since subsetting a matrix does not reliably preserve the
+  # "fluorophore" attribute check.spectra.duplicates() relies on.
+  check.spectra.duplicates( spectra )
+
   # remove any pre-existing AF row from the fluorophore spectra
   if ( "AF" %in% rownames( spectra ) )
     spectra <- spectra[ rownames( spectra ) != "AF", , drop = FALSE ]
@@ -152,6 +199,16 @@ get.af.spectra <- function(
 
   unstained.ff   <- readFCS( unstained.sample, return.keywords = TRUE )
   file.name      <- unstained.ff$keywords[[ "$FIL" ]]
+
+  # retain scatter (and, where configured, imaging) columns alongside the
+  # spectral data so that per-node scatter statistics can be computed when
+  # return.model = TRUE. Rows are kept aligned with unstained.exprs through
+  # every subsetting step below.
+  scatter.channels  <- intersect( asp$default.scatter.parameter,
+                                  colnames( unstained.ff$data ) )
+  unstained.scatter <- if ( length( scatter.channels ) > 0 )
+    unstained.ff$data[ , scatter.channels, drop = FALSE ] else NULL
+
   unstained.exprs <- unstained.ff$data[ , spectral.channels ]
 
   # ------------------------------------------------------------------
@@ -181,12 +238,22 @@ get.af.spectra <- function(
         )
       }
       unstained.exprs <- unstained.exprs[ keep.events, , drop = FALSE ]
+      if ( !is.null( unstained.scatter ) )
+        unstained.scatter <- unstained.scatter[ keep.events, , drop = FALSE ]
     }
   }
 
-  # OLS unmix without AF - combined with raw data for richer clustering features
-  unmixed.no.af <- unmix.ols.fast( unstained.exprs, spectra )
-  cluster.data  <- cbind( unstained.exprs, unmixed.no.af )
+  # OLS unmix without AF - combined with raw data for richer clustering
+  # features. Skipped entirely when `use.unmixed = FALSE`, since an OLS
+  # unmix against a collinear `spectra` (e.g. several similar fluorophores
+  # in a bead-cell comparison panel) is itself unstable and would corrupt
+  # rather than enrich the clustering features.
+  if ( use.unmixed ) {
+    unmixed.no.af <- unmix.ols.fast( unstained.exprs, spectra )
+    cluster.data  <- cbind( unstained.exprs, unmixed.no.af )
+  } else {
+    cluster.data  <- unstained.exprs
+  }
 
   # ---------------------------------------------------------------------------
   # Stage 1: Base AF spectra via SOM
@@ -288,6 +355,12 @@ get.af.spectra <- function(
   # ---------------------------------------------------------------------------
 
   if ( refine ) {
+
+    warning( "`return.model = TRUE` with `refine = TRUE`: refined AF spectra ",
+             "are synthesised rather than drawn from SOM node populations, ",
+             "so several dictionary entries may attract few events and will ",
+             "fall back to the pooled covariance. Use `refine = FALSE` when ",
+             "building an AF model.", call. = FALSE )
 
     if ( verbose ) message( "Refine: identifying best-fitting AF - first pass" )
 
@@ -609,6 +682,38 @@ get.af.spectra <- function(
     )
   }
 
+  if ( return.model ) {
+
+    if ( verbose ) message( "Computing per-node AF covariance model" )
+
+    attr( af.spectra, "af.model" ) <- .compute.af.node.model(
+      event.spectral = cluster.data[ , spectral.channels, drop = FALSE ],
+      event.scatter  = unstained.scatter,
+      af.spectra     = af.spectra,
+      rank           = model.rank,
+      var.explained  = model.var.explained,
+      min.events     = model.min.events,
+      shrinkage      = model.shrinkage
+    )
+
+    if ( verbose ) {
+      mdl <- attr( af.spectra, "af.model" )
+      shape.frac <- vapply( mdl$nodes, function( z ) {
+        v <- z$shape.frac
+        if ( is.null( v ) || length( v ) != 1L ) NA_real_ else as.numeric( v )
+      }, numeric( 1 ) )
+      message( sprintf(
+        "  %d nodes, median rank %d, median occupancy %d events",
+        length( mdl$nodes ),
+        stats::median( vapply( mdl$nodes, function( z ) z$rank, numeric( 1 ) ) ),
+        stats::median( vapply( mdl$nodes, function( z ) z$n,    numeric( 1 ) ) ) ) )
+      message( sprintf(
+        "  shape.frac: median %.2f, %d / %d nodes scored (rest below min.events)",
+        stats::median( shape.frac, na.rm = TRUE ),
+        sum( !is.na( shape.frac ) ), length( shape.frac ) ) )
+    }
+  }
+
   return( af.spectra )
 
 }
@@ -660,6 +765,137 @@ deduplicate.spectra <- function( spectra, threshold = 0.99 ) {
 
 }
 
+# -----------------------------------------------------------------------------
+# Per-node AF model: within-node spectral covariance, occupancy and abundance
+# priors, and scatter statistics.
+#
+# Assignment is recomputed against the FINAL dictionary rather than tracked
+# through the SOM, because rows are added (population mean), removed (QC,
+# deduplication) and modified (refinement) after mapping. Recomputing also
+# matches how unmix.af.gls() will assign at run time.
+# -----------------------------------------------------------------------------
+
+.compute.af.node.model <- function(
+    event.spectral,
+    event.scatter,
+    af.spectra,
+    rank          = 6L,
+    var.explained = 0.95,
+    min.events    = 50L,
+    shrinkage     = 0.10
+) {
+
+  event.spectral <- as.matrix( event.spectral )
+  node.n <- nrow( af.spectra )
+  det.n  <- ncol( af.spectra )
+
+  # scalar least-squares fit of each event to each dictionary entry:
+  # alpha = <y, a> / <a, a>, residual sum of squares = |y|^2 - alpha^2 |a|^2
+  aa    <- rowSums( af.spectra^2 )
+  ya    <- event.spectral %*% t( af.spectra )              # events x nodes
+  alpha <- sweep( ya, 2L, aa, "/" )
+  rss   <- rowSums( event.spectral^2 ) - sweep( alpha^2, 2L, aa, "*" )
+
+  assign.k <- max.col( -rss, ties.method = "first" )
+  alpha.k  <- alpha[ cbind( seq_len( nrow( alpha ) ), assign.k ) ]
+
+  # shape residual: event rescaled to unit abundance, minus its dictionary entry
+  usable <- alpha.k > 0 & is.finite( alpha.k )
+
+  delta.all <- matrix( NA_real_, nrow( event.spectral ), det.n )
+  delta.all[ usable, ] <-
+    event.spectral[ usable, , drop = FALSE ] / alpha.k[ usable ] -
+    af.spectra[ assign.k[ usable ], , drop = FALSE ]
+
+  pooled.cov <- stats::cov( delta.all[ usable, , drop = FALSE ] )
+
+  # Pooled shape fraction: the same intercept regression as per node, over
+  # all usable events. Deltas mix true shape variation with measurement
+  # noise scaled by 1 / alpha^2; the GLS covariance adds detector noise on
+  # its own diagonal, so any noise left inside the AF covariance would be
+  # counted twice. Deflating by the estimated shape fraction removes the
+  # first-order double count. Also serves as the fallback for nodes too
+  # small to estimate their own fraction.
+  pooled.shape.frac <- 1
+  d2.all  <- rowSums( delta.all[ usable, , drop = FALSE ]^2 )
+  ia2.all <- 1 / alpha.k[ usable ]^2
+  if ( stats::var( ia2.all ) > 0 && mean( d2.all ) > 0 ) {
+    cf.all <- stats::coef( stats::lm( d2.all ~ ia2.all ) )
+    pooled.shape.frac <- min( max( cf.all[ 1L ], 0 ) / mean( d2.all ), 1 )
+  }
+  pooled.cov <- pooled.shape.frac * pooled.cov
+
+  nodes <- lapply( seq_len( node.n ), function( k ) {
+
+    idx <- which( assign.k == k & usable )
+    n.k <- length( idx )
+
+    # Decompose the within-node spread into shape variation and measurement
+    # noise. Noise enters delta as (photon noise / alpha), so it scales as
+    # 1/alpha^2 while genuine shape variation does not. The intercept of
+    # |delta|^2 ~ 1/alpha^2 is the shape component.
+    shape.frac <- NA_real_
+    if ( n.k >= min.events ) {
+      d2  <- rowSums( delta.all[ idx, , drop = FALSE ]^2 )
+      ia2 <- 1 / alpha.k[ idx ]^2
+      if ( stats::var( ia2 ) > 0 && mean( d2 ) > 0 ) {
+        cf <- stats::coef( stats::lm( d2 ~ ia2 ) )
+        shape.frac <- min( max( cf[ 1L ], 0 ) / mean( d2 ), 1 )
+      }
+    }
+
+    node.shape.frac <- if ( is.na( shape.frac ) ) pooled.shape.frac else shape.frac
+
+    cov.k <- if ( n.k >= min.events ) {
+      ( 1 - shrinkage ) * node.shape.frac *
+        stats::cov( delta.all[ idx, , drop = FALSE ] ) +
+        shrinkage * pooled.cov
+    } else pooled.cov
+
+    ev  <- eigen( cov.k, symmetric = TRUE )
+    lam <- pmax( ev$values, 0 )
+
+    keep <- seq_len( min( rank, sum( lam > 0 ) ) )
+    if ( length( keep ) > 1L ) {
+      cum <- cumsum( lam[ keep ] ) / sum( lam )
+      hit <- which( cum >= var.explained )
+      if ( length( hit ) > 0L ) keep <- keep[ seq_len( hit[ 1L ] ) ]
+    }
+
+    basis <- t( ev$vectors[ , keep, drop = FALSE ] )
+    colnames( basis ) <- colnames( af.spectra )
+
+    log.alpha <- if ( n.k >= 3L ) log( alpha.k[ idx ] ) else NA_real_
+
+    list(
+      n            = n.k,
+      basis        = basis,
+      lambda       = lam[ keep ],
+      rank         = length( keep ),
+      total.var    = sum( lam ),
+      shape.frac   = if ( length( shape.frac ) == 1L )
+        as.numeric( shape.frac ) else NA_real_,
+      log.alpha.mu = if ( n.k >= 3L ) mean( log.alpha ) else NA_real_,
+      log.alpha.sd = if ( n.k >= 3L ) stats::sd( log.alpha ) else NA_real_,
+      scatter.mean = if ( !is.null( event.scatter ) && n.k >= 3L )
+        colMeans( event.scatter[ idx, , drop = FALSE ] ) else NULL,
+      scatter.cov  = if ( !is.null( event.scatter ) && n.k >= min.events )
+        stats::cov( event.scatter[ idx, , drop = FALSE ] ) else NULL
+    )
+  } )
+
+  names( nodes ) <- rownames( af.spectra )
+
+  counts <- vapply( nodes, function( z ) z$n, numeric( 1 ) )
+
+  list(
+    nodes      = nodes,
+    prior      = ( counts + 1 ) / sum( counts + 1 ),   # Laplace-smoothed
+    pooled.cov = pooled.cov,
+    n.assigned = sum( usable ),
+    detectors  = colnames( af.spectra )
+  )
+}
 
 # ---------------------------------------------------------------------------
 # Private helper: per-event contaminant filter
