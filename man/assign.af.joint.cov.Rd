@@ -4,7 +4,7 @@
 \alias{assign.af.joint.cov}
 \title{Assign AF Spectrum By Joint Covariance-Weighted Error}
 \usage{
-assign.af.joint.cov(raw.data, spectra, af.spectra)
+assign.af.joint.cov(raw.data, spectra, af.spectra, return.scores = FALSE)
 }
 \arguments{
 \item{raw.data}{Expression data from raw FCS files. Cells in rows and
@@ -17,6 +17,9 @@ and 1, with fluorophores in rows and detectors in columns.}
 \item{af.spectra}{Spectral signatures of autofluorescences, normalized
 between 0 and 1, with AF variants in rows and detectors in columns. Prepare
 using \code{get.af.spectra}.}
+
+\item{return.scores}{Logical, default \code{FALSE}. If \verb{\code{TRUE}}, also
+returns the unmixed data and scores for each AF variant per cell.}
 }
 \value{
 Integer vector of length \code{nrow(raw.data)} giving the row index

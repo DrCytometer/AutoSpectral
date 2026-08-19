@@ -26,6 +26,8 @@
 #' @param af.spectra Spectral signatures of autofluorescences, normalized
 #' between 0 and 1, with AF variants in rows and detectors in columns. Prepare
 #' using \code{get.af.spectra}.
+#' @param return.scores Logical, default \code{FALSE}. If `\code{TRUE}`, also
+#' returns the unmixed data and scores for each AF variant per cell.
 #'
 #' @return Integer vector of length \code{nrow(raw.data)} giving the row index
 #' (into \code{af.spectra}) of the best-fitting AF variant for each cell.
@@ -35,7 +37,8 @@
 assign.af.joint.cov <- function(
     raw.data,
     spectra,
-    af.spectra
+    af.spectra,
+    return.scores = FALSE
 ) {
 
   # drop AF row from spectra if present (mirrors assign.af.fluorophores pattern)
@@ -67,9 +70,15 @@ assign.af.joint.cov <- function(
   r.library <- t( af.spectra ) - ( S %*% v.library )
 
   # ---- Estimated AF intensity per cell per variant (k matrix) ----
-  numerator                <- raw.data %*% r.library
-  denominator              <- colSums( r.library^2 )
-  denominator[ denominator == 0 ] <- 1e-10
+  numerator   <- raw.data %*% r.library
+  denominator <- colSums( r.library^2 )
+
+  # Identifiability guard: an AF variant lying almost inside the fluorophore
+  # span has a vanishing out-of-span residual direction, so its abundance k
+  # is not identifiable from the residual and the raw ratio explodes. Floor
+  # each self-dot at a fraction of the largest, capping the relative
+  # amplification of near-in-span variants.
+  denominator <- pmax( denominator, 0.01 * max( denominator, 1e-10 ) )
   k.matrix                 <- sweep( numerator, 2, denominator, "/" )
   k.matrix[ k.matrix < 0 ] <- 0
 
@@ -114,5 +123,17 @@ assign.af.joint.cov <- function(
   }
 
   # variant that minimises the joint proportional score
-  return( max.col( -prop.score.matrix, ties.method = "first" ) )
+  af.index <- max.col( -prop.score.matrix, ties.method = "first" )
+
+  if ( !return.scores ) return( af.index )
+
+  # k.matrix and v.library let a caller reconstruct the implied AF abundance
+  # and fluorophore correction for any candidate, not only the winner
+  list(
+    af.index  = af.index,
+    scores    = prop.score.matrix,
+    k.matrix  = k.matrix,
+    v.library = v.library,
+    unmixed   = unmixed
+  )
 }
