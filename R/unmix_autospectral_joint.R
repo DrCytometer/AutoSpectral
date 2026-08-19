@@ -111,6 +111,10 @@ unmix.autospectral.joint <- function(
   # -------------------------------------------------------------------------
   # Input validation
   # -------------------------------------------------------------------------
+  # spectral reference matrix must contain exactly one row per fluorophore
+  # before any unmixing method runs
+  check.spectra.duplicates( spectra )
+
   if ( "AF" %in% rownames( spectra ) )
     spectra <- spectra[ rownames( spectra ) != "AF", , drop = FALSE ]
 
@@ -175,7 +179,8 @@ unmix.autospectral.joint <- function(
   # AF helpers, mirroring the C++ weighted/unweighted split exactly.
   v_lib_af      <- P %*% t( af.spectra )                             # F x nAF
   r_lib_af      <- t( af.spectra ) - t( spectra ) %*% v_lib_af       # D x nAF
-  r_dots_af     <- pmax( colSums( ( r_lib_af^2 ) * w.global ), 1e-10 )       # nAF, weighted
+  r_dots_af     <- colSums( ( r_lib_af^2 ) * w.global )                      # nAF, weighted
+  r_dots_af     <- pmax( r_dots_af, 0.01 * max( r_dots_af, 1e-10 ) )
   r_lib_af_w2   <- sweep( r_lib_af, 1, w.global^2, `*` )             # D x nAF
   r_dots_af_raw <- colSums( r_lib_af^2 )                              # nAF, unweighted
 
