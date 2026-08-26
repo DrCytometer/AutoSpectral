@@ -26,6 +26,7 @@ get.spectral.variants(
   median.line.color = "black",
   median.linewidth = 1,
   use.unmixed = TRUE,
+  unstained.sample = NULL,
   stained.sample = NULL,
   optimize.necessity.threshold = 0.01,
   ...
@@ -116,6 +117,12 @@ unstained-sample positivity thresholds used internally by
 \code{get.fluor.variants()} are not computed, and the returned
 \code{spillover.spread} is always \code{NULL}.}
 
+\item{unstained.sample}{Optional file path to a cell-based unstained FCS
+file, used as the autofluorescence reference when the control file has
+no \code{"AF"} row. Required in that case; ignored (with a message) if
+the control file does have an \code{"AF"} row, since the in-situ
+unstained paired with the single-stained controls is used instead.}
+
 \item{stained.sample}{Optional file path to a representative stained FCS
 file. When supplied, it is read and unmixed to obtain per-fluorophore
 median positive signal (MFI), which weights the optimization necessity
@@ -172,6 +179,12 @@ detector. All positive events are scatter-matched to unstained events and
 their per-event background is subtracted before SOM clustering. This gives a
 comprehensive, population-level picture of true fluorophore spectral
 variability without requiring a pre-computed \code{af.spectra} matrix.
+
+A cell-based unstained sample is still required at this stage, since it
+anchors the positivity thresholds and per-node AF library. It is normally
+read from the control file's \code{"AF"} row; if the control file has no
+\code{"AF"} row (e.g. a bead-only or negative-free control setup), supply
+one directly via \code{unstained.sample} instead.
 
 The output is saved as an .rds file and per-fluorophore variant plots are
 produced if requested.

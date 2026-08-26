@@ -192,9 +192,15 @@ validate.control.file <- function(
   af.idx <- ct$fluorophore[ !is.na( ct$fluorophore ) ] == "AF"
   if ( !any( af.idx ) ) {
     issues[[ length( issues ) + 1 ]] <-
-      .new_issue( "error", "missing_af",
+      .new_issue( "warning", "missing_af",
                   column = "filename",
-                  message = "No AF (autofluorescence) control provided" )
+                  message = paste(
+                    "No AF (autofluorescence) control provided.",
+                    "Fluorophore spectra can still be extracted from bead",
+                    "and/or single-stained-only controls, but a cell-based",
+                    "unstained sample must be supplied separately to",
+                    "get.af.spectra() and get.spectral.variants()."
+                  ) )
   } else {
     if ( sum( af.idx ) > 1 ) {
       issues[[ length( issues ) + 1 ]] <-
@@ -276,9 +282,16 @@ validate.control.file <- function(
   ## ---------- universal negative ----------
   missing.un <- is.na( ct$universal.negative )
   if ( all( missing.un ) ) {
-    .new_issue( "warning", "no_universal_negative",
-                column = "universal.negative",
-                message = "No universal negative specified" )
+    issues[[ length( issues ) + 1 ]] <-
+      .new_issue( "warning", "no_universal_negative",
+                  column = "universal.negative",
+                  message = paste(
+                    "No universal.negative specified for any control.",
+                    "Autofluorescence removal and negative-based background",
+                    "correction will be skipped for all samples; spectra",
+                    "will be extracted from each single-stained control's",
+                    "own positive population."
+                  ) )
   }
 
   un <- stats::na.omit( unique( ct$universal.negative ) )

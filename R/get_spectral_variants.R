@@ -16,6 +16,12 @@
 #' comprehensive, population-level picture of true fluorophore spectral
 #' variability without requiring a pre-computed \code{af.spectra} matrix.
 #'
+#' A cell-based unstained sample is still required at this stage, since it
+#' anchors the positivity thresholds and per-node AF library. It is normally
+#' read from the control file's \code{"AF"} row; if the control file has no
+#' \code{"AF"} row (e.g. a bead-only or negative-free control setup), supply
+#' one directly via \code{unstained.sample} instead.
+#'
 #' The output is saved as an .rds file and per-fluorophore variant plots are
 #' produced if requested.
 #'
@@ -84,6 +90,11 @@
 #'   unstained-sample positivity thresholds used internally by
 #'   \code{get.fluor.variants()} are not computed, and the returned
 #'   \code{spillover.spread} is always \code{NULL}.
+#' @param unstained.sample Optional file path to a cell-based unstained FCS
+#'   file, used as the autofluorescence reference when the control file has
+#'   no \code{"AF"} row. Required in that case; ignored (with a message) if
+#'   the control file does have an \code{"AF"} row, since the in-situ
+#'   unstained paired with the single-stained controls is used instead.
 #' @param stained.sample Optional file path to a representative stained FCS
 #'   file. When supplied, it is read and unmixed to obtain per-fluorophore
 #'   median positive signal (MFI), which weights the optimization necessity
@@ -148,6 +159,7 @@ get.spectral.variants <- function(
     median.line.color  = "black",
     median.linewidth   = 1,
     use.unmixed                  = TRUE,
+    unstained.sample             = NULL,
     stained.sample               = NULL,
     optimize.necessity.threshold = 0.01,
     ...
@@ -329,6 +341,9 @@ get.spectral.variants <- function(
   if ( !is.logical( use.unmixed ) || length( use.unmixed ) != 1 || is.na( use.unmixed ) )
     .type.err( "use.unmixed", "a single TRUE/FALSE value", use.unmixed )
 
+  if ( !is.null( unstained.sample ) && ( !is.character( unstained.sample ) || length( unstained.sample ) != 1 ) )
+    .type.err( "unstained.sample", "NULL or a single character path", unstained.sample )
+
   if ( !is.null( stained.sample ) && ( !is.character( stained.sample ) || length( stained.sample ) != 1 ) )
     .type.err( "stained.sample", "NULL or a single character path", stained.sample )
 
@@ -423,11 +438,27 @@ get.spectral.variants <- function(
   control.type <- control.table$control.type
   names( control.type ) <- table.fluors
 
-  if ( !( "AF" %in% table.fluors ) )
+  has.af.row <- "AF" %in% table.fluors
+
+  if ( !has.af.row && is.null( unstained.sample ) )
     stop(
-      "Unable to locate `AF` control in control file. An unstained cell control is required.",
+      "An unstained cell control is required for get.spectral.variants(): ",
+      "either include an `AF` row in the control file, or supply the ",
+      "`unstained.sample` argument.",
       call. = FALSE
     )
+
+  if ( has.af.row && !is.null( unstained.sample ) && verbose )
+    message(
+      "\033[33mBoth an `AF` row in the control file and `unstained.sample` ",
+      "were supplied; using the in-situ `AF` control from the control ",
+      "file.\033[0m"
+    )
+
+  unstained.file <- if ( has.af.row )
+    file.path( control.dir, flow.file.name[ "AF" ] )
+  else
+    unstained.sample
 
   # ensure spectra columns match channel order
   spectra.cols <- colnames( spectra )
@@ -461,7 +492,7 @@ get.spectral.variants <- function(
   if ( verbose )
     message( paste0( "\033[32m", "Measuring background in unstained samples", "\033[0m" ) )
 
-  unstained <- readFCS( file.path( control.dir, flow.file.name[ "AF" ] ) )
+  unstained <- readFCS( unstained.file )
 
   if ( nrow( unstained ) > asp$gate.downsample.n.cells ) {
     set.seed( asp$bird.seed )
@@ -476,7 +507,7 @@ get.spectral.variants <- function(
 
   # get AF spectra in place
   af.spectra <- get.af.spectra(
-    file.path( control.dir, flow.file.name[ "AF" ] ),
+    unstained.file,
     asp,
     spectra,
     som.dim = 10,

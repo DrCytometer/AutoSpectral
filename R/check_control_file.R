@@ -75,11 +75,23 @@ check.control.file <- function(
 
     missing_af = function( x ) {
       paste(
-        "\033[31m",
+        "\033[33m",
         "No autofluorescence (AF) control was detected.",
         "AF controls are strongly recommended for spectral unmixing,",
-        "particularly when using primary cell samples,",
-        "and are currently required for the AutoSpectral workflow.",
+        "particularly when using primary cell samples. Fluorophore spectra",
+        "can still be extracted without one, but a cell-based unstained",
+        "sample will need to be supplied directly to get.af.spectra() and",
+        "get.spectral.variants() when you reach those steps.",
+        "\033[0m"
+      )
+    },
+
+    no_universal_negative = function( x ) {
+      paste(
+        "\033[33m",
+        "No universal.negative specified for any control.",
+        "Autofluorescence removal and negative-based background correction",
+        "will be skipped for every sample.",
         "\033[0m"
       )
     },
