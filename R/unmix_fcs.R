@@ -414,7 +414,12 @@ unmix.fcs <- function(
   # define weights if needed
   if ( ( weighted || method %in% c( "WLS", "Poisson", "FastPoisson" ) ) && is.null( weights ) ) {
     # Poisson-like weighting based on mean expression (variance = mean in a Poisson distribution)
-    weight.sample <- readFCS( fcs.file, start.row = 1, end.row = min( 1e5, total.events ) )
+    weight.sample <- readFCS(
+      fcs.file,
+      start.row = 1,
+      end.row = min( 1e5, total.events ),
+      columns = spectral.channel
+    )
     # weights are inverse of signal (more signal, more noise, less reliable)
     weights <- 1 / pmax( abs( colMeans( weight.sample[ , spectral.channel ] ) ), 1e-6 )
     rm( weight.sample )
@@ -431,12 +436,15 @@ unmix.fcs <- function(
     if ( verbose & chunk.n > 1 )
       message( sprintf( "Processing chunk %d/%d (Events %d to %d)", i, chunk.n, s.row, e.row ) )
 
-    # read in only events from this chunk
+    # read in only events from this chunk, and only the columns this run
+    # actually needs -- avoids decoding/materializing unused parameters on
+    # wide panels (Discover)
     chunk.data <- readFCS(
       fcs.file,
       return.keywords = FALSE,
       start.row = s.row,
-      end.row = e.row
+      end.row = e.row,
+      columns = c( spectral.channel, other.channels )
     )
     chunk.spectral <- chunk.data[ , spectral.channel, drop = FALSE ]
     chunk.other <- chunk.data[ , other.channels, drop = FALSE ]

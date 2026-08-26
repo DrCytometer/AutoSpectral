@@ -4,7 +4,13 @@
 \alias{readFCS}
 \title{Read FCS File}
 \usage{
-readFCS(fcs.path, return.keywords = FALSE, start.row = NULL, end.row = NULL)
+readFCS(
+  fcs.path,
+  return.keywords = FALSE,
+  start.row = NULL,
+  end.row = NULL,
+  columns = NULL
+)
 }
 \arguments{
 \item{fcs.path}{A character string specifying the file path (directory and

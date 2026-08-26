@@ -38,7 +38,8 @@ readFCS <- function(
     fcs.path,
     return.keywords = FALSE,
     start.row = NULL,
-    end.row = NULL
+    end.row = NULL,
+    columns = NULL
 ) {
 
   fcs.path <- path.expand(fcs.path)
@@ -48,7 +49,8 @@ readFCS <- function(
       fcs.path        = fcs.path,
       return.keywords = return.keywords,
       start.row       = start.row,
-      end.row         = end.row
+      end.row         = end.row,
+      columns         = columns
     ))
   }
 
@@ -110,6 +112,21 @@ readFCS <- function(
   }))
 
   colnames(data.mat) <- col.names
+
+  # Pure-R path has no native column-selective decode; subset after the
+  # fact so the interface matches AutoSpectralRcpp::readFCS(). Users are
+  # already encouraged to install AutoSpectralRcpp for speed.
+  if (!is.null(columns)) {
+    missing.cols <- setdiff(columns, col.names)
+    if (length(missing.cols) > 0) {
+      stop(
+        "Requested column(s) not found in ", fcs.path, ": ",
+        paste(missing.cols, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    data.mat <- data.mat[, columns, drop = FALSE]
+  }
 
   if (return.keywords) {
     return(list(data = data.mat, keywords = keywords))
