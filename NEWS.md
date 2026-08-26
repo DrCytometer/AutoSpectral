@@ -1,3 +1,28 @@
+# AutoSpectral 1.7.2 (2026-08-26)
+
+## New Features
+
+- Multiple controls can now be processed for a given fluorophore. This means you
+can extract the spectrum of a single fluorophore from two or more controls
+(e.g., comparing beads and cells for APC) in order to decide which to use. The
+duplicate(s) must be removed prior to unmixing, and there are now some checks to
+assist with removing duplicates and preventing bad mixing matrices being passed
+through to unmixing.
+- An unstained cell-based control is no longer obligatory for the spectral
+extraction pipelines, either `get.spectra.automated()` or `define.flow.control()`
+plus `clean.controls()` plus `get.fluorophore.spectra()`. You will still need an
+unstained cell control or controls for autofluorescence extraction via
+`get.af.spectra()` and also in `get.spectral.variants()`, but that only applies
+if you are using the AutoSpectral unmixing functions as opposed to OLS or WLS.
+
+
+## Improvements
+- Faster FCS reading and unmixing thanks to improvements to the AutoSpectralRcpp
+backend suggested by Paul Heisig.
+
+## Bug fixes
+
+
 # AutoSpectral 1.7.1 (2026-07-30)
 
 ## New Features
