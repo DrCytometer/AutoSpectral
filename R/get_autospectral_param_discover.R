@@ -24,11 +24,11 @@ get.autospectral.param.discover <- function( autosp.param )
 
   autosp.param$scatter.data.min.x <- 0
 
-  autosp.param$scatter.data.max.x <- 24140237
+  autosp.param$scatter.data.max.x <- 5e7
 
   autosp.param$scatter.data.min.y <- 0
 
-  autosp.param$scatter.data.max.y <- 16488107
+  autosp.param$scatter.data.max.y <- 5e7
 
   autosp.param$expr.data.min <- -111
 
