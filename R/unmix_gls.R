@@ -22,6 +22,10 @@
 #'   fraction of the delta variance is captured. Default `0.99`.
 #' @param min.lambda Numeric, eigenvalues below this fraction of the leading
 #'   eigenvalue are dropped. Default `1e-4`.
+#' @param pooled.fallback Logical, if `TRUE`, uses other fluorophores' variability
+#' to infer likely variability for a fluorophore where variants where not
+#' sucessfully measured.
+#' @param verbose Logical, whether to output messages to the console.
 #'
 #' @return A named list, one entry per fluorophore with at least two
 #'   variants, each containing `basis` (components x detectors), `lambda`
