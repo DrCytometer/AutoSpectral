@@ -77,10 +77,14 @@
 #'   \item{`stats`}{One-row data frame of fit and plausibility quantities:
 #'     `x.span`, `explained`, `explained.total`, `resid.rel`, `intercept.rel`,
 #'     `bg.align`, `clamp.frac`, `anchor.rel`, `vif.target`, `vif.max`,
-#'     `vif.partner`, `deg.change`, `peak.curr`, `peak.new`. `bg.align` is the
-#'     cosine between the fitted intercept and the fitted signature; a value
-#'     near minus one means the fit is trading a background floor against the
-#'     slope, the signature of an unmodelled background confound.}
+#'     `vif.partner`, `deg.change`, `peak.curr`, `peak.new`, `peak.new.rel`.
+#'     `bg.align` is the cosine between the fitted intercept and the fitted
+#'     signature; a value near minus one means the fit is trading a
+#'     background floor against the slope, the signature of an unmodelled
+#'     background confound. `peak.new.rel` is the current signature's own
+#'     value at the candidate's new peak channel, relative to the current
+#'     signature's own peak - 1 when the candidate does not propose a shift,
+#'     falling toward 0 the less that channel has to do with the dye today.}
 #' }
 #'
 #' @importFrom MASS ginv
@@ -178,16 +182,19 @@ extract.raw.signature <- function(
   bins <- sort( unique( bin ) )
   if ( length( bins ) < 3 ) return( NULL )
 
+  idx.by.bin <- split( seq_len( nrow( raw.data ) ), bin )
+  idx.by.bin <- idx.by.bin[ as.character( bins ) ]
+
   y.bin <- matrix(
-    vapply( bins, function( b )
-      colMeans( raw.data[ bin == b, , drop = FALSE ] ),
+    vapply( idx.by.bin, function( idx )
+      colMeans( raw.data[ idx, , drop = FALSE ] ),
       numeric( ncol( raw.data ) ) ),
     nrow = length( bins ), byrow = TRUE,
     dimnames = list( NULL, colnames( raw.data ) ) )
 
   x.bin <- matrix(
-    vapply( bins, function( b )
-      colMeans( x[ bin == b, , drop = FALSE ] ), numeric( ncol( x ) ) ),
+    vapply( idx.by.bin, function( idx )
+      colMeans( x[ idx, , drop = FALSE ] ), numeric( ncol( x ) ) ),
     nrow = length( bins ), byrow = TRUE,
     dimnames = list( NULL, colnames( x ) ) )
 
@@ -331,6 +338,9 @@ extract.raw.signature <- function(
     max( sqrt( sum( current^2 ) ) * sqrt( sum( signature^2 ) ),
          .Machine$double.eps )
 
+  peak.new.rel <- current[ which.max( signature ) ] /
+    max( max( current ), .Machine$double.eps )
+
   stats.out <- data.frame(
     fluorophore      = target,
     n.events         = nrow( raw.data ),
@@ -351,6 +361,7 @@ extract.raw.signature <- function(
     deg.change       = 180 / pi * acos( pmin( 1, pmax( -1, cos.curr ) ) ),
     peak.curr        = colnames( raw.data )[ which.max( current ) ],
     peak.new         = colnames( raw.data )[ which.max( signature ) ],
+    peak.new.rel     = unname( peak.new.rel ),
     row.names        = NULL,
     stringsAsFactors = FALSE
   )

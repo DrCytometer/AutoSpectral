@@ -89,10 +89,14 @@ normalised.}
 \item{\code{stats}}{One-row data frame of fit and plausibility quantities:
 \code{x.span}, \code{explained}, \code{explained.total}, \code{resid.rel}, \code{intercept.rel},
 \code{bg.align}, \code{clamp.frac}, \code{anchor.rel}, \code{vif.target}, \code{vif.max},
-\code{vif.partner}, \code{deg.change}, \code{peak.curr}, \code{peak.new}. \code{bg.align} is the
-cosine between the fitted intercept and the fitted signature; a value
-near minus one means the fit is trading a background floor against the
-slope, the signature of an unmodelled background confound.}
+\code{vif.partner}, \code{deg.change}, \code{peak.curr}, \code{peak.new}, \code{peak.new.rel}.
+\code{bg.align} is the cosine between the fitted intercept and the fitted
+signature; a value near minus one means the fit is trading a
+background floor against the slope, the signature of an unmodelled
+background confound. \code{peak.new.rel} is the current signature's own
+value at the candidate's new peak channel, relative to the current
+signature's own peak - 1 when the candidate does not propose a shift,
+falling toward 0 the less that channel has to do with the dye today.}
 }
 }
 \description{
