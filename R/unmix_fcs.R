@@ -101,8 +101,10 @@
 #'   weighting to the joint unmixing solve. Only used when
 #'   `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
 #' @param noise.floor Numeric, default `125`. Lower clamp on the denominator
-#'   of the per-cell detector weights when `cell.weight = TRUE`. Only used
-#'   when `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+#'   of the per-cell detector weights when `cell.weight = TRUE` and
+#'   `pipeline = "joint"` (passed to `unmix.autospectral.rcpp()`), and on the
+#'   IRLS weight denominator when `method = "FastPoisson"` (passed to
+#'   `AutoSpectralRcpp::unmix.poisson.fast()`).
 #' @param alpha Numeric, default `0.5`. Weighting for balancing residual and
 #'   covariance spillover minimization. Only used when `pipeline = "joint"`.
 #'   Passed to `unmix.autospectral.rcpp()`.
@@ -421,7 +423,7 @@ unmix.fcs <- function(
       columns = spectral.channel
     )
     # weights are inverse of signal (more signal, more noise, less reliable)
-    weights <- 1 / pmax( abs( colMeans( weight.sample[ , spectral.channel ] ) ), 1e-6 )
+    weights <- 1 / pmax( abs( colMeans( weight.sample[ , spectral.channel ] ) ), noise.floor )
     rm( weight.sample )
   }
 
@@ -580,7 +582,8 @@ unmix.fcs <- function(
               n_threads = threads,
               divergence.threshold = divergence.threshold,
               divergence.handling = divergence.handling,
-              balance.weight = balance.weight
+              balance.weight = balance.weight,
+              noise.floor = noise.floor
             ),
             error = function( e ) {
               warning(

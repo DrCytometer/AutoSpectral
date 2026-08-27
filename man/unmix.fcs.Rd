@@ -19,7 +19,7 @@ unmix.fcs(
   include.raw = FALSE,
   include.imaging = TRUE,
   use.dist0 = TRUE,
-  divergence.threshold = 10000,
+  divergence.threshold = 10,
   divergence.handling = "Balance",
   balance.weight = 0.5,
   speed = c("fast", "medium", "slow"),
@@ -161,8 +161,10 @@ weighting to the joint unmixing solve. Only used when
 \code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}.}
 
 \item{noise.floor}{Numeric, default \code{125}. Lower clamp on the denominator
-of the per-cell detector weights when \code{cell.weight = TRUE}. Only used
-when \code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}.}
+of the per-cell detector weights when \code{cell.weight = TRUE} and
+\code{pipeline = "joint"} (passed to \code{unmix.autospectral.rcpp()}), and on the
+IRLS weight denominator when \code{method = "FastPoisson"} (passed to
+\code{AutoSpectralRcpp::unmix.poisson.fast()}).}
 
 \item{alpha}{Numeric, default \code{0.5}. Weighting for balancing residual and
 covariance spillover minimization. Only used when \code{pipeline = "joint"}.
