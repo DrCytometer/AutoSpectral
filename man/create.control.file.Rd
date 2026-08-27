@@ -9,7 +9,8 @@ create.control.file(
   asp,
   fill.gate.name = TRUE,
   filename = "fcs_control_file",
-  legacy = FALSE
+  legacy = FALSE,
+  output.dir = getwd()
 )
 }
 \arguments{
@@ -29,6 +30,9 @@ and the control file will be suitable only for the new automated spectral
 extraction pipeline using \code{get.spectra.automated()}. To use the version 1
 "legacy" pipeline for the extraction of fluorophore spectra, using gating and
 \code{define.flow.control()}, set \code{legacy=TRUE}.}
+
+\item{output.dir}{location where the CSV file will be written. Default is the
+current working directory.}
 }
 \value{
 No returns. Outputs a csv file called fcs_control_file.csv

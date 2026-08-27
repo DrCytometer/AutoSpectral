@@ -28,6 +28,8 @@
 #' extraction pipeline using `get.spectra.automated()`. To use the version 1
 #' "legacy" pipeline for the extraction of fluorophore spectra, using gating and
 #' `define.flow.control()`, set `legacy=TRUE`.
+#' @param output.dir location where the CSV file will be written. Default is the
+#' current working directory.
 #'
 #' @return No returns. Outputs a csv file called fcs_control_file.csv
 #' @export
@@ -37,7 +39,8 @@ create.control.file <- function(
     asp,
     fill.gate.name = TRUE,
     filename = "fcs_control_file",
-    legacy = FALSE
+    legacy = FALSE,
+    output.dir = getwd()
   ) {
 
   # check for existing control file and generate a new name if it exists
@@ -338,7 +341,7 @@ create.control.file <- function(
 
   utils::write.csv(
     control.table,
-    file = control.file.name,
+    file = file.path( output.dir, control.file.name ),
     row.names = FALSE
   )
 
