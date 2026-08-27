@@ -75,8 +75,16 @@
 #'   `TRUE`.
 #' @param max.iter Integer, maximum spillover-matrix iterations. Default `20`.
 #' @param downsample Logical or numeric. `FALSE` disables downsampling; a
-#'   numeric gives the number of events to use. Values above the event count are
-#'   reduced to it. Default `20000`.
+#'   numeric gives the number of events to use. Values above the event count
+#'   are reduced to it by a stratified sample over each event's dominant
+#'   fluorophore under the starting spectra, so a dim or rare dye's own
+#'   positive population is not thinned at the same rate as the background
+#'   bulk. Default `20000`.
+#' @param downsample.background.frac Numeric in (0, 1), the share of
+#'   `downsample` reserved for events dominant for nothing. Default `0.3`.
+#' @param downsample.min.stratum Integer, the floor below which a
+#'   fluorophore's own positive population is kept whole by the stratified
+#'   downsample rather than thinned further. Default `2000`.
 #' @param unstained.threshold Numeric in (0, 1), the percentile of the unstained
 #'   control defining positivity. Default `0.99`.
 #' @param unstained.margin Numeric, multiplier applied to that threshold.
@@ -181,13 +189,24 @@
 #'   the candidate signature. A value near minus one means the fit is trading a
 #'   background floor against the slope, the event-level signature of an
 #'   unmodelled background confound. Default `-0.9`.
+#' @param gate.on.bias Logical, whether `min.impact.ratio` actually blocks a
+#'   candidate, versus being computed and logged only. Default `FALSE`.
+#'   Evidence from a counterfactual audit (score whether accepting each
+#'   rejected candidate would have moved the row toward or away from ground
+#'   truth): of every candidate this gate rejected, 79.9% would have helped
+#'   if accepted (n=144, two substrates) - 90.7% on one substrate, a
+#'   coin-flip 47.2% on the other. The gate is net-harmful on the substrate
+#'   where it discriminates worst and only weakly useful on the other, so it
+#'   defaults off rather than removed - `bias.impact` and the ratio are still
+#'   computed and logged either way, so the evidence for re-enabling it on a
+#'   new substrate remains visible without code changes.
 #' @param min.impact.ratio Numeric, how many times a proposed step's abundance
 #'   effect must exceed the effect of the same phase's bias on its own control,
 #'   measured through the current unmixing operator. Degrees weight every
 #'   detector alike and every dye alike; this weights each row by the abundances
 #'   it actually produces, so a large rotation of a dim row is cheap and a small
-#'   rotation of a bright collinear row is not. Requires `null.spectra`.
-#'   Default `2`.
+#'   rotation of a bright collinear row is not. Requires `null.spectra` and
+#'   `gate.on.bias = TRUE`. Default `2`.
 #' @param max.angle Numeric, maximum angular change of a row in degrees.
 #' @param max.clamp.frac Numeric, maximum fraction of a candidate row's
 #'   absolute mass that non-negativity clamping may remove. Default `0.15`.
@@ -198,11 +217,28 @@
 #' @param max.condition.increase Numeric, the factor by which a single accepted
 #'   row may increase the condition number of the unmixing design. Default
 #'   `1.05`.
-#' @param allow.peak.shift Logical, whether a candidate row whose peak detector
-#'   differs from the current row may be accepted. Default `FALSE`.
+#' @param leakage.margin Numeric, the fraction by which held-out leakage must
+#'   increase, not merely be numerically larger, before a candidate is
+#'   refused for it. `.fix.leakage()` is a held-out statistic on a
+#'   dominance population that can be small, and "any increase blocks" was
+#'   itself producing false positives - candidates blocked on multiple
+#'   consecutive fits that would demonstrably have helped if accepted.
+#'   Default `0.05`.
+#' @param peak.shift.min.rel Numeric, a candidate row whose peak detector
+#'   differs from the current row is only accepted if the current signature's
+#'   own value at that new peak channel, relative to the current signature's
+#'   own peak, is at least this large - a close secondary peak taking over is
+#'   plausible, a shift to a channel the current signature barely uses is not.
+#'   Use `Inf` to never allow a peak shift and `0` to always allow one.
+#'   Default `0.7`.
 #' @param max.hotspot Numeric, hotspot scale above which a fluorophore is
 #'   considered inseparable from the autofluorescence basis and is frozen.
 #'   Default `5`.
+#' @param n.threads Integer, OpenMP threads for the batched pair estimator
+#'   (`fix_envelope_truncated_batch_rcpp()`). Keep at the default unless this
+#'   call is not itself running inside another parallel context (e.g. one
+#'   sample of several under `mclapply()`), since the two layers of
+#'   parallelism would otherwise compete for the same cores. Default `1L`.
 #' @param figures Logical, whether to write the spillover heatmap. Default
 #'   `TRUE`.
 #' @param save Logical, whether to write the csv outputs. Default `TRUE`.
@@ -244,6 +280,8 @@ fix.my.unmix <- function(
     large.gate             = TRUE,
     max.iter               = 20L,
     downsample             = 20000,
+    downsample.background.frac = 0.3,
+    downsample.min.stratum     = 2000L,
     unstained.threshold    = 0.99,
     unstained.margin       = 1.3,
     spread.kappa           = 2,
@@ -267,7 +305,7 @@ fix.my.unmix <- function(
     source.dominant        = TRUE,
     spread.addback         = FALSE,
     anchor.weight          = 1,
-    max.coefficient        = 0.2,
+    max.coefficient        = 0.5,
     convergence.threshold  = 0.01,
     convergence.quantile   = 0.95,
     update.spectra         = TRUE,
@@ -281,14 +319,17 @@ fix.my.unmix <- function(
     max.resid              = 0.03,
     max.intercept          = 0.03,
     min.bg.align           = -0.9,
+    gate.on.bias           = FALSE,
     min.impact.ratio       = 2,
-    max.angle              = 10,
+    max.angle              = 15,
     max.clamp.frac         = 0.15,
     max.anchor             = 0.10,
     max.vif                = 500,
     max.condition.increase = 1.05,
-    allow.peak.shift       = FALSE,
+    peak.shift.min.rel     = 0.7,
     max.hotspot            = 5,
+    leakage.margin         = 0.05,
+    n.threads              = 1L,
     figures                = TRUE,
     save                   = TRUE,
     verbose                = TRUE
@@ -386,14 +427,6 @@ fix.my.unmix <- function(
     stop( "`spectra` and the spectral channels of the data do not match.",
           call. = FALSE )
 
-  if ( !isFALSE( downsample ) && !is.null( downsample ) ) {
-    n.keep <- min( as.integer( downsample ), nrow( stained.raw ) )
-    if ( n.keep < nrow( stained.raw ) ) {
-      stained.raw <- stained.raw[
-        sample.int( nrow( stained.raw ), n.keep ), , drop = FALSE ]
-    }
-  }
-
   # ---------------------------------------------------------------------------
   # Background basis and the projection it defines
   # ---------------------------------------------------------------------------
@@ -481,6 +514,47 @@ fix.my.unmix <- function(
   stained.fit   <- project( stained.raw )
   unstained.fit <- project( unstained.raw )
 
+  # A uniform downsample keeps every population in the same proportion the
+  # raw file already had it in, so it thins a dim or rare fluorophore's own
+  # positive population at the same rate as a background bulk that was
+  # already more than large enough to set its own threshold. Stratifying by
+  # dominant fluorophore under the starting spectra fixes that: every
+  # fluorophore's stratum gets its own quota, with a floor that protects a
+  # dim dye's whole positive population and a separate cap on the events
+  # dominant for nothing.
+  if ( !isFALSE( downsample ) && !is.null( downsample ) ) {
+
+    n.keep <- min( as.integer( downsample ), nrow( stained.raw ) )
+
+    if ( n.keep < nrow( stained.raw ) ) {
+
+      thr.rough <- unstained.margin * apply(
+        unstained.fit$abundance, 2, stats::quantile,
+        probs = unstained.threshold, names = FALSE )
+      names( thr.rough ) <- fluorophores
+
+      thr.mat.rough <- get.spread.thresholds(
+        unmixed          = stained.fit$abundance,
+        thresholds       = thr.rough,
+        spillover.spread = spillover.spread,
+        spread.kappa     = spread.kappa,
+        verbose          = FALSE )
+
+      keep.idx <- .fix.stratified.sample(
+        abundance        = stained.fit$abundance,
+        thresholds       = thr.rough,
+        threshold.matrix = thr.mat.rough,
+        n.total          = n.keep,
+        background.frac  = downsample.background.frac,
+        min.stratum      = downsample.min.stratum )
+
+      stained.raw <- stained.raw[ keep.idx, , drop = FALSE ]
+      stained.fit <- list(
+        abundance = stained.fit$abundance[ keep.idx, , drop = FALSE ],
+        residual  = stained.fit$residual[  keep.idx, , drop = FALSE ] )
+    }
+  }
+
   # ---------------------------------------------------------------------------
   # Phase one: residual spillover matrix from the negative envelope
   # ---------------------------------------------------------------------------
@@ -490,6 +564,14 @@ fix.my.unmix <- function(
 
   trust <- spillover.curr
   pair.log <- NULL
+
+  # Warm-starts the truncated estimator's IRLS from the previous outer
+  # iteration's fitted slope for the same pair, since spillover.curr moves by
+  # less each iteration as it converges and each pair's true slope moves with
+  # it. Zero for every pair on the first iteration, which is the same OLS
+  # start the estimator has always used.
+  slope.warm <- matrix( 0, fluorophore.n, fluorophore.n,
+                        dimnames = list( fluorophores, fluorophores ) )
 
   convergence.log <- data.frame(
     iter = integer(), delta = numeric(), delta.quantile = numeric(),
@@ -558,36 +640,60 @@ fix.my.unmix <- function(
 
     pair.log <- list()
 
+    # One batched call per source instead of one scalar call per pair -
+    # everything that depends only on the source (the dominance mask, the
+    # source-positivity split, the abundance bins) is computed once and
+    # shared across every channel it might spill into. Per-channel
+    # acceptance logic below is unchanged from the scalar loop; only how
+    # `est` is obtained differs. max.truncated.events is deliberately not
+    # passed through: the batched truncated estimator always fits the full
+    # negative-selected population rather than reproducing the bulk
+    # subsample, which its own documentation and a dedicated correctness
+    # check (test_fix_envelope_slope_vectorized.R) establish as equivalent,
+    # not approximate, since the subsampled bulk sits at the origin and
+    # carries no leverage on the slope.
     for ( source in fluorophores ) {
-      for ( channel in setdiff( fluorophores, source ) ) {
 
-        spread.var <- 0
-        if ( !is.null( spillover.spread ) &&
-             source %in% rownames( spillover.spread ) &&
-             channel %in% colnames( spillover.spread ) ) {
-          spread.var <- spillover.spread[ source, channel ]
-          if ( !is.finite( spread.var ) ) spread.var <- 0
-          spread.var <- max( spread.var, 0 )
-        }
+      channel.set <- setdiff( fluorophores, source )
 
-        est <- .fix.envelope.slope(
-          x.source         = unmixed.comp[ , source ],
-          x.target         = unmixed.comp[ , channel ],
-          threshold.source = threshold.matrix[ , source ],
-          threshold.target = threshold.matrix[ , channel ],
-          spread.var       = spread.var,
-          neg.var          = neg.var[ channel ],
-          source.mask      = if ( is.null( dominant ) ) NULL else
-            dominant == match( source, fluorophores ),
-          quantiles            = envelope.quantiles,
-          n.levels             = n.levels.pair,
-          min.events           = min.negative.events,
-          min.bin.negative     = min.bin.negative,
-          spread.addback       = spread.addback,
-          anchor.weight        = anchor.weight,
-          max.truncated.events = max.truncated.events,
-          max.coefficient      = max.coefficient,
-          max.mask.passes      = max.mask.passes )
+      spread.var.vec <- rep( 0, length( channel.set ) )
+      if ( !is.null( spillover.spread ) &&
+           source %in% rownames( spillover.spread ) ) {
+        avail <- intersect( channel.set, colnames( spillover.spread ) )
+        spread.var.vec[ match( avail, channel.set ) ] <-
+          spillover.spread[ source, avail ]
+        spread.var.vec[ !is.finite( spread.var.vec ) ] <- 0
+        spread.var.vec <- pmax( spread.var.vec, 0 )
+      }
+
+      est.batch <- .fix.envelope.slope.batch(
+        x.source          = unmixed.comp[ , source ],
+        X.target          = unmixed.comp[ , channel.set, drop = FALSE ],
+        threshold.source  = threshold.matrix[ , source ],
+        Threshold.target  = threshold.matrix[ , channel.set, drop = FALSE ],
+        spread.var        = spread.var.vec,
+        neg.var           = neg.var[ channel.set ],
+        source.mask       = if ( is.null( dominant ) ) NULL else
+          dominant == match( source, fluorophores ),
+        quantiles             = envelope.quantiles,
+        n.levels              = n.levels.pair,
+        min.events            = min.negative.events,
+        min.bin.negative      = min.bin.negative,
+        spread.addback        = spread.addback,
+        anchor.weight         = anchor.weight,
+        max.coefficient       = max.coefficient,
+        max.mask.passes       = max.mask.passes,
+        start.slope           = slope.warm[ source, channel.set ],
+        n.threads             = n.threads )
+
+      for ( ci in seq_along( channel.set ) ) {
+
+        channel <- channel.set[ ci ]
+        est <- if ( is.null( est.batch ) ) NULL else
+          as.list( est.batch[ ci, , drop = FALSE ] )
+
+        if ( !is.null( est ) && is.finite( est$slope.truncated ) )
+          slope.warm[ source, channel ] <- est$slope.truncated
 
         w <- 0
 
@@ -655,19 +761,6 @@ fix.my.unmix <- function(
         iter, delta, 100 * convergence.quantile, delta.quantile, delta.max,
         sum( trust > 0 ) - fluorophore.n ) )
 
-    if ( delta.quantile < convergence.threshold ) {
-      if ( verbose ) message( "\033[32mConverged.\033[0m" )
-      break
-    }
-
-    delta.history <- c( delta.history[ -1L ], delta )
-
-    if ( all( is.finite( delta.history ) ) &&
-         mean( diff( delta.history ) ) >= 0 ) {
-      if ( verbose ) message( "\033[33mRefinement stalled, stopping.\033[0m" )
-      break
-    }
-
     # The trust weight damps the step; it must not touch the estimate or the
     # convergence test, or the fixed point becomes trust-weighted identity
     # rather than identity.
@@ -682,6 +775,19 @@ fix.my.unmix <- function(
     }
 
     spillover.curr <- sweep( spillover.next, 1, diag.next, "/" )
+
+    if ( delta.quantile < convergence.threshold ) {
+      if ( verbose ) message( "\033[32mConverged.\033[0m" )
+      break
+    }
+
+    delta.history <- c( delta.history[ -1L ], delta )
+
+    if ( all( is.finite( delta.history ) ) &&
+         mean( diff( delta.history ) ) >= 0 ) {
+      if ( verbose ) message( "\033[33mRefinement stalled, stopping.\033[0m" )
+      break
+    }
 
     if ( iter == max.iter && verbose )
       message( "\033[33mReached iteration limit.\033[0m" )
@@ -851,17 +957,19 @@ fix.my.unmix <- function(
                   reject <- "background.confound" else
                     if ( st$clamp.frac > max.clamp.frac )
                       reject <- "negative.mass" else
-                        if ( is.finite( step.impact ) && is.finite( bias.impact ) &&
+                        if ( gate.on.bias &&
+                             is.finite( step.impact ) && is.finite( bias.impact ) &&
                              step.impact < min.impact.ratio * bias.impact )
                           reject <- "bias" else
                             if ( st$deg.change > max.angle )
                               reject <- "angle" else
         if ( is.finite( st$anchor.rel ) && st$anchor.rel > max.anchor )
           reject <- "background" else
-        if ( st$vif.target > max.vif )
-          reject <- "collinear" else
-        if ( !allow.peak.shift && st$peak.new != st$peak.curr )
-          reject <- "peak.shift"
+            if ( st$vif.target > max.vif )
+              reject <- "collinear" else
+                if ( st$peak.new != st$peak.curr &&
+                     st$peak.new.rel < peak.shift.min.rel )
+                  reject <- "peak.shift"
       }
 
       leak.before <- NA_real_
@@ -896,16 +1004,26 @@ fix.my.unmix <- function(
 
         condition.after <- calculate.condition.number( design.trial )
 
+        # .fix.leakage() subsamples internally above its own max.events;
+        # matching the seed for both calls means "before" and "after" score
+        # the same held-out events, so a difference reflects the design
+        # change and not which random subset happened to be drawn each call.
+        leak.seed <- ( if ( is.null( asp$bird.seed ) ) 0L else asp$bird.seed ) +
+          f * 1009L
+
+        set.seed( leak.seed )
         leak.before <- .fix.leakage( residual[ idx, , drop = FALSE ],
                                      design, j, fluorophores )
+        set.seed( leak.seed )
         leak.after  <- .fix.leakage( residual[ idx, , drop = FALSE ],
                                      design.trial, j, fluorophores )
 
         reject <- if ( condition.after >
                        max.condition.increase * condition.curr )
           "conditioning" else
-          if ( is.finite( leak.before ) && is.finite( leak.after ) &&
-               leak.after >= leak.before ) "leakage" else NA_character_
+            if ( is.finite( leak.before ) && is.finite( leak.after ) &&
+                 leak.after >= ( 1 + leakage.margin ) * leak.before )
+              "leakage" else NA_character_
 
         if ( is.na( reject ) ) {
           spectra.new    <- trial
@@ -959,9 +1077,13 @@ fix.my.unmix <- function(
   spectra.backsolved <- spectra.backsolved / row.max
 
   if ( figures )
-    plot.heatmap( spillover.curr, asp, TRUE, asp$fix.unmixing.heatmap,
-                  legend.label = "Spillover", TRUE,
-                  output.dir = asp$fix.unmixing.dir )
+    spectral.heatmap(
+      spectra = spillover.curr,
+      title = "FixMyUnmix_spillover_heatmap",
+      plot.dir = asp$fix.unmixing.dir,
+      legend.label = "Spillover",
+      save = TRUE
+    )
 
   if ( save ) {
     utils::write.csv( spillover.curr,
@@ -1034,7 +1156,8 @@ fix.my.unmix <- function(
                                  max.truncated.events = 20000L,
                                  max.coefficient      = 0.2,
                                  max.mask.passes      = 3L,
-                                 mask.tolerance       = 0.05 ) {
+                                 mask.tolerance       = 0.05,
+                                 start.slope          = 0 ) {
 
   n <- length( x.source )
   if ( n < min.events ) return( NULL )
@@ -1081,19 +1204,18 @@ fix.my.unmix <- function(
     c( bright, bulk )
   }
 
-  fit.truncated <- function( index ) {
+  fit.truncated <- function( index, start = NULL ) {
 
     if ( length( index ) < min.events ) return( NA_real_ )
 
-    fit.robust.linear.model(
-      x.data    = x.source[ index ],
-      y.data    = x.target[ index ],
-      x.name    = "source", y.name = "target",
-      fix.unmix = TRUE )[ 2 ]
+    .fix.huber.slope( x.source[ index ], x.target[ index ], start = start )[ 2 ]
   }
 
-  truncated.index <- select.negative( 0 )
-  slope.truncated <- fit.truncated( truncated.index )
+  start.slope <- if ( is.finite( start.slope ) &&
+                      abs( start.slope ) <= max.coefficient ) start.slope else 0
+
+  truncated.index <- select.negative( start.slope )
+  slope.truncated <- fit.truncated( truncated.index, start = c( 0, start.slope ) )
 
   for ( pass in seq_len( as.integer( max.mask.passes ) ) ) {
 
@@ -1101,7 +1223,7 @@ fix.my.unmix <- function(
          abs( slope.truncated ) > max.coefficient ) break
 
     index.next <- select.negative( slope.truncated )
-    slope.next <- fit.truncated( index.next )
+    slope.next <- fit.truncated( index.next, start = c( 0, slope.truncated ) )
 
     if ( !is.finite( slope.next ) ) break
 
@@ -1170,11 +1292,18 @@ fix.my.unmix <- function(
   bins <- sort( unique( bin ) )
   if ( length( bins ) < 5 ) return( truncated.only() )
 
-  centre <- vapply( bins, function( b )
-    stats::median( x.source[ bin == b ] ), numeric( 1 ) )
-  neg.n <- vapply( bins, function( b )
-    sum( target.negative[ bin == b ] ), integer( 1 ) )
-  bin.n <- vapply( bins, function( b ) sum( bin == b ), integer( 1 ) )
+  # Each bin's row indices are split out once and reused for every per-bin
+  # statistic below, rather than re-scanning `bin == b` over all n events
+  # once per bin for each of centre / neg.n / bin.n / envelope.value /
+  # median.value in turn.
+  idx.by.bin <- split( seq_len( n ), bin )
+  idx.by.bin <- idx.by.bin[ as.character( bins ) ]
+
+  centre <- unname( vapply( idx.by.bin, function( idx )
+    stats::median( x.source[ idx ] ), numeric( 1 ) ) )
+  neg.n <- unname( vapply( idx.by.bin, function( idx )
+    sum( target.negative[ idx ] ), integer( 1 ) ) )
+  bin.n <- unname( lengths( idx.by.bin ) )
 
   usable <- neg.n >= min.bin.negative
   if ( sum( usable ) < 4L ) return( truncated.only() )
@@ -1206,27 +1335,39 @@ fix.my.unmix <- function(
     y.bin <- value[ keep ]
     w.bin <- weight[ keep ]
 
-    fit <- stats::lm.wfit( x = cbind( 1, x.bin ), y = y.bin, w = w.bin )
-
+    # Closed-form weighted least squares for the two-parameter fit, in place
+    # of stats::lm.wfit(). At n.levels.pair bins a QR decomposition buys
+    # nothing here, and dropping it removes this function's only call into
+    # compiled linear algebra, which matters both for its own overhead, run
+    # tens of thousands of times per correction, and for safety under
+    # mclapply on macOS, where forking a process that has touched
+    # Accelerate's threaded BLAS is unreliable.
     x.mean <- sum( w.bin * x.bin ) / sum( w.bin )
+    y.mean <- sum( w.bin * y.bin ) / sum( w.bin )
     sxx    <- sum( w.bin * ( x.bin - x.mean )^2 )
-    dof    <- sum( keep ) - 2L
+    sxy    <- sum( w.bin * ( x.bin - x.mean ) * ( y.bin - y.mean ) )
 
-    se <- if ( dof > 0 && sxx > 0 )
-      sqrt( sum( w.bin * fit$residuals^2 ) / dof / sxx ) else NA_real_
+    slope     <- if ( sxx > 0 ) sxy / sxx else NA_real_
+    intercept <- y.mean - slope * x.mean
+    residuals <- y.bin - ( intercept + slope * x.bin )
 
-    list( slope = unname( fit$coefficients[ 2 ] ), se = se )
+    dof <- sum( keep ) - 2L
+
+    se <- if ( is.finite( slope ) && dof > 0 && sxx > 0 )
+      sqrt( sum( w.bin * residuals^2 ) / dof / sxx ) else NA_real_
+
+    list( slope = slope, se = se )
   }
 
-  envelope.value <- vapply( bins, function( b ) {
-    v <- x.target[ bin == b & target.negative ]
+  envelope.value <- unname( vapply( idx.by.bin, function( idx ) {
+    v <- x.target[ idx ][ target.negative[ idx ] ]
     if ( length( v ) < min.bin.negative ) return( NA_real_ )
     stats::quantile( v, probs = quantiles[ 1 ], names = FALSE )
-  }, numeric( 1 ) )
+  }, numeric( 1 ) ) )
 
-  median.value <- vapply( bins, function( b )
-    stats::quantile( x.target[ bin == b ], probs = quantiles[ 2 ],
-                     names = FALSE ), numeric( 1 ) )
+  median.value <- unname( vapply( idx.by.bin, function( idx )
+    stats::quantile( x.target[ idx ], probs = quantiles[ 2 ], names = FALSE ),
+    numeric( 1 ) ) )
 
   envelope <- fit.trace( envelope.value + z[ 1 ] * sd.bin, weight.envelope )
   compare  <- fit.trace( median.value   + z[ 2 ] * sd.bin, weight.compare )
@@ -1297,4 +1438,143 @@ fix.my.unmix <- function(
   if ( length( off ) == 0 ) return( NA_real_ )
 
   sum( abs( apply( unmixed[ , off, drop = FALSE ], 2, stats::median ) ) ) / on
+}
+
+
+#' Stratified subsample of raw events by dominant fluorophore, for
+#' downsampling before the correction loops.
+#'
+#' A uniform subsample keeps every population in the same proportion the raw
+#' file already had it in. In a fully stained sample that means the biggest
+#' population, usually events with most of the panel silent, sets how hard
+#' everything else gets thinned; a dim or rare fluorophore's own positive
+#' population is cut at the same rate as a background bulk that was already
+#' more than large enough to define its threshold, and it is exactly that
+#' population the pair estimator and the signature fit need the most events
+#' from.
+#'
+#' Membership is by positivity, not by a single winner-take-all dominance
+#' label: an event above threshold for two fluorophores at once belongs to
+#' both strata, not whichever scores higher. That matters specifically for a
+#' fully stained sample, where co-expression is real and is exactly the
+#' population downstream identifiability checks rely on; a mutually-exclusive
+#' assignment would credit a co-positive event to only one of the two markers
+#' and let a large stratum's subsampling discard it from the other's
+#' population by chance. On a concatenated single-stain pool the distinction
+#' is close to moot, since the spread-scaled boundary already keeps one
+#' tube's events out of another's positive population except right at the
+#' edge, so this reduces to the same partition either way there.
+#'
+#' Every fluorophore's stratum is sampled against its own quota: a floor that
+#' keeps a dim dye's whole positive population intact whenever it is smaller
+#' than the floor, and a proportional share of what is left of the budget for
+#' strata that can use more. The chosen events are the union across
+#' fluorophores, so a co-positive event drawn by more than one stratum is
+#' kept once and effectively has a higher retention chance, which is the
+#' right direction. Events positive for nothing are capped separately as a
+#' flat fraction of the total, since additional events there mostly refine a
+#' threshold that is already well determined.
+#'
+#' @param abundance Numeric matrix (events x fluorophores), a first-pass
+#'   unmixed abundance under the spectra downsampling will feed into.
+#' @param thresholds Named numeric vector, flat per-fluorophore positivity
+#'   thresholds in the same units as `abundance`.
+#' @param threshold.matrix Numeric matrix, same shape as `abundance`, the
+#'   spread-scaled positivity boundary from `get.spread.thresholds()`.
+#' @param n.total Integer, the total event budget.
+#' @param background.frac Numeric in (0, 1), the share of `n.total` reserved
+#'   for events positive for nothing. Default `0.3`.
+#' @param min.stratum Integer, the floor below which a fluorophore's positive
+#'   population is kept whole rather than thinned. Default `2000`.
+#'
+#' @return Integer vector of row indices to keep.
+#'
+#' @noRd
+.fix.stratified.sample <- function( abundance, thresholds, threshold.matrix,
+                                    n.total, background.frac = 0.3,
+                                    min.stratum = 2000L ) {
+
+  n <- nrow( abundance )
+  if ( n <= n.total ) return( seq_len( n ) )
+
+  positive <- ( abundance - threshold.matrix ) > 0
+
+  background.idx <- which( rowSums( positive ) == 0L )
+  positive.idx    <- lapply( seq_len( ncol( abundance ) ),
+                             function( j ) which( positive[ , j ] ) )
+
+  n.background <- min( length( background.idx ),
+                       round( background.frac * n.total ) )
+  budget.positive <- n.total - n.background
+
+  sizes   <- vapply( positive.idx, length, integer( 1 ) )
+  floor.n <- pmin( sizes, as.integer( min.stratum ) )
+
+  # A panel with many fluorophores can demand more floor than the budget
+  # holds; when it does, every stratum's floor is scaled down by the same
+  # factor rather than starving whichever strata come later in column order.
+  quota <- if ( sum( floor.n ) > budget.positive ) {
+    pmin( sizes, floor( floor.n * budget.positive / max( sum( floor.n ), 1 ) ) )
+  } else {
+    spare           <- pmax( sizes - floor.n, 0 )
+    leftover.budget <- budget.positive - sum( floor.n )
+    extra <- if ( sum( spare ) > 0 )
+      leftover.budget * spare / sum( spare ) else rep( 0, length( sizes ) )
+    pmin( sizes, floor.n + round( extra ) )
+  }
+
+  chosen.positive <- unique( unlist( Map( function( idx, k )
+    if ( length( idx ) <= k ) idx else sample( idx, k ),
+    positive.idx, quota ), use.names = FALSE ) )
+
+  chosen.background <- if ( n.background >= length( background.idx ) )
+    background.idx else sample( background.idx, n.background )
+
+  c( chosen.positive, chosen.background )
+}
+
+#' Closed-form Huber M-estimator for a two-parameter (intercept + slope) fit,
+#' in place of fit.robust.linear.model()'s call to MASS::rlm(). Same default
+#' behaviour: weights from psi.huber with tuning constant k = 1.345, scale
+#' re-estimated each iteration from the MAD of the current residuals,
+#' iterating to a coefficient-change tolerance, initial weights of 1 so the
+#' first fit is OLS. On non-convergence it returns a zero slope rather than
+#' falling back to OLS, matching fit.robust.linear.model()'s fix.unmix = TRUE
+#' behaviour, since a coefficient this function cannot pin down is exactly
+#' the case the caller needs to see as untrustworthy rather than as some
+#' other estimator's best guess.
+#'
+#' Every step is the same closed-form weighted least squares fit.trace() in
+#' `.fix.envelope.slope()` already uses, so this makes no call to
+#' stats::lm.wfit(), solve(), or any other compiled linear-algebra routine,
+#' which is the second and larger BLAS dependency this pair loop had.
+#'
+#' @param x,y Numeric vectors, the predictor and response.
+#' @param k Numeric, the Huber tuning constant. Default `1.345`.
+#' @param max.iter Integer, maximum IRLS iterations. Default `100`.
+#' @param tol Numeric, relative coefficient-change convergence tolerance.
+#'   Default `1e-4`.
+#' @param start Optional numeric `c(intercept, slope)`, a warm start. When
+#'   supplied, the first iteration's weights come from its residuals instead
+#'   of OLS weights, so a caller iterating the same pair across outer passes
+#'   can resume near its last estimate. Default `NULL`.
+#'
+#' @return Numeric vector `c(intercept, slope)`.
+#'
+#' @noRd
+.fix.huber.slope <- function( x, y, k = 1.345, max.iter = 100L, tol = 1e-4,
+                              start = NULL ) {
+
+  if (
+    requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+    "fix_huber_slope_rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) )
+  ) {
+    AutoSpectralRcpp::fix_huber_slope_rcpp(
+      x, y, k = k, max_iter = as.integer( max.iter ),
+      tol = tol, start = start
+    )
+  } else {
+    stop( "Install AutoSpectralRcpp" )
+  }
+
 }

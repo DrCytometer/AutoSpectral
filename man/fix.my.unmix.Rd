@@ -18,6 +18,8 @@ fix.my.unmix(
   large.gate = TRUE,
   max.iter = 20L,
   downsample = 20000,
+  downsample.background.frac = 0.3,
+  downsample.min.stratum = 2000L,
   unstained.threshold = 0.99,
   unstained.margin = 1.3,
   spread.kappa = 2,
@@ -41,7 +43,7 @@ fix.my.unmix(
   source.dominant = TRUE,
   spread.addback = FALSE,
   anchor.weight = 1,
-  max.coefficient = 0.2,
+  max.coefficient = 0.5,
   convergence.threshold = 0.01,
   convergence.quantile = 0.95,
   update.spectra = TRUE,
@@ -55,14 +57,17 @@ fix.my.unmix(
   max.resid = 0.03,
   max.intercept = 0.03,
   min.bg.align = -0.9,
+  gate.on.bias = FALSE,
   min.impact.ratio = 2,
-  max.angle = 10,
+  max.angle = 15,
   max.clamp.frac = 0.15,
   max.anchor = 0.1,
   max.vif = 500,
   max.condition.increase = 1.05,
-  allow.peak.shift = FALSE,
+  peak.shift.min.rel = 0.7,
   max.hotspot = 5,
+  leakage.margin = 0.05,
+  n.threads = 1L,
   figures = TRUE,
   save = TRUE,
   verbose = TRUE
@@ -111,8 +116,18 @@ spectrum as a single background row; \code{"none"} fits no background.}
 \item{max.iter}{Integer, maximum spillover-matrix iterations. Default \code{20}.}
 
 \item{downsample}{Logical or numeric. \code{FALSE} disables downsampling; a
-numeric gives the number of events to use. Values above the event count are
-reduced to it. Default \code{20000}.}
+numeric gives the number of events to use. Values above the event count
+are reduced to it by a stratified sample over each event's dominant
+fluorophore under the starting spectra, so a dim or rare dye's own
+positive population is not thinned at the same rate as the background
+bulk. Default \code{20000}.}
+
+\item{downsample.background.frac}{Numeric in (0, 1), the share of
+\code{downsample} reserved for events dominant for nothing. Default \code{0.3}.}
+
+\item{downsample.min.stratum}{Integer, the floor below which a
+fluorophore's own positive population is kept whole by the stratified
+downsample rather than thinned further. Default \code{2000}.}
 
 \item{unstained.threshold}{Numeric in (0, 1), the percentile of the unstained
 control defining positivity. Default \code{0.99}.}
@@ -255,13 +270,25 @@ the candidate signature. A value near minus one means the fit is trading a
 background floor against the slope, the event-level signature of an
 unmodelled background confound. Default \code{-0.9}.}
 
+\item{gate.on.bias}{Logical, whether \code{min.impact.ratio} actually blocks a
+candidate, versus being computed and logged only. Default \code{FALSE}.
+Evidence from a counterfactual audit (score whether accepting each
+rejected candidate would have moved the row toward or away from ground
+truth): of every candidate this gate rejected, 79.9\% would have helped
+if accepted (n=144, two substrates) - 90.7\% on one substrate, a
+coin-flip 47.2\% on the other. The gate is net-harmful on the substrate
+where it discriminates worst and only weakly useful on the other, so it
+defaults off rather than removed - \code{bias.impact} and the ratio are still
+computed and logged either way, so the evidence for re-enabling it on a
+new substrate remains visible without code changes.}
+
 \item{min.impact.ratio}{Numeric, how many times a proposed step's abundance
 effect must exceed the effect of the same phase's bias on its own control,
 measured through the current unmixing operator. Degrees weight every
 detector alike and every dye alike; this weights each row by the abundances
 it actually produces, so a large rotation of a dim row is cheap and a small
-rotation of a bright collinear row is not. Requires \code{null.spectra}.
-Default \code{2}.}
+rotation of a bright collinear row is not. Requires \code{null.spectra} and
+\code{gate.on.bias = TRUE}. Default \code{2}.}
 
 \item{max.angle}{Numeric, maximum angular change of a row in degrees.}
 
@@ -278,12 +305,31 @@ fluorophore's own abundance within its population. Default \code{500}.}
 row may increase the condition number of the unmixing design. Default
 \code{1.05}.}
 
-\item{allow.peak.shift}{Logical, whether a candidate row whose peak detector
-differs from the current row may be accepted. Default \code{FALSE}.}
+\item{peak.shift.min.rel}{Numeric, a candidate row whose peak detector
+differs from the current row is only accepted if the current signature's
+own value at that new peak channel, relative to the current signature's
+own peak, is at least this large - a close secondary peak taking over is
+plausible, a shift to a channel the current signature barely uses is not.
+Use \code{Inf} to never allow a peak shift and \code{0} to always allow one.
+Default \code{0.7}.}
 
 \item{max.hotspot}{Numeric, hotspot scale above which a fluorophore is
 considered inseparable from the autofluorescence basis and is frozen.
 Default \code{5}.}
+
+\item{leakage.margin}{Numeric, the fraction by which held-out leakage must
+increase, not merely be numerically larger, before a candidate is
+refused for it. \code{.fix.leakage()} is a held-out statistic on a
+dominance population that can be small, and "any increase blocks" was
+itself producing false positives - candidates blocked on multiple
+consecutive fits that would demonstrably have helped if accepted.
+Default \code{0.05}.}
+
+\item{n.threads}{Integer, OpenMP threads for the batched pair estimator
+(\code{fix_envelope_truncated_batch_rcpp()}). Keep at the default unless this
+call is not itself running inside another parallel context (e.g. one
+sample of several under \code{mclapply()}), since the two layers of
+parallelism would otherwise compete for the same cores. Default \code{1L}.}
 
 \item{figures}{Logical, whether to write the spillover heatmap. Default
 \code{TRUE}.}
