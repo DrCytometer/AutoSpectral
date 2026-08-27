@@ -288,7 +288,7 @@
   bracket.df <- data.frame(
     x    = c( bar.x[ 1L ], bar.x[ 1L ], bar.x[ 2L ], bar.x[ 2L ] ),
     y    = c( bar.y * 0.95, bar.y, bar.y, bar.y * 0.95 ),
-    grp  = c( 1L, 1L, 1L, 1L )
+    group  = c( 1L, 1L, 1L, 1L )
   )
 
   breaks <- asp$ribbon.breaks
@@ -301,7 +301,7 @@
     ggplot2::geom_area( fill = fill.color, color = NA, alpha = 0.7, na.rm = TRUE ) +
     ggplot2::geom_line( color = line.color, linewidth = asp$figure.spectra.line.size, na.rm = TRUE ) +
     ggplot2::geom_path(
-      data = bracket.df, ggplot2::aes( x, y, group = grp ),
+      data = bracket.df, ggplot2::aes( x, y, group = group ),
       color = line.color, linewidth = 0.8, inherit.aes = FALSE
     ) +
     ggplot2::annotate(
