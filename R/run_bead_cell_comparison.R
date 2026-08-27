@@ -209,6 +209,20 @@ finalize.control.file <- function( control.file.path, particle.type, reference.t
 #' @param legacy.gate Logical scalar. Whether to perform gating in
 #'   \code{define.flow.control()} when \code{legacy.pipeline = TRUE}. Defaults
 #'   to \code{TRUE}.
+#' @param n.candidates Integer, default `1000`. Number of top-expressing
+#'   candidate events selected per fluorophore before cosine-similarity
+#'   filtering. Ignored in internal-negative mode, where the top 5%% of
+#'   events by peak channel are used directly.
+#' @param n.spectral Integer, default `50`. Number of spectral events
+#'   retained after filtering for low AF cosine similarity.
+#' @param k.neighbors Integer, default `2`. Number of nearest neighbours in
+#'   scatter space used for per-event AF subtraction.
+#' @param allow.duplicate.controls Logical, default `FALSE`. Set `TRUE` to
+#' permit multiple single-stained controls for the same fluorophore
+#' (diagnostic/QC use only). Each is tracked internally under a unique
+#' `sample` identifier and carried through to `marker.spectra`'s rownames;
+#' the true fluorophore identity is preserved as a `"fluorophore"` attribute
+#' for reference-library matching and for `check.spectra.duplicates()`.
 #' @param mismatch.abs.alpha Numeric scalar in `[0, 1]`. Line transparency used
 #'   for the absolute-value spectral mismatch plot described below. Defaults
 #'   to \code{0.5}.

@@ -85,6 +85,24 @@ to \code{"density"}.}
 \code{define.flow.control()} when \code{legacy.pipeline = TRUE}. Defaults
 to \code{TRUE}.}
 
+\item{n.candidates}{Integer, default \code{1000}. Number of top-expressing
+candidate events selected per fluorophore before cosine-similarity
+filtering. Ignored in internal-negative mode, where the top 5\%\% of
+events by peak channel are used directly.}
+
+\item{n.spectral}{Integer, default \code{50}. Number of spectral events
+retained after filtering for low AF cosine similarity.}
+
+\item{k.neighbors}{Integer, default \code{2}. Number of nearest neighbours in
+scatter space used for per-event AF subtraction.}
+
+\item{allow.duplicate.controls}{Logical, default \code{FALSE}. Set \code{TRUE} to
+permit multiple single-stained controls for the same fluorophore
+(diagnostic/QC use only). Each is tracked internally under a unique
+\code{sample} identifier and carried through to \code{marker.spectra}'s rownames;
+the true fluorophore identity is preserved as a \code{"fluorophore"} attribute
+for reference-library matching and for \code{check.spectra.duplicates()}.}
+
 \item{mismatch.abs.alpha}{Numeric scalar in \verb{[0, 1]}. Line transparency used
 for the absolute-value spectral mismatch plot described below. Defaults
 to \code{0.5}.}
