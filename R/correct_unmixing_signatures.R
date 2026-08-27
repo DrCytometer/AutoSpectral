@@ -353,9 +353,12 @@ correct.unmixing.signatures <- function(
           x.use, probs = seq( 0, 1, length.out = n.levels + 1 ) ) )
         if ( length( brk ) < 3 ) return( NULL )
 
-        bin   <- as.integer( cut( x.use, breaks = brk, include.lowest = TRUE ) )
-        y.bin <- t( vapply( sort( unique( bin ) ), function( b )
-          colMeans( y.use[ bin == b, , drop = FALSE ] ),
+        bin        <- as.integer( cut( x.use, breaks = brk, include.lowest = TRUE ) )
+        bins.use   <- sort( unique( bin ) )
+        idx.by.bin <- split( seq_along( bin ), bin )
+        idx.by.bin <- idx.by.bin[ as.character( bins.use ) ]
+        y.bin <- t( vapply( idx.by.bin, function( idx )
+          colMeans( y.use[ idx, , drop = FALSE ] ),
           numeric( ncol( y.use ) ) ) )
 
         if ( length( background.idx ) >= min.events )
