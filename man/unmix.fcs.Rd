@@ -19,7 +19,7 @@ unmix.fcs(
   include.raw = FALSE,
   include.imaging = TRUE,
   use.dist0 = TRUE,
-  divergence.threshold = 10,
+  divergence.threshold = 10000,
   divergence.handling = "Balance",
   balance.weight = 0.5,
   speed = c("fast", "medium", "slow"),

@@ -26,6 +26,12 @@ fraction of the delta variance is captured. Default \code{0.99}.}
 
 \item{min.lambda}{Numeric, eigenvalues below this fraction of the leading
 eigenvalue are dropped. Default \code{1e-4}.}
+
+\item{pooled.fallback}{Logical, if \code{TRUE}, uses other fluorophores' variability
+to infer likely variability for a fluorophore where variants where not
+sucessfully measured.}
+
+\item{verbose}{Logical, whether to output messages to the console.}
 }
 \value{
 A named list, one entry per fluorophore with at least two
