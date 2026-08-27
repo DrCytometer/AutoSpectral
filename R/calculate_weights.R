@@ -18,6 +18,10 @@
 #' file, if generated.
 #' @param filename Character string specifying the filename for the CSV file.
 #' Default is `weights.csv`.#'
+#' @param noise.floor Numeric, default `125`. Lower clamp on mean channel
+#' signal before inversion, preventing near-dark channels from producing an
+#' unbounded weight. Signal units, same convention as `noise.floor` elsewhere
+#' in the package.
 #' @param verbose Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
 #'
 #' @return A named numeric vector with weighting for each detector.
@@ -31,8 +35,9 @@ calculate.weights <- function(
     save = FALSE,
     output.dir = "./table_spectra",
     filename = "weights.csv",
+    noise.floor = 125,
     verbose = TRUE
-  ) {
+) {
 
   if ( save & !dir.exists( output.dir ) ) dir.create( output.dir )
 
@@ -40,7 +45,7 @@ calculate.weights <- function(
   if ( verbose ) message( paste( "Reading FCS file:", fcs.file ) )
   spectral.exprs <- readFCS( fcs.file )[ , spectral.channels ]
 
-  weights <- pmax( abs( colMeans( spectral.exprs ) ), 1e-6 )
+  weights <- pmax( abs( colMeans( spectral.exprs ) ), noise.floor )
   weights <- 1 / weights
 
   names( weights ) <- spectral.channels

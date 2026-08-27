@@ -10,6 +10,7 @@ calculate.weights(
   save = FALSE,
   output.dir = "./table_spectra",
   filename = "weights.csv",
+  noise.floor = 125,
   verbose = TRUE
 )
 }
@@ -27,6 +28,11 @@ file, if generated.}
 
 \item{filename}{Character string specifying the filename for the CSV file.
 Default is \code{weights.csv}.#'}
+
+\item{noise.floor}{Numeric, default \code{125}. Lower clamp on mean channel
+signal before inversion, preventing near-dark channels from producing an
+unbounded weight. Signal units, same convention as \code{noise.floor} elsewhere
+in the package.}
 
 \item{verbose}{Logical, default is \code{TRUE}. Set to \code{FALSE} to suppress messages.}
 }

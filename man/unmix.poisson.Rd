@@ -9,6 +9,7 @@ unmix.poisson(
   spectra,
   asp,
   initial.weights = NULL,
+  noise.floor = 125,
   parallel = TRUE,
   threads = NULL
 )
@@ -24,6 +25,11 @@ Prepare using \code{get.autospectral.param}}
 \item{initial.weights}{Optional numeric vector of weights, one per fluorescent
 detector. Default is \code{NULL}, in which case weighting will be done by
 channel means.}
+
+\item{noise.floor}{Numeric, default \code{125}. Lower clamp on the initial WLS
+weights used to seed each cell's fit. Signal units, same convention as
+\code{noise.floor} elsewhere in the package. Not used inside \code{glm.fit} itself;
+see \code{unmix.poisson.fast()} for floor-aware per-cell IRLS reweighting.}
 
 \item{parallel}{Logical, default is \code{TRUE}, which enables parallel processing
 for per-cell unmixing.}

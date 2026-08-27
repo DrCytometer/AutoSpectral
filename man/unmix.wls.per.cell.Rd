@@ -4,7 +4,7 @@
 \alias{unmix.wls.per.cell}
 \title{Unmix WLS Per Cell}
 \usage{
-unmix.wls.per.cell(cell.raw, spectra, weights)
+unmix.wls.per.cell(cell.raw, spectra, weights = NULL, noise.floor = 125)
 }
 \arguments{
 \item{cell.raw}{Expression data from raw FCS files. A single row of cells with
@@ -14,8 +14,15 @@ match the columns in spectra.}
 \item{spectra}{Spectral signatures of fluorophores, normalized between 0
 and 1, with fluorophores in rows and detectors in columns.}
 
-\item{weights}{The weighting values for the detectors. No checks are performed
-in this function; \code{unmix.wls} should be used for standard cases.}
+\item{weights}{The weighting values for the detectors. No checks are
+performed on supplied weights; \code{unmix.wls} should be used for standard
+cases. Default is \code{NULL}, in which case weighting is computed from this
+cell's own signal, floored at \code{noise.floor}.}
+
+\item{noise.floor}{Numeric, default \code{125}. Lower clamp on this cell's
+signal before inversion when \code{weights = NULL}. Signal units, same
+convention as \code{noise.floor} elsewhere in the package. Ignored if
+\code{weights} is supplied.}
 }
 \value{
 Unmixed data (one row), fluorophores in columns.

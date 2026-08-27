@@ -4,7 +4,7 @@
 \alias{unmix.wls.fast}
 \title{Unmix WLS Fast}
 \usage{
-unmix.wls.fast(raw.data, spectra, weights = NULL)
+unmix.wls.fast(raw.data, spectra, weights = NULL, noise.floor = 125)
 }
 \arguments{
 \item{raw.data}{Expression data from raw FCS files. Cells in rows and
@@ -14,11 +14,18 @@ match the columns in spectra.}
 \item{spectra}{Spectral signatures of fluorophores, normalized between 0
 and 1, with fluorophores in rows and detectors in columns.}
 
-\item{weights}{The weighting values for the detectors. No checks are performed
-in this function; \code{unmix.wls} should be used for most cases.}
+\item{weights}{The weighting values for the detectors. No checks are
+performed on supplied weights; \code{unmix.wls} should be used for most cases.
+Default is \code{NULL}, in which case weighting is computed from channel means
+of \code{raw.data}, floored at \code{noise.floor}.}
+
+\item{noise.floor}{Numeric, default \code{125}. Lower clamp on mean channel
+signal before inversion when \code{weights = NULL}. Signal units, same
+convention as \code{noise.floor} elsewhere in the package. Ignored if \code{weights}
+is supplied.}
 }
 \value{
-Unmixed data with cells in rows and fluorophores in columns.
+A matrix containing unmixed data with cells in rows and fluorophores in columns.
 }
 \description{
 Faster solver for per-cell optimization workflow. Performs spectral unmixing

@@ -4,7 +4,7 @@
 \alias{unmix.wls}
 \title{Unmix Using Weighted Least Squares}
 \usage{
-unmix.wls(raw.data, spectra, weights = NULL)
+unmix.wls(raw.data, spectra, weights = NULL, noise.floor = 125)
 }
 \arguments{
 \item{raw.data}{Expression data from raw fcs files. Cells in rows and
@@ -17,6 +17,11 @@ and 1, with fluorophores in rows and detectors in columns.}
 \item{weights}{Optional numeric vector of weights, one per fluorescent
 detector. Default is \code{NULL}, in which case weighting will be done by
 channel means.}
+
+\item{noise.floor}{Numeric, default \code{125}. Lower clamp on mean channel
+signal before inversion when \code{weights = NULL}, preventing near-dark
+channels from producing an unbounded weight. Signal units, same
+convention as \code{noise.floor} elsewhere in the package.}
 }
 \value{
 A matrix containing unnmixed data with cells in rows and

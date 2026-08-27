@@ -14,6 +14,10 @@
 #' @param initial.weights Optional numeric vector of weights, one per fluorescent
 #' detector. Default is `NULL`, in which case weighting will be done by
 #' channel means.
+#' @param noise.floor Numeric, default `125`. Lower clamp on the initial WLS
+#' weights used to seed each cell's fit. Signal units, same convention as
+#' `noise.floor` elsewhere in the package. Not used inside `glm.fit` itself;
+#' see `unmix.poisson.fast()` for floor-aware per-cell IRLS reweighting.
 #' @param parallel Logical, default is `TRUE`, which enables parallel processing
 #' for per-cell unmixing.
 #' @param threads Numeric, default is `NULL`, in which case `asp$worker.process.n`
@@ -33,6 +37,7 @@ unmix.poisson <- function(
     spectra,
     asp,
     initial.weights = NULL,
+    noise.floor = 125,
     parallel = TRUE,
     threads = NULL
 ) {
@@ -40,7 +45,7 @@ unmix.poisson <- function(
   if ( is.null( threads ) ) threads <- asp$worker.process.n
 
   # initialize with WLS unmixing (approximates Poisson weighting)
-  unmixed.data <- unmix.wls( raw.data, spectra, initial.weights )
+  unmixed.data <- unmix.wls( raw.data, spectra, initial.weights, noise.floor = noise.floor )
 
   # handle zeros and negative values
   spectra.t <- t( abs( spectra ) )
@@ -71,7 +76,7 @@ unmix.poisson <- function(
       unmixed.data.cell <- unmixed.data[ cell, ]
 
       # fit glm model with Poisson distribution using identity link function
-      fit <- tryCatch(
+      fit <- try(
         suppressWarnings(
           stats::glm.fit(
             spectra.t, raw.data.cell,
@@ -80,7 +85,8 @@ unmix.poisson <- function(
             control = stats::glm.control( maxit = asp$rlm.iter.max ),
             intercept = FALSE
           )
-        )
+        ),
+        silent = TRUE
       )
 
       if ( !inherits( fit, "try-error" ) && fit$converged ) {

@@ -14,13 +14,17 @@
 #' @param weights Optional numeric vector of weights, one per fluorescent
 #' detector. Default is `NULL`, in which case weighting will be done by
 #' channel means.
+#' @param noise.floor Numeric, default `125`. Lower clamp on mean channel
+#' signal before inversion when `weights = NULL`, preventing near-dark
+#' channels from producing an unbounded weight. Signal units, same
+#' convention as `noise.floor` elsewhere in the package.
 #'
 #' @return A matrix containing unnmixed data with cells in rows and
 #' fluorophores in columns.
 #'
 #' @export
 
-unmix.wls <- function( raw.data, spectra, weights = NULL ) {
+unmix.wls <- function( raw.data, spectra, weights = NULL, noise.floor = 125 ) {
 
   # check for data/spectra column matching
   raw.data.cols <- colnames( raw.data )
@@ -43,7 +47,7 @@ unmix.wls <- function( raw.data, spectra, weights = NULL ) {
   # set up weights correctly
   if ( is.null( weights ) ) {
     # weights are inverse of channel variances (mean if Poisson)
-    weights <- pmax( abs( colMeans( raw.data ) ), 1e-6 )
+    weights <- pmax( abs( colMeans( raw.data ) ), noise.floor )
     weights <- 1 / weights
     W.half <- diag( sqrt( weights ) )
 
