@@ -561,7 +561,7 @@ get.spectral.variants <- function(
       requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
       "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) )
     ) {
-      unmix.autospectral.rcpp(
+      AutoSpectralRcpp::unmix.autospectral.rcpp(
         raw.data = unstained,
         spectra = spectra,
         af.spectra = af.spectra,
@@ -821,7 +821,7 @@ get.spectral.variants <- function(
         requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
         "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) )
       ) {
-        unmix.autospectral.rcpp(
+        AutoSpectralRcpp::unmix.autospectral.rcpp(
           raw.data = stained.raw,
           spectra = spectra,
           af.spectra = af.spectra,
