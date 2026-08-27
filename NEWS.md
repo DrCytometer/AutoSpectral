@@ -21,6 +21,9 @@ if you are using the AutoSpectral unmixing functions as opposed to OLS or WLS.
 backend suggested by Paul Heisig.
 
 ## Bug fixes
+- Many small things.
+- Handling of edge cases with weighting (WLS) using a noise floor cutoff to
+prevent approaching infinity.
 
 
 # AutoSpectral 1.7.1 (2026-07-30)

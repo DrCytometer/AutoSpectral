@@ -15,4 +15,4 @@ inst/doc
 /doc/
 /Meta/
 .positai
-.~lock
+inst/extdata/.~lock

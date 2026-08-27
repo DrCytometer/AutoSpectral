@@ -31,6 +31,14 @@ utils::globalVariables(
      "sd_Mean_Sim",
      "method",
      "Mean_Sim",
-     "rSD_Sim"
+     "rSD_Sim",
+     "Class",
+     "Mismatch",
+     "Variability",
+     "Cosine",
+     "Brightness",
+     "CosineSim",
+     "n",
+     "Gate"
   )
 )
