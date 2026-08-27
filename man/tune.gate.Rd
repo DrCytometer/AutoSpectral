@@ -2,7 +2,7 @@
 % Please edit documentation in R/tune_gate.R
 \name{tune.gate}
 \alias{tune.gate}
-\title{Define Gate by Density}
+\title{Tune Landmark Gate}
 \usage{
 tune.gate(
   control.file,
@@ -105,7 +105,16 @@ A combined plot of all gates. Saves plots of the gates defined using
 combinations of the specified parameters.
 }
 \description{
-A short description...
+This function provides a parameter search grid for optimizing FSC/SSC gating
+on the single-stained control files. Set up the control file and specify gate
+names (for example, group controls with similar expected scatter regions into
+one "gate.name"). \code{tune.gate()} selects the brightest \code{n.cells} positive events
+from each file linked to a given \code{gate.name}, and cuts the density peak at
+\code{percentiles}. You get plots showing the output gate boundaries plotted in the
+\code{boundary.color}. This uses the "landmark" gating system. Note that for this
+to work, you must supply some controls with staining. Unstained samples will
+be excluded, and if you only supply unstained samples, it will stop. To draw
+gates on unstained samples, use the "density" method: see \code{define.gate.density()}.
 }
 \references{
 Laniewski, Nathan. \emph{flowstate}.
