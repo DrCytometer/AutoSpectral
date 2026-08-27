@@ -16,6 +16,12 @@
 #' @param end.row Optional numeric specifying the row to end reading on. Can
 #' be useful for reading in just the metadata or for chunking files. Default is
 #' `NULL`, which will read the whole file.
+#' @param columns Optional character vector of \code{$PnN} channel names to
+#'   read. Default \code{NULL} reads and returns every channel (unchanged
+#'   behaviour). Supplying a subset avoids decoding and materializing columns
+#'   that will be discarded immediately afterward -- useful for wide panels
+#'   (e.g. ID7000, Xenith) where only spectral + a few passthrough channels
+#'   are actually needed.
 #'
 #' @return If `return.keywords = TRUE`, a list containing two elements:
 #' 1) the expression data in a matrix, and 2) the keywords.

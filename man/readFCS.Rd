@@ -26,6 +26,13 @@ be useful for reading in just the metadata or for chunking files. Default is
 \item{end.row}{Optional numeric specifying the row to end reading on. Can
 be useful for reading in just the metadata or for chunking files. Default is
 \code{NULL}, which will read the whole file.}
+
+\item{columns}{Optional character vector of \code{$PnN} channel names to
+read. Default \code{NULL} reads and returns every channel (unchanged
+behaviour). Supplying a subset avoids decoding and materializing columns
+that will be discarded immediately afterward -- useful for wide panels
+(e.g. ID7000, Xenith) where only spectral + a few passthrough channels
+are actually needed.}
 }
 \value{
 If \code{return.keywords = TRUE}, a list containing two elements:
