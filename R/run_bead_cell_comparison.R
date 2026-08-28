@@ -202,7 +202,7 @@ finalize.control.file <- function( control.file.path, particle.type, reference.t
 #'   (\code{define.flow.control()} / \code{clean.controls()} /
 #'   \code{get.fluorophore.spectra()}); if \code{FALSE}, the automated
 #'   (non-gated) pipeline (\code{get.spectra.automated()}) is used. Defaults
-#'   to \code{FALSE}.
+#'   to \code{TRUE}.
 #' @param legacy.gating.system Character scalar. Gating system passed to
 #'   \code{define.flow.control()} when \code{legacy.pipeline = TRUE}. Defaults
 #'   to \code{"density"}.
@@ -290,14 +290,19 @@ finalize.control.file <- function( control.file.path, particle.type, reference.t
 #'     distance-based comparisons are not artificially biased toward zero
 #'     variance at each spectrum's peak detector. The renormalized variants
 #'     are then compared against the reference type's renormalized variants
-#'     via \code{assess.mismatch()} (cosine similarity, unaffected by the
-#'     choice of per-row normalization), \code{assess.variability()},
-#'     \code{assess.variability.mad()}, and \code{bead.cell.dist()}
-#'     (per-detector signed distance). \code{Extraction} in the return
-#'     value retains the original L-infinity-normalized spectra/variants
-#'     as produced by the extraction pipeline; only the comparison stages
-#'     below use the L2-renormalized versions.
-#'   \item \strong{Error-metric plots.} \code{plot.mismatch()} is called per
+#'     via \code{assess.mismatch()} and \code{assess.mismatch.angle()}
+#'     (cosine similarity and spectral angle, unaffected by the choice of
+#'     per-row normalization), \code{assess.variability()},
+#'     \code{assess.variability.mad()}, \code{bead.cell.dist()}
+#'     (per-detector signed distance), and \code{assess.variability.alignment()}
+#'     (cosine similarity between the per-detector variability profile and
+#'     the per-detector mismatch magnitude profile, i.e. whether variability
+#'     and mismatch are concentrated at the same detectors).
+#'     \code{Extraction} in the return value retains the original
+#'     L-infinity-normalized spectra/variants as produced by the extraction
+#'     pipeline; only the comparison stages below use the L2-renormalized
+#'     versions.
+#'   \item \strong{Error-metric plots.} \code{mismatch.plot()} is called per
 #'     non-reference particle type, with shared axis limits computed across
 #'     all particle types for comparability.
 #'   \item \strong{Spectral location of mismatch.} Per-detector MAD of the
@@ -322,8 +327,9 @@ finalize.control.file <- function( control.file.path, particle.type, reference.t
 #'   \item{Extraction}{Named list (by particle type) of extraction results,
 #'     each containing \code{spectra}, \code{brightness}, and \code{variants}.}
 #'   \item{Comparison}{Named list (by non-reference particle type) of
-#'     \code{Cosine}, \code{Variability}, \code{VariabilityMAD}, and
-#'     \code{Distance} results versus \code{reference.type}.}
+#'     \code{Cosine}, \code{Angle}, \code{Variability},
+#'     \code{VariabilityMAD}, \code{Distance}, and \code{Alignment}
+#'     results versus \code{reference.type}.}
 #'   \item{Stats}{Named list (by non-reference particle type) of
 #'     \code{mismatch.plot()} outputs.}
 #'   \item{MAD}{Named list (by non-reference particle type) of per-detector
@@ -345,7 +351,7 @@ run.bead.cell.comparison <- function(
     fluor.df            = NULL,
     figures             = TRUE,
     verbose             = TRUE,
-    legacy.pipeline      = FALSE,
+    legacy.pipeline      = TRUE,
     legacy.gating.system = "density",
     legacy.gate          = TRUE,
     n.candidates            = 1000L,
@@ -637,13 +643,19 @@ run.bead.cell.comparison <- function(
         bead.variants <- particle.results[[ b ]]$variants$variants
         bead.variants <- bead.variants[ setdiff( names( bead.variants ), fluor.exclude.b ) ]
         bead.variants <- lapply( bead.variants, l2.normalize.spectra )
-        dist.mat      <- bead.cell.dist( cell.variants, bead.variants )
+        dist.mat        <- bead.cell.dist( cell.variants, bead.variants )
+        variability.mad <- assess.variability.mad( bead.variants )
 
         list(
           Cosine         = assess.mismatch( cell.variants, bead.variants ),
+          Angle          = assess.mismatch.angle( cell.variants, bead.variants ),
           Variability    = assess.variability( bead.variants ),
-          VariabilityMAD = assess.variability.mad( bead.variants ),
+          VariabilityMAD = variability.mad,
           Distance       = dist.mat,
+          Alignment      = assess.variability.alignment(
+            variability.mad = variability.mad,
+            mismatch.dist    = dist.mat
+          ),
           Clusters       = assess.mismatch.clusters(
             dist.mat          = dist.mat,
             ref.spectra       = ref.spectra,
@@ -693,17 +705,27 @@ run.bead.cell.comparison <- function(
   all.cosine <- unlist( lapply( comparison, function( x ) x$Cosine ) )
   sim.limits <- c( 1, min( 0.95, all.cosine, na.rm = TRUE ) )
 
+  all.angle <- unlist( lapply( comparison, function( x ) x$Angle ) )
+  angle.limits <- c( 0, max( all.angle, na.rm = TRUE ) * 1.05 )
+
+  all.alignment <- unlist( lapply( comparison, function( x ) x$Alignment ) )
+  alignment.limits <- c( max( 0, min( all.alignment, na.rm = TRUE ) - 0.05 ), 1 )
+
   stats.results <- lapply( bead.types, function( b ) {
     mismatch.plot(
       cosine.data      = comparison[[ b ]]$Cosine,
+      angle.data       = comparison[[ b ]]$Angle,
       mismatch.data    = rowSums( abs( comparison[[ b ]]$Distance ) ),
       variability.data = rowSums( abs( comparison[[ b ]]$VariabilityMAD ) ),
+      alignment.data   = comparison[[ b ]]$Alignment,
       brightness.data  = particle.results[[ b ]]$brightness,
       fluor.df         = fluor.df,
       particle.name    = b,
       output.dir       = plot.dir,
       mismatch.limits  = mismatch.limits,
       sim.limits       = sim.limits,
+      angle.limits     = angle.limits,
+      alignment.limits = alignment.limits,
       cytometer        = asp$cytometer
     )
   } )
