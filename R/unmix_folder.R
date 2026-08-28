@@ -289,11 +289,14 @@ unmix.folder <- function(
 
   files.to.unmix <- list.files( fcs.dir, pattern = ".fcs", full.names = TRUE )
 
+  # unmix.fcs() only reads flow.control$voltages
+  flow.control.slim <- list( voltages = flow.control$voltages )
+
   # construct list of arguments
   args.list <- list(
     spectra = spectra,
     asp = asp,
-    flow.control = flow.control,
+    flow.control = flow.control.slim,
     method = method,
     weighted = weighted,
     weights = weights,
