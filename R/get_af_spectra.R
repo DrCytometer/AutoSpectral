@@ -16,6 +16,7 @@
 #' before being appended.
 #'
 #' @importFrom parallelly availableCores
+#' @importFrom FNN knnx.index
 #'
 #' @param unstained.sample Path and file name for an unstained sample FCS file.
 #'   The sample type and processing (protocol) method should match the fully
@@ -478,10 +479,14 @@ get.af.spectra <- function(
         threads = if ( parallel ) threads else 1L
       )
 
-      cluster.ids <- unique( map.error$mapping[ , 1 ] )
+      error.assign <- as.integer(
+        FNN::knnx.index( data = map.error$codes, query = spill.ratios, k = 1 )
+      )
+
+      cluster.ids <- unique( error.assign )
 
       modulated.list <- lapply( cluster.ids, function( cl ) {
-        cl.sub.idx <- which( map.error$mapping[ , 1 ] == cl )
+        cl.sub.idx <- which( error.assign == cl )
         global.idx <- problem.idx[ cl.sub.idx ]
 
         # median correction pattern for this error cluster
