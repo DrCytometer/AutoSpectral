@@ -51,13 +51,60 @@ readFCS <- function(
   fcs.path <- path.expand(fcs.path)
 
   if (requireNamespace("AutoSpectralRcpp", quietly = TRUE)) {
-    return(AutoSpectralRcpp::readFCS(
+
+    rcpp.readFCS <- AutoSpectralRcpp::readFCS
+
+    if ("columns" %in% names(formals(rcpp.readFCS))) {
+      return(rcpp.readFCS(
+        fcs.path        = fcs.path,
+        return.keywords = return.keywords,
+        start.row       = start.row,
+        end.row         = end.row,
+        columns         = columns
+      ))
+    }
+
+    # Installed AutoSpectralRcpp predates the `columns` argument -- calling
+    # it with `columns=` would error with "unused argument". Call it with
+    # the signature it actually has (still gets the fast compiled reader),
+    # then subset to `columns` in R afterward if requested.
+    if (!is.null(columns)) {
+      warning(
+        "Installed AutoSpectralRcpp predates the `columns` argument to ",
+        "readFCS() (requires AutoSpectralRcpp >= ", .AS.RCPP.MIN.COLUMNS, "). ",
+        "The full file will be decoded and then subset in R for this call, ",
+        "so it won't get the full memory savings. Update AutoSpectralRcpp:\n",
+        "  remotes::install_github(\"DrCytometer/AutoSpectralRcpp\")",
+        call. = FALSE
+      )
+    }
+
+    result <- rcpp.readFCS(
       fcs.path        = fcs.path,
       return.keywords = return.keywords,
       start.row       = start.row,
-      end.row         = end.row,
-      columns         = columns
-    ))
+      end.row         = end.row
+    )
+
+    if (is.null(columns)) return(result)
+
+    data.mat <- if (return.keywords) result$data else result
+
+    missing.cols <- setdiff(columns, colnames(data.mat))
+    if (length(missing.cols) > 0) {
+      stop(
+        "Requested column(s) not found in ", fcs.path, ": ",
+        paste(missing.cols, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    data.mat <- data.mat[, columns, drop = FALSE]
+
+    if (return.keywords) {
+      result$data <- data.mat
+      return(result)
+    }
+    return(data.mat)
   }
 
   con <- file(fcs.path, open = "rb")
