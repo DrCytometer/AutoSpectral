@@ -356,11 +356,13 @@ get.af.spectra <- function(
 
   if ( refine ) {
 
-    warning( "`return.model = TRUE` with `refine = TRUE`: refined AF spectra ",
-             "are synthesised rather than drawn from SOM node populations, ",
-             "so several dictionary entries may attract few events and will ",
-             "fall back to the pooled covariance. Use `refine = FALSE` when ",
-             "building an AF model.", call. = FALSE )
+    if (FALSE) {
+      warning( "`return.model = TRUE` with `refine = TRUE`: refined AF spectra ",
+               "are synthesised rather than drawn from SOM node populations, ",
+               "so several dictionary entries may attract few events and will ",
+               "fall back to the pooled covariance. Use `refine = FALSE` when ",
+               "building an AF model.", call. = FALSE )
+    }
 
     if ( verbose ) message( "Refine: identifying best-fitting AF - first pass" )
 
