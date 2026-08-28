@@ -26,6 +26,11 @@
 #' universal negatives to be defined in the control file and in `flow.control`.
 #' @param downsample Logical, default is `TRUE`. Whether to reduce cell and bead
 #' control events to speed up processing.
+#' @param drop.raw Logical, default `FALSE`. If `TRUE`, removes
+#' `flow.control$expr.data` (the full, undownsampled per-event data from
+#' every control) before returning, freeing memory once cleaning is done.
+#' Only set this if you don't need `get.fluorophore.spectra(use.clean.expr =
+#' FALSE)` or other functions that read the raw expression data afterward.
 #' @param negative.n Integer. Number of events to include in the downsampled
 #' negative population. Default is `asp$negative.n`.
 #' @param positive.n Integer. Number of events to include in the downsampled
@@ -71,6 +76,7 @@ clean.controls <- function(
     af.remove = TRUE,
     universal.negative = TRUE,
     downsample = TRUE,
+    drop.raw = FALSE,
     negative.n = asp$negative.n,
     positive.n = asp$positive.n,
     scatter.match = TRUE,
@@ -495,6 +501,8 @@ clean.controls <- function(
     }
     cat( rep( "=", 30 ), "\n\n" )
   }
+
+  if ( drop.raw ) flow.control$expr.data <- NULL
 
   return( flow.control )
 }
