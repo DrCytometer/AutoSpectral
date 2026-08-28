@@ -53,11 +53,24 @@ describing the gate boundary.
 
 The gating proceeds in three steps:
 \itemize{
-\item Defines bounds by data trimming
+\item Defines bounds from the region of scatter space the data actually
+occupies, then trims those bounds further
 \item Defines a region around the target maximum found within the bounds
 \item Defines a gate around the target maximum, only within that region
 }
 
 The method uses numerical search of maxima over estimated densities and
 Voronoi tessellations to improve density estimation around maxima.
+
+When \code{region.auto} is \code{TRUE} in the relevant \code{default.gate.param.cells} /
+\code{default.gate.param.beads} entry (the default), the bounds are computed
+with \code{\link[=get.scatter.occupancy]{get.scatter.occupancy()}}, a density-relative method that is robust
+to a handful of extreme events and to cytometers with a much larger
+theoretical scatter range than any one sample occupies.
+\code{scatter.data.min.x} / \code{scatter.data.max.x} / \code{scatter.data.min.y} /
+\code{scatter.data.max.y} still apply as an outer sanity ceiling, and become the
+working bounds again if \code{region.auto} is set to \code{FALSE}.
+}
+\seealso{
+\code{\link[=get.scatter.occupancy]{get.scatter.occupancy()}}
 }

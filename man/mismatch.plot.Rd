@@ -2,18 +2,23 @@
 % Please edit documentation in R/mismatch_plots.R
 \name{mismatch.plot}
 \alias{mismatch.plot}
-\title{Plot Spectral Mismatch, Variability, and Brightness by Dye Class}
+\title{Plot Spectral Mismatch, Angle, Variability, Alignment, and
+Brightness by Dye Class}
 \usage{
 mismatch.plot(
   cosine.data,
+  angle.data,
   mismatch.data,
   variability.data,
+  alignment.data,
   brightness.data,
   fluor.df,
   particle.name = "UltraComp",
   output.dir = "./results/aurora",
   mismatch.limits = c(0, 3.5),
   sim.limits = c(1, 0.93),
+  angle.limits = c(0, 25),
+  alignment.limits = c(0, 1),
   cytometer
 )
 }
@@ -22,12 +27,20 @@ mismatch.plot(
 values, rownames are fluorophore names, as returned by
 \code{assess.mismatch()}.}
 
+\item{angle.data}{One-column numeric matrix of spectral angle values
+(degrees), rownames are fluorophore names, as returned by
+\code{assess.mismatch.angle()}.}
+
 \item{mismatch.data}{Named numeric vector of per-fluorophore mismatch
 magnitudes, e.g. \code{rowSums(abs(bead.cell.dist(...)))}.}
 
 \item{variability.data}{Named numeric vector of per-fluorophore
 variability magnitudes, e.g.
 \code{rowSums(abs(assess.variability.mad(...)))}.}
+
+\item{alignment.data}{One-column numeric matrix of per-fluorophore
+variability/mismatch alignment values, rownames are fluorophore names,
+as returned by \code{assess.variability.alignment()}.}
 
 \item{brightness.data}{One-column numeric matrix of per-fluorophore
 brightness (MFI) values, rownames are fluorophore names, as returned
@@ -49,6 +62,12 @@ mismatch plots. Default \code{c(0, 3.5)}.}
 \item{sim.limits}{Numeric vector of length 2, y/x-axis limits for
 cosine similarity plots (reversed axis). Default \code{c(1, 0.93)}.}
 
+\item{angle.limits}{Numeric vector of length 2, y/x-axis limits for
+spectral angle plots. Default \code{c(0, 25)}.}
+
+\item{alignment.limits}{Numeric vector of length 2, y/x-axis limits for
+variability/mismatch alignment plots. Default \code{c(0, 1)}.}
+
 \item{cytometer}{Character. Cytometer label used in plot titles and
 output filenames.}
 }
@@ -59,9 +78,22 @@ p-value) for each pair of metrics, one row per comparison. Returns
 }
 \description{
 Produces a standard set of diagnostic plots comparing a particle type's
-spectral mismatch, variability, cosine similarity, and brightness
-against fluorophore dye class, plus pairwise correlations between all
-four metrics with simple linear-fit statistics. Each individual plot is
-saved as a JPEG in \code{output.dir}, and all plots are additionally
-combined into a single multi-panel PDF report.
+spectral mismatch, spectral angle, variability, variability/mismatch
+alignment, cosine similarity, and brightness against fluorophore dye
+class, plus every pairwise correlation between those six metrics with
+simple linear-fit statistics. Each individual plot is saved as a JPEG in
+\code{output.dir}, and all plots are additionally combined into a single
+multi-panel PDF report.
+}
+\details{
+Six metrics are compared: \code{Mismatch}, \code{Cosine}, \code{Angle}, \code{Variability},
+\code{Alignment}, and \code{Brightness}. For each metric, a violin/jitter plot by
+dye class is produced. For every pair of metrics, a scatter plot with an
+\code{lm()} trendline is produced, annotated with that pair's R-squared and
+p-value; since simple linear regression's R-squared and F-test p-value
+are symmetric in the two variables, these statistics are unaffected by
+which metric in a pair ends up on the plot's x- versus y-axis. \code{Cosine}
+is the only metric plotted on a reversed axis (cosine similarity
+decreases with divergence, unlike the other five metrics, which all
+increase with divergence).
 }

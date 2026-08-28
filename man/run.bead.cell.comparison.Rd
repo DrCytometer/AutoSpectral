@@ -14,7 +14,7 @@ run.bead.cell.comparison(
   fluor.df = NULL,
   figures = TRUE,
   verbose = TRUE,
-  legacy.pipeline = FALSE,
+  legacy.pipeline = TRUE,
   legacy.gating.system = "density",
   legacy.gate = TRUE,
   n.candidates = 1000L,
@@ -75,7 +75,7 @@ are extracted with the legacy gated pipeline
 (\code{define.flow.control()} / \code{clean.controls()} /
 \code{get.fluorophore.spectra()}); if \code{FALSE}, the automated
 (non-gated) pipeline (\code{get.spectra.automated()}) is used. Defaults
-to \code{FALSE}.}
+to \code{TRUE}.}
 
 \item{legacy.gating.system}{Character scalar. Gating system passed to
 \code{define.flow.control()} when \code{legacy.pipeline = TRUE}. Defaults
@@ -148,8 +148,9 @@ A list with components:
 \item{Extraction}{Named list (by particle type) of extraction results,
 each containing \code{spectra}, \code{brightness}, and \code{variants}.}
 \item{Comparison}{Named list (by non-reference particle type) of
-\code{Cosine}, \code{Variability}, \code{VariabilityMAD}, and
-\code{Distance} results versus \code{reference.type}.}
+\code{Cosine}, \code{Angle}, \code{Variability},
+\code{VariabilityMAD}, \code{Distance}, and \code{Alignment}
+results versus \code{reference.type}.}
 \item{Stats}{Named list (by non-reference particle type) of
 \code{mismatch.plot()} outputs.}
 \item{MAD}{Named list (by non-reference particle type) of per-detector
@@ -204,14 +205,19 @@ L-infinity convention (peak detector fixed to 1.0) to unit L2
 distance-based comparisons are not artificially biased toward zero
 variance at each spectrum's peak detector. The renormalized variants
 are then compared against the reference type's renormalized variants
-via \code{assess.mismatch()} (cosine similarity, unaffected by the
-choice of per-row normalization), \code{assess.variability()},
-\code{assess.variability.mad()}, and \code{bead.cell.dist()}
-(per-detector signed distance). \code{Extraction} in the return
-value retains the original L-infinity-normalized spectra/variants
-as produced by the extraction pipeline; only the comparison stages
-below use the L2-renormalized versions.
-\item \strong{Error-metric plots.} \code{plot.mismatch()} is called per
+via \code{assess.mismatch()} and \code{assess.mismatch.angle()}
+(cosine similarity and spectral angle, unaffected by the choice of
+per-row normalization), \code{assess.variability()},
+\code{assess.variability.mad()}, \code{bead.cell.dist()}
+(per-detector signed distance), and \code{assess.variability.alignment()}
+(cosine similarity between the per-detector variability profile and
+the per-detector mismatch magnitude profile, i.e. whether variability
+and mismatch are concentrated at the same detectors).
+\code{Extraction} in the return value retains the original
+L-infinity-normalized spectra/variants as produced by the extraction
+pipeline; only the comparison stages below use the L2-renormalized
+versions.
+\item \strong{Error-metric plots.} \code{mismatch.plot()} is called per
 non-reference particle type, with shared axis limits computed across
 all particle types for comparability.
 \item \strong{Spectral location of mismatch.} Per-detector MAD of the
