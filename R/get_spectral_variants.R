@@ -492,14 +492,12 @@ get.spectral.variants <- function(
   if ( verbose )
     message( paste0( "\033[32m", "Measuring background in unstained samples", "\033[0m" ) )
 
-  unstained <- readFCS( unstained.file )
+  unstained <- readFCS( unstained.file, columns = spectral.channel )
 
   if ( nrow( unstained ) > asp$gate.downsample.n.cells ) {
     set.seed( asp$bird.seed )
     unstained.idx <- sample( nrow( unstained ), asp$gate.downsample.n.cells )
-    unstained     <- unstained[ unstained.idx, spectral.channel, drop = FALSE ]
-  } else {
-    unstained <- unstained[ , spectral.channel, drop = FALSE ]
+    unstained     <- unstained[ unstained.idx, , drop = FALSE ]
   }
 
   raw.thresholds <- apply( unstained, 2, function( col )
@@ -528,14 +526,24 @@ get.spectral.variants <- function(
       grepl( "\\.fcs$", universal.negative, ignore.case = TRUE )
   ] )
 
-  af.pcs.list <- lapply( univ.neg.files, function( fn ) {
-    dat <- readFCS( file.path( control.dir, fn ) )
+  # read each unique universal-negative file once
+  neg.cache <- lapply( univ.neg.files, function( fn ) {
+    dat <- readFCS(
+      file.path( control.dir, fn ),
+      columns = union( spectral.channel, scatter.channel )
+    )
+    list(
+      spectral = dat[ , spectral.channel, drop = FALSE ],
+      scatter  = dat[ , scatter.channel,  drop = FALSE ]
+    )
+  } )
+  names( neg.cache ) <- univ.neg.files
+
+  af.pcs.list <- lapply( neg.cache, function( nc ) {
+    dat <- nc$spectral
     if ( nrow( dat ) > asp$gate.downsample.n.cells ) {
       set.seed( asp$bird.seed )
-      dat <- dat[ sample( nrow( dat ), asp$gate.downsample.n.cells ),
-                  spectral.channel, drop = FALSE ]
-    } else {
-      dat <- dat[ , spectral.channel, drop = FALSE ]
+      dat <- dat[ sample( nrow( dat ), asp$gate.downsample.n.cells ), , drop = FALSE ]
     }
     sv <- svd( dat, nu = 0, nv = 4 )
     t( sv$v )
@@ -613,6 +621,7 @@ get.spectral.variants <- function(
     unmixed.thresholds = unmixed.thresholds,
     flow.channel       = flow.channel,
     af.pcs             = af.pcs.list,
+    neg.cache          = neg.cache,
     use.unmixed        = use.unmixed,
     n.cells            = n.cells,
     som.dim            = som.dim,
@@ -804,17 +813,11 @@ get.spectral.variants <- function(
           "\033[0m"
         ) )
 
-      stained.raw <- readFCS( stained.sample )
+      stained.raw <- readFCS( stained.sample, columns = spectral.channel )
 
       if ( nrow( stained.raw ) > 5000 ) {
         set.seed( asp$bird.seed )
-        stained.raw <- stained.raw[
-          sample( nrow( stained.raw ), 5000 ),
-          spectral.channel,
-          drop = FALSE
-        ]
-      } else {
-        stained.raw <- stained.raw[ , spectral.channel, drop = FALSE ]
+        stained.raw <- stained.raw[ sample( nrow( stained.raw ), 5000 ), , drop = FALSE ]
       }
 
       stained.unmixed <- if (

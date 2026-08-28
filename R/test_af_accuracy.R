@@ -106,23 +106,28 @@ test.af.accuracy <- function(
 
   # ---- read FCS and subset to spectral columns -------------------------------
 
-  fcs.full <- readFCS( unstained.fcs )
-
   needs.scatter <- "assign.af.scatter.match" %in% functions
+
+  fcs.cols.needed <- if ( needs.scatter ) union( colnames( spectra ), scatter.param ) else colnames( spectra )
+
   if ( needs.scatter ) {
     if ( is.null( scatter.param ) )
       stop(
         "scatter.param must be supplied when 'assign.af.scatter.match' ",
         "is in functions.", call. = FALSE
       )
-    missing.scatter <- setdiff( scatter.param, colnames( fcs.full ) )
+    probe.cols <- colnames( readFCS( unstained.fcs, start.row = 1, end.row = 1 ) )
+    missing.scatter <- setdiff( scatter.param, probe.cols )
     if ( length( missing.scatter ) > 0L )
       stop(
         "scatter.param columns not found in unstained.fcs: ",
         paste( missing.scatter, collapse = ", " ), call. = FALSE
       )
-    raw.data.scatter <- fcs.full[ , union( colnames( spectra ), scatter.param ) ]
   }
+
+  fcs.full <- readFCS( unstained.fcs, columns = fcs.cols.needed )
+
+  if ( needs.scatter ) raw.data.scatter <- fcs.full[ , union( colnames( spectra ), scatter.param ) ]
 
   raw.data <- fcs.full[ , colnames( spectra ) ]
 
@@ -136,7 +141,7 @@ test.af.accuracy <- function(
 
   if ( needs.scatter ) {
     ref.data.scatter <- if ( !is.null( ref.fcs ) ) {
-      readFCS( ref.fcs )[ , union( colnames( spectra ), scatter.param ) ]
+      readFCS( ref.fcs, columns = union( colnames( spectra ), scatter.param ) )
     } else {
       raw.data.scatter   # self-reference; see ref.fcs caveat above
     }

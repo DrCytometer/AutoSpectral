@@ -629,9 +629,9 @@ spectra.standard.workflow.plot <- function(
       }
     }
 
-    mat <- readFCS( fcs.path.i )
-    cols.keep <- intersect( c( scatter.channels, spectral.channels ), colnames( mat ) )
-    mat <- mat[ , cols.keep, drop = FALSE ]
+    probe.cols.i <- colnames( readFCS( fcs.path.i, start.row = 1, end.row = 1 ) )
+    cols.keep    <- intersect( c( scatter.channels, spectral.channels ), probe.cols.i )
+    mat          <- readFCS( fcs.path.i, columns = cols.keep )
 
     spec.present <- intersect( spectral.channels, colnames( mat ) )
     if ( length( spec.present ) > 0 ) {

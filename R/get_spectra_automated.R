@@ -6,7 +6,7 @@
 
 ## Derive ordered spectral channel names from a single FCS file and asp.
 .derive.spectral.channels <- function( fcs.path, asp ) {
-  all.channels         <- colnames( readFCS( fcs.path ) )
+  all.channels         <- colnames( readFCS( fcs.path, start.row = 1, end.row = 1 ) )
   non.spectral.pattern <- paste0( asp$non.spectral.channel, collapse = "|" )
   channels             <- all.channels[ !grepl( non.spectral.pattern, all.channels ) ]
 
@@ -245,9 +245,9 @@
   height.channels <- sub( "-A$", "-H", scatter.channels )
   cols.keep       <- c( scatter.channels, height.channels, spectral.channels )
 
-  mat     <- readFCS( path )
-  present <- intersect( cols.keep, colnames( mat ) )
-  mat     <- mat[ , present, drop = FALSE ]
+  probe.cols <- colnames( readFCS( path, start.row = 1, end.row = 1 ) )
+  present    <- intersect( cols.keep, probe.cols )
+  mat        <- readFCS( path, columns = present )
 
   # -- remove spectral-saturating events
   spec.present <- intersect( spectral.channels, colnames( mat ) )
@@ -585,19 +585,6 @@ get.spectra.automated <- function(
     }
   }
 
-  # read fluorophore FCS files
-  fluor.data <- vector( "list", length( fluor.rows ) )
-  names( fluor.data ) <- fluor.samples
-
-  for ( i in seq_along( fluor.rows ) ) {
-    fcs.path.i        <- file.path( control.dir, fluor.files[ i ] )
-    fluor.data[[ i ]] <- .read.fcs.clean(
-      fcs.path.i, fluor.names[ i ],
-      spectral.channels, scatter.channels, sat.value, singlet.quantiles,
-      remove.doublets, asp, verbose
-    )
-  }
-
   # -- 4. Extract spectrum per fluorophore
   if ( verbose )
     message( "\033[34m-- Extracting spectra --\033[0m" )
@@ -623,7 +610,13 @@ get.spectra.automated <- function(
   for ( i in seq_along( fluor.names ) ) {
     fluor  <- fluor.names[ i ]
     expeak <- fluor.channels[ i ]
-    mat.i  <- fluor.data[[ i ]]
+
+    fcs.path.i <- file.path( control.dir, fluor.files[ i ] )
+    mat.i <- .read.fcs.clean(
+      fcs.path.i, fluor.names[ i ],
+      spectral.channels, scatter.channels, sat.value, singlet.quantiles,
+      remove.doublets, asp, verbose
+    )
 
     spec.i <- intersect( spectral.channels, colnames( mat.i ) )
     scat.i <- intersect( scatter.channels,  colnames( mat.i ) )
@@ -871,9 +864,15 @@ get.spectra.automated <- function(
 
     # expand spectrum back to full spectral.channels vector
     full.spectrum <- stats::setNames( rep( 0, length( spectral.channels ) ),
-                               spectral.channels )
+                                      spectral.channels )
     full.spectrum[ names( spectrum ) ] <- spectrum
     spectra.list[[ i ]] <- full.spectrum
+
+    # free this control's raw event matrix before the next fluorophore --
+    # holding every control in memory at once is otherwise the dominant
+    # memory cost of this function on panels with many fluorophores
+    rm( mat.i, spec.data )
+    if ( i %% 5 == 0 ) gc()
   }
 
   # -- 6. Legacy pipeline refinement for flagged fluorophores

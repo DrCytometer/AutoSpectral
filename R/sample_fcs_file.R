@@ -18,7 +18,7 @@
 
 sample.fcs.file <- function( file.name, control.dir, downsample.n, asp ) {
 
-  ff <- readFCS( file.path( control.dir, file.name ) )[ , asp$default.scatter.parameter ]
+  ff <- readFCS( file.path( control.dir, file.name ), columns = asp$default.scatter.parameter )
 
   event.n <- nrow( ff )
 

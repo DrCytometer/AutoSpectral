@@ -50,7 +50,8 @@ read.channel <- function(
     stop( "duplicated filenames in fcs data", call. = FALSE )
 
   flow.set.channel <- colnames(
-    readFCS( file.path( control.dir, control.table$filename[ 1 ] ) ) )
+    readFCS( file.path( control.dir, control.table$filename[ 1 ] ), start.row = 1, end.row = 1 )
+  )
 
   # correct channel names
   flow.set.channel.corrected <- flow.set.channel

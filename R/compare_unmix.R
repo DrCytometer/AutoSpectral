@@ -175,8 +175,10 @@ compare.unmix <- function(
   asp <- get.autospectral.param( cytometer )
 
   # --- read FCS files ---
-  ss.expr.data <- readFCS( single.stained.fcs )
-  un.expr.data <- readFCS( unstained.fcs )
+  fcs.cols.needed <- union( colnames( spectra ), asp$default.scatter.parameter )
+  ss.probe.cols   <- colnames( readFCS( single.stained.fcs, start.row = 1, end.row = 1 ) )
+  ss.expr.data    <- readFCS( single.stained.fcs, columns = intersect( fcs.cols.needed, ss.probe.cols ) )
+  un.expr.data    <- readFCS( unstained.fcs, columns = fcs.cols.needed )
 
   # check that spectral channels are present in FCS
   missing.channels <- setdiff( colnames( spectra ), colnames( ss.expr.data ) )

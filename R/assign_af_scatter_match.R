@@ -112,14 +112,18 @@ assign.af.scatter.match <- function(
   # 1. Input ingestion: accept file paths or pre-loaded matrices
   # ---------------------------------------------------------------------------
 
+  fcs.cols.needed <- union( scatter.param, colnames( spectra ) )
+
   if ( is.character( test.data ) ) {
     if ( verbose ) message( "Reading test FCS: ", test.data )
-    test.data <- readFCS( test.data )
+    probe.cols <- colnames( readFCS( test.data, start.row = 1, end.row = 1 ) )
+    test.data  <- readFCS( test.data, columns = intersect( fcs.cols.needed, probe.cols ) )
   }
 
   if ( is.character( ref.data ) ) {
     if ( verbose ) message( "Reading reference FCS: ", ref.data )
-    ref.data <- readFCS( ref.data )
+    probe.cols <- colnames( readFCS( ref.data, start.row = 1, end.row = 1 ) )
+    ref.data   <- readFCS( ref.data, columns = intersect( fcs.cols.needed, probe.cols ) )
   }
 
   test.data <- as.matrix( test.data )
@@ -411,8 +415,9 @@ benchmark.af.scatter.match <- function(
 ) {
 
   # ---- Load data if paths ----
-  if ( is.character( test.data ) ) test.data <- readFCS( test.data )
-  if ( is.character( ref.data  ) ) ref.data  <- readFCS( ref.data  )
+  fcs.cols.needed <- union( scatter.param, colnames( spectra ) )
+  if ( is.character( test.data ) ) test.data <- readFCS( test.data, columns = fcs.cols.needed )
+  if ( is.character( ref.data  ) ) ref.data  <- readFCS( ref.data,  columns = fcs.cols.needed )
   test.data <- as.matrix( test.data )
 
   spectral.cols <- colnames( spectra )

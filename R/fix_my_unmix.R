@@ -398,8 +398,7 @@ fix.my.unmix <- function(
     if ( verbose )
       message( sprintf( "\033[34mReading %s.\033[0m", label ) )
 
-    ff <- readFCS( file.name )
-    expr.data <- ff[ , flow.control$scatter.and.channel.spectral ]
+    expr.data <- readFCS( file.name, columns = flow.control$scatter.and.channel.spectral )
     gate.data <- expr.data[ , flow.control$scatter.parameter ]
 
     if ( is.null( gate.polygon ) )

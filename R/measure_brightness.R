@@ -81,7 +81,10 @@ get.brightness.automated <- function(
   read.unstained <- function( uf ) {
     if ( !is.null( unstained.cache[[ uf ]] ) ) return( unstained.cache[[ uf ]] )
     uf.path <- file.path( control.dir, uf )
-    mat <- if ( file.exists( uf.path ) ) readFCS( uf.path ) else NULL
+    # every peak channel looked up below is a column of `spectra`, so this
+    # is always a sufficient set regardless of which fluorophore's channel
+    # triggers the first read of a given negative file
+    mat <- if ( file.exists( uf.path ) ) readFCS( uf.path, columns = colnames( spectra ) ) else NULL
     unstained.cache[[ uf ]] <- mat
     mat
   }
@@ -94,12 +97,14 @@ get.brightness.automated <- function(
       {
         channel <- colnames( spectra )[ which.max( spectra[ fluor, ] ) ]
 
-        stained <- readFCS( file.path( control.dir, fluor.files[[ fluor ]] ) )
+        stained.path <- file.path( control.dir, fluor.files[[ fluor ]] )
+        probe.cols   <- colnames( readFCS( stained.path, start.row = 1, end.row = 1 ) )
 
-        if ( !channel %in% colnames( stained ) )
+        if ( !channel %in% probe.cols )
           stop( "Channel '", channel, "' not found in ", fluor.files[[ fluor ]] )
 
-        expr  <- stained[ , channel ]
+        stained <- readFCS( stained.path, columns = channel )
+        expr    <- stained[ , channel ]
         top.n <- min( n.cells, length( expr ) )
 
         if ( top.n < n.cells )

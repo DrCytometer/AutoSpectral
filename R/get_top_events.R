@@ -18,11 +18,13 @@
 #'
 
 get.top.events <- function( fcs.path, channel, n = 2000, scatter.param ) {
-  mat <- readFCS( fcs.path, return.keywords = FALSE )
+  probe.cols <- colnames( readFCS( fcs.path, start.row = 1, end.row = 1 ) )
 
   # Check if channel exists
-  if ( !channel %in% colnames( mat ) ) return( NULL )
-  if ( !all( scatter.param %in% colnames( mat ) ) ) return( NULL )
+  if ( !channel %in% probe.cols ) return( NULL )
+  if ( !all( scatter.param %in% probe.cols ) ) return( NULL )
+
+  mat <- readFCS( fcs.path, return.keywords = FALSE, columns = c( channel, scatter.param ) )
 
   # Order by the specific channel descending
   ord <- order( mat[ , channel ], decreasing = TRUE )

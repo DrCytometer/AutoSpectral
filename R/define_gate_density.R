@@ -228,8 +228,9 @@ define.gate.density <- function(
     # read in scatter data
     scatter.data <- readFCS(
       file.path( control.dir, f ),
-      return.keywords = FALSE
-    )[ , c( fsc.channel, ssc.channel ) ]
+      return.keywords = FALSE,
+      columns = c( fsc.channel, ssc.channel )
+    )
 
     event.n <- nrow( scatter.data )
 

@@ -99,9 +99,9 @@
   height.channels <- sub( "-A$", "-H", scatter.channels )
   cols.keep       <- c( scatter.channels, height.channels, spectral.channels )
 
-  mat     <- readFCS( path )
-  present <- intersect( cols.keep, colnames( mat ) )
-  mat     <- mat[ , present, drop = FALSE ]
+  probe.cols <- colnames( readFCS( path, start.row = 1, end.row = 1 ) )
+  present    <- intersect( cols.keep, probe.cols )
+  mat        <- readFCS( path, columns = present )
 
   spec.present <- intersect( spectral.channels, colnames( mat ) )
   if ( length( spec.present ) > 0 ) {

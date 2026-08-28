@@ -118,7 +118,7 @@ compare.af <- function(
 
   # ---- read FCS and subset to spectral columns -------------------------------
 
-  raw.data <- readFCS( unstained.fcs )[ , colnames( spectra ) ]
+  raw.data <- readFCS( unstained.fcs, columns = colnames( spectra ) )
 
   # ---- downsample ------------------------------------------------------------
 

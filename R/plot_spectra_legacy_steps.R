@@ -457,8 +457,11 @@ spectra.legacy.steps.plot <- function(
     gate.name.i <- ctrl.tbl.gated$gate.name[ ctrl.tbl.gated$sample == samp.i ][ 1L ]
 
     # -- A. Automated scatter gate (re-derived; see .resolve.legacy.gate())
-    raw.mat.i <- readFCS( file.path( control.dir, fluor.file ) )
-    spec.present.i <- intersect( flow.control$spectral.channel, colnames( raw.mat.i ) )
+    fluor.file.path <- file.path( control.dir, fluor.file )
+    probe.cols.i    <- colnames( readFCS( fluor.file.path, start.row = 1, end.row = 1 ) )
+    cols.keep.i     <- intersect( c( scatter.channels, flow.control$spectral.channel ), probe.cols.i )
+    raw.mat.i       <- readFCS( fluor.file.path, columns = cols.keep.i )
+    spec.present.i  <- intersect( flow.control$spectral.channel, colnames( raw.mat.i ) )
     if ( length( spec.present.i ) > 0 )
       raw.mat.i <- raw.mat.i[
         rowSums( raw.mat.i[ , spec.present.i, drop = FALSE ] >= sat.value ) == 0, , drop = FALSE

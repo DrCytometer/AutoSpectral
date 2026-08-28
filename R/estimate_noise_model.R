@@ -127,7 +127,8 @@ estimate.noise.model <- function(
 
   if ( is.character( raw.data ) ) {
     if ( verbose ) message( "Reading FCS file: ", raw.data )
-    raw.data <- readFCS( raw.data )
+    probe.cols <- colnames( readFCS( raw.data, start.row = 1, end.row = 1 ) )
+    raw.data   <- readFCS( raw.data, columns = intersect( colnames( spectra ), probe.cols ) )
   }
   raw.data <- as.matrix( raw.data )
 
@@ -169,7 +170,7 @@ estimate.noise.model <- function(
 
       if ( is.character( af.raw.data ) ) {
         if ( verbose ) message( "Reading FCS file for AF basis: ", af.raw.data )
-        af.raw.data <- readFCS( af.raw.data )
+        af.raw.data <- readFCS( af.raw.data, columns = det.names )
       }
       af.events <- as.matrix( af.raw.data )[ , det.names, drop = FALSE ]
 

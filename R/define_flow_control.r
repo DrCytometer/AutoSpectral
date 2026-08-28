@@ -218,7 +218,9 @@ define.flow.control <- function(
   flow.scatter.parameter <- read.scatter.parameter( asp )
 
   # set scatter parameters and channels
-  all.channels <- colnames(readFCS(file.path(control.dir, control.table$filename[1])))
+  all.channels <- colnames(
+    readFCS( file.path( control.dir, control.table$filename[ 1 ] ), start.row = 1, end.row = 1 )
+  )
   flow.scatter.and.channel <- c(
     asp$default.time.parameter,
     flow.scatter.parameter,
@@ -353,8 +355,7 @@ define.flow.control <- function(
       exports,
       parallel = parallel,
       threads = threads,
-      export.env = environment(),
-      allow.mclapply.mac = TRUE
+      export.env = environment()
     )
     lapply.function <- result$lapply
   } else {

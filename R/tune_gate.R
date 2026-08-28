@@ -17,7 +17,7 @@
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous element_blank
 #' @importFrom ggplot2 theme_bw theme element_line geom_path after_stat coord_cartesian
 #' @importFrom ggplot2 element_text element_rect margin expansion ggsave labs
-#' @importFrom ggplot2 scale_fill_viridis_d geom_contour_filled scale_fill_manual
+#' @importFrom ggplot2 scale_fill_viridis_d geom_polygon scale_fill_manual
 #' @importFrom scattermore geom_scattermore
 #' @importFrom MASS kde2d
 #'
@@ -190,8 +190,9 @@ tune.gate <- function(
     # read in scatter data
     scatter.data <- readFCS(
       file.path( control.dir, f ),
-      return.keywords = FALSE
-    )[ , c( fsc.channel, ssc.channel ) ]
+      return.keywords = FALSE,
+      columns = c( fsc.channel, ssc.channel )
+    )
 
     # set seed and sample
     if ( nrow( scatter.data ) > max.event.n ) {
@@ -286,16 +287,18 @@ tune.gate <- function(
     )
   })
 
-  # format the density for plotting
-  density.df <- data.frame( expand.grid(
-    x = gate.bound.density$x,
-    y = gate.bound.density$y
-  ) )
-  density.df$z <- as.vector( gate.bound.density$z )
-  density.df <- density.df[ !is.na( density.df$z ), ]
-  density.df <- density.df[ !duplicated( density.df[ , c( "x", "y" ) ] ), ]
-  max.z <- max( density.df$z, na.rm = TRUE )
+  # isoband directly on the grid
+  z.grid <- gate.bound.density$z
+  z.grid[ is.na( z.grid ) ] <- 0
+  max.z <- max( z.grid )
   density.breaks <- seq( 0.05 * max.z, max.z, length.out = 11 )
+
+  contour.polygons <- .contour.polygons.from.grid(
+    x      = gate.bound.density$x,
+    y      = gate.bound.density$y,
+    z      = z.grid,
+    breaks = density.breaks
+  )
 
   # convert points to data frame for plotting
   gate.data.ggp <- data.frame(
@@ -321,27 +324,30 @@ tune.gate <- function(
       color = "black",
       alpha = 1,
       na.rm = TRUE
-    ) +
-    geom_contour_filled(
-      data = density.df,
-      aes( x = x, y = y, z = z ),
-      breaks = density.breaks,
-      alpha = 1,
-      inherit.aes = FALSE,
-      na.rm = TRUE
-    ) +
+    )
+
+  if ( !is.null( contour.polygons ) ) {
+    base.plot <- base.plot +
+      geom_polygon(
+        data = contour.polygons,
+        aes( x = x, y = y, group = level, subgroup = subgroup, fill = level ),
+        alpha = 1,
+        inherit.aes = FALSE,
+        na.rm = TRUE
+      )
+  }
+
+  base.plot <- base.plot +
     scale_x_continuous(
       name = x.lab,
       breaks = x.breaks,
       labels = x.labels,
-      #limits = x.limits,
       expand = expansion( asp$figure.gate.scale.expand )
     ) +
     scale_y_continuous(
       name = y.lab,
       breaks = y.breaks,
       labels = y.labels,
-      #limits = y.limits,
       expand = expansion( asp$figure.gate.scale.expand )
     ) +
     coord_cartesian( xlim = x.limits, ylim = y.limits ) +

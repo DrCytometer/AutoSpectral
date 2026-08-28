@@ -47,8 +47,11 @@ get.gated.flow.expression.data <- function(
   # read in the FCS file
   flow.file <- file.name[ samp ]
 
-  # read exprs for scatter and spectral channels only
-  expr.data <- readFCS( file.path( control.dir, flow.file ) )[ , scatter.and.spectral.channel ]
+  # read only the channels needed downstream
+  expr.data <- readFCS(
+    file.path( control.dir, flow.file ),
+    columns = scatter.and.spectral.channel
+  )
 
   # remove any out-of-range events
   below.resolution.limit <- apply(

@@ -57,6 +57,12 @@
 #' @param af.pcs Named list of autofluorescence-defining principal component
 #'   matrices, one per unique unstained FCS file. Names are FCS filenames
 #'   matching entries in \code{universal.negative}.
+#' @param neg.cache Optional named list, one entry per unique unstained FCS
+#'   file (names are filenames), each holding `$spectral` and `$scatter`
+#'   matrices already read from disk. Built once in `get.spectral.variants()`
+#'   and reused across all fluorophores sharing the same negative, avoiding a
+#'   repeat disk read/decode per fluorophore. Default `NULL` falls back to
+#'   reading `universal.negative[fluor]` directly.
 #' @param use.unmixed Logical, default \code{TRUE}. Whether to unmix
 #'   background-corrected positive events against the full \code{spectra}
 #'   matrix and use that unmixed-space projection for positivity selection,
@@ -145,6 +151,7 @@ get.fluor.variants <- function(
     unmixed.thresholds,
     flow.channel,
     af.pcs,
+    neg.cache          = NULL,
     use.unmixed        = TRUE,
     n.cells            = 10000L,
     som.dim            = 10L,
@@ -169,7 +176,10 @@ get.fluor.variants <- function(
   orig.vec <- as.numeric( original.spectrum )
   af.collinear <- FALSE
 
-  pos.data <- readFCS( file.path( control.dir, file.name[ fluor ] ) )
+  pos.data <- readFCS(
+    file.path( control.dir, file.name[ fluor ] ),
+    columns = union( spectral.channel, scatter.channel )
+  )
   # remove saturated events
   keep <- rowSums( pos.data[ , spectral.channel ] >= asp$expr.data.max ) == 0
   pos.spectral <- pos.data[ keep, spectral.channel ]
@@ -242,8 +252,15 @@ get.fluor.variants <- function(
     grepl( "\\.fcs$", universal.negative[ fluor ], ignore.case = TRUE )
 
   if ( is.valid.file ) {
-    neg.path    <- file.path( control.dir, universal.negative[ fluor ] )
-    neg.data    <- readFCS( neg.path )
+    neg.file <- universal.negative[ fluor ]
+
+    if ( !is.null( neg.cache ) && neg.file %in% names( neg.cache ) ) {
+      neg.data <- cbind( neg.cache[[ neg.file ]]$spectral, neg.cache[[ neg.file ]]$scatter )
+    } else {
+      neg.path <- file.path( control.dir, neg.file )
+      neg.data <- readFCS( neg.path, columns = union( spectral.channel, scatter.channel ) )
+    }
+
     # remove saturated events
     keep <- rowSums( neg.data[ , spectral.channel ] >= asp$expr.data.max ) == 0
     neg.spectral <- neg.data[ keep, spectral.channel ]
