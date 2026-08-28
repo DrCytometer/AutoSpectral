@@ -39,6 +39,7 @@ utils::globalVariables(
      "Brightness",
      "CosineSim",
      "n",
-     "Gate"
+     "Gate",
+     "subgroup"
   )
 )
