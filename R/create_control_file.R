@@ -132,7 +132,9 @@ create.control.file <- function(
     base.detectors <- cytometers$CytoStellar
     base.detectors <- base.detectors[ !is.na( base.detectors ) & base.detectors != "" ]
 
-    first.fcs.channels <- colnames( readFCS( file.path( control.dir, control.files[ 1 ] ) ) )
+    first.fcs.channels <- colnames(
+      readFCS( file.path( control.dir, control.files[ 1 ] ), start.row = 1, end.row = 1 )
+    )
     suffix <- .resolve.cytostellar.suffix( first.fcs.channels, base.detectors )
 
     detectors <- stats::setNames(
