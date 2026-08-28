@@ -4,8 +4,8 @@
 #'
 #' @description
 #' Extracts autofluorescence spectra from an unstained sample. Intended for use
-#' with `unmix.autospectral`. Uses FlowSOM (EmbedSOM) clustering for rapid
-#' identification of cells with similar AF profiles.
+#' with `unmix.autospectral`. Uses SOM clustering for rapid identification of
+#' cells with similar AF profiles.
 #'
 #' Optionally deduplicates the resulting spectra by cosine similarity
 #' (`deduplicate = TRUE`, default) to remove near-identical profiles that cause
@@ -470,24 +470,13 @@ get.af.spectra <- function(
 
       som.dim.error <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
 
-      set.seed( asp$bird.seed )
-      if ( requireNamespace( "EmbedSOM", quietly = TRUE ) ) {
-        colnames( spill.ratios ) <- colnames( spectra )
-        map.error <- EmbedSOM::SOM(
-          spill.ratios,
-          xdim = som.dim.error,
-          ydim = som.dim.error,
-          batch = TRUE,
-          parallel = TRUE
-        )
-      } else {
-        map.error <- FlowSOM::SOM(
-          spill.ratios,
-          xdim = som.dim.error,
-          ydim = som.dim.error,
-          silent = TRUE
-        )
-      }
+      colnames( spill.ratios ) <- colnames( spectra )
+      map.error <- get.som.codes(
+        data    = spill.ratios,
+        som.dim = som.dim.error,
+        seed    = asp$bird.seed,
+        threads = if ( parallel ) threads else 1L
+      )
 
       cluster.ids <- unique( map.error$mapping[ , 1 ] )
 

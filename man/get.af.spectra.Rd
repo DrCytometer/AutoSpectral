@@ -166,8 +166,8 @@ for problem cells.
 }
 \description{
 Extracts autofluorescence spectra from an unstained sample. Intended for use
-with \code{unmix.autospectral}. Uses FlowSOM (EmbedSOM) clustering for rapid
-identification of cells with similar AF profiles.
+with \code{unmix.autospectral}. Uses SOM clustering for rapid identification of
+cells with similar AF profiles.
 
 Optionally deduplicates the resulting spectra by cosine similarity
 (\code{deduplicate = TRUE}, default) to remove near-identical profiles that cause
