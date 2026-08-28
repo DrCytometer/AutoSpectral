@@ -644,13 +644,7 @@ fix.my.unmix <- function(
     # source-positivity split, the abundance bins) is computed once and
     # shared across every channel it might spill into. Per-channel
     # acceptance logic below is unchanged from the scalar loop; only how
-    # `est` is obtained differs. max.truncated.events is deliberately not
-    # passed through: the batched truncated estimator always fits the full
-    # negative-selected population rather than reproducing the bulk
-    # subsample, which its own documentation and a dedicated correctness
-    # check (test_fix_envelope_slope_vectorized.R) establish as equivalent,
-    # not approximate, since the subsampled bulk sits at the origin and
-    # carries no leverage on the slope.
+    # `est` is obtained differs.
     for ( source in fluorophores ) {
 
       channel.set <- setdiff( fluorophores, source )
@@ -680,6 +674,7 @@ fix.my.unmix <- function(
         min.bin.negative      = min.bin.negative,
         spread.addback        = spread.addback,
         anchor.weight         = anchor.weight,
+        max.truncated.events  = max.truncated.events,
         max.coefficient       = max.coefficient,
         max.mask.passes       = max.mask.passes,
         start.slope           = slope.warm[ source, channel.set ],

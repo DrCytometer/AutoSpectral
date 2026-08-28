@@ -26,14 +26,19 @@
 #' the binned envelope estimator -- was never the bottleneck (it runs on
 #' `n.levels.pair` bins, not the full event count) and stays in R.
 #'
-#' Unlike `.fix.envelope.slope()`, the truncated estimator here does not
-#' reproduce the bulk subsample when a target's negative population exceeds
-#' `max.truncated.events`; it always fits the full negative-selected
-#' population. Per that function's own documented rationale, the bulk sits
-#' at the origin and carries no leverage on the slope, so this is expected
-#' to be equivalent, not an approximation -- but it means a target whose
-#' subsample would have triggered will not be bit-identical to
-#' `.fix.envelope.slope()`, only statistically equivalent to it.
+#' Reproduces `select.negative()`'s bulk cap: every bright (source-positive)
+#' event is kept regardless of file size, and the origin-hugging bulk below
+#' the source threshold is subsampled down to `max.truncated.events` events
+#' total once the negative-selected population exceeds it, delegated to
+#' `fix_envelope_truncated_batch_rcpp()`'s own per-target random-number
+#' stream. Each target's stream is seeded independently from R's ambient RNG
+#' (one integer per target, drawn once before the call), so results are
+#' reproducible under `set.seed()` and identical regardless of `n.threads`
+#' -- the subsample a target draws depends only on its own seed, never on
+#' which thread happened to process it. Not bit-identical to
+#' `.fix.envelope.slope()`, which draws its bulk subsample from a single
+#' shared RNG stream advanced pair by pair, but statistically equivalent to
+#' it.
 #'
 #' @param x.source Numeric vector, length `n`, the source fluorophore's
 #'   current compensated abundance.
@@ -50,8 +55,8 @@
 #' @param source.mask Logical vector, length `n`, or `NULL`. Shared across
 #'   every target, since it depends only on the source.
 #' @param quantiles,n.levels,min.events,min.bin.negative,spread.addback,
-#'   anchor.weight,max.coefficient,max.mask.passes,mask.tolerance
-#'   As in `.fix.envelope.slope()`.
+#'   anchor.weight,max.truncated.events,max.coefficient,max.mask.passes,
+#'   mask.tolerance As in `.fix.envelope.slope()`.
 #' @param start.slope Numeric vector, length `m`, per-target warm starts.
 #'   `NULL` starts every target at zero.
 #' @param n.threads Integer, OpenMP threads for
@@ -78,6 +83,7 @@
     min.bin.negative     = 25L,
     spread.addback       = TRUE,
     anchor.weight        = 1,
+    max.truncated.events = 20000L,
     max.coefficient      = 0.2,
     max.mask.passes      = 3L,
     mask.tolerance       = 0.05,
@@ -106,20 +112,27 @@
 
   if ( n < min.events ) return( NULL )
 
+  # One seed per target, drawn from R's ambient RNG stream so the whole
+  # pipeline is reproducible under set.seed() upstream of this call.
+  seed <- sample.int( .Machine$integer.max, m )
+
   if (
     requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
     "fix_envelope_truncated_batch_rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) )
   ) {
     truncated <- AutoSpectralRcpp::fix_envelope_truncated_batch_rcpp(
-      x                = x.source,
-      Y                = X.target,
-      Threshold_target = Threshold.target,
-      start_slope      = start.slope,
-      max_coefficient  = max.coefficient,
-      max_mask_passes  = as.integer( max.mask.passes ),
-      mask_tolerance   = mask.tolerance,
-      min_events       = as.integer( min.events ),
-      n_threads        = as.integer( n.threads ) )
+      x                     = x.source,
+      Y                     = X.target,
+      Threshold_target      = Threshold.target,
+      threshold_source      = threshold.source,
+      start_slope           = start.slope,
+      seed                  = as.integer( seed ),
+      max_coefficient       = max.coefficient,
+      max_mask_passes       = as.integer( max.mask.passes ),
+      mask_tolerance        = mask.tolerance,
+      min_events            = as.integer( min.events ),
+      max_truncated_events  = as.integer( max.truncated.events ),
+      n_threads             = as.integer( n.threads ) )
   } else {
     stop( "Install AutoSpectralRcpp" )
   }
