@@ -122,12 +122,29 @@ gate.define.plot <- function(
   x.lab <- names( which( scatter.and.channel.label == gate.marker[ 1 ] ) )
   y.lab <- names( which( scatter.and.channel.label == gate.marker[ 2 ] ) )
 
-  # create axes labels
-  x.limits <- c( asp$scatter.data.min.x, asp$scatter.data.max.x )
-  x.breaks <- seq( asp$scatter.data.min.x, asp$scatter.data.max.x, asp$data.step )
+  # create axes labels; prefer the occupied range computed for this gate
+  # (gate.bound$x.low/x.high/y.low/y.high) over the cytometer's full sanity
+  # range, so the plot isn't dominated by empty space when the detector's
+  # theoretical range is much larger than what the sample occupies
+  if ( !is.null( gate.bound ) ) {
+    x.axis.min <- gate.bound$x.low
+    x.axis.max <- gate.bound$x.high
+    y.axis.min <- gate.bound$y.low
+    y.axis.max <- gate.bound$y.high
+  } else {
+    x.axis.min <- asp$scatter.data.min.x
+    x.axis.max <- asp$scatter.data.max.x
+    y.axis.min <- asp$scatter.data.min.y
+    y.axis.max <- asp$scatter.data.max.y
+  }
+
+  x.limits <- c( x.axis.min, x.axis.max )
+  x.breaks <- pretty( x.limits, n = 6 )
+  x.breaks <- x.breaks[ x.breaks >= x.axis.min & x.breaks <= x.axis.max ]
   x.labels <- paste0( round( x.breaks / 1e6, 1 ), "e6" )
-  y.limits <- c( asp$scatter.data.min.y, asp$scatter.data.max.y )
-  y.breaks <- seq( asp$scatter.data.min.y, asp$scatter.data.max.y, asp$data.step )
+  y.limits <- c( y.axis.min, y.axis.max )
+  y.breaks <- pretty( y.limits, n = 6 )
+  y.breaks <- y.breaks[ y.breaks >= y.axis.min & y.breaks <= y.axis.max ]
   y.labels <- paste0( round( y.breaks / 1e6, 1 ), "e6" )
 
   # set up the plot

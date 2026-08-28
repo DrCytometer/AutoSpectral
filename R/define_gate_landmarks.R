@@ -286,15 +286,21 @@ define.gate.landmarks <- function(
 
   gate.population <- list( boundary = gate.boundary )
 
-  # format regions for plotting
+  # format regions for plotting; use the actual occupied range of the pooled
+  # landmark events, capped by the cytometer's sanity limits, so the plot
+  # isn't dominated by empty space when the detector's theoretical range is
+  # much larger than what any sample occupies
+  x.range <- range( pooled.scatter.data[ , fsc.channel ] )
+  y.range <- range( pooled.scatter.data[ , ssc.channel ] )
+
   gate.bound <- list(
     density = dens,
     voronoi = NULL,
     density.max = NULL,
-    x.low = asp$scatter.data.min.x,
-    x.high = asp$scatter.data.max.x,
-    y.low = asp$scatter.data.min.y,
-    y.high = asp$scatter.data.max.y
+    x.low = max( asp$scatter.data.min.x, x.range[ 1 ] ),
+    x.high = min( asp$scatter.data.max.x, x.range[ 2 ] ),
+    y.low = max( asp$scatter.data.min.y, y.range[ 1 ] ),
+    y.high = min( asp$scatter.data.max.y, y.range[ 2 ] )
   )
 
   # plotting

@@ -139,6 +139,11 @@ get.autospectral.param.minimal <- function() {
       gate.data.trim.factor.y.min.cells = 0.01,
       gate.data.trim.factor.y.max.cells = 0.99,
 
+      scatter.occupancy.density.threshold.cells = 0.02,
+      scatter.occupancy.grid.n.cells = 128,
+      scatter.occupancy.max.events.cells = 1e5,
+      scatter.occupancy.trim.quantile.cells = 0.001,
+
       gate.bound.density.bw.factor.cells = 1.0,
       gate.bound.density.grid.n.cells = 100,
       gate.bound.density.neigh.size.cells = 3,
@@ -170,6 +175,11 @@ get.autospectral.param.minimal <- function() {
       gate.data.trim.factor.x.max.beads = 0.99,
       gate.data.trim.factor.y.min.beads = 0.01,
       gate.data.trim.factor.y.max.beads = 0.99,
+
+      scatter.occupancy.density.threshold.beads = 0.02,
+      scatter.occupancy.grid.n.beads = 128,
+      scatter.occupancy.max.events.beads = 1e5,
+      scatter.occupancy.trim.quantile.beads = 0.001,
 
       gate.bound.density.bw.factor.beads = 6.0,
       gate.bound.density.grid.n.beads = 100,

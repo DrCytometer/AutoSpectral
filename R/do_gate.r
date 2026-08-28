@@ -8,12 +8,22 @@
 #'
 #' The gating proceeds in three steps:
 #'
-#' - Defines bounds by data trimming
+#' - Defines bounds from the region of scatter space the data actually
+#' occupies, then trims those bounds further
 #' - Defines a region around the target maximum found within the bounds
 #' - Defines a gate around the target maximum, only within that region
 #'
 #' The method uses numerical search of maxima over estimated densities and
 #' Voronoi tessellations to improve density estimation around maxima.
+#'
+#' When `region.auto` is `TRUE` in the relevant `default.gate.param.cells` /
+#' `default.gate.param.beads` entry (the default), the bounds are computed
+#' with [get.scatter.occupancy()], a density-relative method that is robust
+#' to a handful of extreme events and to cytometers with a much larger
+#' theoretical scatter range than any one sample occupies.
+#' `scatter.data.min.x` / `scatter.data.max.x` / `scatter.data.min.y` /
+#' `scatter.data.max.y` still apply as an outer sanity ceiling, and become the
+#' working bounds again if `region.auto` is set to `FALSE`.
 #'
 #' @importFrom MASS kde2d bandwidth.nrd
 #' @importFrom tripack tri.mesh convex.hull
@@ -35,6 +45,8 @@
 #' @param max.points Number of points to plot (speeds up plotting). Default is
 #' `5e4`.
 #' @param gate.color Color to plot the gate boundary line, default is `darkgoldenrod1`.
+#'
+#' @seealso [get.scatter.occupancy()]
 #'
 #' @return A set of points describing the gate boundary.
 #'
@@ -68,11 +80,33 @@ do.gate <- function(
   gate.region <- NULL
   gate.boundary <- NULL
 
-  # trim data to cytometer's limits
-  gate.data.x.min <- max( asp$scatter.data.min.x, min( gate.data[ , 1 ] ) )
-  gate.data.x.max <- min( asp$scatter.data.max.x, max( gate.data[ , 1 ] ) )
-  gate.data.y.min <- max( asp$scatter.data.min.y, min( gate.data[ , 2 ] ) )
-  gate.data.y.max <- min( asp$scatter.data.max.y, max( gate.data[ , 2 ] ) )
+  region.auto <- isTRUE( p$default.gate.param$region.auto )
+
+  if ( region.auto ) {
+    occupancy <- get.scatter.occupancy(
+      gate.data,
+      density.threshold = p$scatter.occupancy.density.threshold,
+      grid.n             = p$scatter.occupancy.grid.n,
+      max.events          = p$scatter.occupancy.max.events,
+      trim.quantile       = p$scatter.occupancy.trim.quantile,
+      bird.seed           = asp$bird.seed
+    )
+    data.x.range   <- occupancy$x.range
+    data.y.range   <- occupancy$y.range
+    occupancy.keep <- occupancy$keep
+  } else {
+    data.x.range   <- range( gate.data[ , 1 ] )
+    data.y.range   <- range( gate.data[ , 2 ] )
+    occupancy.keep <- rep( TRUE, nrow( gate.data ) )
+  }
+
+  # trim data to cytometer's limits (an outer sanity ceiling; the working
+  # range now comes from where events are actually dense, not from this
+  # fixed bound)
+  gate.data.x.min <- max( asp$scatter.data.min.x, data.x.range[ 1 ] )
+  gate.data.x.max <- min( asp$scatter.data.max.x, data.x.range[ 2 ] )
+  gate.data.y.min <- max( asp$scatter.data.min.y, data.y.range[ 1 ] )
+  gate.data.y.max <- min( asp$scatter.data.max.y, data.y.range[ 2 ] )
 
   # trim the boundary limits (usually by 5%)
   gate.bound.x.low <- ( 1 - p$gate.data.trim.factor.x.min ) * gate.data.x.min +
@@ -86,7 +120,8 @@ do.gate <- function(
 
   lims <- c(gate.data.x.min, gate.data.x.max, gate.data.y.min, gate.data.y.max)
   gate.bound.data.idx <- which(
-    gate.data[,1] > lims[1] & gate.data[,1] < lims[2] &
+    occupancy.keep &
+      gate.data[,1] > lims[1] & gate.data[,1] < lims[2] &
       gate.data[,2] > lims[3] & gate.data[,2] < lims[4]
   )
 

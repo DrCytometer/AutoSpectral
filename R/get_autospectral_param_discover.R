@@ -22,16 +22,17 @@ get.autospectral.param.discover <- function( autosp.param )
   # add cytometer-specific parameters
   autosp.param$cytometer <- "FACSDiscover"
 
+  # Outer sanity ceiling only -- do.gate()/define.gate.landmarks() now derive
+  # the actual working range from get.scatter.occupancy(), so this no longer
+  # needs to be tuned tightly to what a given experiment occupies. It still
+  # matters as a hard backstop (e.g. against corrupted/saturated events) and
+  # as the fallback range if region.auto is turned off.
   autosp.param$scatter.data.min.x <- 0
-
-  autosp.param$scatter.data.max.x <- 5e7
-
+  autosp.param$scatter.data.max.x <- 20e7
   autosp.param$scatter.data.min.y <- 0
-
-  autosp.param$scatter.data.max.y <- 5e7
+  autosp.param$scatter.data.max.y <- 20e7
 
   autosp.param$expr.data.min <- -111
-
   autosp.param$expr.data.max <- 24140237
 
   autosp.param$default.scatter.parameter <- c( "FSC-A", "SSC (Violet)-A" )

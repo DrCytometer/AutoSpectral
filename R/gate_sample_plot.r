@@ -73,10 +73,22 @@ gate.sample.plot <- function(
   # 2. Axis geometry (computed once, reused by raster + contours + scales)
   # ---------------------------------------------------------------------------
 
-  x.limits <- c( asp$scatter.data.min.x, asp$scatter.data.max.x )
-  y.limits <- c( asp$scatter.data.min.y, asp$scatter.data.max.y )
-  x.breaks <- seq( asp$scatter.data.min.x, asp$scatter.data.max.x, asp$data.step )
-  y.breaks <- seq( asp$scatter.data.min.y, asp$scatter.data.max.y, asp$data.step )
+  # use the range this sample's events actually occupy (density-relative,
+  # robust to a handful of extreme events) rather than the cytometer's full
+  # sanity range, so the plot isn't dominated by empty space
+  occupancy <- get.scatter.occupancy( gate.data, bird.seed = asp$bird.seed )
+
+  x.axis.min <- max( asp$scatter.data.min.x, occupancy$x.range[ 1 ] )
+  x.axis.max <- min( asp$scatter.data.max.x, occupancy$x.range[ 2 ] )
+  y.axis.min <- max( asp$scatter.data.min.y, occupancy$y.range[ 1 ] )
+  y.axis.max <- min( asp$scatter.data.max.y, occupancy$y.range[ 2 ] )
+
+  x.limits <- c( x.axis.min, x.axis.max )
+  y.limits <- c( y.axis.min, y.axis.max )
+  x.breaks <- pretty( x.limits, n = 6 )
+  x.breaks <- x.breaks[ x.breaks >= x.axis.min & x.breaks <= x.axis.max ]
+  y.breaks <- pretty( y.limits, n = 6 )
+  y.breaks <- y.breaks[ y.breaks >= y.axis.min & y.breaks <= y.axis.max ]
   x.labels <- paste0( round( x.breaks / 1e6, 1 ), "e6" )
   y.labels <- paste0( round( y.breaks / 1e6, 1 ), "e6" )
 
