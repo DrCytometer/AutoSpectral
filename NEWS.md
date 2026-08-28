@@ -1,4 +1,4 @@
-# AutoSpectral 1.7.2 (2026-08-26)
+# AutoSpectral 1.8.0 (2026-08-26)
 
 ## New Features
 
@@ -14,11 +14,17 @@ plus `clean.controls()` plus `get.fluorophore.spectra()`. You will still need an
 unstained cell control or controls for autofluorescence extraction via
 `get.af.spectra()` and also in `get.spectral.variants()`, but that only applies
 if you are using the AutoSpectral unmixing functions as opposed to OLS or WLS.
+- When calling `create.control.file()`, you can now specify the location where
+the CSV file will be written using `output.dir`.
 
 
 ## Improvements
 - Faster FCS reading and unmixing thanks to improvements to the AutoSpectralRcpp
 backend suggested by Paul Heisig.
+- Better memory handling throughout using restricted reading of only the needed
+parts of FCS files, removing redundant reads.
+- Faster plotting by reducing redundant density/contour calculations.
+- Faster plotting by side-stepping `ggsave` and using `fast` in `ragg`.
 
 ## Bug fixes
 - Many small things.

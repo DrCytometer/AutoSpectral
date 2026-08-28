@@ -1,7 +1,7 @@
 Package: AutoSpectral
 Type: Package
 Title: Tools for Unmixing Spectral Flow Cytometry Data
-Version: 1.7.2
+Version: 1.8.0
 Authors@R: c(
     person(
       "Oliver", "Burton",
@@ -47,10 +47,10 @@ Imports:
     cowplot,
     patchwork,
     viridis,
-    hexbin
+    hexbin,
+    isoband
 Suggests: 
-    AutoSpectralRcpp (>= 1.1.0),
-    EmbedSOM
+    AutoSpectralRcpp (>= 1.3.0)
 Remotes:
     bioc::FlowSOM,
     bioc::flowWorkspace,
