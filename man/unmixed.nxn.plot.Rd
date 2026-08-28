@@ -19,6 +19,9 @@ unmixed.nxn.plot(
   hex.bins = 64,
   color.palette = "viridis",
   hist.fill = "steelblue",
+  file.type = "jpg",
+  dpi = 150,
+  max.canvas.px = 20000,
   output.dir = "."
 )
 }
@@ -71,12 +74,28 @@ scatter panels. Default \code{"viridis"}.}
 \item{hist.fill}{Character string. Fill color for the diagonal histogram
 bars. Default \code{"steelblue"}.}
 
-\item{output.dir}{Character string. Directory for the output PDF. Created
+\item{file.type}{Character string specifying the output file format. One
+of \code{"jpg"} (default), \code{"tiff"}, \code{"png"}, or \code{"pdf"}. Raster formats are
+strongly recommended here: for large channel counts the triangle holds
+hundreds to thousands of panels, and a vector \code{"pdf"} records every
+hexagon/point as a separate drawn object, making it extremely slow to
+render and write.}
+
+\item{dpi}{Numeric. Resolution in dots per inch for raster \code{file.type}
+values. Ignored for \code{"pdf"}. Default \code{150}.}
+
+\item{max.canvas.px}{Numeric. Safety cap on the predicted raster width/
+height in pixels (\code{n * biplot.size * dpi}). If the requested combination
+would exceed this, \code{dpi} is automatically reduced (with a warning) rather
+than attempting to allocate an oversized raster. Ignored for \code{"pdf"}.
+Default \code{20000}.}
+
+\item{output.dir}{Character string. Directory for the output file. Created
 automatically if absent. Default \code{"."}.}
 }
 \value{
 The combined \code{\link[cowplot:plot_grid]{cowplot::plot_grid()}} object is returned invisibly.
-The PDF is always written to \code{output.dir}.
+The figure is always written to \code{output.dir}.
 }
 \description{
 Produces a lower-triangular grid of scatter biplots for every pair of

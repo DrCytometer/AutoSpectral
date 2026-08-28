@@ -21,6 +21,7 @@ get.fluor.variants(
   unmixed.thresholds,
   flow.channel,
   af.pcs,
+  neg.cache = NULL,
   use.unmixed = TRUE,
   n.cells = 10000L,
   som.dim = 10L,
@@ -85,6 +86,13 @@ one per fluorophore.}
 \item{af.pcs}{Named list of autofluorescence-defining principal component
 matrices, one per unique unstained FCS file. Names are FCS filenames
 matching entries in \code{universal.negative}.}
+
+\item{neg.cache}{Optional named list, one entry per unique unstained FCS
+file (names are filenames), each holding \verb{$spectral} and \verb{$scatter}
+matrices already read from disk. Built once in \code{get.spectral.variants()}
+and reused across all fluorophores sharing the same negative, avoiding a
+repeat disk read/decode per fluorophore. Default \code{NULL} falls back to
+reading \code{universal.negative[fluor]} directly.}
 
 \item{use.unmixed}{Logical, default \code{TRUE}. Whether to unmix
 background-corrected positive events against the full \code{spectra}

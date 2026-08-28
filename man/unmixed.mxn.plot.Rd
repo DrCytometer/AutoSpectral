@@ -20,6 +20,9 @@ unmixed.mxn.plot(
   use.hex = TRUE,
   hex.bins = 64,
   color.palette = "viridis",
+  file.type = "jpg",
+  dpi = 150,
+  max.canvas.px = 20000,
   output.dir = "."
 )
 }
@@ -76,12 +79,26 @@ Ignored when \code{use.hex = FALSE}. Default \code{64}.}
 \code{"turbo"}) or \code{"rainbow"} to use the package default gradient. Default
 \code{"viridis"}.}
 
-\item{output.dir}{Character string. Directory for the output PDF. Created
+\item{file.type}{Character string specifying the output file format. One
+of \code{"jpg"} (default), \code{"tiff"}, \code{"png"}, or \code{"pdf"}. Raster formats are
+strongly recommended: a vector \code{"pdf"} records every hexagon/point as a
+separate drawn object and becomes very slow and large as panel count
+grows.}
+
+\item{dpi}{Numeric. Resolution in dots per inch for raster \code{file.type}
+values. Ignored for \code{"pdf"}. Default \code{150}.}
+
+\item{max.canvas.px}{Numeric. Safety cap on the predicted raster edge in
+pixels. If \code{n.col}, \code{biplot.size}, and \code{dpi} would exceed this, \code{dpi} is
+automatically reduced (with a warning). Ignored for \code{"pdf"}. Default
+\code{20000}.}
+
+\item{output.dir}{Character string. Directory for the output file. Created
 automatically if absent. Default \code{"."}.}
 }
 \value{
 The combined \code{\link[cowplot:plot_grid]{cowplot::plot_grid()}} object is returned invisibly.
-The PDF is always written to \code{output.dir}.
+The figure is always written to \code{output.dir}.
 }
 \description{
 Produces a grid of scatter biplots comparing a set of m target fluorophores
