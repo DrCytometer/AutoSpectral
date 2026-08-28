@@ -31,6 +31,18 @@ library(AutoSpectral)
 ``` r
 
 asp <- get.autospectral.param(cytometer = "id7000")
+```
+
+    ## Warning: The ID7000 does not expose per-channel detector voltage or gain
+    ## settings ($PnV/$PnG) in its FCS files. AutoSpectral cannot verify voltage/gain
+    ## consistency between single-stained controls and experiment samples for this
+    ## cytometer. Please ensure controls and samples are run with matched instrument
+    ## settings. Samples run using One-Max or All-Max may exhibit inaccurate unmixing.
+
+    ## Cytometer set to ID7000
+
+``` r
+
 control.dir <- "path_to_my_single_stained_controls"
 control.def.file <- "fcs_control_file.csv"
 ```

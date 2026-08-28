@@ -122,7 +122,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.7.1**
+**Version 1.8.0**
 
 Version 1.6+ provides a new automated approach to extracting spectral
 profiles. Most of the development here has been by Nathan Laniewksi.

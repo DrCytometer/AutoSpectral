@@ -35,6 +35,9 @@ unmixed.nxn.plot(
   hex.bins = 64,
   color.palette = "viridis",
   hist.fill = "steelblue",
+  file.type = "jpg",
+  dpi = 150,
+  max.canvas.px = 20000,
   output.dir = "."
 )
 ```
@@ -119,16 +122,39 @@ unmixed.nxn.plot(
   Character string. Fill color for the diagonal histogram bars. Default
   `"steelblue"`.
 
+- file.type:
+
+  Character string specifying the output file format. One of `"jpg"`
+  (default), `"tiff"`, `"png"`, or `"pdf"`. Raster formats are strongly
+  recommended here: for large channel counts the triangle holds hundreds
+  to thousands of panels, and a vector `"pdf"` records every
+  hexagon/point as a separate drawn object, making it extremely slow to
+  render and write.
+
+- dpi:
+
+  Numeric. Resolution in dots per inch for raster `file.type` values.
+  Ignored for `"pdf"`. Default `150`.
+
+- max.canvas.px:
+
+  Numeric. Safety cap on the predicted raster width/ height in pixels
+  (`n * biplot.size * dpi`). If the requested combination would exceed
+  this, `dpi` is automatically reduced (with a warning) rather than
+  attempting to allocate an oversized raster. Ignored for `"pdf"`.
+  Default `20000`.
+
 - output.dir:
 
-  Character string. Directory for the output PDF. Created automatically
+  Character string. Directory for the output file. Created automatically
   if absent. Default `"."`.
 
 ## Value
 
 The combined
 [`cowplot::plot_grid()`](https://wilkelab.org/cowplot/reference/plot_grid.html)
-object is returned invisibly. The PDF is always written to `output.dir`.
+object is returned invisibly. The figure is always written to
+`output.dir`.
 
 ## See also
 

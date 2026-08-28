@@ -17,8 +17,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Tools for Unmixing Spectral Flow Cytometry Data">
-<meta name="description" content="Isolates and refines clean spectral signatures from single stained controls. Deals with autofluorescence contamination in controls effectively. Unmix fcs files with ordinary or weighted least squares, or with the hallmark AutoSpectral approach to deal with autofluorescence and fluorophore variability on a per-cell basis.">
-<meta property="og:description" content="Isolates and refines clean spectral signatures from single stained controls. Deals with autofluorescence contamination in controls effectively. Unmix fcs files with ordinary or weighted least squares, or with the hallmark AutoSpectral approach to deal with autofluorescence and fluorophore variability on a per-cell basis.">
+<meta name="description" content="Isolates and refines clean spectral signatures from single stained controls. Deals with autofluorescence contamination in controls effectively. Unmix FCS files with ordinary or weighted least squares, or with the hallmark AutoSpectral approach to deal with autofluorescence and fluorophore variability on a per-cell basis.">
+<meta property="og:description" content="Isolates and refines clean spectral signatures from single stained controls. Deals with autofluorescence contamination in controls effectively. Unmix FCS files with ordinary or weighted least squares, or with the hallmark AutoSpectral approach to deal with autofluorescence and fluorophore variability on a per-cell basis.">
 <script>
   window.MathJax = {
     tex: { packages: {'[+]': ['boldsymbol']} }
@@ -33,7 +33,7 @@
 
     <a class="navbar-brand me-2" href="index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,6 +111,7 @@
 <li>Agilent NovoCyte Opteon (“opteon”)</li>
 <li>Beckman Coulter CytoFLEX mosaic (“mosaic”)</li>
 <li>ThermoFisher Attune Xenith (“xenith”)</li>
+<li>ChallenBio CytoStellar (“cytostellar”)</li>
 </ul>
 <p>If you have data from a different instrument and are willing to share files, contact the author/maintainer.</p>
 <p>AutoSpectral will probably not solve all your unmixing issues; hopefully it will help. Here are some other tools that may also help:</p>
@@ -131,6 +132,7 @@
 <li>Fix non-specific staining. If you’re struggling with this, check out the blocking articles on the Colibri blog.</li>
 <li>Fix instrument errors. If your laser wasn’t working, this won’t help.</li>
 <li>Fix all unmixing errors. AutoSpectral currently has some ability to fix unmixing errors, provided the controls are a representation of the sample. You can see some examples of errors being fixed in the pre-print, but you can also see some examples of errors not being fixed in the deliberately poorly designed 42-color Aurora data example. This is something I’m still working on.</li>
+<li>Adjust for running samples on different voltages/gains. Sony recommends running multi-colour samples on potentially very different voltage settings from the single-colour controls. This means the spectral profiles of your fluorophores will not be accurate except on in Sony’s software, where you have access to all the QC, voltage settings and PMT linearity curves needed to make the adjustment. None of this information is in the FCS files, so AutoSpectral can’t really do the same adjustment process. This is broadly true for other instruments as well–if you run your controls once a month and run samples later in the month without any new controls, your unmixing may not be very good.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -140,9 +142,10 @@
 <div class="section level3">
 <h3 id="latest-stable-release">Latest Stable Release<a class="anchor" aria-label="anchor" href="#latest-stable-release"></a>
 </h3>
-<p><strong>Version 1.6.0</strong></p>
+<p><strong>Version 1.8.0</strong></p>
 <p>Version 1.6+ provides a new automated approach to extracting spectral profiles. Most of the development here has been by Nathan Laniewksi. This is fast, highly reproducible, clean and avoids all the issues with gating. Try it out with <code><a href="reference/get.spectra.automated.html">get.spectra.automated()</a></code>.</p>
 <p>Version 1.6+ also provides a new unmixing pipeline for per-cell fluorophore optimization to eliminate discontinuities that appeared in some data sets. To use this approach, call <code><a href="reference/unmix.fcs.html">unmix.fcs()</a></code> or <code><a href="reference/unmix.folder.html">unmix.folder()</a></code> with <code>pipeline = "joint"</code>. Otherwise the unmixing will default to the original approach.</p>
+<p>This has been tested on Windows 11 and on macOS Sequoia 15.2 (Apple Silicon).</p>
 <p>Version 1.0+ is intended to greatly speed up the process of unmixing. This is done by pre-screening the variation in autofluorescence and fluorophores for each cell, identifying likely “best” candidates rather than using a brute force approach. If you are using <a href="https://github.com/DrCytometer/AutoSpectralRcpp" class="external-link">AutoSpectralRcpp</a>, you will need to update that for compatibility.</p>
 <p>To install the latest, hopefully stable version, install using <code>devtools</code> or <code>remotes</code>. You will need to install the Bioconductor packages separately. As of version 0.9.1, AutoSpectral relies primarily on <code>FlowSOM</code> rather than <code>EmbedSOM</code>, so you will need to install <code>FlowSOM</code> via Bioconductor. That said, if you install <code>EmbedSOM</code>, Autospectral will automatically detect and use it for faster processing.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -151,14 +154,14 @@
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
 <span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"flowWorkspace"</span>, <span class="st">"FlowSOM"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># You'll need devtools or remotes to install from GitHub.</span></span>
-<span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># You'll need pak or remotes to install from GitHub.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
+<p>Installation should take less than 5 minutes.</p>
 <p>As of version 0.8.7, there is a Shiny helper tool to assist you in setting up your AutoSpectral control files. This is an interactive html app that opens in RStudio. Hopefully this makes things easier. It is new, so again, imperfect. To try it, visit <a href="https://github.com/DrCytometer/AutoSpectralHelper" class="external-link">AutoSpectralHelper</a>. If you update AutoSpectral, I recommend downloading a new version of the app to ensure compatibility.</p>
 <p>To install a specific release, e.g., a previous one, use the version number:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@v1.0.2"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"DrCytometer/AutoSpectral@v1.5.6"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="dev-branch">Dev branch<a class="anchor" aria-label="anchor" href="#dev-branch"></a>
@@ -269,7 +272,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

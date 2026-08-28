@@ -22,7 +22,10 @@ benchmark.af.spectra(
   seed = 42L,
   n.downsample = 1000L,
   plot.dir = "figure_af_accuracy",
-  filename = "af_accuracy_spectra_benchmark"
+  filename = "af_accuracy_spectra_benchmark",
+  scatter.param = NULL,
+  ref.fcs = NULL,
+  k.scatter = 5L
 )
 ```
 
@@ -93,6 +96,21 @@ benchmark.af.spectra(
   Character scalar. Stem used to name the summary PDF (the file will be
   `<plot.dir>/<filename>.pdf`). Default:
   `"af_accuracy_spectra_benchmark"`.
+
+- scatter.param:
+
+  Character vector. Parameters to use for the scatter- matching if using
+  scatter-matched AF extraction.
+
+- ref.fcs:
+
+  Character scalar. Path to the unstained FCS file used as a reference
+  sample for scatter-matched AF extraction.
+
+- k.scatter:
+
+  Numeric, default `5L`. Number of neighboring scatter points to
+  consider when using scatter-matched AF extraction.
 
 ## Value
 

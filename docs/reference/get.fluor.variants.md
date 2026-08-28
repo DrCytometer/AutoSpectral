@@ -39,14 +39,21 @@ get.fluor.variants(
   unmixed.thresholds,
   flow.channel,
   af.pcs,
+  neg.cache = NULL,
+  use.unmixed = TRUE,
   n.cells = 10000L,
   som.dim = 10L,
   k.neighbors = 3L,
   sim.threshold = 0.985,
+  sim.threshold.floor = 0.9,
+  af.collinear.threshold = 0.95,
+  noise.floor.tail.fraction = 0.2,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
-  median.linewidth = 1
+  median.linewidth = 1,
+  parallel = TRUE,
+  threads = NULL
 )
 ```
 
@@ -128,6 +135,30 @@ get.fluor.variants(
   one per unique unstained FCS file. Names are FCS filenames matching
   entries in `universal.negative`.
 
+- neg.cache:
+
+  Optional named list, one entry per unique unstained FCS file (names
+  are filenames), each holding `$spectral` and `$scatter` matrices
+  already read from disk. Built once in
+  [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
+  and reused across all fluorophores sharing the same negative, avoiding
+  a repeat disk read/decode per fluorophore. Default `NULL` falls back
+  to reading `universal.negative[fluor]` directly.
+
+- use.unmixed:
+
+  Logical, default `TRUE`. Whether to unmix background-corrected
+  positive events against the full `spectra` matrix and use that
+  unmixed-space projection for positivity selection, the Spillover
+  Spreading Matrix inputs, and as additional SOM clustering features.
+  Set to `FALSE` when `spectra` contains several similar or collinear
+  fluorophores (e.g. a bead-cell comparison panel), where the
+  full-spectra unmix is itself unstable or unsolvable. When `FALSE`,
+  positivity selection falls back to the raw-threshold events already
+  identified via `raw.thresholds`, SOM clustering uses raw detector
+  space only, and the `"spillover.spread"` / `"on.channel.mfi"`
+  attributes are not computed (see Value).
+
 - n.cells:
 
   Integer, default `10000`. Maximum number of positive events used for
@@ -150,6 +181,32 @@ get.fluor.variants(
   centroid and the reference spectrum for the centroid to be retained as
   a variant.
 
+- sim.threshold.floor:
+
+  Numeric, default `0.90`. Lower bound for adaptive relaxation of
+  `sim.threshold` when the initial cutoff retains fewer than 20 events.
+  Relaxation is logged via
+  [`warning()`](https://rdrr.io/r/base/warning.html) and the threshold
+  actually used is returned as the `"cosine.threshold.used"` attribute.
+
+- af.collinear.threshold:
+
+  Numeric, default `0.95`. Minimum cosine similarity between `fluor`'s
+  reference spectrum and any of its paired unstained file's AF principal
+  directions (`af.pcs`) at or above which the AF-component projection
+  step is skipped, since a joint OLS fit against near-collinear AF and
+  fluorophore directions can push real fluorophore signal into the AF
+  term. Recorded as the `"af.collinear"` attribute.
+
+- noise.floor.tail.fraction:
+
+  Numeric in (0, 1), default `0.20`. Per-detector noise floor is the MAD
+  (scaled to a Gaussian-equivalent variance) of the lowest fraction of
+  raw values in that detector's column, using every event in the control
+  file. Lower values isolate a purer background tail but with fewer
+  events to estimate from; higher values are more stable but risk
+  pulling in dim positive events.
+
 - variant.fill.color:
 
   Color for the shaded ribbon in the variant plot. Default `"red"`.
@@ -166,11 +223,30 @@ get.fluor.variants(
 
   Width of the reference-spectrum line. Default `1`.
 
+- parallel:
+
+  Logical, default `TRUE`. Enable OpenMP multi-threading for this call's
+  batch SOM
+  ([`get.som.codes()`](https://drcytometer.github.io/AutoSpectral/reference/get.som.codes.md)).
+
+- threads:
+
+  Numeric or `NULL`. OpenMP threads for the batch SOM. `NULL` defaults
+  to `0` (all available cores) when `parallel = TRUE`.
+
 ## Value
 
 A numeric matrix; variants in rows, detectors in columns, values
-normalised to \\\[0, 1\]\\. When no centroids survive cosine QC the
-single reference spectrum is returned (one row).
+normalised to \\\[0, 1\]\\. Row 1 is always the library reference
+spectrum for `fluor`; subsequent rows are SOM-derived variants that
+passed cosine QC. When too few positive events are available, or no
+centroids survive cosine QC, the single reference spectrum is returned
+(one row). Carries three attributes: `"noise.floor"` (per-detector
+background SD, described above), `"spillover.spread"` (named numeric
+vector, per-detector MAD of this control's unmixed positive population,
+or `NULL` if fewer than 20 positive events were found or if
+`use.unmixed = FALSE`), and `"on.channel.mfi"` (this control's own
+median unmixed abundance, `NA` if `use.unmixed = FALSE`).
 
 ## References
 

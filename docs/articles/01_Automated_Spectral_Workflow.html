@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -267,12 +267,12 @@ pipeline. Check these against the expected profiles for your cytometer
 in online viewers such as <a href="https://cloud.cytekbio.com/" class="external-link">Cytek
 Cloud</a> or in the QC plots.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/Automated_autospectral_spectra.jpg" class="r-plt" alt="Spectral Signature Traces"><p class="caption">
+<img src="figures/Automated_workflow/Automated_autospectral_spectra.jpg" class="r-plt" alt="Spectral Signature Traces" width="1828"><p class="caption">
 Spectral Signature Traces
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/Automated_spectral_heatmap.jpg" class="r-plt" alt="Spectral Signature Heatmap"><p class="caption">
+<img src="figures/Automated_workflow/Automated_spectral_heatmap.jpg" class="r-plt" alt="Spectral Signature Heatmap" width="1772"><p class="caption">
 Spectral Signature Heatmap
 </p>
 </div>
@@ -280,7 +280,7 @@ Spectral Signature Heatmap
 (<code>figure_similarity_heatmap/</code>) — shows pairwise similarity
 between all fluorophore spectra.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/Automated_autospectral_similarity_matrix.jpg" class="r-plt" alt="Cosine Similarity Heatmap"><p class="caption">
+<img src="figures/Automated_workflow/Automated_autospectral_similarity_matrix.jpg" class="r-plt" alt="Cosine Similarity Heatmap" width="1200"><p class="caption">
 Cosine Similarity Heatmap
 </p>
 </div>
@@ -290,7 +290,7 @@ with high spectral overlap, as in Mage et al. Values above 6 are most
 likely to cause unmixing problems; values between 4 and 6 are worth
 reviewing.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/Automated_Hotspot_Matrix_heatmap.jpg" class="r-plt" alt="Hotspot Matrix Heatmap"><p class="caption">
+<img src="figures/Automated_workflow/Automated_Hotspot_Matrix_heatmap.jpg" class="r-plt" alt="Hotspot Matrix Heatmap" width="1200"><p class="caption">
 Hotspot Matrix Heatmap
 </p>
 </div>
@@ -303,7 +303,7 @@ that takes the place of the gating-based exclusion in AutoSpectral
 &lt;1.6.0. You’ll notice that the brightest events are typically the
 cleanest, as should be expected (they are farthest from background).</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/Automated_cosine_filter.jpg" class="r-plt" alt="Hotspot Matrix Heatmap"><p class="caption">
+<img src="figures/Automated_workflow/Automated_cosine_filter.jpg" class="r-plt" alt="Hotspot Matrix Heatmap" width="432"><p class="caption">
 Hotspot Matrix Heatmap
 </p>
 </div>
@@ -314,7 +314,7 @@ spectral events, and the matched AF/negative events used for
 subtraction. This is now done using k-nearest neighbours, and should be
 essentially perfect. Here’s CD11b - BUV805:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/BUV805_universal_negative_scatter_plot.jpg" class="r-plt" alt="Hotspot Matrix Heatmap"><p class="caption">
+<img src="figures/Automated_workflow/BUV805_universal_negative_scatter_plot.jpg" class="r-plt" alt="Hotspot Matrix Heatmap" width="1800"><p class="caption">
 Hotspot Matrix Heatmap
 </p>
 </div>
@@ -616,7 +616,7 @@ spleen, you probably won’t see much benefit from this.</p>
 trace and as a heatmap in <code>figure_autofluorescence</code>. The AF
 spectra are saved as a CSV file in <code>table_spectra</code>.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/af_spectra.jpg" class="r-plt" alt="Autofluorescence profiles in the spleen"><p class="caption">
+<img src="figures/Automated_workflow/af_spectra.jpg" class="r-plt" alt="Autofluorescence profiles in the spleen" width="1828"><p class="caption">
 Autofluorescence profiles in the spleen
 </p>
 </div>
@@ -625,7 +625,7 @@ where the black line represents a median signature (what you might use
 with an automated single AF parameter), and the red traces represents
 the variation:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/af_density.jpg" class="r-plt" alt="Autofluorescence variation in the spleen"><p class="caption">
+<img src="figures/Automated_workflow/af_density.jpg" class="r-plt" alt="Autofluorescence variation in the spleen" width="1772"><p class="caption">
 Autofluorescence variation in the spleen
 </p>
 </div>
@@ -634,21 +634,21 @@ unstained sample we have supplied.</p>
 <p>This is without any AF extraction, looking at what AutoSpectral has
 determined are the two most-affected fluorophore channels:</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/Spleen_No_AF_Extraction.jpg" class="r-plt" alt="Spleen: No AF Extraction"><p class="caption">
+<img src="figures/Automated_workflow/Spleen_No_AF_Extraction.jpg" class="r-plt" alt="Spleen: No AF Extraction" width="750"><p class="caption">
 Spleen: No AF Extraction
 </p>
 </div>
 <p>What you get on the same unstained sample with per-cell AF
 extraction, without refinement (refine=FALSE):</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction"><p class="caption">
+<img src="figures/Automated_workflow/Spleen_PerCell_AF_Extraction_First_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction" width="750"><p class="caption">
 Spleen: Per-Cell AF Extraction
 </p>
 </div>
 <p>What you get on the same unstained sample with per-cell AF
 extraction, <em>with</em> refinement (refine=TRUE):</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction Refined"><p class="caption">
+<img src="figures/Automated_workflow/Spleen_PerCell_AF_Extraction_Second_Pass.jpg" class="r-plt" alt="Spleen: Per-Cell AF Extraction Refined" width="750"><p class="caption">
 Spleen: Per-Cell AF Extraction Refined
 </p>
 </div>
@@ -736,7 +736,7 @@ CD11b, but we have at least as much variation in the long wavelength
 spillover on the violet and red laser, as should be expected from a
 tandem dye.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/BUV805_variants.jpg" class="r-plt" alt="Variation in BUV805"><p class="caption">
+<img src="figures/Automated_workflow/BUV805_variants.jpg" class="r-plt" alt="Variation in BUV805" width="1772"><p class="caption">
 Variation in BUV805
 </p>
 </div>
@@ -747,7 +747,7 @@ this case.</p>
 <p>Variability in the YG1-A detector is likely tandem breakdown
 (variable free PE signal).</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/PECy7_variants.jpg" class="r-plt" alt="Variation in PE-Cy7"><p class="caption">
+<img src="figures/Automated_workflow/PECy7_variants.jpg" class="r-plt" alt="Variation in PE-Cy7" width="1772"><p class="caption">
 Variation in PE-Cy7
 </p>
 </div>
@@ -799,12 +799,12 @@ or <a href="https://www.colibri-cytometry.com/post/autospectral-plotting" class=
 <span><span class="fu"><a href="../reference/create.biplot.html">create.biplot</a></span><span class="op">(</span><span class="va">asp.lung</span>, <span class="st">"BUV395-A"</span>, <span class="st">"BV421-A"</span>, <span class="va">asp</span>, title <span class="op">=</span> <span class="st">"AutoSpectral"</span><span class="op">)</span></span></code></pre></div>
 <p>Let’s have a look at the unmixed data.</p>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/SpectroFlo.jpg" class="r-plt" alt="SpectroFlo Unmixed"><p class="caption">
+<img src="figures/Automated_workflow/SpectroFlo.jpg" class="r-plt" alt="SpectroFlo Unmixed" width="750"><p class="caption">
 SpectroFlo Unmixed
 </p>
 </div>
 <div class="figure" style="text-align: center">
-<img src="figures/Automated_workflow/AutoSpectral.jpg" class="r-plt" alt="AutoSpectral Unmixed"><p class="caption">
+<img src="figures/Automated_workflow/AutoSpectral.jpg" class="r-plt" alt="AutoSpectral Unmixed" width="750"><p class="caption">
 AutoSpectral Unmixed
 </p>
 </div>
@@ -832,7 +832,7 @@ analysis software.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

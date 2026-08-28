@@ -17,7 +17,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,101 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.6.0" id="autospectral-160-2026-06-01">AutoSpectral 1.6.0 (2026-06-01)<a class="anchor" aria-label="anchor" href="#autospectral-160-2026-06-01"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.8.0" id="autospectral-180-2026-08-26">AutoSpectral 1.8.0 (2026-08-26)<a class="anchor" aria-label="anchor" href="#autospectral-180-2026-08-26"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-8-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-8-0"></a></h3>
+<ul><li>Multiple controls can now be processed for a given fluorophore. This means you can extract the spectrum of a single fluorophore from two or more controls (e.g., comparing beads and cells for APC) in order to decide which to use. The duplicate(s) must be removed prior to unmixing, and there are now some checks to assist with removing duplicates and preventing bad mixing matrices being passed through to unmixing.</li>
+<li>An unstained cell-based control is no longer obligatory for the spectral extraction pipelines, either <code><a href="../reference/get.spectra.automated.html">get.spectra.automated()</a></code> or <code><a href="../reference/define.flow.control.html">define.flow.control()</a></code> plus <code><a href="../reference/clean.controls.html">clean.controls()</a></code> plus <code><a href="../reference/get.fluorophore.spectra.html">get.fluorophore.spectra()</a></code>. You will still need an unstained cell control or controls for autofluorescence extraction via <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> and also in <code><a href="../reference/get.spectral.variants.html">get.spectral.variants()</a></code>, but that only applies if you are using the AutoSpectral unmixing functions as opposed to OLS or WLS.</li>
+<li>When calling <code><a href="../reference/create.control.file.html">create.control.file()</a></code>, you can now specify the location where the CSV file will be written using <code>output.dir</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="improvements-1-8-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-8-0"></a></h3>
+<ul><li>Faster FCS reading and unmixing thanks to improvements to the AutoSpectralRcpp backend suggested by Paul Heisig.</li>
+<li>Better memory handling throughout using restricted reading of only the needed parts of FCS files, removing redundant reads.</li>
+<li>Faster plotting by reducing redundant density/contour calculations.</li>
+<li>Faster plotting by side-stepping <code>ggsave</code> and using <code>fast</code> in <code>ragg</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-8-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-8-0"></a></h3>
+<ul><li>Many small things.</li>
+<li>Handling of edge cases with weighting (WLS) using a noise floor cutoff to prevent approaching infinity.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.7.1" id="autospectral-171-2026-07-30">AutoSpectral 1.7.1 (2026-07-30)<a class="anchor" aria-label="anchor" href="#autospectral-171-2026-07-30"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-7-1">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-7-1"></a></h3>
+<ul><li>Support for the ChallenBio CytoStellar cytometer. Call <code>cytostellar</code> or any unique string, e.g., <code>cyt</code> (see below), when calling <code><a href="../reference/get.autospectral.param.html">get.autospectral.param()</a></code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="improvements-1-7-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-7-1"></a></h3>
+<ul><li>Replaced <code>get.autospectral.param.a8</code> and <code>s8</code> individual functions with a new generic one for “FACSDiscover” cytometers. This is designed to be future-proof for the new FACSDiscover A7 and any variants thereof. Should be backwards compatible. You may now call <code>discover</code> for any of these, although <code>a8</code> and <code>s8</code> will still work.</li>
+<li>Cytometer calling in <code><a href="../reference/get.autospectral.param.html">get.autospectral.param()</a></code> is now case-insensitive.</li>
+<li>Variant extraction via <code><a href="../reference/get.spectral.variants.html">get.spectral.variants()</a></code> is now parallelized at the level of the SOM rather than via a memory-intensive <code>parLapply</code> loop. Should be faster.</li>
+<li>SOM mapping is now available via an in-house port of EmbedSOM’s batched SOM if you install <code>AutoSpectralRcpp</code>.</li>
+<li>When calling <code><a href="../reference/get.spectra.automated.html">get.spectra.automated()</a></code>, you may elect not to gate on the singlets by setting <code>remove.doublets = FALSE</code>. Default behavior is unchanged.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-7-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-7-1"></a></h3>
+<ul><li>Some patches and improvements to <code><a href="../reference/test.af.accuracy.html">test.af.accuracy()</a></code> and <code>sim.flow.data</code>, the testing functions for unmixing algorithm accuracy and development.</li>
+<li>Patch for issue causing a crash when reading or writing large FCS files</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.7.0" id="autospectral-170-2026-07-25">AutoSpectral 1.7.0 (2026-07-25)<a class="anchor" aria-label="anchor" href="#autospectral-170-2026-07-25"></a></h2>
+<div class="section level3">
+<h3 id="improvements-1-7-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-7-0"></a></h3>
+<ul><li>Set “joint” pipeline as the default for AutoSpectral unmixing in <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code> and <code><a href="../reference/unmix.folder.html">unmix.folder()</a></code>.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.6.4" id="autospectral-164-2026-07-20">AutoSpectral 1.6.4 (2026-07-20)<a class="anchor" aria-label="anchor" href="#autospectral-164-2026-07-20"></a></h2>
+<div class="section level3">
+<h3 id="improvements-1-6-4">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-6-4"></a></h3>
+<ul><li>Reduced default number of variants produced by <code><a href="../reference/get.spectral.variants.html">get.spectral.variants()</a></code> by dropping <code>som.dim</code> from <code>10</code> to <code>5</code>, which speeds up the unmixing 1.5 - 3x. Profiling suggests the impact on unmixing quality is minimal.</li>
+<li>More markers.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-6-4">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-6-4"></a></h3>
+<ul><li>
+<code>get.bd.spectra()</code> was looking for a <code>SPILL</code> keyword, but the newer FCS files from the A8 and S8 use <code>$SPILL</code>. Fixed.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.6.3" id="autospectral-163-2026-07-19">AutoSpectral 1.6.3 (2026-07-19)<a class="anchor" aria-label="anchor" href="#autospectral-163-2026-07-19"></a></h2>
+<div class="section level3">
+<h3 id="improvements-1-6-3">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-6-3"></a></h3>
+<ul><li>Installation should now be simplified by setting remote install sites.</li>
+<li>More fluorophores</li>
+<li>More markers</li>
+<li>More spectral references for the Aurora</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-6-3">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-6-3"></a></h3>
+<ul><li>Add missing documentation for internal functions.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.6.2" id="autospectral-162-2026-07-13">AutoSpectral 1.6.2 (2026-07-13)<a class="anchor" aria-label="anchor" href="#autospectral-162-2026-07-13"></a></h2>
+<div class="section level3">
+<h3 id="improvements-1-6-2">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-6-2"></a></h3>
+<ul><li>Voltage consistency checks are now applied when reading in the single-stained control files to ensure all samples have been recorded on the same settings. Similarly, the voltages/gains read from the single-stained controls are kept for checking sample FCS files when performing unmixing, to ensure that the samples were acquired on the same settings. Inconsistencies in this regard will prompt a warning, since AutoSpectral does not have the ability to access individual instrument linearity or QC information, which would be required to accurately adjust the unmixing for different acquisition settings.</li>
+<li>When loading in the data via <code><a href="../reference/define.flow.control.html">define.flow.control()</a></code>, there are now checks for low event counts after applying the gates. If any contrl sample has below <code>asp$min.cell.warning.n</code> (default is 500) events left, a fallback approach is triggered, defining a new gate using <code><a href="../reference/define.gate.landmarks.html">define.gate.landmarks()</a></code> for that control sample. This is designed to catch situations where users haven’t understood how to use the gating and have not defined gating groups in the control file or provided pre-determined gates.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.6.1" id="autospectral-161-2026-07-12">AutoSpectral 1.6.1 (2026-07-12)<a class="anchor" aria-label="anchor" href="#autospectral-161-2026-07-12"></a></h2>
+<div class="section level3">
+<h3 id="improvements-1-6-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-6-1"></a></h3>
+<ul><li>Better peak channel assignment handling for the various versions of the Aurora. When an instrument lacks particular channels that would be assigned as the peak, the spectral reference library is used to infer the next best peak, either by looking at the reference for the fluorophore, if available, or by looking at the mean signature for other fluorophores with the same peak emission.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-6-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-6-1"></a></h3>
+<ul><li>7-AAD peak channel had a typo for the Aurora.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.6.0" id="autospectral-160-2026-07-01">AutoSpectral 1.6.0 (2026-07-01)<a class="anchor" aria-label="anchor" href="#autospectral-160-2026-07-01"></a></h2>
 <div class="section level3">
 <h3 id="new-features-1-6-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-6-0"></a></h3>
 <ul><li>Automated spectral profile extraction using approaches developed by Nathan Laniewski in <code>flowState</code>. This simplifies the workflow considerably, and eliminates the need for gating, which was a key cause of stress. The new automated approach employs projection orthogonalization to determine the peak channel (which way is the control going that isn’t like the autofluorescence?), and uses cosine filtering (which events are least contaminated by AF?) to find the clean spectral signatures.</li>
@@ -298,7 +392,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

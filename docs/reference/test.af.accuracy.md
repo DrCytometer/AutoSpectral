@@ -19,7 +19,10 @@ test.af.accuracy(
   functions = c("assign.af.fluorophores", "assign.af.residuals", "assign.af.joint.cov"),
   n.downsample = 1000L,
   plot.dir = "figure_af_accuracy",
-  title = "af_accuracy"
+  title = "af_accuracy",
+  scatter.param = NULL,
+  ref.fcs = NULL,
+  k.scatter = 5L
 )
 ```
 
@@ -75,6 +78,26 @@ test.af.accuracy(
 
   Character scalar. Stem used to name the output PDF (the file will be
   `<plot.dir>/<title>_biplots.pdf`). Default: `"af_accuracy"`.
+
+- scatter.param:
+
+  Character vector of scatter channel names (e.g. c("FSC-A","SSC-A")).
+  Required only when `"assign.af.scatter.match"` is included in
+  `functions`; ignored otherwise.
+
+- ref.fcs:
+
+  Character scalar. Optional path to a separate reference FCS file for
+  `assign.af.scatter.match`'s kNN library. If `NULL` (default), the same
+  (downsampled) `unstained.fcs` pool is used as both test and reference
+  set – note this means each cell's own scatter profile is present in
+  its neighbour pool, which will bias the similarity estimate
+  optimistically. Supply a distinct `ref.fcs` for an unbiased
+  comparison.
+
+- k.scatter:
+
+  Integer. Passed to `assign.af.scatter.match`'s `k`. Default `5L`.
 
 ## Value
 

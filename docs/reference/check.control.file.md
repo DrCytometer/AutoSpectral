@@ -14,7 +14,8 @@ check.control.file(
   strict = FALSE,
   min.event.warning = 5000,
   min.event.error = 1000,
-  legacy = FALSE
+  legacy = FALSE,
+  allow.duplicate.controls = FALSE
 )
 ```
 
@@ -59,6 +60,13 @@ check.control.file(
   fluorophore spectra, using gating and
   [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md),
   set `legacy=TRUE`.
+
+- allow.duplicate.controls:
+
+  Logical, default `FALSE`. Passed through to
+  [`validate.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.md).
+  Set `TRUE` to permit multiple controls for the same fluorophore
+  (diagnostic/QC use only).
 
 ## Value
 

@@ -6,7 +6,7 @@ unmixing using weighted least squares.
 ## Usage
 
 ``` r
-unmix.wls.fast(raw.data, spectra, weights = NULL)
+unmix.wls.fast(raw.data, spectra, weights = NULL, noise.floor = 125)
 ```
 
 ## Arguments
@@ -24,9 +24,19 @@ unmix.wls.fast(raw.data, spectra, weights = NULL)
 
 - weights:
 
-  The weighting values for the detectors. No checks are performed in
-  this function; `unmix.wls` should be used for most cases.
+  The weighting values for the detectors. No checks are performed on
+  supplied weights; `unmix.wls` should be used for most cases. Default
+  is `NULL`, in which case weighting is computed from channel means of
+  `raw.data`, floored at `noise.floor`.
+
+- noise.floor:
+
+  Numeric, default `125`. Lower clamp on mean channel signal before
+  inversion when `weights = NULL`. Signal units, same convention as
+  `noise.floor` elsewhere in the package. Ignored if `weights` is
+  supplied.
 
 ## Value
 
-Unmixed data with cells in rows and fluorophores in columns.
+A matrix containing unmixed data with cells in rows and fluorophores in
+columns.

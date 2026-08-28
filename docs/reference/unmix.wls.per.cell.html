@@ -19,7 +19,7 @@ using weighted least squares."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +73,7 @@ using weighted least squares.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">unmix.wls.per.cell</span><span class="op">(</span><span class="va">cell.raw</span>, <span class="va">spectra</span>, <span class="va">weights</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">unmix.wls.per.cell</span><span class="op">(</span><span class="va">cell.raw</span>, <span class="va">spectra</span>, weights <span class="op">=</span> <span class="cn">NULL</span>, noise.floor <span class="op">=</span> <span class="fl">125</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -92,8 +92,17 @@ and 1, with fluorophores in rows and detectors in columns.</p></dd>
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
-<dd><p>The weighting values for the detectors. No checks are performed
-in this function; <code>unmix.wls</code> should be used for standard cases.</p></dd>
+<dd><p>The weighting values for the detectors. No checks are
+performed on supplied weights; <code>unmix.wls</code> should be used for standard
+cases. Default is <code>NULL</code>, in which case weighting is computed from this
+cell's own signal, floored at <code>noise.floor</code>.</p></dd>
+
+
+<dt id="arg-noise-floor">noise.floor<a class="anchor" aria-label="anchor" href="#arg-noise-floor"></a></dt>
+<dd><p>Numeric, default <code>125</code>. Lower clamp on this cell's
+signal before inversion when <code>weights = NULL</code>. Signal units, same
+convention as <code>noise.floor</code> elsewhere in the package. Ignored if
+<code>weights</code> is supplied.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -110,7 +119,7 @@ in this function; <code>unmix.wls</code> should be used for standard cases.</p><
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

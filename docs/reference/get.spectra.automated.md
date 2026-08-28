@@ -47,6 +47,7 @@ get.spectra.automated(
   n.spectral = 200L,
   k.neighbors = 2L,
   singlet.quantiles = c(0.85, 0.975),
+  remove.doublets = TRUE,
   cosine.threshold = 0.9,
   peak.signal.threshold = 0.5,
   legacy.refinement = TRUE,
@@ -55,6 +56,7 @@ get.spectra.automated(
   figures = TRUE,
   plot.cosine.filter = TRUE,
   plot.scatter.match = TRUE,
+  allow.duplicate.controls = FALSE,
   verbose = TRUE
 )
 ```
@@ -86,7 +88,7 @@ get.spectra.automated(
 
 - n.spectral:
 
-  Integer, default `200`. Number of spectral events retained after
+  Integer, default `50`. Number of spectral events retained after
   filtering for low AF cosine similarity.
 
 - k.neighbors:
@@ -97,7 +99,14 @@ get.spectra.automated(
 - singlet.quantiles:
 
   Numeric, default `c( 0.85, 0.975 )`. Range of quantiles to use for
-  doublet discrimination.
+  doublet discrimination. Ignored if `remove.doublets = FALSE`.
+
+- remove.doublets:
+
+  Logical, default `TRUE`. Whether to apply the two-pass scatter-ratio
+  (FSC-A/FSC-H, SSC-A/SSC-H) doublet-removal step during FCS cleaning.
+  Set to `FALSE` to skip singlet gating entirely, e.g. for cytometers or
+  panels lacking usable height parameters.
 
 - cosine.threshold:
 
@@ -146,6 +155,16 @@ get.spectra.automated(
   PDF showing the KNN scatter-matched AF subtraction for each
   fluorophore (unstained background, selected spectral events, and their
   matched AF events). Set to `FALSE` to skip.
+
+- allow.duplicate.controls:
+
+  Logical, default `FALSE`. Set `TRUE` to permit multiple single-stained
+  controls for the same fluorophore (diagnostic/QC use only). Each is
+  tracked internally under a unique `sample` identifier and carried
+  through to `marker.spectra`'s rownames; the true fluorophore identity
+  is preserved as a `"fluorophore"` attribute for reference-library
+  matching and for
+  [`check.spectra.duplicates()`](https://drcytometer.github.io/AutoSpectral/reference/check.spectra.duplicates.md).
 
 - verbose:
 

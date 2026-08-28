@@ -13,8 +13,11 @@ get.autospectral.param(cytometer = "aurora", figures = TRUE)
 - cytometer:
 
   The type of cytometer, default is `aurora`. Supported options include
-  `aurora`, `auroraNL` for Northern Lights, `id7000`, `a8`, `s8`,
-  `a5se`, `opteon`, `mosaic` and `xenith`.
+  `aurora`, `auroraNL` for Northern Lights, `id7000`, `discover` (BD
+  FACSDiscover family), `a8` and `s8` (specific FACSDiscover models),
+  `a5se`, `opteon`, `mosaic`, `xenith` and `cytostellar`. Matching is
+  case-insensitive and supports unambiguous partial matches (e.g.
+  `"aur"` matches `"aurora"`).
 
 - figures:
 

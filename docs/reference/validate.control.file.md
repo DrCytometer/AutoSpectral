@@ -13,7 +13,8 @@ validate.control.file(
   asp,
   min.event.warning,
   min.event.error,
-  legacy = FALSE
+  legacy = FALSE,
+  allow.duplicate.controls = FALSE
 )
 ```
 
@@ -52,6 +53,16 @@ validate.control.file(
   fluorophore spectra, using gating and
   [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md),
   set `legacy=TRUE`.
+
+- allow.duplicate.controls:
+
+  Logical, default `FALSE`. If `FALSE`, multiple controls for the same
+  fluorophore are flagged as an error. Set to `TRUE` to permit them for
+  diagnostic/QC use (e.g. comparing two preparations of the same
+  conjugate); each will be assigned a unique `sample` identifier. The
+  resulting reference library still must be reduced to one row per
+  fluorophore before it can be used for unmixing – see
+  [`check.spectra.duplicates()`](https://drcytometer.github.io/AutoSpectral/reference/check.spectra.duplicates.md).
 
 ## Value
 

@@ -11,6 +11,7 @@ similarity between the two spectral profiles.
 spectral.reference.plot(
   spectra,
   asp,
+  fluorophore = rownames(spectra),
   qc.threshold.warn = 0.98,
   qc.threshold.fail = 0.9,
   experiment.control.color = "black",
@@ -36,13 +37,24 @@ spectral.reference.plot(
 - spectra:
 
   Matrix or dataframe containing spectral data. This should be in format
-  fluorophores x detectors. Row names will be used as the fluorophore
-  names. Column names will be used as the detectors (channels).
+  fluorophores x detectors. Row names are used to label each trace (e.g.
+  `sample` identifiers, which may disambiguate multiple controls for the
+  same fluorophore) and column names will be used as the detectors
+  (channels).
 
 - asp:
 
   The AutoSpectral parameter list. Used to determine which cytometer
   produced the data.
+
+- fluorophore:
+
+  Optional character vector, the same length and order as
+  `nrow(spectra)`, giving the true fluorophore identity of each row.
+  Used to look up the library reference spectrum and any
+  `comparison.spectra`. Defaults to `rownames(spectra)`, matching the
+  previous behavior when each row already corresponds to a single,
+  uniquely-named fluorophore.
 
 - qc.threshold.warn:
 

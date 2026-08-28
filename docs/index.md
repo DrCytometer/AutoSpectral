@@ -54,6 +54,7 @@ At the moment, the following cytometers are supported:
 - Agilent NovoCyte Opteon (“opteon”)
 - Beckman Coulter CytoFLEX mosaic (“mosaic”)
 - ThermoFisher Attune Xenith (“xenith”)
+- ChallenBio CytoStellar (“cytostellar”)
 
 If you have data from a different instrument and are willing to share
 files, contact the author/maintainer.
@@ -95,6 +96,17 @@ What AutoSpectral cannot do:
   pre-print, but you can also see some examples of errors not being
   fixed in the deliberately poorly designed 42-color Aurora data
   example. This is something I’m still working on.
+- Adjust for running samples on different voltages/gains. Sony
+  recommends running multi-colour samples on potentially very different
+  voltage settings from the single-colour controls. This means the
+  spectral profiles of your fluorophores will not be accurate except on
+  in Sony’s software, where you have access to all the QC, voltage
+  settings and PMT linearity curves needed to make the adjustment. None
+  of this information is in the FCS files, so AutoSpectral can’t really
+  do the same adjustment process. This is broadly true for other
+  instruments as well–if you run your controls once a month and run
+  samples later in the month without any new controls, your unmixing may
+  not be very good.
 
 ## Installation
 
@@ -103,7 +115,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.6.0**
+**Version 1.8.0**
 
 Version 1.6+ provides a new automated approach to extracting spectral
 profiles. Most of the development here has been by Nathan Laniewksi.
@@ -119,6 +131,9 @@ or
 [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
 with `pipeline = "joint"`. Otherwise the unmixing will default to the
 original approach.
+
+This has been tested on Windows 11 and on macOS Sequoia 15.2 (Apple
+Silicon).
 
 Version 1.0+ is intended to greatly speed up the process of unmixing.
 This is done by pre-screening the variation in autofluorescence and
@@ -141,11 +156,12 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 BiocManager::install(c("flowWorkspace", "FlowSOM"))
 
-# You'll need devtools or remotes to install from GitHub.
-# install.packages("devtools")
-# install.packages("remotes")
-remotes::install_github("DrCytometer/AutoSpectral")
+# You'll need pak or remotes to install from GitHub.
+install.packages("pak")
+pak::pak("DrCytometer/AutoSpectral")
 ```
+
+Installation should take less than 5 minutes.
 
 As of version 0.8.7, there is a Shiny helper tool to assist you in
 setting up your AutoSpectral control files. This is an interactive html
@@ -160,7 +176,7 @@ number:
 
 ``` r
 
-remotes::install_github("DrCytometer/AutoSpectral@v1.0.2")
+pak::pak("DrCytometer/AutoSpectral@v1.5.6")
 ```
 
 ### Dev branch

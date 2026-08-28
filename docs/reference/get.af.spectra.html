@@ -6,8 +6,8 @@
     }
   };
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Get Autofluorescence Spectra — get.af.spectra"><meta name="description" content="Extracts autofluorescence spectra from an unstained sample. Intended for use
-with unmix.autospectral. Uses FlowSOM (EmbedSOM) clustering for rapid
-identification of cells with similar AF profiles.
+with unmix.autospectral. Uses SOM clustering for rapid identification of
+cells with similar AF profiles.
 Optionally deduplicates the resulting spectra by cosine similarity
 (deduplicate = TRUE, default) to remove near-identical profiles that cause
 spurious over-correction of near-zero events in fully stained samples. When
@@ -15,8 +15,8 @@ refine = TRUE, a second round of targeted modulation is performed on cells
 that remain far from zero after the first-pass correction; modulated spectra
 are screened for redundancy against each other and against the base library
 before being appended."><meta property="og:description" content="Extracts autofluorescence spectra from an unstained sample. Intended for use
-with unmix.autospectral. Uses FlowSOM (EmbedSOM) clustering for rapid
-identification of cells with similar AF profiles.
+with unmix.autospectral. Uses SOM clustering for rapid identification of
+cells with similar AF profiles.
 Optionally deduplicates the resulting spectra by cosine similarity
 (deduplicate = TRUE, default) to remove near-identical profiles that cause
 spurious over-correction of near-zero events in fully stained samples. When
@@ -35,7 +35,7 @@ before being appended."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,8 +84,8 @@ before being appended."><script>
 
     <div class="ref-description section level2">
     <p>Extracts autofluorescence spectra from an unstained sample. Intended for use
-with <code>unmix.autospectral</code>. Uses FlowSOM (EmbedSOM) clustering for rapid
-identification of cells with similar AF profiles.</p>
+with <code>unmix.autospectral</code>. Uses SOM clustering for rapid identification of
+cells with similar AF profiles.</p>
 <p>Optionally deduplicates the resulting spectra by cosine similarity
 (<code>deduplicate = TRUE</code>, default) to remove near-identical profiles that cause
 spurious over-correction of near-zero events in fully stained samples. When
@@ -110,12 +110,18 @@ before being appended.</p>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  deduplicate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  duplication.threshold <span class="op">=</span> <span class="fl">0.99</span>,</span>
+<span>  use.unmixed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  refine <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  problem.quantile <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  remove.contaminants <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  contaminant.threshold <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  threads <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">parallel</span><span class="op">)</span> <span class="fl">0</span> <span class="kw">else</span> <span class="fl">1</span>,</span>
+<span>  return.model <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  model.rank <span class="op">=</span> <span class="fl">6L</span>,</span>
+<span>  model.var.explained <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  model.min.events <span class="op">=</span> <span class="fl">50L</span>,</span>
+<span>  model.shrinkage <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  heatmap.color.palette <span class="op">=</span> <span class="st">"viridis"</span>,</span>
 <span>  spectral.trace.color.palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  af.fill.color <span class="op">=</span> <span class="st">"red"</span>,</span>
@@ -192,6 +198,19 @@ similarity to any already-retained spectrum meets or exceeds this value.
 Only used when <code>deduplicate = TRUE</code>.</p></dd>
 
 
+<dt id="arg-use-unmixed">use.unmixed<a class="anchor" aria-label="anchor" href="#arg-use-unmixed"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Whether to include an OLS
+unmixed-space projection (<code>unmix.ols.fast(unstained.exprs, spectra)</code>)
+alongside the raw detector data as SOM clustering input. Set to <code>FALSE</code>
+to cluster on raw detector space only, which is appropriate when
+<code>spectra</code> contains several similar or collinear fluorophores (e.g. a
+bead-cell comparison panel), where an OLS unmix is itself unstable and
+would corrupt the clustering features rather than enrich them.
+<code>use.unmixed = FALSE</code> also forces <code>refine = FALSE</code>, since the
+second-pass refinement identifies "problem cells" from per-cell
+unmixing residuals and is subject to the same instability.</p></dd>
+
+
 <dt id="arg-refine">refine<a class="anchor" aria-label="anchor" href="#arg-refine"></a></dt>
 <dd><p>Logical, default <code>FALSE</code>. Controls whether to perform a second
 round of autofluorescence measurement on "problem cells": those with the
@@ -239,6 +258,36 @@ for per-cell AF identification. Used when <code>refine = TRUE</code>.</p></dd>
 <code>refine = TRUE</code>.</p></dd>
 
 
+<dt id="arg-return-model">return.model<a class="anchor" aria-label="anchor" href="#arg-return-model"></a></dt>
+<dd><p>Logical. When <code>TRUE</code>, attaches an <code>"af.model"</code> attribute
+to the returned spectra containing per-node covariance, occupancy priors,
+abundance priors and scatter statistics, for use by <code><a href="unmix.af.gls.html">unmix.af.gls()</a></code>. The
+return value is still a matrix, so existing callers are unaffected.
+Default <code>FALSE</code>. Requires refine = FALSE for well-populated per-node
+covariances.</p></dd>
+
+
+<dt id="arg-model-rank">model.rank<a class="anchor" aria-label="anchor" href="#arg-model-rank"></a></dt>
+<dd><p>Integer, maximum rank retained for each node's spectral
+covariance. Default <code>6</code>.</p></dd>
+
+
+<dt id="arg-model-var-explained">model.var.explained<a class="anchor" aria-label="anchor" href="#arg-model-var-explained"></a></dt>
+<dd><p>Numeric, fraction of within-node variance to
+retain. Default <code>0.95</code>.</p></dd>
+
+
+<dt id="arg-model-min-events">model.min.events<a class="anchor" aria-label="anchor" href="#arg-model-min-events"></a></dt>
+<dd><p>Integer, minimum events for a node to receive a
+covariance estimate. Nodes below this get the pooled covariance.
+Default <code>50</code>.</p></dd>
+
+
+<dt id="arg-model-shrinkage">model.shrinkage<a class="anchor" aria-label="anchor" href="#arg-model-shrinkage"></a></dt>
+<dd><p>Numeric in <code>[0, 1]</code>, shrinkage of each node covariance
+toward the pooled covariance. Guards nodes with few events. Default <code>0.10</code>.</p></dd>
+
+
 <dt id="arg-heatmap-color-palette">heatmap.color.palette<a class="anchor" aria-label="anchor" href="#arg-heatmap-color-palette"></a></dt>
 <dd><p>Optional character string defining the viridis
 color palette for the fluorophore heatmap. Default is <code>"viridis"</code>. Options:
@@ -272,7 +321,6 @@ for problem cells.</p>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-visualization and interpretation of cytometry data." <em>Cytometry Part A</em>,
 87(7), 636-645. <a href="https://doi.org/10.1002/cyto.a.22625" class="external-link">doi:10.1002/cyto.a.22625</a>
 
 Wehrens R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen
@@ -289,7 +337,7 @@ Wehrens R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

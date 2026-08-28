@@ -21,7 +21,7 @@ successful running of AutoSpectral."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,7 +82,8 @@ successful running of AutoSpectral.</p>
 <span>  <span class="va">asp</span>,</span>
 <span>  <span class="va">min.event.warning</span>,</span>
 <span>  <span class="va">min.event.error</span>,</span>
-<span>  legacy <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  legacy <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  allow.duplicate.controls <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -120,6 +121,16 @@ extraction pipeline using <code><a href="get.spectra.automated.html">get.spectra
 "legacy" pipeline for the extraction of fluorophore spectra, using gating and
 <code><a href="define.flow.control.html">define.flow.control()</a></code>, set <code>legacy=TRUE</code>.</p></dd>
 
+
+<dt id="arg-allow-duplicate-controls">allow.duplicate.controls<a class="anchor" aria-label="anchor" href="#arg-allow-duplicate-controls"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. If <code>FALSE</code>,
+multiple controls for the same fluorophore are flagged as an error. Set to
+<code>TRUE</code> to permit them for diagnostic/QC use (e.g. comparing two preparations
+of the same conjugate); each will be assigned a unique <code>sample</code> identifier.
+The resulting reference library still must be reduced to one row per
+fluorophore before it can be used for unmixing – see
+<code><a href="check.spectra.duplicates.html">check.spectra.duplicates()</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -136,7 +147,7 @@ problems with the <code>control.def.file</code>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

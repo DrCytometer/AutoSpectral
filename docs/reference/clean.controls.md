@@ -19,6 +19,7 @@ clean.controls(
   af.remove = TRUE,
   universal.negative = TRUE,
   downsample = TRUE,
+  drop.raw = FALSE,
   negative.n = asp$negative.n,
   positive.n = asp$positive.n,
   scatter.match = TRUE,
@@ -28,6 +29,7 @@ clean.controls(
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
+  diagnostics.env = NULL,
   ...
 )
 ```
@@ -61,6 +63,14 @@ clean.controls(
 
   Logical, default is `TRUE`. Whether to reduce cell and bead control
   events to speed up processing.
+
+- drop.raw:
+
+  Logical, default `FALSE`. If `TRUE`, removes `flow.control$expr.data`
+  (the full, undownsampled per-event data from every control) before
+  returning, freeing memory once cleaning is done. Only set this if you
+  don't need `get.fluorophore.spectra(use.clean.expr = FALSE)` or other
+  functions that read the raw expression data afterward.
 
 - negative.n:
 
@@ -111,6 +121,18 @@ clean.controls(
 
   Numeric, number of threads to use for parallel processing. Default is
   `NULL` which will revert to `asp$worker.process.n` if `parallel=TRUE`.
+
+- diagnostics.env:
+
+  Optional environment, default `NULL`. If supplied,
+  [`remove.af()`](https://drcytometer.github.io/AutoSpectral/reference/remove.af.md)
+  populates it (keyed by sample name) with the objects used to identify
+  and exclude intrusive autofluorescence for each cell-based AF-removal
+  sample: `af.peak.channel`, `fluor.peak`, `af.boundaries`,
+  `expr.data.pos`/`expr.data.neg` (spectral channels only), and the
+  resulting gate indices. Intended for diagnostic/manuscript figures
+  (see `plot.spectra.legacy.steps()`); has no effect on the cleaning
+  result. Capture is unreliable when `parallel = TRUE`.
 
 - ...:
 

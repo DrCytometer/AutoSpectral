@@ -16,6 +16,7 @@ calculate.weights(
   save = FALSE,
   output.dir = "./table_spectra",
   filename = "weights.csv",
+  noise.floor = 125,
   verbose = TRUE
 )
 ```
@@ -45,6 +46,13 @@ calculate.weights(
 
   Character string specifying the filename for the CSV file. Default is
   `weights.csv`.#'
+
+- noise.floor:
+
+  Numeric, default `125`. Lower clamp on mean channel signal before
+  inversion, preventing near-dark channels from producing an unbounded
+  weight. Signal units, same convention as `noise.floor` elsewhere in
+  the package.
 
 - verbose:
 

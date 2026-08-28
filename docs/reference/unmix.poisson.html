@@ -21,7 +21,7 @@ that fail to converge."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,6 +81,7 @@ that fail to converge.</p>
 <span>  <span class="va">spectra</span>,</span>
 <span>  <span class="va">asp</span>,</span>
 <span>  initial.weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  noise.floor <span class="op">=</span> <span class="fl">125</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  threads <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -107,6 +108,13 @@ Prepare using <code>get.autospectral.param</code></p></dd>
 <dd><p>Optional numeric vector of weights, one per fluorescent
 detector. Default is <code>NULL</code>, in which case weighting will be done by
 channel means.</p></dd>
+
+
+<dt id="arg-noise-floor">noise.floor<a class="anchor" aria-label="anchor" href="#arg-noise-floor"></a></dt>
+<dd><p>Numeric, default <code>125</code>. Lower clamp on the initial WLS
+weights used to seed each cell's fit. Signal units, same convention as
+<code>noise.floor</code> elsewhere in the package. Not used inside <code>glm.fit</code> itself;
+see <code>unmix.poisson.fast()</code> for floor-aware per-cell IRLS reweighting.</p></dd>
 
 
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
@@ -139,7 +147,7 @@ Cytometry Utilizing Nonsquare Compensation Matrices" <em>Cytometry Part A</em>,
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

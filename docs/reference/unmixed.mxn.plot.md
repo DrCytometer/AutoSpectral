@@ -34,6 +34,9 @@ unmixed.mxn.plot(
   use.hex = TRUE,
   hex.bins = 64,
   color.palette = "viridis",
+  file.type = "jpg",
+  dpi = 150,
+  max.canvas.px = 20000,
   output.dir = "."
 )
 ```
@@ -124,16 +127,37 @@ unmixed.mxn.plot(
   or `"rainbow"` to use the package default gradient. Default
   `"viridis"`.
 
+- file.type:
+
+  Character string specifying the output file format. One of `"jpg"`
+  (default), `"tiff"`, `"png"`, or `"pdf"`. Raster formats are strongly
+  recommended: a vector `"pdf"` records every hexagon/point as a
+  separate drawn object and becomes very slow and large as panel count
+  grows.
+
+- dpi:
+
+  Numeric. Resolution in dots per inch for raster `file.type` values.
+  Ignored for `"pdf"`. Default `150`.
+
+- max.canvas.px:
+
+  Numeric. Safety cap on the predicted raster edge in pixels. If
+  `n.col`, `biplot.size`, and `dpi` would exceed this, `dpi` is
+  automatically reduced (with a warning). Ignored for `"pdf"`. Default
+  `20000`.
+
 - output.dir:
 
-  Character string. Directory for the output PDF. Created automatically
+  Character string. Directory for the output file. Created automatically
   if absent. Default `"."`.
 
 ## Value
 
 The combined
 [`cowplot::plot_grid()`](https://wilkelab.org/cowplot/reference/plot_grid.html)
-object is returned invisibly. The PDF is always written to `output.dir`.
+object is returned invisibly. The figure is always written to
+`output.dir`.
 
 ## See also
 

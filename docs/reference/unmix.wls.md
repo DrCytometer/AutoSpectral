@@ -7,7 +7,7 @@ power.
 ## Usage
 
 ``` r
-unmix.wls(raw.data, spectra, weights = NULL)
+unmix.wls(raw.data, spectra, weights = NULL, noise.floor = 125)
 ```
 
 ## Arguments
@@ -28,6 +28,13 @@ unmix.wls(raw.data, spectra, weights = NULL)
   Optional numeric vector of weights, one per fluorescent detector.
   Default is `NULL`, in which case weighting will be done by channel
   means.
+
+- noise.floor:
+
+  Numeric, default `125`. Lower clamp on mean channel signal before
+  inversion when `weights = NULL`, preventing near-dark channels from
+  producing an unbounded weight. Signal units, same convention as
+  `noise.floor` elsewhere in the package.
 
 ## Value
 

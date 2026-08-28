@@ -24,7 +24,8 @@ define.flow.control(
   parallel = FALSE,
   verbose = TRUE,
   threads = NULL,
-  color.palette = NULL
+  color.palette = NULL,
+  allow.duplicate.controls = FALSE
 )
 ```
 
@@ -101,13 +102,24 @@ define.flow.control(
   `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako` and
   `turbo`.
 
+- allow.duplicate.controls:
+
+  Logical, default `FALSE`. Set `TRUE` to permit multiple single-stained
+  controls for the same fluorophore (diagnostic/QC use only). Each is
+  tracked internally under a unique `sample` identifier. The resulting
+  spectral reference library still needs to be reduced to one row per
+  fluorophore before unmixing – see
+  [`check.spectra.duplicates()`](https://drcytometer.github.io/AutoSpectral/reference/check.spectra.duplicates.md).
+
 ## Value
 
 A list (`flow.control`) with the following components:
 
 - `filename`: Names of the single-color control files.
 
-- `fluorophore`: Corresponding fluorophores used in the experiment.
+- `fluorophore`: Corresponding fluorophores used in the experiment. May
+  contain duplicates if multiple controls were run for the same
+  fluorophore; see `sample` for the unique per-control identifier.
 
 - `antigen`: Corresponding markers used in the experiment.
 
@@ -139,7 +151,9 @@ A list (`flow.control`) with the following components:
 
 - `spectral.channel.n`: Number of spectral channels.
 
-- `sample`: Sample names (fluorophores).
+- `sample`: Unique per-control identifier. Equal to `fluorophore` unless
+  multiple controls share a fluorophore, in which case it is
+  disambiguated (e.g. `"PE (cells)"`, `"PE (cells) (CD4)"`).
 
 - `scatter.and.channel`: FSC, SSC, and peak channel information.
 

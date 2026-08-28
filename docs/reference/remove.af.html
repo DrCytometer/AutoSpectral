@@ -19,7 +19,7 @@ the specified parameters and settings."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,7 +87,8 @@ the specified parameters and settings.</p>
 <span>  k.neighbors <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>  main.figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  intermediate.figures <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  diagnostics.env <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -161,6 +162,17 @@ exclusion from the unstained.</p></dd>
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical, default is <code>TRUE</code>. Set to <code>FALSE</code> to suppress messages.</p></dd>
 
+
+<dt id="arg-diagnostics-env">diagnostics.env<a class="anchor" aria-label="anchor" href="#arg-diagnostics-env"></a></dt>
+<dd><p>Optional environment, default <code>NULL</code>. If supplied,
+<code>remove.af()</code> populates it (keyed by sample name) with the objects used to
+identify and exclude intrusive autofluorescence for each cell-based
+AF-removal sample: <code>af.peak.channel</code>, <code>fluor.peak</code>, <code>af.boundaries</code>,
+<code>expr.data.pos</code>/<code>expr.data.neg</code> (spectral channels only), and the
+resulting gate indices. Intended for diagnostic/manuscript figures (see
+<code>plot.spectra.legacy.steps()</code>); has no effect on the cleaning result.
+Capture is unreliable when <code>parallel = TRUE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -177,7 +189,7 @@ removed for the sample.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -1,6 +1,168 @@
 # Changelog
 
-## AutoSpectral 1.6.0 (2026-06-01)
+## AutoSpectral 1.8.0 (2026-08-26)
+
+### New Features
+
+- Multiple controls can now be processed for a given fluorophore. This
+  means you can extract the spectrum of a single fluorophore from two or
+  more controls (e.g., comparing beads and cells for APC) in order to
+  decide which to use. The duplicate(s) must be removed prior to
+  unmixing, and there are now some checks to assist with removing
+  duplicates and preventing bad mixing matrices being passed through to
+  unmixing.
+- An unstained cell-based control is no longer obligatory for the
+  spectral extraction pipelines, either
+  [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md)
+  or
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
+  plus
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+  plus
+  [`get.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluorophore.spectra.md).
+  You will still need an unstained cell control or controls for
+  autofluorescence extraction via
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
+  and also in
+  [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md),
+  but that only applies if you are using the AutoSpectral unmixing
+  functions as opposed to OLS or WLS.
+- When calling
+  [`create.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/create.control.file.md),
+  you can now specify the location where the CSV file will be written
+  using `output.dir`.
+
+### Improvements
+
+- Faster FCS reading and unmixing thanks to improvements to the
+  AutoSpectralRcpp backend suggested by Paul Heisig.
+- Better memory handling throughout using restricted reading of only the
+  needed parts of FCS files, removing redundant reads.
+- Faster plotting by reducing redundant density/contour calculations.
+- Faster plotting by side-stepping `ggsave` and using `fast` in `ragg`.
+
+### Bug fixes
+
+- Many small things.
+- Handling of edge cases with weighting (WLS) using a noise floor cutoff
+  to prevent approaching infinity.
+
+## AutoSpectral 1.7.1 (2026-07-30)
+
+### New Features
+
+- Support for the ChallenBio CytoStellar cytometer. Call `cytostellar`
+  or any unique string, e.g., `cyt` (see below), when calling
+  [`get.autospectral.param()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.md).
+
+### Improvements
+
+- Replaced `get.autospectral.param.a8` and `s8` individual functions
+  with a new generic one for “FACSDiscover” cytometers. This is designed
+  to be future-proof for the new FACSDiscover A7 and any variants
+  thereof. Should be backwards compatible. You may now call `discover`
+  for any of these, although `a8` and `s8` will still work.
+- Cytometer calling in
+  [`get.autospectral.param()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.md)
+  is now case-insensitive.
+- Variant extraction via
+  [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
+  is now parallelized at the level of the SOM rather than via a
+  memory-intensive `parLapply` loop. Should be faster.
+- SOM mapping is now available via an in-house port of EmbedSOM’s
+  batched SOM if you install `AutoSpectralRcpp`.
+- When calling
+  [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md),
+  you may elect not to gate on the singlets by setting
+  `remove.doublets = FALSE`. Default behavior is unchanged.
+
+### Bug fixes
+
+- Some patches and improvements to
+  [`test.af.accuracy()`](https://drcytometer.github.io/AutoSpectral/reference/test.af.accuracy.md)
+  and `sim.flow.data`, the testing functions for unmixing algorithm
+  accuracy and development.
+- Patch for issue causing a crash when reading or writing large FCS
+  files
+
+## AutoSpectral 1.7.0 (2026-07-25)
+
+### Improvements
+
+- Set “joint” pipeline as the default for AutoSpectral unmixing in
+  [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md)
+  and
+  [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md).
+
+## AutoSpectral 1.6.4 (2026-07-20)
+
+### Improvements
+
+- Reduced default number of variants produced by
+  [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
+  by dropping `som.dim` from `10` to `5`, which speeds up the unmixing
+  1.5 - 3x. Profiling suggests the impact on unmixing quality is
+  minimal.
+- More markers.
+
+### Bug fixes
+
+- `get.bd.spectra()` was looking for a `SPILL` keyword, but the newer
+  FCS files from the A8 and S8 use `$SPILL`. Fixed.
+
+## AutoSpectral 1.6.3 (2026-07-19)
+
+### Improvements
+
+- Installation should now be simplified by setting remote install sites.
+- More fluorophores
+- More markers
+- More spectral references for the Aurora
+
+### Bug fixes
+
+- Add missing documentation for internal functions.
+
+## AutoSpectral 1.6.2 (2026-07-13)
+
+### Improvements
+
+- Voltage consistency checks are now applied when reading in the
+  single-stained control files to ensure all samples have been recorded
+  on the same settings. Similarly, the voltages/gains read from the
+  single-stained controls are kept for checking sample FCS files when
+  performing unmixing, to ensure that the samples were acquired on the
+  same settings. Inconsistencies in this regard will prompt a warning,
+  since AutoSpectral does not have the ability to access individual
+  instrument linearity or QC information, which would be required to
+  accurately adjust the unmixing for different acquisition settings.
+- When loading in the data via
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md),
+  there are now checks for low event counts after applying the gates. If
+  any contrl sample has below `asp$min.cell.warning.n` (default is 500)
+  events left, a fallback approach is triggered, defining a new gate
+  using
+  [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md)
+  for that control sample. This is designed to catch situations where
+  users haven’t understood how to use the gating and have not defined
+  gating groups in the control file or provided pre-determined gates.
+
+## AutoSpectral 1.6.1 (2026-07-12)
+
+### Improvements
+
+- Better peak channel assignment handling for the various versions of
+  the Aurora. When an instrument lacks particular channels that would be
+  assigned as the peak, the spectral reference library is used to infer
+  the next best peak, either by looking at the reference for the
+  fluorophore, if available, or by looking at the mean signature for
+  other fluorophores with the same peak emission.
+
+### Bug fixes
+
+- 7-AAD peak channel had a typo for the Aurora.
+
+## AutoSpectral 1.6.0 (2026-07-01)
 
 ### New Features
 

@@ -35,7 +35,7 @@ sim.flow.data(
   ssc.sd.log = 0.5,
   fsc.ssc.cor = 0.6,
   shot.noise = TRUE,
-  counts.per.unit = 0.5,
+  counts.per.unit = NULL,
   spillover.noise = TRUE,
   detector.noise = TRUE,
   af.variation = TRUE,
@@ -140,8 +140,8 @@ sim.flow.data(
 
 - counts.per.unit:
 
-  Numeric scalar for `shot.noise`. Default `0.5`. Works inversely;
-  higher numbers will decrease shot noise-driven spread.
+  Numeric scalar for `shot.noise`. Default NULL, which uses the
+  cytometer-specific preset. Supply a value to override.
 
 - spillover.noise:
 

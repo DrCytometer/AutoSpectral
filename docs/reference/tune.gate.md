@@ -1,6 +1,17 @@
-# Define Gate by Density
+# Tune Landmark Gate
 
-A short description...
+This function provides a parameter search grid for optimizing FSC/SSC
+gating on the single-stained control files. Set up the control file and
+specify gate names (for example, group controls with similar expected
+scatter regions into one "gate.name"). `tune.gate()` selects the
+brightest `n.cells` positive events from each file linked to a given
+`gate.name`, and cuts the density peak at `percentiles`. You get plots
+showing the output gate boundaries plotted in the `boundary.color`. This
+uses the "landmark" gating system. Note that for this to work, you must
+supply some controls with staining. Unstained samples will be excluded,
+and if you only supply unstained samples, it will stop. To draw gates on
+unstained samples, use the "density" method: see
+[`define.gate.density()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.density.md).
 
 ## Usage
 

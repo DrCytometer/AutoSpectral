@@ -1,8 +1,8 @@
 # Get Autofluorescence Spectra
 
 Extracts autofluorescence spectra from an unstained sample. Intended for
-use with `unmix.autospectral`. Uses FlowSOM (EmbedSOM) clustering for
-rapid identification of cells with similar AF profiles.
+use with `unmix.autospectral`. Uses SOM clustering for rapid
+identification of cells with similar AF profiles.
 
 Optionally deduplicates the resulting spectra by cosine similarity
 (`deduplicate = TRUE`, default) to remove near-identical profiles that
@@ -28,12 +28,18 @@ get.af.spectra(
   verbose = TRUE,
   deduplicate = FALSE,
   duplication.threshold = 0.99,
+  use.unmixed = TRUE,
   refine = TRUE,
   problem.quantile = 0.99,
   remove.contaminants = TRUE,
   contaminant.threshold = 0.99,
   parallel = TRUE,
   threads = if (parallel) 0 else 1,
+  return.model = FALSE,
+  model.rank = 6L,
+  model.var.explained = 0.95,
+  model.min.events = 50L,
+  model.shrinkage = 0.1,
   heatmap.color.palette = "viridis",
   spectral.trace.color.palette = NULL,
   af.fill.color = "red",
@@ -108,6 +114,19 @@ get.af.spectra(
   already-retained spectrum meets or exceeds this value. Only used when
   `deduplicate = TRUE`.
 
+- use.unmixed:
+
+  Logical, default `TRUE`. Whether to include an OLS unmixed-space
+  projection (`unmix.ols.fast(unstained.exprs, spectra)`) alongside the
+  raw detector data as SOM clustering input. Set to `FALSE` to cluster
+  on raw detector space only, which is appropriate when `spectra`
+  contains several similar or collinear fluorophores (e.g. a bead-cell
+  comparison panel), where an OLS unmix is itself unstable and would
+  corrupt the clustering features rather than enrich them.
+  `use.unmixed = FALSE` also forces `refine = FALSE`, since the
+  second-pass refinement identifies "problem cells" from per-cell
+  unmixing residuals and is subject to the same instability.
+
 - refine:
 
   Logical, default `FALSE`. Controls whether to perform a second round
@@ -156,6 +175,35 @@ get.af.spectra(
   (`parallel = FALSE`) or all available cores if `parallel = TRUE`. Used
   when `refine = TRUE`.
 
+- return.model:
+
+  Logical. When `TRUE`, attaches an `"af.model"` attribute to the
+  returned spectra containing per-node covariance, occupancy priors,
+  abundance priors and scatter statistics, for use by
+  [`unmix.af.gls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.af.gls.md).
+  The return value is still a matrix, so existing callers are
+  unaffected. Default `FALSE`. Requires refine = FALSE for
+  well-populated per-node covariances.
+
+- model.rank:
+
+  Integer, maximum rank retained for each node's spectral covariance.
+  Default `6`.
+
+- model.var.explained:
+
+  Numeric, fraction of within-node variance to retain. Default `0.95`.
+
+- model.min.events:
+
+  Integer, minimum events for a node to receive a covariance estimate.
+  Nodes below this get the pooled covariance. Default `50`.
+
+- model.shrinkage:
+
+  Numeric in `[0, 1]`, shrinkage of each node covariance toward the
+  pooled covariance. Guards nodes with few events. Default `0.10`.
+
 - heatmap.color.palette:
 
   Optional character string defining the viridis color palette for the
@@ -189,7 +237,6 @@ modulated spectra for problem cells.
 ## References
 
 Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-visualization and interpretation of cytometry data." *Cytometry Part A*,
 87(7), 636-645.
 [doi:10.1002/cyto.a.22625](https://doi.org/10.1002/cyto.a.22625) Wehrens
 R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen

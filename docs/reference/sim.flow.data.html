@@ -35,7 +35,7 @@ and a simple OLS unmixed result (no AF) for immediate inspection."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,7 +115,7 @@ and a simple OLS unmixed result (no AF) for immediate inspection.</p>
 <span>  ssc.sd.log <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  fsc.ssc.cor <span class="op">=</span> <span class="fl">0.6</span>,</span>
 <span>  shot.noise <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  counts.per.unit <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  counts.per.unit <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  spillover.noise <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  detector.noise <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  af.variation <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -225,8 +225,8 @@ and log(SSC) in the synthetic scatter population. Default <code>0.6</code>.</p><
 
 
 <dt id="arg-counts-per-unit">counts.per.unit<a class="anchor" aria-label="anchor" href="#arg-counts-per-unit"></a></dt>
-<dd><p>Numeric scalar for <code>shot.noise</code>. Default <code>0.5</code>. Works
-inversely; higher numbers will decrease shot noise-driven spread.</p></dd>
+<dd><p>Numeric scalar for <code>shot.noise</code>. Default NULL, which
+uses the cytometer-specific preset. Supply a value to override.</p></dd>
 
 
 <dt id="arg-spillover-noise">spillover.noise<a class="anchor" aria-label="anchor" href="#arg-spillover-noise"></a></dt>
@@ -309,7 +309,7 @@ reproducibility.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

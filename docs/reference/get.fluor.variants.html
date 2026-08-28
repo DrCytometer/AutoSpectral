@@ -51,7 +51,7 @@ smoothing."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,14 +138,21 @@ smoothing.</p>
 <span>  <span class="va">unmixed.thresholds</span>,</span>
 <span>  <span class="va">flow.channel</span>,</span>
 <span>  <span class="va">af.pcs</span>,</span>
+<span>  neg.cache <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  use.unmixed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n.cells <span class="op">=</span> <span class="fl">10000L</span>,</span>
 <span>  som.dim <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  k.neighbors <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>  sim.threshold <span class="op">=</span> <span class="fl">0.985</span>,</span>
+<span>  sim.threshold.floor <span class="op">=</span> <span class="fl">0.9</span>,</span>
+<span>  af.collinear.threshold <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  noise.floor.tail.fraction <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>  variant.fill.color <span class="op">=</span> <span class="st">"red"</span>,</span>
 <span>  variant.fill.alpha <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  median.line.color <span class="op">=</span> <span class="st">"black"</span>,</span>
-<span>  median.linewidth <span class="op">=</span> <span class="fl">1</span></span>
+<span>  median.linewidth <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  threads <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -233,6 +240,29 @@ matrices, one per unique unstained FCS file. Names are FCS filenames
 matching entries in <code>universal.negative</code>.</p></dd>
 
 
+<dt id="arg-neg-cache">neg.cache<a class="anchor" aria-label="anchor" href="#arg-neg-cache"></a></dt>
+<dd><p>Optional named list, one entry per unique unstained FCS
+file (names are filenames), each holding <code>$spectral</code> and <code>$scatter</code>
+matrices already read from disk. Built once in <code><a href="get.spectral.variants.html">get.spectral.variants()</a></code>
+and reused across all fluorophores sharing the same negative, avoiding a
+repeat disk read/decode per fluorophore. Default <code>NULL</code> falls back to
+reading <code>universal.negative[fluor]</code> directly.</p></dd>
+
+
+<dt id="arg-use-unmixed">use.unmixed<a class="anchor" aria-label="anchor" href="#arg-use-unmixed"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Whether to unmix
+background-corrected positive events against the full <code>spectra</code>
+matrix and use that unmixed-space projection for positivity selection,
+the Spillover Spreading Matrix inputs, and as additional SOM clustering
+features. Set to <code>FALSE</code> when <code>spectra</code> contains several
+similar or collinear fluorophores (e.g. a bead-cell comparison panel),
+where the full-spectra unmix is itself unstable or unsolvable. When
+<code>FALSE</code>, positivity selection falls back to the raw-threshold
+events already identified via <code>raw.thresholds</code>, SOM clustering uses
+raw detector space only, and the <code>"spillover.spread"</code> /
+<code>"on.channel.mfi"</code> attributes are not computed (see Value).</p></dd>
+
+
 <dt id="arg-n-cells">n.cells<a class="anchor" aria-label="anchor" href="#arg-n-cells"></a></dt>
 <dd><p>Integer, default <code>10000</code>. Maximum number of positive
 events used for SOM clustering. Files with more events above threshold
@@ -257,6 +287,33 @@ similarity between a SOM centroid and the reference spectrum for the
 centroid to be retained as a variant.</p></dd>
 
 
+<dt id="arg-sim-threshold-floor">sim.threshold.floor<a class="anchor" aria-label="anchor" href="#arg-sim-threshold-floor"></a></dt>
+<dd><p>Numeric, default <code>0.90</code>. Lower bound for
+adaptive relaxation of <code>sim.threshold</code> when the initial cutoff
+retains fewer than 20 events. Relaxation is logged via <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code>
+and the threshold actually used is returned as the
+<code>"cosine.threshold.used"</code> attribute.</p></dd>
+
+
+<dt id="arg-af-collinear-threshold">af.collinear.threshold<a class="anchor" aria-label="anchor" href="#arg-af-collinear-threshold"></a></dt>
+<dd><p>Numeric, default <code>0.95</code>. Minimum
+cosine similarity between <code>fluor</code>'s reference spectrum and any of
+its paired unstained file's AF principal directions (<code>af.pcs</code>) at
+or above which the AF-component projection step is skipped, since a
+joint OLS fit against near-collinear AF and fluorophore directions can
+push real fluorophore signal into the AF term. Recorded as the
+<code>"af.collinear"</code> attribute.</p></dd>
+
+
+<dt id="arg-noise-floor-tail-fraction">noise.floor.tail.fraction<a class="anchor" aria-label="anchor" href="#arg-noise-floor-tail-fraction"></a></dt>
+<dd><p>Numeric in (0, 1), default <code>0.20</code>.
+Per-detector noise floor is the MAD (scaled to a Gaussian-equivalent
+variance) of the lowest fraction of raw values in that detector's
+column, using every event in the control file. Lower values isolate a
+purer background tail but with fewer events to estimate from; higher
+values are more stable but risk pulling in dim positive events.</p></dd>
+
+
 <dt id="arg-variant-fill-color">variant.fill.color<a class="anchor" aria-label="anchor" href="#arg-variant-fill-color"></a></dt>
 <dd><p>Color for the shaded ribbon in the variant plot.
 Default <code>"red"</code>.</p></dd>
@@ -276,12 +333,31 @@ Default <code>"red"</code>.</p></dd>
 <dd><p>Width of the reference-spectrum line. Default
 <code>1</code>.</p></dd>
 
+
+<dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Enable OpenMP multi-threading
+for this call's batch SOM (<code><a href="get.som.codes.html">get.som.codes()</a></code>).</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>Numeric or <code>NULL</code>. OpenMP threads for the batch SOM.
+<code>NULL</code> defaults to <code>0</code> (all available cores) when <code>parallel = TRUE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A numeric matrix; variants in rows, detectors in columns, values
-normalised to \([0, 1]\). When no centroids survive cosine QC the
-single reference spectrum is returned (one row).</p>
+normalised to \([0, 1]\). Row 1 is always the library reference
+spectrum for <code>fluor</code>; subsequent rows are SOM-derived variants that
+passed cosine QC. When too few positive events are available, or no
+centroids survive cosine QC, the single reference spectrum is returned
+(one row). Carries three attributes: <code>"noise.floor"</code> (per-detector
+background SD, described above), <code>"spillover.spread"</code> (named
+numeric vector, per-detector MAD of this control's unmixed positive
+population, or <code>NULL</code> if fewer than 20 positive events were found or
+if <code>use.unmixed = FALSE</code>), and <code>"on.channel.mfi"</code> (this
+control's own median unmixed abundance, <code>NA</code> if
+<code>use.unmixed = FALSE</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -298,7 +374,7 @@ single reference spectrum is returned (one row).</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

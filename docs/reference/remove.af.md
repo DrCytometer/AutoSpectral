@@ -20,7 +20,8 @@ remove.af(
   k.neighbors = 3L,
   main.figures = TRUE,
   intermediate.figures = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  diagnostics.env = NULL
 )
 ```
 
@@ -91,6 +92,17 @@ remove.af(
 - verbose:
 
   Logical, default is `TRUE`. Set to `FALSE` to suppress messages.
+
+- diagnostics.env:
+
+  Optional environment, default `NULL`. If supplied, `remove.af()`
+  populates it (keyed by sample name) with the objects used to identify
+  and exclude intrusive autofluorescence for each cell-based AF-removal
+  sample: `af.peak.channel`, `fluor.peak`, `af.boundaries`,
+  `expr.data.pos`/`expr.data.neg` (spectral channels only), and the
+  resulting gate indices. Intended for diagnostic/manuscript figures
+  (see `plot.spectra.legacy.steps()`); has no effect on the cleaning
+  result. Capture is unreliable when `parallel = TRUE`.
 
 ## Value
 

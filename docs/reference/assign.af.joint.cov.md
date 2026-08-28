@@ -19,7 +19,7 @@ upweight channels where they diverge.
 ## Usage
 
 ``` r
-assign.af.joint.cov(raw.data, spectra, af.spectra)
+assign.af.joint.cov(raw.data, spectra, af.spectra, return.scores = FALSE)
 ```
 
 ## Arguments
@@ -40,6 +40,11 @@ assign.af.joint.cov(raw.data, spectra, af.spectra)
   Spectral signatures of autofluorescences, normalized between 0 and 1,
   with AF variants in rows and detectors in columns. Prepare using
   `get.af.spectra`.
+
+- return.scores:
+
+  Logical, default `FALSE`. If `\code{TRUE}`, also returns the unmixed
+  data and scores for each AF variant per cell.
 
 ## Value
 

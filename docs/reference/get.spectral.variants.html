@@ -16,6 +16,11 @@ detector. All positive events are scatter-matched to unstained events and
 their per-event background is subtracted before SOM clustering. This gives a
 comprehensive, population-level picture of true fluorophore spectral
 variability without requiring a pre-computed af.spectra matrix.
+A cell-based unstained sample is still required at this stage, since it
+anchors the positivity thresholds and per-node AF library. It is normally
+read from the control file's &quot;AF&quot; row; if the control file has no
+&quot;AF&quot; row (e.g. a bead-only or negative-free control setup), supply
+one directly via unstained.sample instead.
 The output is saved as an .rds file and per-fluorophore variant plots are
 produced if requested."><meta property="og:description" content="Cycles through all fluorophores defined in control.def.file,
 identifying variation in their spectral profiles via SOM clustering on
@@ -28,6 +33,11 @@ detector. All positive events are scatter-matched to unstained events and
 their per-event background is subtracted before SOM clustering. This gives a
 comprehensive, population-level picture of true fluorophore spectral
 variability without requiring a pre-computed af.spectra matrix.
+A cell-based unstained sample is still required at this stage, since it
+anchors the positivity thresholds and per-node AF library. It is normally
+read from the control file's &quot;AF&quot; row; if the control file has no
+&quot;AF&quot; row (e.g. a bead-only or negative-free control setup), supply
+one directly via unstained.sample instead.
 The output is saved as an .rds file and per-fluorophore variant plots are
 produced if requested."><script>
   window.MathJax = {
@@ -41,7 +51,7 @@ produced if requested."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,6 +110,11 @@ detector. All positive events are scatter-matched to unstained events and
 their per-event background is subtracted before SOM clustering. This gives a
 comprehensive, population-level picture of true fluorophore spectral
 variability without requiring a pre-computed <code>af.spectra</code> matrix.</p>
+<p>A cell-based unstained sample is still required at this stage, since it
+anchors the positivity thresholds and per-node AF library. It is normally
+read from the control file's <code>"AF"</code> row; if the control file has no
+<code>"AF"</code> row (e.g. a bead-only or negative-free control setup), supply
+one directly via <code>unstained.sample</code> instead.</p>
 <p>The output is saved as an .rds file and per-fluorophore variant plots are
 produced if requested.</p>
     </div>
@@ -113,17 +128,22 @@ produced if requested.</p>
 <span>  <span class="va">spectra</span>,</span>
 <span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  output.dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n.cells <span class="op">=</span> <span class="fl">10000L</span>,</span>
-<span>  som.dim <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  som.dim <span class="op">=</span> <span class="fl">5L</span>,</span>
 <span>  k.neighbors <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>  sim.threshold <span class="op">=</span> <span class="fl">0.985</span>,</span>
+<span>  sim.threshold.floor <span class="op">=</span> <span class="fl">0.9</span>,</span>
+<span>  af.collinear.threshold <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  noise.floor.tail.fraction <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>  variant.fill.color <span class="op">=</span> <span class="st">"red"</span>,</span>
 <span>  variant.fill.alpha <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  median.line.color <span class="op">=</span> <span class="st">"black"</span>,</span>
 <span>  median.linewidth <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  use.unmixed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  unstained.sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  stained.sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  optimize.necessity.threshold <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -163,8 +183,8 @@ plots.</p></dd>
 
 
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
-<dd><p>Logical, default <code>FALSE</code>. Enable parallel processing
-across fluorophores.</p></dd>
+<dd><p>Logical, default <code>TRUE</code>. Enable parallel processing
+for SOM clustering (requires AutoSpectralRcpp).</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -184,7 +204,7 @@ are randomly downsampled. Passed to <code>get.fluor.variants</code>.</p></dd>
 
 
 <dt id="arg-som-dim">som.dim<a class="anchor" aria-label="anchor" href="#arg-som-dim"></a></dt>
-<dd><p>Integer, default <code>10</code>. Side length of the square SOM
+<dd><p>Integer, default <code>5</code>. Side length of the square SOM
 grid; up to <code>som.dim^2</code> candidate variants per fluorophore before
 cosine QC. Passed to <code>get.fluor.variants</code>.</p></dd>
 
@@ -199,6 +219,30 @@ background. Passed to <code>get.fluor.variants</code>.</p></dd>
 <dd><p>Numeric, default <code>0.99</code>. Minimum cosine similarity
 to the reference spectrum for a SOM centroid to be retained as a variant.
 Passed to <code>get.fluor.variants</code>.</p></dd>
+
+
+<dt id="arg-sim-threshold-floor">sim.threshold.floor<a class="anchor" aria-label="anchor" href="#arg-sim-threshold-floor"></a></dt>
+<dd><p>Numeric, default <code>0.90</code>. Lower bound for
+adaptive relaxation of <code>sim.threshold</code> when the initial cutoff
+retains fewer than 20 events. Relaxation is logged via <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code>
+and the threshold actually used is returned as the
+<code>"cosine.threshold.used"</code> attribute.</p></dd>
+
+
+<dt id="arg-af-collinear-threshold">af.collinear.threshold<a class="anchor" aria-label="anchor" href="#arg-af-collinear-threshold"></a></dt>
+<dd><p>Numeric, default <code>0.95</code>. Minimum
+cosine similarity between <code>fluor</code>'s reference spectrum and any of
+its paired unstained file's AF principal directions (<code>af.pcs</code>) at
+or above which the AF-component projection step is skipped, since a
+joint OLS fit against near-collinear AF and fluorophore directions can
+push real fluorophore signal into the AF term. Recorded as the
+<code>"af.collinear"</code> attribute.</p></dd>
+
+
+<dt id="arg-noise-floor-tail-fraction">noise.floor.tail.fraction<a class="anchor" aria-label="anchor" href="#arg-noise-floor-tail-fraction"></a></dt>
+<dd><p>Numeric in (0, 1), default <code>0.20</code>.
+Fraction of each detector's raw values (lowest end) used to estimate the
+per-control noise floor. Passed to <code>get.fluor.variants</code>.</p></dd>
 
 
 <dt id="arg-variant-fill-color">variant.fill.color<a class="anchor" aria-label="anchor" href="#arg-variant-fill-color"></a></dt>
@@ -219,6 +263,29 @@ Default <code>"red"</code>.</p></dd>
 <dt id="arg-median-linewidth">median.linewidth<a class="anchor" aria-label="anchor" href="#arg-median-linewidth"></a></dt>
 <dd><p>Width of the reference-spectrum line. Default
 <code>1</code>.</p></dd>
+
+
+<dt id="arg-use-unmixed">use.unmixed<a class="anchor" aria-label="anchor" href="#arg-use-unmixed"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Whether AF extraction
+(<code><a href="get.af.spectra.html">get.af.spectra()</a></code>) and fluorophore variant assessment
+(<code><a href="get.fluor.variants.html">get.fluor.variants()</a></code>) may use full-spectra OLS unmixing as part
+of their SOM clustering input, positivity selection, and Spillover
+Spreading Matrix construction. Set to <code>FALSE</code> when <code>spectra</code>
+contains several similar or collinear fluorophores (e.g. a bead-cell
+comparison panel), where a full-spectra unmix is itself unstable or
+unsolvable and would corrupt rather than inform those steps. When
+<code>FALSE</code>, clustering falls back to raw detector space only, the
+unstained-sample positivity thresholds used internally by
+<code><a href="get.fluor.variants.html">get.fluor.variants()</a></code> are not computed, and the returned
+<code>spillover.spread</code> is always <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-unstained-sample">unstained.sample<a class="anchor" aria-label="anchor" href="#arg-unstained-sample"></a></dt>
+<dd><p>Optional file path to a cell-based unstained FCS
+file, used as the autofluorescence reference when the control file has
+no <code>"AF"</code> row. Required in that case; ignored (with a message) if
+the control file does have an <code>"AF"</code> row, since the in-situ
+unstained paired with the single-stained controls is used instead.</p></dd>
 
 
 <dt id="arg-stained-sample">stained.sample<a class="anchor" aria-label="anchor" href="#arg-stained-sample"></a></dt>
@@ -262,6 +329,22 @@ reference spectrum), one per fluorophore.</p></dd>
 <dd><p>Named list of Euclidean norms of the deltas,
 one numeric vector per fluorophore.</p></dd>
 
+<dt><code>noise.floor</code></dt>
+<dd><p>Named numeric vector, per-detector electronic
+noise floor in signal units (SD), pooled by minimum across controls.
+Matches the units of <code>noise.floor</code> elsewhere in the package
+(<code><a href="unmix.fcs.html">unmix.fcs()</a></code>, the C++ pipeline). Square it before passing to
+<code>estimate.noise.model(read.var.floor = ...)</code>, which expects a
+variance.</p></dd>
+
+<dt><code>spillover.spread</code></dt>
+<dd><p>Matrix (source fluorophore x target
+channel), the Spillover Spreading Matrix: increase in unmixed
+variance a source fluorophore's positive population contributes to
+each other channel, per unit of its own on-channel signal. Diagonal
+entries are <code>NA</code>. <code>NULL</code> if no control supplied enough positive
+events. Saved as a heatmap when <code>figures = TRUE</code>.</p></dd>
+
 
 </dl><p>The list is also saved as an .rds file in <code>output.dir</code>.</p>
     </div>
@@ -275,7 +358,7 @@ one numeric vector per fluorophore.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

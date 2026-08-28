@@ -6,7 +6,13 @@ usage and faster than `flowCore`.
 ## Usage
 
 ``` r
-readFCS(fcs.path, return.keywords = FALSE, start.row = NULL, end.row = NULL)
+readFCS(
+  fcs.path,
+  return.keywords = FALSE,
+  start.row = NULL,
+  end.row = NULL,
+  columns = NULL
+)
 ```
 
 ## Arguments
@@ -32,6 +38,15 @@ readFCS(fcs.path, return.keywords = FALSE, start.row = NULL, end.row = NULL)
   Optional numeric specifying the row to end reading on. Can be useful
   for reading in just the metadata or for chunking files. Default is
   `NULL`, which will read the whole file.
+
+- columns:
+
+  Optional character vector of `$PnN` channel names to read. Default
+  `NULL` reads and returns every channel (unchanged behaviour).
+  Supplying a subset avoids decoding and materializing columns that will
+  be discarded immediately afterward – useful for wide panels (e.g.
+  ID7000, Xenith) where only spectral + a few passthrough channels are
+  actually needed.
 
 ## Value
 

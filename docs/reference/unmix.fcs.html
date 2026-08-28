@@ -17,7 +17,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,7 +94,7 @@
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  chunk.size <span class="op">=</span> <span class="fl">2e+06</span>,</span>
-<span>  pipeline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"legacy"</span>, <span class="st">"joint"</span><span class="op">)</span>,</span>
+<span>  pipeline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"joint"</span>, <span class="st">"legacy"</span><span class="op">)</span>,</span>
 <span>  n.passes <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  n.af.passes <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  cell.weight <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">asp</span><span class="op">$</span><span class="va">cytometer</span> <span class="op">==</span> <span class="st">"ID7000"</span><span class="op">)</span> <span class="cn">TRUE</span> <span class="kw">else</span> <span class="cn">FALSE</span>,</span>
@@ -286,8 +286,10 @@ weighting to the joint unmixing solve. Only used when
 
 <dt id="arg-noise-floor">noise.floor<a class="anchor" aria-label="anchor" href="#arg-noise-floor"></a></dt>
 <dd><p>Numeric, default <code>125</code>. Lower clamp on the denominator
-of the per-cell detector weights when <code>cell.weight = TRUE</code>. Only used
-when <code>pipeline = "joint"</code>. Passed to <code>unmix.autospectral.rcpp()</code>.</p></dd>
+of the per-cell detector weights when <code>cell.weight = TRUE</code> and
+<code>pipeline = "joint"</code> (passed to <code>unmix.autospectral.rcpp()</code>), and on the
+IRLS weight denominator when <code>method = "FastPoisson"</code> (passed to
+<code><a href="https://rdrr.io/pkg/AutoSpectralRcpp/man/unmix.poisson.fast.html" class="external-link">AutoSpectralRcpp::unmix.poisson.fast()</a></code>).</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
@@ -332,7 +334,7 @@ forward for additional AF passes (see <code>n.af.passes</code>). Only used when
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

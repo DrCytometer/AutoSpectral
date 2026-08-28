@@ -12,6 +12,7 @@ unmix.poisson(
   spectra,
   asp,
   initial.weights = NULL,
+  noise.floor = 125,
   parallel = TRUE,
   threads = NULL
 )
@@ -37,6 +38,13 @@ unmix.poisson(
   Optional numeric vector of weights, one per fluorescent detector.
   Default is `NULL`, in which case weighting will be done by channel
   means.
+
+- noise.floor:
+
+  Numeric, default `125`. Lower clamp on the initial WLS weights used to
+  seed each cell's fit. Signal units, same convention as `noise.floor`
+  elsewhere in the package. Not used inside `glm.fit` itself; see
+  `unmix.poisson.fast()` for floor-aware per-cell IRLS reweighting.
 
 - parallel:
 

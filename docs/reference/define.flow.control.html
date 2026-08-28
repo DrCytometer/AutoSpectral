@@ -33,7 +33,7 @@ not help much on Windows unless &amp;gt;10 cores are available."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -104,7 +104,8 @@ not help much on Windows unless &gt;10 cores are available.</p>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  threads <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  color.palette <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  color.palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  allow.duplicate.controls <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -178,11 +179,22 @@ to be similar to FlowJo or SpectroFlo. Other options are the viridis color
 options: <code>magma</code>, <code>inferno</code>, <code>plasma</code>, <code>viridis</code>, <code>cividis</code>, <code>rocket</code>, <code>mako</code>
 and <code>turbo</code>.</p></dd>
 
+
+<dt id="arg-allow-duplicate-controls">allow.duplicate.controls<a class="anchor" aria-label="anchor" href="#arg-allow-duplicate-controls"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. Set <code>TRUE</code> to
+permit multiple single-stained controls for the same fluorophore
+(diagnostic/QC use only). Each is tracked internally under a unique
+<code>sample</code> identifier. The resulting spectral reference library still needs
+to be reduced to one row per fluorophore before unmixing –
+see <code><a href="check.spectra.duplicates.html">check.spectra.duplicates()</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list (<code>flow.control</code>) with the following components:</p><ul><li><p><code>filename</code>: Names of the single-color control files.</p></li>
-<li><p><code>fluorophore</code>: Corresponding fluorophores used in the experiment.</p></li>
+<li><p><code>fluorophore</code>: Corresponding fluorophores used in the experiment. May
+contain duplicates if multiple controls were run for the same fluorophore;
+see <code>sample</code> for the unique per-control identifier.</p></li>
 <li><p><code>antigen</code>: Corresponding markers used in the experiment.</p></li>
 <li><p><code>control.type</code>: Type of control used (beads or cells).</p></li>
 <li><p><code>universal.negative</code>: Corresponding universal negative for each control.</p></li>
@@ -197,7 +209,9 @@ and <code>turbo</code>.</p></dd>
 <li><p><code>channel.n</code>: Number of channels.</p></li>
 <li><p><code>spectral.channel</code>: Spectral channel information.</p></li>
 <li><p><code>spectral.channel.n</code>: Number of spectral channels.</p></li>
-<li><p><code>sample</code>: Sample names (fluorophores).</p></li>
+<li><p><code>sample</code>: Unique per-control identifier. Equal to <code>fluorophore</code> unless
+multiple controls share a fluorophore, in which case it is disambiguated
+(e.g. <code>"PE (cells)"</code>, <code>"PE (cells) (CD4)"</code>).</p></li>
 <li><p><code>scatter.and.channel</code>: FSC, SSC, and peak channel information.</p></li>
 <li><p><code>scatter.and.channel.label</code>: Labels for scatter and channel.</p></li>
 <li><p><code>scatter.and.channel.spectral</code>: FSC, SSC, and spectral channels.</p></li>
@@ -234,7 +248,7 @@ Communications</em> 12 (2890) 2021.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -21,7 +21,7 @@ first column contains fluorophore names)."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,7 +80,9 @@ first column contains fluorophore names).</p>
 <span>  <span class="va">spectra.file</span>,</span>
 <span>  spectra.dir <span class="op">=</span> <span class="st">"./table_spectra"</span>,</span>
 <span>  remove.af <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  af.param <span class="op">=</span> <span class="st">"AF"</span></span>
+<span>  af.param <span class="op">=</span> <span class="st">"AF"</span>,</span>
+<span>  check.collinearity <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  collinearity.threshold <span class="op">=</span> <span class="fl">0.95</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -107,6 +109,22 @@ matrix without the default autofluorescence spectrum.</p></dd>
 that any fluorophores can be removed from the matrix by supplying a character
 vector, e.g., <code>c("BUV395", "PE")</code>, if desired.</p></dd>
 
+
+<dt id="arg-check-collinearity">check.collinearity<a class="anchor" aria-label="anchor" href="#arg-check-collinearity"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. CSV files cannot carry
+the <code>"fluorophore"</code> identity attribute that <code><a href="check.spectra.duplicates.html">check.spectra.duplicates()</a></code>
+checks exactly elsewhere, and a <code>sample</code>-disambiguated rowname (e.g.
+<code>"PE (cells)"</code> / <code>"PE (cells) (CD4)"</code>) is unique by construction, so a
+rownames-only check would never catch two controls for the same dye. When
+<code>TRUE</code>, screens for suspiciously similar rows as an early, load-time
+warning (the same screen <code><a href="check.spectra.duplicates.html">check.spectra.duplicates()</a></code> falls back to later).</p></dd>
+
+
+<dt id="arg-collinearity-threshold">collinearity.threshold<a class="anchor" aria-label="anchor" href="#arg-collinearity-threshold"></a></dt>
+<dd><p>Numeric, default <code>0.95</code>. Cosine similarity
+above which two rows trigger the warning. Matches the package default for
+<code>asp$similarity.warning.n</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -122,7 +140,7 @@ vector, e.g., <code>c("BUV395", "PE")</code>, if desired.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

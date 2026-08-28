@@ -27,7 +27,7 @@ panels for each method are saved as a single PDF."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,10 @@ panels for each method are saved as a single PDF.</p>
 <span>  functions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"assign.af.fluorophores"</span>, <span class="st">"assign.af.residuals"</span>, <span class="st">"assign.af.joint.cov"</span><span class="op">)</span>,</span>
 <span>  n.downsample <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  plot.dir <span class="op">=</span> <span class="st">"figure_af_accuracy"</span>,</span>
-<span>  title <span class="op">=</span> <span class="st">"af_accuracy"</span></span>
+<span>  title <span class="op">=</span> <span class="st">"af_accuracy"</span>,</span>
+<span>  scatter.param <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ref.fcs <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  k.scatter <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -151,6 +154,27 @@ Created recursively if it does not exist. Default: <code>"figure_af_accuracy"</c
 will be <code>&lt;plot.dir&gt;/&lt;title&gt;_biplots.pdf</code>). Default:
 <code>"af_accuracy"</code>.</p></dd>
 
+
+<dt id="arg-scatter-param">scatter.param<a class="anchor" aria-label="anchor" href="#arg-scatter-param"></a></dt>
+<dd><p>Character vector of scatter channel names (e.g.
+c("FSC-A","SSC-A")). Required only when <code>"assign.af.scatter.match"</code>
+is included in <code>functions</code>; ignored otherwise.</p></dd>
+
+
+<dt id="arg-ref-fcs">ref.fcs<a class="anchor" aria-label="anchor" href="#arg-ref-fcs"></a></dt>
+<dd><p>Character scalar. Optional path to a separate reference
+FCS file for <code>assign.af.scatter.match</code>'s kNN library. If <code>NULL</code>
+(default), the same (downsampled) <code>unstained.fcs</code> pool is used as
+both test and reference set – note this means each cell's own scatter
+profile is present in its neighbour pool, which will bias the similarity
+estimate optimistically. Supply a distinct <code>ref.fcs</code> for an
+unbiased comparison.</p></dd>
+
+
+<dt id="arg-k-scatter">k.scatter<a class="anchor" aria-label="anchor" href="#arg-k-scatter"></a></dt>
+<dd><p>Integer. Passed to <code>assign.af.scatter.match</code>'s
+<code>k</code>. Default <code>5L</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -191,7 +215,7 @@ excluded).</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -13,6 +13,12 @@ clustering. This gives a comprehensive, population-level picture of true
 fluorophore spectral variability without requiring a pre-computed
 `af.spectra` matrix.
 
+A cell-based unstained sample is still required at this stage, since it
+anchors the positivity thresholds and per-node AF library. It is
+normally read from the control file's `"AF"` row; if the control file
+has no `"AF"` row (e.g. a bead-only or negative-free control setup),
+supply one directly via `unstained.sample` instead.
+
 The output is saved as an .rds file and per-fluorophore variant plots
 are produced if requested.
 
@@ -26,17 +32,22 @@ get.spectral.variants(
   spectra,
   figures = TRUE,
   output.dir = NULL,
-  parallel = FALSE,
+  parallel = TRUE,
   verbose = TRUE,
   threads = NULL,
   n.cells = 10000L,
-  som.dim = 10L,
+  som.dim = 5L,
   k.neighbors = 3L,
   sim.threshold = 0.985,
+  sim.threshold.floor = 0.9,
+  af.collinear.threshold = 0.95,
+  noise.floor.tail.fraction = 0.2,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
   median.linewidth = 1,
+  use.unmixed = TRUE,
+  unstained.sample = NULL,
   stained.sample = NULL,
   optimize.necessity.threshold = 0.01,
   ...
@@ -75,8 +86,8 @@ get.spectral.variants(
 
 - parallel:
 
-  Logical, default `FALSE`. Enable parallel processing across
-  fluorophores.
+  Logical, default `TRUE`. Enable parallel processing for SOM clustering
+  (requires AutoSpectralRcpp).
 
 - verbose:
 
@@ -95,7 +106,7 @@ get.spectral.variants(
 
 - som.dim:
 
-  Integer, default `10`. Side length of the square SOM grid; up to
+  Integer, default `5`. Side length of the square SOM grid; up to
   `som.dim^2` candidate variants per fluorophore before cosine QC.
   Passed to `get.fluor.variants`.
 
@@ -110,6 +121,29 @@ get.spectral.variants(
   Numeric, default `0.99`. Minimum cosine similarity to the reference
   spectrum for a SOM centroid to be retained as a variant. Passed to
   `get.fluor.variants`.
+
+- sim.threshold.floor:
+
+  Numeric, default `0.90`. Lower bound for adaptive relaxation of
+  `sim.threshold` when the initial cutoff retains fewer than 20 events.
+  Relaxation is logged via
+  [`warning()`](https://rdrr.io/r/base/warning.html) and the threshold
+  actually used is returned as the `"cosine.threshold.used"` attribute.
+
+- af.collinear.threshold:
+
+  Numeric, default `0.95`. Minimum cosine similarity between `fluor`'s
+  reference spectrum and any of its paired unstained file's AF principal
+  directions (`af.pcs`) at or above which the AF-component projection
+  step is skipped, since a joint OLS fit against near-collinear AF and
+  fluorophore directions can push real fluorophore signal into the AF
+  term. Recorded as the `"af.collinear"` attribute.
+
+- noise.floor.tail.fraction:
+
+  Numeric in (0, 1), default `0.20`. Fraction of each detector's raw
+  values (lowest end) used to estimate the per-control noise floor.
+  Passed to `get.fluor.variants`.
 
 - variant.fill.color:
 
@@ -126,6 +160,32 @@ get.spectral.variants(
 - median.linewidth:
 
   Width of the reference-spectrum line. Default `1`.
+
+- use.unmixed:
+
+  Logical, default `TRUE`. Whether AF extraction
+  ([`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md))
+  and fluorophore variant assessment
+  ([`get.fluor.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluor.variants.md))
+  may use full-spectra OLS unmixing as part of their SOM clustering
+  input, positivity selection, and Spillover Spreading Matrix
+  construction. Set to `FALSE` when `spectra` contains several similar
+  or collinear fluorophores (e.g. a bead-cell comparison panel), where a
+  full-spectra unmix is itself unstable or unsolvable and would corrupt
+  rather than inform those steps. When `FALSE`, clustering falls back to
+  raw detector space only, the unstained-sample positivity thresholds
+  used internally by
+  [`get.fluor.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluor.variants.md)
+  are not computed, and the returned `spillover.spread` is always
+  `NULL`.
+
+- unstained.sample:
+
+  Optional file path to a cell-based unstained FCS file, used as the
+  autofluorescence reference when the control file has no `"AF"` row.
+  Required in that case; ignored (with a message) if the control file
+  does have an `"AF"` row, since the in-situ unstained paired with the
+  single-stained controls is used instead.
 
 - stained.sample:
 
@@ -173,5 +233,24 @@ A named list with elements:
 
   Named list of Euclidean norms of the deltas, one numeric vector per
   fluorophore.
+
+- `noise.floor`:
+
+  Named numeric vector, per-detector electronic noise floor in signal
+  units (SD), pooled by minimum across controls. Matches the units of
+  `noise.floor` elsewhere in the package
+  ([`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md),
+  the C++ pipeline). Square it before passing to
+  `estimate.noise.model(read.var.floor = ...)`, which expects a
+  variance.
+
+- `spillover.spread`:
+
+  Matrix (source fluorophore x target channel), the Spillover Spreading
+  Matrix: increase in unmixed variance a source fluorophore's positive
+  population contributes to each other channel, per unit of its own
+  on-channel signal. Diagonal entries are `NA`. `NULL` if no control
+  supplied enough positive events. Saved as a heatmap when
+  `figures = TRUE`.
 
 The list is also saved as an .rds file in `output.dir`.

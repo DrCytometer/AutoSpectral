@@ -30,7 +30,7 @@ unmix.fcs(
   verbose = TRUE,
   n.variants = NULL,
   chunk.size = 2e+06,
-  pipeline = c("legacy", "joint"),
+  pipeline = c("joint", "legacy"),
   n.passes = 1L,
   n.af.passes = 1L,
   cell.weight = if (asp$cytometer == "ID7000") TRUE else FALSE,
@@ -225,8 +225,10 @@ unmix.fcs(
 - noise.floor:
 
   Numeric, default `125`. Lower clamp on the denominator of the per-cell
-  detector weights when `cell.weight = TRUE`. Only used when
-  `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+  detector weights when `cell.weight = TRUE` and `pipeline = "joint"`
+  (passed to `unmix.autospectral.rcpp()`), and on the IRLS weight
+  denominator when `method = "FastPoisson"` (passed to
+  [`AutoSpectralRcpp::unmix.poisson.fast()`](https://rdrr.io/pkg/AutoSpectralRcpp/man/unmix.poisson.fast.html)).
 
 - alpha:
 

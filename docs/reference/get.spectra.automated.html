@@ -69,7 +69,7 @@ get.fluorophore.spectra) remains available and is unchanged."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -153,6 +153,7 @@ refined using the legacy gating and cleaning approach.</p></li>
 <span>  n.spectral <span class="op">=</span> <span class="fl">200L</span>,</span>
 <span>  k.neighbors <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  singlet.quantiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.85</span>, <span class="fl">0.975</span><span class="op">)</span>,</span>
+<span>  remove.doublets <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  cosine.threshold <span class="op">=</span> <span class="fl">0.9</span>,</span>
 <span>  peak.signal.threshold <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  legacy.refinement <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -161,6 +162,7 @@ refined using the legacy gating and cleaning approach.</p></li>
 <span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot.cosine.filter <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot.scatter.match <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  allow.duplicate.controls <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -191,7 +193,7 @@ events by peak channel are used directly.</p></dd>
 
 
 <dt id="arg-n-spectral">n.spectral<a class="anchor" aria-label="anchor" href="#arg-n-spectral"></a></dt>
-<dd><p>Integer, default <code>200</code>. Number of spectral events
+<dd><p>Integer, default <code>50</code>. Number of spectral events
 retained after filtering for low AF cosine similarity.</p></dd>
 
 
@@ -202,7 +204,15 @@ scatter space used for per-event AF subtraction.</p></dd>
 
 <dt id="arg-singlet-quantiles">singlet.quantiles<a class="anchor" aria-label="anchor" href="#arg-singlet-quantiles"></a></dt>
 <dd><p>Numeric, default <code>c( 0.85, 0.975 )</code>. Range of
-quantiles to use for doublet discrimination.</p></dd>
+quantiles to use for doublet discrimination. Ignored if
+<code>remove.doublets = FALSE</code>.</p></dd>
+
+
+<dt id="arg-remove-doublets">remove.doublets<a class="anchor" aria-label="anchor" href="#arg-remove-doublets"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Whether to apply the
+two-pass scatter-ratio (FSC-A/FSC-H, SSC-A/SSC-H) doublet-removal step
+during FCS cleaning. Set to <code>FALSE</code> to skip singlet gating entirely,
+e.g. for cytometers or panels lacking usable height parameters.</p></dd>
 
 
 <dt id="arg-cosine-threshold">cosine.threshold<a class="anchor" aria-label="anchor" href="#arg-cosine-threshold"></a></dt>
@@ -253,6 +263,15 @@ for each fluorophore (unstained background, selected spectral events, and
 their matched AF events). Set to <code>FALSE</code> to skip.</p></dd>
 
 
+<dt id="arg-allow-duplicate-controls">allow.duplicate.controls<a class="anchor" aria-label="anchor" href="#arg-allow-duplicate-controls"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. Set <code>TRUE</code> to
+permit multiple single-stained controls for the same fluorophore
+(diagnostic/QC use only). Each is tracked internally under a unique
+<code>sample</code> identifier and carried through to <code>marker.spectra</code>'s rownames;
+the true fluorophore identity is preserved as a <code>"fluorophore"</code> attribute
+for reference-library matching and for <code><a href="check.spectra.duplicates.html">check.spectra.duplicates()</a></code>.</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical, default <code>TRUE</code>. Print progress messages.</p></dd>
 
@@ -278,7 +297,7 @@ peak = 1). Compatible with all downstream AutoSpectral functions.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>
