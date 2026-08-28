@@ -7,10 +7,9 @@
 #'
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
 #' @importFrom ggplot2 theme_bw theme element_line geom_path after_stat
-#' @importFrom ggplot2 element_text element_rect margin ggsave
+#' @importFrom ggplot2 element_text element_rect margin
 #' @importFrom ggplot2 scale_fill_viridis_d scale_fill_manual coord_cartesian
-#' @importFrom ggplot2 geom_contour_filled annotation_raster annotate
-#' @importFrom ragg agg_jpeg
+#' @importFrom ggplot2 geom_polygon annotation_raster
 #'
 #' @param plot.data Matrix containing autofluorescence data points.
 #' @param samp Sample identifier.
@@ -146,46 +145,47 @@ gate.af.sample.plot <- function(
     )
   }
 
-  # direct data.frame construction — avoids expand.grid allocation
-  n.grid     <- length( gate.bound.density$x )
-  density.df <- data.frame(
-    x = rep( gate.bound.density$x, times = n.grid ),
-    y = rep( gate.bound.density$y, each  = n.grid ),
-    z = as.vector( gate.bound.density$z )
-  )
-  density.df$z[ is.na( density.df$z ) ] <- 0
+  # isoband works directly on the grid
+  z.grid <- gate.bound.density$z
+  z.grid[ is.na( z.grid ) ] <- 0
 
-  max.z          <- max( density.df$z )
+  max.z          <- max( z.grid )
   density.breaks <- seq( 0.05 * max.z, max.z, length.out = 11 )
   if ( diff( range( density.breaks ) ) == 0 ) {
     density.breaks <- seq( 0, max.z + 0.1, length.out = 11 )
   }
+
+  contour.polygons <- .contour.polygons.from.grid(
+    x      = gate.bound.density$x,
+    y      = gate.bound.density$y,
+    z      = z.grid,
+    breaks = density.breaks
+  )
 
   # ---------------------------------------------------------------------------
   # 6. Build plot
   # ---------------------------------------------------------------------------
 
   gate.plot <- ggplot() +
-    annotate(
-      "rect",
-      xmin = x.lim.trans[1], xmax = x.lim.trans[2],
-      ymin = y.lim.trans[1], ymax = y.lim.trans[2],
-      fill = "white", colour = NA
-    ) +
     annotation_raster(
       scatter.raster,
       xmin = x.lim.trans[1], xmax = x.lim.trans[2],
       ymin = y.lim.trans[1], ymax = y.lim.trans[2],
       interpolate = FALSE
-    ) +
-    geom_contour_filled(
-      data        = density.df,
-      aes( x = x, y = y, z = z ),
-      breaks      = density.breaks,
-      alpha       = 1,
-      inherit.aes = FALSE,
-      na.rm       = TRUE
-    ) +
+    )
+
+  if ( !is.null( contour.polygons ) ) {
+    gate.plot <- gate.plot +
+      geom_polygon(
+        data        = contour.polygons,
+        aes( x = x, y = y, group = level, subgroup = subgroup, fill = level ),
+        alpha       = 1,
+        inherit.aes = FALSE,
+        na.rm       = TRUE
+      )
+  }
+
+  gate.plot <- gate.plot +
     scale_x_continuous(
       name   = x.lab,
       breaks = x.brk.trans,
@@ -255,16 +255,15 @@ gate.af.sample.plot <- function(
   # 9. Save
   # ---------------------------------------------------------------------------
 
-  ggsave(
-    file.path(
+  .save.ggplot.fast(
+    plot     = gate.plot,
+    filename = file.path(
       asp$figure.clean.control.dir,
       paste( asp$af.plot.filename, samp, ".jpg", sep = "_" )
     ),
-    plot      = gate.plot,
-    device    = ragg::agg_jpeg,
-    width     = asp$figure.width,
-    height    = asp$figure.height,
-    limitsize = FALSE
+    width    = asp$figure.width,
+    height   = asp$figure.height,
+    method   = "fast"
   )
 
 }

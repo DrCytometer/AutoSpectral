@@ -8,11 +8,10 @@
 #'
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
 #' @importFrom ggplot2 theme_bw theme element_line after_stat coord_cartesian
-#' @importFrom ggplot2 element_text element_rect margin expansion ggsave
-#' @importFrom ggplot2 scale_fill_viridis_d scale_fill_manual geom_contour_filled
+#' @importFrom ggplot2 element_text element_rect margin expansion
+#' @importFrom ggplot2 scale_fill_viridis_d scale_fill_manual geom_polygon
 #' @importFrom ggplot2 geom_text geom_point geom_path
 #' @importFrom scattermore geom_scattermore
-#' @importFrom ragg agg_jpeg
 #'
 #' @param samp Sample identifier.
 #' @param gate.data Matrix containing gate data points.
@@ -106,16 +105,18 @@ gate.define.plot <- function(
     y = c( gate.population$boundary$y, gate.population$boundary$y[ 1 ] )
   )
 
-  # structure pre-computed density input
-  density.df <- expand.grid(
-    x = gate.bound$density$x,
-    y = gate.bound$density$y
-  )
-  density.df$z <- as.vector( gate.bound$density$z )
-  density.df <- density.df[ !is.na( density.df$z ), ]
-  density.df <- density.df[ !duplicated( density.df[ , c( "x", "y" ) ] ), ]
-  max.z <- max( density.df$z, na.rm = TRUE)
+  # isoband directly on grid
+  z.grid <- gate.bound$density$z
+  z.grid[ is.na( z.grid ) ] <- 0
+  max.z <- max( z.grid )
   density.breaks <- seq( 0.05 * max.z, max.z, length.out = 11 )
+
+  contour.polygons <- .contour.polygons.from.grid(
+    x      = gate.bound$density$x,
+    y      = gate.bound$density$y,
+    z      = z.grid,
+    breaks = density.breaks
+  )
 
   # get axis labels
   x.lab <- names( which( scatter.and.channel.label == gate.marker[ 1 ] ) )
@@ -136,14 +137,19 @@ gate.define.plot <- function(
       color = "black",
       alpha = 1,
       na.rm = TRUE
-    ) +
-    geom_contour_filled(
-      data = density.df,
-      aes( x = x, y = y, z = z ),
-      breaks = density.breaks,
-      alpha = 1,
-      inherit.aes = FALSE
-    ) +
+    )
+
+  if ( !is.null( contour.polygons ) ) {
+    gate.plot <- gate.plot +
+      geom_polygon(
+        data = contour.polygons,
+        aes( x = x, y = y, group = level, subgroup = subgroup, fill = level ),
+        alpha = 1,
+        inherit.aes = FALSE
+      )
+  }
+
+  gate.plot <- gate.plot +
     scale_x_continuous(
       name = x.lab,
       breaks = x.breaks,
@@ -173,7 +179,7 @@ gate.define.plot <- function(
       aes( x, y ),
       color = gate.color,
       linewidth = asp$figure.gate.line.size
-      ) +
+    ) +
     theme_bw() +
     theme(
       plot.margin = margin(
@@ -235,13 +241,12 @@ gate.define.plot <- function(
       scale_fill_manual( values = rainbow.palette )
   }
 
-  ggsave(
-    file.path( asp$figure.gate.dir, sprintf( "%s.jpg", samp ) ),
-    plot = gate.plot,
-    device = ragg::agg_jpeg,
-    width = asp$figure.width,
-    height = asp$figure.height,
-    limitsize = FALSE
+  .save.ggplot.fast(
+    plot     = gate.plot,
+    filename = file.path( asp$figure.gate.dir, sprintf( "%s.jpg", samp ) ),
+    width    = asp$figure.width,
+    height   = asp$figure.height,
+    method   = "fast"
   )
 
 }

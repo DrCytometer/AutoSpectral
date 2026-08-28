@@ -53,11 +53,24 @@
 #' scatter panels. Default `"viridis"`.
 #' @param hist.fill Character string. Fill color for the diagonal histogram
 #' bars. Default `"steelblue"`.
-#' @param output.dir Character string. Directory for the output PDF. Created
+#' @param file.type Character string specifying the output file format. One
+#' of `"jpg"` (default), `"tiff"`, `"png"`, or `"pdf"`. Raster formats are
+#' strongly recommended here: for large channel counts the triangle holds
+#' hundreds to thousands of panels, and a vector `"pdf"` records every
+#' hexagon/point as a separate drawn object, making it extremely slow to
+#' render and write.
+#' @param dpi Numeric. Resolution in dots per inch for raster `file.type`
+#' values. Ignored for `"pdf"`. Default `150`.
+#' @param max.canvas.px Numeric. Safety cap on the predicted raster width/
+#' height in pixels (`n * biplot.size * dpi`). If the requested combination
+#' would exceed this, `dpi` is automatically reduced (with a warning) rather
+#' than attempting to allocate an oversized raster. Ignored for `"pdf"`.
+#' Default `20000`.
+#' @param output.dir Character string. Directory for the output file. Created
 #' automatically if absent. Default `"."`.
 #'
 #' @return The combined [cowplot::plot_grid()] object is returned invisibly.
-#' The PDF is always written to `output.dir`.
+#' The figure is always written to `output.dir`.
 #'
 #' @importFrom ggplot2 ggplot aes geom_hex geom_histogram scale_x_continuous
 #' @importFrom ggplot2 scale_y_continuous scale_fill_viridis_c scale_fill_gradientn
@@ -66,6 +79,7 @@
 #' @importFrom scattermore geom_scattermore
 #' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom cowplot plot_grid
+#' @importFrom ragg agg_jpeg agg_tiff agg_png
 #'
 #' @seealso [unmixed.mxn.plot()], [create.biplot()]
 #'
@@ -86,8 +100,23 @@ unmixed.nxn.plot <- function(
     hex.bins      = 64,
     color.palette = "viridis",
     hist.fill     = "steelblue",
+    file.type     = "jpg",
+    dpi           = 150,
+    max.canvas.px = 20000,
     output.dir    = "."
-  ) {
+) {
+
+  # resolve output device and file extension from file.type
+  file.type <- tolower( file.type )
+  if ( file.type == "jpeg" ) file.type <- "jpg"
+  file.type <- match.arg( file.type, c( "jpg", "tiff", "png", "pdf" ) )
+
+  plot.device <- switch( file.type,
+                         jpg  = ragg::agg_jpeg,
+                         tiff = ragg::agg_tiff,
+                         png  = ragg::agg_png,
+                         pdf  = grDevices::pdf
+  )
 
   # --- read and validate data ---
   mat <- .read.unmixed.input( unmixed.data, channels = channels )
@@ -213,17 +242,40 @@ unmixed.nxn.plot <- function(
 
   canvas.size <- n * biplot.size
 
-  ggplot2::ggsave(
-    filename  = file.path( output.dir, paste0( title, ".pdf" ) ),
+  if ( file.type != "pdf" ) {
+    predicted.px <- canvas.size * dpi
+    if ( predicted.px > max.canvas.px ) {
+      dpi.adjusted <- max( 36, floor( max.canvas.px / canvas.size ) )
+      warning(
+        paste0(
+          "Requested canvas (", round( canvas.size ), " in at ", dpi,
+          " dpi) would produce a ", round( predicted.px ),
+          "px raster, exceeding max.canvas.px = ", max.canvas.px,
+          ". Reducing dpi to ", dpi.adjusted,
+          ". Consider subsetting `channels` for a sharper, smaller grid."
+        ),
+        call. = FALSE
+      )
+      dpi <- dpi.adjusted
+    }
+  }
+
+  out.file <- file.path( output.dir, paste0( title, ".", file.type ) )
+
+  ggsave.args <- list(
+    filename  = out.file,
     plot      = combined,
-    device    = grDevices::pdf,
+    device    = plot.device,
     width     = canvas.size,
     height    = canvas.size,
+    dpi       = dpi,
     limitsize = FALSE
   )
+  if ( file.type %in% c( "jpg", "png" ) ) ggsave.args$method <- "fast"
 
-  message( "\033[32mSaved: ", file.path( output.dir, paste0( title, ".pdf" ) ),
-           "\033[0m" )
+  do.call( ggplot2::ggsave, ggsave.args )
+
+  message( "\033[32mSaved: ", out.file, "\033[0m" )
 
   invisible( combined )
 }

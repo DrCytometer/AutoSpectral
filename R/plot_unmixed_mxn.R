@@ -17,7 +17,22 @@
             call. = FALSE )
     if ( !file.exists( unmixed.data ) )
       stop( paste0( "FCS file not found: '", unmixed.data, "'" ), call. = FALSE )
-    mat <- AutoSpectral::readFCS( unmixed.data )
+
+    if ( !is.null( channels ) ) {
+      probe.cols <- colnames( readFCS( unmixed.data, start.row = 1, end.row = 1 ) )
+      missing.ch <- setdiff( channels, probe.cols )
+      if ( length( missing.ch ) > 0 )
+        stop(
+          paste0(
+            "The following requested channels are absent from the data: ",
+            paste( missing.ch, collapse = ", " )
+          ),
+          call. = FALSE
+        )
+      return( readFCS( unmixed.data, columns = channels ) )
+    }
+
+    mat <- readFCS( unmixed.data )
   } else if ( is.matrix( unmixed.data ) || is.data.frame( unmixed.data ) ) {
     mat <- as.matrix( unmixed.data )
   } else {
@@ -336,11 +351,22 @@
 #' `"magma"`, `"inferno"`, `"plasma"`, `"cividis"`, `"rocket"`, `"mako"`,
 #' `"turbo"`) or `"rainbow"` to use the package default gradient. Default
 #' `"viridis"`.
-#' @param output.dir Character string. Directory for the output PDF. Created
+#' @param file.type Character string specifying the output file format. One
+#' of `"jpg"` (default), `"tiff"`, `"png"`, or `"pdf"`. Raster formats are
+#' strongly recommended: a vector `"pdf"` records every hexagon/point as a
+#' separate drawn object and becomes very slow and large as panel count
+#' grows.
+#' @param dpi Numeric. Resolution in dots per inch for raster `file.type`
+#' values. Ignored for `"pdf"`. Default `150`.
+#' @param max.canvas.px Numeric. Safety cap on the predicted raster edge in
+#' pixels. If `n.col`, `biplot.size`, and `dpi` would exceed this, `dpi` is
+#' automatically reduced (with a warning). Ignored for `"pdf"`. Default
+#' `20000`.
+#' @param output.dir Character string. Directory for the output file. Created
 #' automatically if absent. Default `"."`.
 #'
 #' @return The combined [cowplot::plot_grid()] object is returned invisibly.
-#' The PDF is always written to `output.dir`.
+#' The figure is always written to `output.dir`.
 #'
 #' @importFrom ggplot2 ggplot aes geom_hex geom_histogram scale_x_continuous
 #' @importFrom ggplot2 scale_y_continuous scale_fill_viridis_c scale_fill_gradientn
@@ -349,6 +375,7 @@
 #' @importFrom scattermore geom_scattermore
 #' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom cowplot plot_grid
+#' @importFrom ragg agg_jpeg agg_tiff agg_png
 #'
 #' @seealso [unmixed.nxn.plot()], [create.biplot()]
 #'
@@ -370,8 +397,23 @@ unmixed.mxn.plot <- function(
     use.hex       = TRUE,
     hex.bins      = 64,
     color.palette = "viridis",
+    file.type     = "jpg",
+    dpi           = 150,
+    max.canvas.px = 20000,
     output.dir    = "."
-  ) {
+) {
+
+  # resolve output device and file extension from file.type
+  file.type <- tolower( file.type )
+  if ( file.type == "jpeg" ) file.type <- "jpg"
+  file.type <- match.arg( file.type, c( "jpg", "tiff", "png", "pdf" ) )
+
+  plot.device <- switch( file.type,
+                         jpg  = ragg::agg_jpeg,
+                         tiff = ragg::agg_tiff,
+                         png  = ragg::agg_png,
+                         pdf  = grDevices::pdf
+  )
 
   # --- read and validate data ---
   mat <- .read.unmixed.input( unmixed.data, channels = NULL )
@@ -437,42 +479,57 @@ unmixed.mxn.plot <- function(
   if ( is.null( n.col ) ) n.col <- n.y
   n.col <- min( n.col, n.y )
 
+  # --- precompute per-fluorophore x transforms/axes and per-channel y
+  # transforms/axes once each, instead of rebuilding them on every one of
+  # the n.x * n.y panel iterations ---
+  x.transforms <- lapply( fluorophore, function( fl ) {
+    .make.biexp.transforms(
+      asp,
+      x.min = x.mins[ fl ], x.max = data.max,
+      y.min = 0,             y.max = data.max,   # y unused here
+      x.width.basis = x.width.basis,
+      y.width.basis = y.width.basis
+    )$x
+  } )
+  names( x.transforms ) <- fluorophore
+
+  x.axes <- lapply( fluorophore, function( fl )
+    .axis.setup( asp, x.mins[ fl ], data.max )
+  )
+  names( x.axes ) <- fluorophore
+
+  y.transforms <- lapply( y.channels, function( ch ) {
+    .make.biexp.transforms(
+      asp,
+      x.min = 0,             x.max = data.max,   # x unused here
+      y.min = y.mins[ ch ], y.max = data.max,
+      x.width.basis = x.width.basis,
+      y.width.basis = y.width.basis
+    )$y
+  } )
+  names( y.transforms ) <- y.channels
+
+  y.axes <- lapply( y.channels, function( ch )
+    .axis.setup( asp, y.mins[ ch ], data.max )
+  )
+  names( y.axes ) <- y.channels
+
   # --- build all panels ---
   panel.list <- vector( "list", n.x * n.y )
   idx <- 1L
 
   for ( fl in fluorophore ) {
-
-    tx <- .make.biexp.transforms(
-      asp,
-      x.min = x.mins[ fl ], x.max = data.max,
-      y.min = y.min,         y.max = data.max,   # y transform recomputed per channel below
-      x.width.basis = x.width.basis,
-      y.width.basis = y.width.basis
-    )$x   # only need the x transform here; y is per-channel
-
-    x.axis <- .axis.setup( asp, x.mins[ fl ], data.max )
-
     for ( ch in y.channels ) {
-
-      transforms <- .make.biexp.transforms(
-        asp,
-        x.min = x.mins[ fl ], x.max = data.max,
-        y.min = y.mins[ ch ], y.max = data.max,
-        x.width.basis = x.width.basis,
-        y.width.basis = y.width.basis
-      )
-      y.axis <- .axis.setup( asp, y.mins[ ch ], data.max )
 
       panel.list[[ idx ]] <- .make.panel(
         plot.data     = mat,
         x.dim         = fl,
         y.dim         = ch,
         asp           = asp,
-        tx            = transforms$x,
-        ty            = transforms$y,
-        x.axis        = x.axis,
-        y.axis        = y.axis,
+        tx            = x.transforms[[ fl ]],
+        ty            = y.transforms[[ ch ]],
+        x.axis        = x.axes[[ fl ]],
+        y.axis        = y.axes[[ ch ]],
         use.hex       = use.hex,
         hex.bins      = hex.bins,
         color.palette = color.palette
@@ -492,17 +549,40 @@ unmixed.mxn.plot <- function(
   page.width  <- n.col * biplot.size
   page.height <- ceiling( ( n.x * n.y ) / n.col ) * biplot.size
 
-  ggplot2::ggsave(
-    filename  = file.path( output.dir, paste0( title, ".pdf" ) ),
+  if ( file.type != "pdf" ) {
+    predicted.px <- max( page.width, page.height ) * dpi
+    if ( predicted.px > max.canvas.px ) {
+      dpi.adjusted <- max( 36, floor( max.canvas.px / max( page.width, page.height ) ) )
+      warning(
+        paste0(
+          "Requested page (", round( page.width ), " x ", round( page.height ),
+          " in at ", dpi, " dpi) would produce a raster edge of ",
+          round( predicted.px ), "px, exceeding max.canvas.px = ", max.canvas.px,
+          ". Reducing dpi to ", dpi.adjusted,
+          ". Consider a smaller `n.col`, `biplot.size`, or subsetting fluorophores/channels."
+        ),
+        call. = FALSE
+      )
+      dpi <- dpi.adjusted
+    }
+  }
+
+  out.file <- file.path( output.dir, paste0( title, ".", file.type ) )
+
+  ggsave.args <- list(
+    filename  = out.file,
     plot      = combined,
-    device    = grDevices::pdf,
+    device    = plot.device,
     width     = page.width,
     height    = page.height,
+    dpi       = dpi,
     limitsize = FALSE
   )
+  if ( file.type %in% c( "jpg", "png" ) ) ggsave.args$method <- "fast"
 
-  message( "\033[32mSaved: ", file.path( output.dir, paste0( title, ".pdf" ) ),
-           "\033[0m" )
+  do.call( ggplot2::ggsave, ggsave.args )
+
+  message( "\033[32mSaved: ", out.file, "\033[0m" )
 
   invisible( combined )
 }

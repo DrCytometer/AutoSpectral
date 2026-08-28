@@ -8,10 +8,9 @@
 #'
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous element_blank
 #' @importFrom ggplot2 theme_bw theme element_line geom_path after_stat coord_cartesian
-#' @importFrom ggplot2 element_text element_rect margin expansion ggsave
-#' @importFrom ggplot2 scale_fill_viridis_d geom_contour_filled annotation_raster annotate
+#' @importFrom ggplot2 element_text element_rect margin expansion
+#' @importFrom ggplot2 scale_fill_viridis_d geom_polygon annotation_raster
 #' @importFrom ggplot2 scale_fill_manual
-#' @importFrom ragg agg_jpeg
 #'
 #' @param samp Sample identifier.
 #' @param gate.data Matrix containing gate data points.
@@ -130,8 +129,8 @@ gate.sample.plot <- function(
   # 4. KDE density contours (always fast_kde2d_cpp if available)
   # ---------------------------------------------------------------------------
 
-  density.df     <- NULL
-  density.breaks <- NULL
+  contour.polygons  <- NULL
+  density.breaks    <- NULL
 
   if ( n.points >= switch.n ) {
     bw <- .safe.bandwidth( gate.data )
@@ -157,20 +156,22 @@ gate.sample.plot <- function(
       )
     }
 
-    # format density — direct construction avoids expand.grid overhead
-    n.grid     <- length( gate.bound.density$x )
-    density.df <- data.frame(
-      x = rep( gate.bound.density$x, times = n.grid ),
-      y = rep( gate.bound.density$y, each  = n.grid ),
-      z = as.vector( gate.bound.density$z )
-    )
-    density.df$z[ is.na( density.df$z ) ] <- 0
+    z.grid <- gate.bound.density$z
+    z.grid[ is.na( z.grid ) ] <- 0
 
-    max.z          <- max( density.df$z )
+    max.z          <- max( z.grid )
     density.breaks <- seq( 0.05 * max.z, max.z, length.out = 11 )
     if ( diff( range( density.breaks ) ) == 0 ) {
       density.breaks <- seq( 0, max.z + 0.1, length.out = 11 )
     }
+
+    # isoband directly on the grid
+    contour.polygons <- .contour.polygons.from.grid(
+      x      = gate.bound.density$x,
+      y      = gate.bound.density$y,
+      z      = z.grid,
+      breaks = density.breaks
+    )
   }
 
   # ---------------------------------------------------------------------------
@@ -189,13 +190,6 @@ gate.sample.plot <- function(
   # ---------------------------------------------------------------------------
 
   gate.plot <- ggplot() +
-    # white panel background so NA raster pixels show as white
-    annotate(
-      "rect",
-      xmin = x.limits[1], xmax = x.limits[2],
-      ymin = y.limits[1], ymax = y.limits[2],
-      fill = "white", colour = NA
-    ) +
     # rasterised scatter
     annotation_raster(
       scatter.raster,
@@ -205,12 +199,11 @@ gate.sample.plot <- function(
     )
 
   # density contours on top of scatter (only when enough points)
-  if ( !is.null( density.df ) ) {
+  if ( !is.null( contour.polygons ) ) {
     gate.plot <- gate.plot +
-      geom_contour_filled(
-        data        = density.df,
-        aes( x = x, y = y, z = z ),
-        breaks      = density.breaks,
+      geom_polygon(
+        data        = contour.polygons,
+        aes( x = x, y = y, group = level, subgroup = subgroup, fill = level ),
         alpha       = 1,
         inherit.aes = FALSE,
         na.rm       = TRUE
@@ -257,7 +250,7 @@ gate.sample.plot <- function(
   # 7. Colour scale for density contours
   # ---------------------------------------------------------------------------
 
-  if ( !is.null( density.df ) ) {
+  if ( !is.null( contour.polygons ) ) {
     viridis.colors <- c(
       "magma", "inferno", "plasma", "viridis",
       "cividis", "rocket", "mako", "turbo"
@@ -276,13 +269,12 @@ gate.sample.plot <- function(
   # 8. Save
   # ---------------------------------------------------------------------------
 
-  ggsave(
-    file.path( asp$figure.gate.dir, sprintf( "%s.jpg", samp ) ),
-    plot      = gate.plot,
-    device    = ragg::agg_jpeg,
-    width     = asp$figure.width,
-    height    = asp$figure.height,
-    limitsize = FALSE
+  .save.ggplot.fast(
+    plot     = gate.plot,
+    filename = file.path( asp$figure.gate.dir, sprintf( "%s.jpg", samp ) ),
+    width    = asp$figure.width,
+    height   = asp$figure.height,
+    method   = "fast"
   )
 
 }
