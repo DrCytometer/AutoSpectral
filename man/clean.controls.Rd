@@ -10,6 +10,7 @@ clean.controls(
   af.remove = TRUE,
   universal.negative = TRUE,
   downsample = TRUE,
+  drop.raw = FALSE,
   negative.n = asp$negative.n,
   positive.n = asp$positive.n,
   scatter.match = TRUE,
@@ -41,6 +42,11 @@ universal negatives to be defined in the control file and in \code{flow.control}
 
 \item{downsample}{Logical, default is \code{TRUE}. Whether to reduce cell and bead
 control events to speed up processing.}
+
+\item{drop.raw}{Logical, default \code{FALSE}. If \code{TRUE}, removes
+\code{flow.control$expr.data} (the full, undownsampled per-event data from
+every control) before returning, freeing memory once cleaning is done.
+Only set this if you don't need \code{get.fluorophore.spectra(use.clean.expr = FALSE)} or other functions that read the raw expression data afterward.}
 
 \item{negative.n}{Integer. Number of events to include in the downsampled
 negative population. Default is \code{asp$negative.n}.}
