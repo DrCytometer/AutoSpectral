@@ -74,9 +74,12 @@ run.af.removal <- function(
       "guaranteed-complete diagnostics.", call. = FALSE
     )
 
+  # only ship the expression data being cleaned
+  needed.samples <- unique( c( af.removal.sample, universal.negative[ af.removal.sample ] ) )
+
   # construct arguments list
   args.list <- list(
-    clean.expr = clean.expr,
+    clean.expr = clean.expr[ needed.samples ],
     spectral.channel = spectral.channel,
     peak.channel = peak.channel,
     universal.negative = universal.negative,
@@ -124,7 +127,30 @@ run.af.removal <- function(
     if ( !is.null( result$cleanup ) ) result$cleanup()
   } )
 
+  # guard against a parallel backend silently returning the wrong number of
+  # results, or a per-task failure masquerading as valid expression data
+  if ( length( af.remove.expr ) != length( af.removal.sample ) )
+    stop(
+      "run.af.removal(): parallel backend returned ", length( af.remove.expr ),
+      " results for ", length( af.removal.sample ), " requested samples.",
+      call. = FALSE
+    )
+
   names( af.remove.expr ) <- af.removal.sample
+
+  is.bad.result <- function( x ) {
+    if ( is.null( x ) || inherits( x, "try-error" ) ) return( TRUE )
+    if ( !is.matrix( x ) && !is.data.frame( x ) ) return( TRUE )
+    nrow( x ) == 0
+  }
+  failed <- vapply( af.remove.expr, is.bad.result, logical( 1 ) )
+
+  if ( any( failed ) )
+    stop(
+      "run.af.removal(): worker failed for sample(s): ",
+      paste( af.removal.sample[ failed ], collapse = ", " ),
+      call. = FALSE
+    )
 
   return( af.remove.expr )
 }
