@@ -43,7 +43,7 @@ calculate.weights <- function(
 
   # import FCS
   if ( verbose ) message( paste( "Reading FCS file:", fcs.file ) )
-  spectral.exprs <- readFCS( fcs.file )[ , spectral.channels ]
+  spectral.exprs <- readFCS( fcs.file, columns = spectral.channels )
 
   weights <- pmax( abs( colMeans( spectral.exprs ) ), noise.floor )
   weights <- 1 / weights
