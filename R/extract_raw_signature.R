@@ -242,9 +242,13 @@ extract.raw.signature <- function(
 
     y.res <- y.bin
 
+    nuisance.fitted <- if ( length( nuisance ) > 0 )
+      x.bin[ , nuisance, drop = FALSE ] %*% spectra[ nuisance, , drop = FALSE ] else
+        matrix( 0, nrow = nrow( y.bin ), ncol = ncol( y.bin ),
+                dimnames = dimnames( y.bin ) )
+
     if ( length( nuisance ) > 0 )
-      y.res <- y.bin - x.bin[ , nuisance, drop = FALSE ] %*%
-        spectra[ nuisance, , drop = FALSE ]
+      y.res <- y.bin - nuisance.fitted
 
     if ( intercept ) {
 
@@ -263,6 +267,8 @@ extract.raw.signature <- function(
       signature.raw <- as.numeric( crossprod( xt, y.res ) ) / den
       fitted        <- outer( xt, signature.raw )
     }
+
+    fitted.total <- fitted + nuisance.fitted
   }
 
   offset[ !is.finite( offset ) ] <- 0
@@ -295,8 +301,10 @@ extract.raw.signature <- function(
   explained <- if ( top.norm > 0 )
     sqrt( sum( ( xt[ top.bin ] * signature.raw )^2 ) ) / top.norm else 0
 
+  fitted.for.total <- if ( fit.joint ) fitted else fitted.total
+
   explained.total <- if ( top.norm > 0 )
-    sqrt( sum( fitted[ top.bin, ]^2 ) ) / top.norm else 0
+    sqrt( sum( fitted.for.total[ top.bin, ]^2 ) ) / top.norm else 0
 
   # How much background the subtraction failed to remove, as a fraction of the
   # brightest signal being fitted. A large value means the slope is being
