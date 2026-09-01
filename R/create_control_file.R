@@ -47,7 +47,7 @@ create.control.file <- function(
   control.file.name <- paste0( filename, ".csv" )
   file.count <- 1
 
-  while ( file.exists( control.file.name ) ) {
+  while ( file.exists( file.path( output.dir, control.file.name ) ) ) {
     control.file.name <- paste0( filename, "_", file.count, ".csv")
     file.count <- file.count + 1
   }
