@@ -26,10 +26,14 @@ correct.unmixing.signatures(
   min.explained = 0.5,
   min.gain = 0.002,
   step.grid = c(0, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1),
-  max.step = 0.08,
+  n.split.trials = 1L,
+  min.split.frac = 0.6,
+  max.step = 0.15,
   max.span.drift = 1.1,
   max.bg.alignment = -0.9,
   nuisance.frac = 0.5,
+  footprint.frac = 0.02,
+  footprint.min.channels = 3L,
   background.n = 5000L,
   true.spectra = NULL,
   verbose = TRUE
@@ -118,9 +122,22 @@ search. Default \code{c( 0, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1 )}; the
 small steps matter for tandem dyes, whose abundance-dependent variant
 mixture makes the residual objective a narrow valley.}
 
+\item{n.split.trials}{Integer, number of independent random 50/50 splits
+used by the held-out step search. Default \code{1}, which reproduces the
+original fixed, un-reseeded split exactly. Raising this trades a
+single split's noise for a vote across \code{n.split.trials} splits (see
+\code{min.split.frac}); useful for fluorophores whose true correction is
+real but small relative to per-event noise, where a lone 50/50 split
+can land on the unlucky side.}
+
+\item{min.split.frac}{Numeric in (0, 1], the minimum fraction of
+\code{n.split.trials} splits that must independently find a beneficial step
+before one is accepted. Ignored when \code{n.split.trials = 1}. Default
+\code{0.6}.}
+
 \item{max.step}{Numeric, maximum norm of the correction relative to the
 norm of the row it corrects. Larger proposed corrections are rejected
-outright rather than scaled down. Default \code{0.08}.}
+outright rather than scaled down. Default \code{0.15}.}
 
 \item{max.span.drift}{Numeric, maximum allowed growth of the
 fluorophore's apparent abundance span across iterations. Default
@@ -133,6 +150,23 @@ falls at or below this value. Default \code{-0.9}.}
 \item{nuisance.frac}{Numeric in (0, 1), fraction of a dominance
 population that must be co-active for another fluorophore before it is
 carried as a nuisance term in the restricted design. Default \code{0.5}.}
+
+\item{footprint.frac}{Numeric in \verb{[0, 1)}. Restricts the slope fit and
+the held-out step search to detectors where the dominant dye's own
+current spectrum exceeds \code{footprint.frac} of its own peak. A dye
+cannot carry real shape-error signal in a detector it does not
+meaningfully emit into; for a narrow-emission dye read out on a wide
+detector array, those channels only dilute the held-out residual
+objective with noise from channels that are pure background for that
+dye. Abundance estimation and the \code{explained}/\code{bg.align} gates are
+unaffected; only the slope fit's response and the held-out
+objective's norm are restricted. \code{0} reproduces the previous,
+unrestricted behaviour exactly. Default \code{0.02}.}
+
+\item{footprint.min.channels}{Integer, minimum detectors the
+\code{footprint.frac} mask must keep; below this the mask is dropped and
+every detector is used, so a pathologically narrow spectrum cannot
+leave too few channels to fit. Default \code{3L}.}
 
 \item{background.n}{Integer, maximum background events used for the
 zero-abundance anchor. Default \code{5000}.}

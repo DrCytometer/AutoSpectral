@@ -114,9 +114,20 @@
 #'   search. Default `c( 0, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1 )`; the
 #'   small steps matter for tandem dyes, whose abundance-dependent variant
 #'   mixture makes the residual objective a narrow valley.
+#' @param n.split.trials Integer, number of independent random 50/50 splits
+#'   used by the held-out step search. Default `1`, which reproduces the
+#'   original fixed, un-reseeded split exactly. Raising this trades a
+#'   single split's noise for a vote across `n.split.trials` splits (see
+#'   `min.split.frac`); useful for fluorophores whose true correction is
+#'   real but small relative to per-event noise, where a lone 50/50 split
+#'   can land on the unlucky side.
+#' @param min.split.frac Numeric in (0, 1], the minimum fraction of
+#'   `n.split.trials` splits that must independently find a beneficial step
+#'   before one is accepted. Ignored when `n.split.trials = 1`. Default
+#'   `0.6`.
 #' @param max.step Numeric, maximum norm of the correction relative to the
 #'   norm of the row it corrects. Larger proposed corrections are rejected
-#'   outright rather than scaled down. Default `0.08`.
+#'   outright rather than scaled down. Default `0.15`.
 #' @param max.span.drift Numeric, maximum allowed growth of the
 #'   fluorophore's apparent abundance span across iterations. Default
 #'   `1.10`.
@@ -126,6 +137,21 @@
 #' @param nuisance.frac Numeric in (0, 1), fraction of a dominance
 #'   population that must be co-active for another fluorophore before it is
 #'   carried as a nuisance term in the restricted design. Default `0.5`.
+#' @param footprint.frac Numeric in `[0, 1)`. Restricts the slope fit and
+#'   the held-out step search to detectors where the dominant dye's own
+#'   current spectrum exceeds `footprint.frac` of its own peak. A dye
+#'   cannot carry real shape-error signal in a detector it does not
+#'   meaningfully emit into; for a narrow-emission dye read out on a wide
+#'   detector array, those channels only dilute the held-out residual
+#'   objective with noise from channels that are pure background for that
+#'   dye. Abundance estimation and the `explained`/`bg.align` gates are
+#'   unaffected; only the slope fit's response and the held-out
+#'   objective's norm are restricted. `0` reproduces the previous,
+#'   unrestricted behaviour exactly. Default `0.02`.
+#' @param footprint.min.channels Integer, minimum detectors the
+#'   `footprint.frac` mask must keep; below this the mask is dropped and
+#'   every detector is used, so a pathologically narrow spectrum cannot
+#'   leave too few channels to fit. Default `3L`.
 #' @param background.n Integer, maximum background events used for the
 #'   zero-abundance anchor. Default `5000`.
 #' @param true.spectra Optional numeric matrix (fluorophores x detectors),
@@ -182,10 +208,14 @@ correct.unmixing.signatures <- function(
     min.explained      = 0.5,
     min.gain           = 0.002,
     step.grid          = c( 0, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1 ),
-    max.step           = 0.08,
+    n.split.trials     = 1L,
+    min.split.frac     = 0.6,
+    max.step           = 0.15,
     max.span.drift     = 1.10,
     max.bg.alignment   = -0.9,
     nuisance.frac      = 0.5,
+    footprint.frac        = 0.02,
+    footprint.min.channels = 3L,
     background.n       = 5000L,
     true.spectra       = NULL,
     verbose            = TRUE
@@ -258,6 +288,14 @@ correct.unmixing.signatures <- function(
   unmixed <- unmix.ols.fast( raw.data, spectra )
 
   if ( is.null( spillover.spread ) ) {
+
+    if ( verbose )
+      message( paste0(
+        "`spillover.spread` not supplied: co-activity thresholds are flat. ",
+        "This measurably weakens nuisance-set assignment and gain detection ",
+        "for some fluorophores; supplying get.spectral.variants()$spillover.spread ",
+        "is recommended whenever available for this particle type." ) )
+
     above <- sweep( unmixed[ , panel, drop = FALSE ],
                     2, unmixed.thresholds[ panel ], ">" )
   } else {
@@ -337,6 +375,15 @@ correct.unmixing.signatures <- function(
       nuisance <- setdiff( panel[ co.frac > nuisance.frac ], j )
       active   <- c( j, nuisance )
 
+      # A dye cannot carry real shape-error signal in a detector it does not
+      # meaningfully emit into; restricting the fit and the held-out
+      # objective to its own footprint keeps those channels' noise from
+      # diluting the signal for narrow-emission dyes. Falls back to every
+      # detector if the mask would leave too few to fit.
+      footprint.mask <- spectra.new[ j, ] > footprint.frac * max( spectra.new[ j, ] )
+      if ( sum( footprint.mask ) < footprint.min.channels )
+        footprint.mask <- rep( TRUE, ncol( spectra.new ) )
+
       # Slope from a chosen subset of the group's events: bin by abundance,
       # anchor with the background population, regress the restricted
       # residual on all restricted abundances, and take the dominant dye's
@@ -370,12 +417,24 @@ correct.unmixing.signatures <- function(
         x.bin <- .signature.restricted.unmix( y.bin, spectra.new, active )
         r.bin <- y.bin - x.bin %*% spectra.new[ active, , drop = FALSE ]
 
-        fit   <- stats::lm.fit( x = cbind( 1, x.bin ), y = r.bin )
-        slope <- stats::coef( fit )[ 2, ]
+        # The slope is always fit on every detector: footprint.frac sharpens
+        # which channels decide whether and how far to step (the held-out
+        # objective in residual.gain, below), not what the eventual
+        # correction touches. Restricting the fit's response to the footprint
+        # would permanently cap that row's achievable correction at whatever
+        # fraction of its true error happens to fall inside the mask - a real
+        # cost for a dye whose error is broad but small, and one that bites
+        # hardest on already-well-corrected rows, where even a few percent of
+        # uncorrected error left outside the mask is a large relative hit to
+        # a small residual angle.
+        fit.m <- stats::lm.fit( x = cbind( 1, x.bin ), y = r.bin )
+        slope <- stats::coef( fit.m )[ 2, ]
         slope[ !is.finite( slope ) ] <- 0
 
-        ss.res <- sum( fit$residuals^2 )
-        ss.tot <- sum( sweep( r.bin, 2, colMeans( r.bin ) )^2 )
+        resid.m <- fit.m$residuals[ , footprint.mask, drop = FALSE ]
+        ss.res  <- sum( resid.m^2 )
+        ss.tot  <- sum( sweep( r.bin[ , footprint.mask, drop = FALSE ], 2,
+                               colMeans( r.bin[ , footprint.mask, drop = FALSE ] ) )^2 )
 
         # At its brightest, how much of the background-subtracted signal
         # does this dye's own term account for? A control where the answer
@@ -424,17 +483,23 @@ correct.unmixing.signatures <- function(
       # reduces the restricted residual on the other. This bounds the step
       # but cannot on its own tell a corrected row from a repurposed one -
       # hence the magnitude, drift and confound gates below.
-      half  <- rep_len( c( 1L, 2L ), length( idx ) )
-      idx.a <- idx[ half == 1L ]
-      idx.b <- idx[ half == 2L ]
-
+      #
+      # A single 50/50 split is a noisy instrument for a fluorophore whose
+      # true correction is real but small relative to per-event noise: the
+      # default n.split.trials = 1 reproduces the original fixed,
+      # un-reseeded rep_len(c(1L, 2L), length(idx)) split exactly, for
+      # backward compatibility. Raising n.split.trials instead draws that
+      # many independent random 50/50 splits and requires only
+      # min.split.frac of them to agree a step helps, taking the median of
+      # the agreeing splits' step and gain - trading one noisy verdict for
+      # a vote.
       residual.gain <- function( fit.idx, test.idx ) {
 
         fs <- fit.slope( fit.idx )
         if ( is.null( fs ) ) return( NULL )
 
         y.test <- raw.data[ test.idx, , drop = FALSE ]
-        base   <- sqrt( sum( y.test^2 ) )
+        base   <- sqrt( sum( y.test[ , footprint.mask, drop = FALSE ]^2 ) )
         if ( base <= 0 ) return( NULL )
 
         obj <- vapply( step.grid, function( t ) {
@@ -443,24 +508,50 @@ correct.unmixing.signatures <- function(
           if ( max( s.try[ j, ] ) <= 0 ) return( Inf )
           s.try <- .signature.renorm( s.try )
           x.try <- .signature.restricted.unmix( y.test, s.try, active )
-          sqrt( sum( ( y.test -
-                         x.try %*% s.try[ active, , drop = FALSE ] )^2 ) ) /
-            base
+          resid <- y.test - x.try %*% s.try[ active, , drop = FALSE ]
+          sqrt( sum( resid[ , footprint.mask, drop = FALSE ]^2 ) ) / base
         }, numeric( 1 ) )
 
         best <- which.min( obj )
         list( t = step.grid[ best ], gain = obj[ 1 ] - obj[ best ] )
       }
 
-      gain.ab <- residual.gain( idx.a, idx.b )
-      gain.ba <- residual.gain( idx.b, idx.a )
+      split.trial <- function( half ) {
 
-      if ( is.null( gain.ab ) || is.null( gain.ba ) ) {
-        t.hat <- 0
-        gain  <- NA_real_
+        idx.a <- idx[ half == 1L ]
+        idx.b <- idx[ half == 2L ]
+
+        gain.ab <- residual.gain( idx.a, idx.b )
+        gain.ba <- residual.gain( idx.b, idx.a )
+
+        if ( is.null( gain.ab ) || is.null( gain.ba ) )
+          return( c( t = 0, gain = NA_real_ ) )
+
+        c( t = min( gain.ab$t, gain.ba$t ),
+           gain = min( gain.ab$gain, gain.ba$gain ) )
+      }
+
+      if ( n.split.trials <= 1L ) {
+
+        one   <- split.trial( rep_len( c( 1L, 2L ), length( idx ) ) )
+        t.hat <- one[ "t" ]
+        gain  <- one[ "gain" ]
+
       } else {
-        t.hat <- min( gain.ab$t, gain.ba$t )
-        gain  <- min( gain.ab$gain, gain.ba$gain )
+
+        trials <- t( vapply( seq_len( n.split.trials ), function( trial )
+          split.trial( sample( rep_len( c( 1L, 2L ), length( idx ) ) ) ),
+          numeric( 2 ) ) )
+
+        passed <- trials[ , "t" ] > 0
+
+        if ( any( passed ) && mean( passed ) >= min.split.frac ) {
+          t.hat <- stats::median( trials[ passed, "t" ] )
+          gain  <- stats::median( trials[ passed, "gain" ] )
+        } else {
+          t.hat <- 0
+          gain  <- NA_real_
+        }
       }
 
       slope     <- full$slope
