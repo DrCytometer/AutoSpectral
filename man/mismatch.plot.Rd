@@ -82,7 +82,8 @@ spectral mismatch, spectral angle, variability, variability/mismatch
 alignment, cosine similarity, and brightness against fluorophore dye
 class, plus every pairwise correlation between those six metrics with
 simple linear-fit statistics. Each individual plot is saved as a JPEG in
-\code{output.dir}, and all plots are additionally combined into a single
+\code{output.dir}. A curated subset of these, centered on spectral angle as
+the primary accuracy metric, is additionally combined into a single
 multi-panel PDF report.
 }
 \details{
@@ -96,4 +97,13 @@ which metric in a pair ends up on the plot's x- versus y-axis. \code{Cosine}
 is the only metric plotted on a reversed axis (cosine similarity
 decreases with divergence, unlike the other five metrics, which all
 increase with divergence).
+
+The JPEGs cover all six metrics and every pairwise combination. The
+consolidated PDF report is narrower and fixes \code{Angle} as the reference
+metric throughout: four violin plots (\code{Angle}, \code{Variability},
+\code{Alignment}, \code{Brightness}) followed by three pairwise scatter plots
+(\code{Variability} vs \code{Angle}, \code{Alignment} vs \code{Angle}, \code{Brightness} vs
+\code{Angle}), each with spectral angle fixed on the y-axis. \code{Mismatch} and
+\code{Cosine} are excluded from the PDF report; they remain available as
+individual JPEGs.
 }

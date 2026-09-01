@@ -17,6 +17,8 @@ run.bead.cell.comparison(
   legacy.pipeline = TRUE,
   legacy.gating.system = "density",
   legacy.gate = TRUE,
+  gate.lists = NULL,
+  af.remove = FALSE,
   n.candidates = 1000L,
   n.spectral = 200L,
   k.neighbors = 2L,
@@ -84,6 +86,28 @@ to \code{"density"}.}
 \item{legacy.gate}{Logical scalar. Whether to perform gating in
 \code{define.flow.control()} when \code{legacy.pipeline = TRUE}. Defaults
 to \code{TRUE}.}
+
+\item{gate.lists}{Optional named list, or \code{NULL} (the default). Names
+must match entries in \code{particle.dirs}; each value is itself a named
+list of pre-defined gates (as produced by \code{define.gate.landmarks()}
+and/or \code{define.gate.density()}) to pass through to
+\code{define.flow.control()}'s own \code{gate.list} argument for that
+particle type. Only used when \code{legacy.pipeline = TRUE}; ignored for
+any particle type not present in \code{gate.lists} and for the automated
+pipeline, which has no gating step. As with \code{define.flow.control()}
+itself, each per-particle-type gate list's names must correspond to the
+\code{gate.name} values in that particle type's control file, so
+\code{gate.name} generally needs to be filled in by hand (or carried
+over from a previous run's control file) rather than left for
+\code{assign.gates()} to generate automatically.}
+
+\item{af.remove}{Logical, default \code{FALSE}. Passed through to
+\code{clean.controls()} when \code{legacy.pipeline = TRUE}; ignored for
+the automated pipeline. Intrusive-autofluorescence removal is aimed at
+tissue-derived cell controls and isn't relevant to comparing raw
+single-color signatures across particle types, so it defaults off here
+(unlike \code{clean.controls()}'s own default of \code{TRUE}). Set to
+\code{TRUE} if the reference (cell) folder's controls do need it.}
 
 \item{n.candidates}{Integer, default \code{1000}. Number of top-expressing
 candidate events selected per fluorophore before cosine-similarity
@@ -176,9 +200,10 @@ Processing proceeds in four stages:
 \enumerate{
 \item \strong{Per-particle-type extraction.} For each entry in
 \code{particle.dirs}, a control file is created if absent, validated
-for unresolved fluorophore matches and a resolved AF row, and then run
-through the selected extraction pipeline to yield spectra, automated
-brightness, and spectral variants. Results are cached to
+for unresolved fluorophore matches and a resolved unstained row
+(\code{"AF"} or \code{"Negative"}), and then run through the selected
+extraction pipeline to yield spectra, automated brightness, and
+spectral variants. Results are cached to
 \code{<result.dir>/<particle.type>/<particle.type>_extraction_<pipeline>.rds}
 and reused on subsequent calls; switching \code{legacy.pipeline}
 between runs uses a distinct cache file rather than reusing a stale

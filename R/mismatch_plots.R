@@ -17,7 +17,8 @@
 #' alignment, cosine similarity, and brightness against fluorophore dye
 #' class, plus every pairwise correlation between those six metrics with
 #' simple linear-fit statistics. Each individual plot is saved as a JPEG in
-#' `output.dir`, and all plots are additionally combined into a single
+#' `output.dir`. A curated subset of these, centered on spectral angle as
+#' the primary accuracy metric, is additionally combined into a single
 #' multi-panel PDF report.
 #'
 #' @param cosine.data One-column numeric matrix of cosine similarity
@@ -66,6 +67,15 @@
 #' is the only metric plotted on a reversed axis (cosine similarity
 #' decreases with divergence, unlike the other five metrics, which all
 #' increase with divergence).
+#'
+#' The JPEGs cover all six metrics and every pairwise combination. The
+#' consolidated PDF report is narrower and fixes `Angle` as the reference
+#' metric throughout: four violin plots (`Angle`, `Variability`,
+#' `Alignment`, `Brightness`) followed by three pairwise scatter plots
+#' (`Variability` vs `Angle`, `Alignment` vs `Angle`, `Brightness` vs
+#' `Angle`), each with spectral angle fixed on the y-axis. `Mismatch` and
+#' `Cosine` are excluded from the PDF report; they remain available as
+#' individual JPEGs.
 #'
 #' @importFrom ggplot2 ggplot aes geom_violin geom_jitter geom_point
 #' @importFrom ggplot2 geom_smooth coord_cartesian theme_classic theme
@@ -174,8 +184,6 @@ mismatch.plot <- function(
     )
   }
 
-  plot.list <- list()
-
   # -- violin-by-class plots, one per metric ---------------------------------
   for (m in metric.names) {
     spec <- metric.spec[[m]]
@@ -195,8 +203,6 @@ mismatch.plot <- function(
         ylim    = spec$limits,
         reverse = if (isTRUE(spec$reverse)) "y" else "none"
       )
-
-    plot.list[[length(plot.list) + 1]] <- p
 
     ggplot2::ggsave(
       file.path(
@@ -239,8 +245,6 @@ mismatch.plot <- function(
         legend.position = "none"
       )
 
-    plot.list[[length(plot.list) + 1]] <- p
-
     ggplot2::ggsave(
       file.path(
         output.dir,
@@ -256,7 +260,69 @@ mismatch.plot <- function(
     stringsAsFactors = FALSE
   )
 
-  # -- combine into a single multi-panel PDF report --------------------------
+  # -- consolidated PDF report: spectral angle only ---------------------------
+  # Angle is fixed as the reference metric throughout: four violins (Angle,
+  # Variability, Alignment, Brightness) plus three pairwise scatter plots,
+  # each with Angle on the y-axis. Mismatch and Cosine are deliberately
+  # excluded here; they remain available as individual JPEGs above.
+  report.violin.metrics <- c("Angle", "Variability", "Alignment", "Brightness")
+
+  report.pair.specs <- list(
+    c(x = "Variability", y = "Angle"),
+    c(x = "Alignment",   y = "Angle"),
+    c(x = "Brightness",  y = "Angle")
+  )
+
+  report.plot.list <- list()
+
+  for (m in report.violin.metrics) {
+    spec <- metric.spec[[m]]
+
+    p <- ggplot2::ggplot(plot.df, ggplot2::aes(x = Class, y = .data[[m]], fill = Class)) +
+      ggplot2::geom_violin(trim = FALSE, alpha = 0.6) +
+      ggplot2::geom_jitter(width = 0.15, size = 2, alpha = 0.8, colour = "black") +
+      ggplot2::theme_classic() +
+      ggplot2::labs(title = paste(particle.name, cytometer), x = NULL, y = spec$label) +
+      ggplot2::theme(
+        axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+        legend.position = "none"
+      )
+
+    if (!is.null(spec$limits))
+      p <- p + ggplot2::coord_cartesian(
+        ylim    = spec$limits,
+        reverse = if (isTRUE(spec$reverse)) "y" else "none"
+      )
+
+    report.plot.list[[length(report.plot.list) + 1]] <- p
+  }
+
+  for (pair in report.pair.specs) {
+    x.name <- pair[["x"]]
+    y.name <- pair[["y"]]
+
+    fit   <- stats::lm(plot.df[[y.name]] ~ plot.df[[x.name]])
+    label <- get_stats(fit)
+
+    p <- ggplot2::ggplot(plot.df, ggplot2::aes(x = .data[[x.name]], y = .data[[y.name]])) +
+      ggplot2::geom_point() +
+      ggplot2::geom_smooth(method = "lm", formula = y ~ x, color = "blue", se = FALSE) +
+      .coord(x.name, y.name) +
+      ggplot2::theme_classic() +
+      ggplot2::labs(
+        title    = paste(particle.name, cytometer),
+        subtitle = label,
+        x        = metric.spec[[x.name]]$label,
+        y        = metric.spec[[y.name]]$label
+      ) +
+      ggplot2::theme(
+        axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+        legend.position = "none"
+      )
+
+    report.plot.list[[length(report.plot.list) + 1]] <- p
+  }
+
   title.plot <- cowplot::ggdraw() +
     cowplot::draw_label(
       paste("Analysis Report:", particle.name, "-", cytometer),
@@ -264,7 +330,7 @@ mismatch.plot <- function(
       size = 14
     )
 
-  report.grid <- cowplot::plot_grid(plotlist = plot.list, ncol = 3)
+  report.grid <- cowplot::plot_grid(plotlist = report.plot.list, ncol = 3)
 
   report.plot <- cowplot::plot_grid(
     title.plot, report.grid,
@@ -273,7 +339,7 @@ mismatch.plot <- function(
 
   pdf.path <- file.path(output.dir, paste0("Report_", particle.name, "_", cytometer, ".pdf"))
 
-  n.rows <- ceiling(length(plot.list) / 3)
+  n.rows <- ceiling(length(report.plot.list) / 3)
 
   ggplot2::ggsave(
     pdf.path,

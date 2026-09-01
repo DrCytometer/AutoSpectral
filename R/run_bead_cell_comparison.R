@@ -17,9 +17,8 @@
 #' Post-processes a control file created by \code{create.control.file()} so it
 #' is usable by either the legacy or automated AutoSpectral pipeline in the
 #' context of a bead-vs-cell comparison run. Sets \code{control.type} for every
-#' row according to the particle type of the folder, forces the single
-#' unstained/AF row to \code{control.type == "cells"} (required by both
-#' pipelines' validation), and back-fills \code{universal.negative} for the
+#' row -- including the single unstained row -- according to the true particle
+#' type of the folder, and back-fills \code{universal.negative} for the
 #' remaining rows with that row's filename.
 #'
 #' @param control.file.path Character scalar. Path to the control file CSV to
@@ -37,6 +36,14 @@
 #' warning instructing the user to edit the control file manually rather than
 #' guessing which row is the background control.
 #'
+#' The reference (cell) folder's unstained row is labelled \code{"AF"}, per
+#' the package's usual convention. A bead folder's unstained row is left
+#' labelled \code{"Negative"} and typed \code{control.type == "beads"}, like
+#' every other row in that folder -- it is never relabelled to impersonate a
+#' cell-based AF control. \code{run.bead.cell.comparison()} resolves that row
+#' via \code{get.spectral.variants()}'s own \code{unstained.sample} argument
+#' instead of requiring a literal \code{"AF"} row.
+#'
 #' @return Invisibly, the finalized control file as a data frame. The same
 #'   data is also written back to \code{control.file.path}.
 #'
@@ -48,17 +55,16 @@ finalize.control.file <- function( control.file.path, particle.type, reference.t
     control.file.path, stringsAsFactors = FALSE, colClasses = "character"
   )
 
-  # Fluorophore rows are labelled with the folder's true particle type
-  # (control.type == "cells"/"beads"), which the legacy gating pipeline
-  # (define.flow.control()/assign.gates()/do.gate()) needs in order to pick
-  # the right gate parameters (asp$*.cells vs asp$*.beads). The single
-  # unstained background row is the exception: both pipelines validate that
-  # the row labelled "AF" has control.type == "cells" regardless of what
-  # the particles actually are (see validate_control_file.R, af_wrong_type),
-  # so that row alone is forced to "cells". This also means the automated
-  # pipeline's per-file AF-PC refinement (which only runs for
-  # control.type == "cells" universal negatives) is correctly skipped for
-  # bead folders instead of being incorrectly applied to bead data.
+  # Every row, including the unstained one, is labelled with the folder's
+  # true particle type. The legacy gating pipeline
+  # (define.flow.control()/assign.gates()/do.gate()) requires this to be
+  # uniform within a gate group in order to pick the right gate parameters
+  # (asp$*.cells vs asp$*.beads), and validate.control.file()'s
+  # negative_type_mismatch rule requires a sample and its universal.negative
+  # to share a control.type -- so the unstained row must not be forced to
+  # "cells" for a bead folder just to satisfy the package's separate "AF"
+  # naming convention. See the "AF" relabelling below for how that
+  # convention is honored instead, only for the true reference (cell) folder.
   is.beads <- !identical( particle.type, reference.type )
 
   ctrl$control.type <- if ( is.beads ) "beads" else "cells"
@@ -66,8 +72,11 @@ finalize.control.file <- function( control.file.path, particle.type, reference.t
   unstained.idx <- which( ctrl$fluorophore %in% c( "AF", "Negative" ) )
 
   if ( length( unstained.idx ) == 1 ) {
-    ctrl$fluorophore[ unstained.idx ]  <- "AF"
-    ctrl$control.type[ unstained.idx ] <- "cells"
+    # Only the reference (cell) folder's unstained row is relabelled to the
+    # package's usual "AF" convention. A bead folder's unstained row keeps
+    # whatever label it already resolved to (typically "Negative") and its
+    # control.type == "beads" from the blanket assignment above.
+    if ( !is.beads ) ctrl$fluorophore[ unstained.idx ] <- "AF"
     ctrl$universal.negative[ -unstained.idx ] <- ctrl$filename[ unstained.idx ]
   } else if ( length( unstained.idx ) > 1 ) {
     warning(
@@ -209,6 +218,26 @@ finalize.control.file <- function( control.file.path, particle.type, reference.t
 #' @param legacy.gate Logical scalar. Whether to perform gating in
 #'   \code{define.flow.control()} when \code{legacy.pipeline = TRUE}. Defaults
 #'   to \code{TRUE}.
+#' @param gate.lists Optional named list, or \code{NULL} (the default). Names
+#'   must match entries in \code{particle.dirs}; each value is itself a named
+#'   list of pre-defined gates (as produced by \code{define.gate.landmarks()}
+#'   and/or \code{define.gate.density()}) to pass through to
+#'   \code{define.flow.control()}'s own \code{gate.list} argument for that
+#'   particle type. Only used when \code{legacy.pipeline = TRUE}; ignored for
+#'   any particle type not present in \code{gate.lists} and for the automated
+#'   pipeline, which has no gating step. As with \code{define.flow.control()}
+#'   itself, each per-particle-type gate list's names must correspond to the
+#'   \code{gate.name} values in that particle type's control file, so
+#'   \code{gate.name} generally needs to be filled in by hand (or carried
+#'   over from a previous run's control file) rather than left for
+#'   \code{assign.gates()} to generate automatically.
+#' @param af.remove Logical, default \code{FALSE}. Passed through to
+#'   \code{clean.controls()} when \code{legacy.pipeline = TRUE}; ignored for
+#'   the automated pipeline. Intrusive-autofluorescence removal is aimed at
+#'   tissue-derived cell controls and isn't relevant to comparing raw
+#'   single-color signatures across particle types, so it defaults off here
+#'   (unlike \code{clean.controls()}'s own default of \code{TRUE}). Set to
+#'   \code{TRUE} if the reference (cell) folder's controls do need it.
 #' @param n.candidates Integer, default `1000`. Number of top-expressing
 #'   candidate events selected per fluorophore before cosine-similarity
 #'   filtering. Ignored in internal-negative mode, where the top 5%% of
@@ -261,9 +290,10 @@ finalize.control.file <- function( control.file.path, particle.type, reference.t
 #' \enumerate{
 #'   \item \strong{Per-particle-type extraction.} For each entry in
 #'     \code{particle.dirs}, a control file is created if absent, validated
-#'     for unresolved fluorophore matches and a resolved AF row, and then run
-#'     through the selected extraction pipeline to yield spectra, automated
-#'     brightness, and spectral variants. Results are cached to
+#'     for unresolved fluorophore matches and a resolved unstained row
+#'     (\code{"AF"} or \code{"Negative"}), and then run through the selected
+#'     extraction pipeline to yield spectra, automated brightness, and
+#'     spectral variants. Results are cached to
 #'     \code{<result.dir>/<particle.type>/<particle.type>_extraction_<pipeline>.rds}
 #'     and reused on subsequent calls; switching \code{legacy.pipeline}
 #'     between runs uses a distinct cache file rather than reusing a stale
@@ -354,6 +384,8 @@ run.bead.cell.comparison <- function(
     legacy.pipeline      = TRUE,
     legacy.gating.system = "density",
     legacy.gate          = TRUE,
+    gate.lists              = NULL,
+    af.remove                = FALSE,
     n.candidates            = 1000L,
     n.spectral              = 200L,
     k.neighbors             = 2L,
@@ -434,7 +466,7 @@ run.bead.cell.comparison <- function(
       return( NULL )
     }
 
-    if ( !"AF" %in% ctrl.check$fluorophore ) {
+    if ( !any( ctrl.check$fluorophore %in% c( "AF", "Negative" ) ) ) {
       warning(
         "Skipping '", p, "': no AF/unstained control resolved in ",
         control.path, ". Edit the file and rerun.", call. = FALSE
@@ -483,6 +515,7 @@ run.bead.cell.comparison <- function(
         asp              = asp,
         gate             = legacy.gate,
         gating.system    = legacy.gating.system,
+        gate.list        = gate.lists[[ p ]],
         verbose          = verbose,
         allow.duplicate.controls = allow.duplicate.controls
       )
@@ -490,6 +523,7 @@ run.bead.cell.comparison <- function(
       flow.control <- clean.controls(
         flow.control = flow.control,
         asp          = asp,
+        af.remove    = af.remove,
         main.figures = figures,
         verbose      = verbose
       )
@@ -536,6 +570,26 @@ run.bead.cell.comparison <- function(
     # unmix of `spectra` against itself is unstable or unsolvable here. AF
     # extraction and variant clustering are restricted to raw detector space,
     # and the (unmixed-space) Spillover Spreading Matrix is skipped.
+    #
+    # get.spectral.variants() needs either a literal "AF" row in the control
+    # file or an explicit unstained.sample path (see its own documentation:
+    # "if the control file has no AF row (e.g. a bead-only ... setup), supply
+    # one directly via unstained.sample instead"). Bead folders are typed
+    # control.type == "beads" throughout, including their unstained row
+    # (fluorophore == "Negative"), so no "AF" row is present there -- resolve
+    # that row's file directly rather than mislabelling it to impersonate a
+    # cell-based AF control.
+    has.af.row <- "AF" %in% ctrl.check$fluorophore
+    unstained.sample <- if ( has.af.row ) {
+      NULL
+    } else {
+      neg.idx <- which( ctrl.check$fluorophore == "Negative" )
+      if ( length( neg.idx ) == 1 )
+        file.path( p.dir, ctrl.check$filename[ neg.idx ] )
+      else
+        NULL
+    }
+
     variants <- get.spectral.variants(
       control.dir      = p.dir,
       control.def.file = control.path,
@@ -544,7 +598,8 @@ run.bead.cell.comparison <- function(
       figures          = figures,
       output.dir       = asp$variant.dir,
       verbose          = verbose,
-      use.unmixed      = FALSE
+      use.unmixed      = FALSE,
+      unstained.sample = unstained.sample
     )
 
     result <- list( spectra = spectra, brightness = brightness, variants = variants )
