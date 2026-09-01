@@ -4,7 +4,7 @@
 \alias{check.gates}
 \title{Check Gates For Errors}
 \usage{
-check.gates(gate.list, control.table, asp)
+check.gates(gate.list, control.table, asp, bound.tolerance = 0.05)
 }
 \arguments{
 \item{gate.list}{Named list of gates. To use this, pre-define the
@@ -17,6 +17,16 @@ and ensure that the \code{gate.name} column has been filled in for the
 \code{define.flow.control()} and cleaned up by that function.}
 
 \item{asp}{The AutoSpectral parameter list defined using \code{get.autospectral.param}.}
+
+\item{bound.tolerance}{Numeric, default \code{0.05}. Fractional margin, relative
+to each axis's configured range (\verb{scatter.data.max.* - scatter.data.min.*}),
+allowed outside \verb{scatter.data.min.*}/\verb{scatter.data.max.*} before a gate's
+coordinates are rejected. \code{do.gate()}'s own auto-gating search region is
+clamped to these same bounds rather than erroring when real data extends
+slightly past them (raw scatter from baseline-corrected digital detectors
+commonly dips a little negative near the origin), so a pre-defined gate is
+held to the same loose ceiling here rather than an exact boundary. Set to
+\code{0} to restore a hard boundary.}
 }
 \value{
 Silently returns \code{TRUE} if all checks pass. If any check fails, the

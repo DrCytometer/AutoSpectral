@@ -14,6 +14,15 @@
 #' @param control.table Dataframe or table of the control file, read in via
 #' `define.flow.control()` and cleaned up by that function.
 #' @param asp The AutoSpectral parameter list defined using `get.autospectral.param`.
+#' @param bound.tolerance Numeric, default `0.05`. Fractional margin, relative
+#' to each axis's configured range (`scatter.data.max.* - scatter.data.min.*`),
+#' allowed outside `scatter.data.min.*`/`scatter.data.max.*` before a gate's
+#' coordinates are rejected. `do.gate()`'s own auto-gating search region is
+#' clamped to these same bounds rather than erroring when real data extends
+#' slightly past them (raw scatter from baseline-corrected digital detectors
+#' commonly dips a little negative near the origin), so a pre-defined gate is
+#' held to the same loose ceiling here rather than an exact boundary. Set to
+#' `0` to restore a hard boundary.
 #'
 #' @seealso
 #' * [tune.gate()]
@@ -27,7 +36,7 @@
 #'
 #' @export
 
-check.gates <- function( gate.list, control.table, asp ) {
+check.gates <- function( gate.list, control.table, asp, bound.tolerance = 0.05 ) {
 
   # must be a list
   if ( !is.list(gate.list) ) {
@@ -96,15 +105,22 @@ check.gates <- function( gate.list, control.table, asp ) {
            call. = FALSE)
     }
 
+    # asp$scatter.data.min.x/max.x (and the .y equivalents) are a loose
+    # outer sanity ceiling
+    x.margin <- ( asp$scatter.data.max.x - asp$scatter.data.min.x ) * bound.tolerance
+    y.margin <- ( asp$scatter.data.max.y - asp$scatter.data.min.y ) * bound.tolerance
+
     # Check boundaries for X
-    if ( any(g$x < asp$scatter.data.min.x) || any(g$x > asp$scatter.data.max.x) ) {
+    if ( any(g$x < asp$scatter.data.min.x - x.margin) ||
+         any(g$x > asp$scatter.data.max.x + x.margin) ) {
       stop(sprintf("Gate '%s' has X-coordinates outside the allowed range [%f, %f].",
                    gn, asp$scatter.data.min.x, asp$scatter.data.max.x),
            call. = FALSE)
     }
 
     # Check boundaries for Y
-    if ( any(g$y < asp$scatter.data.min.y) || any(g$y > asp$scatter.data.max.y) ) {
+    if ( any(g$y < asp$scatter.data.min.y - y.margin) ||
+         any(g$y > asp$scatter.data.max.y + y.margin) ) {
       stop(sprintf("Gate '%s' has Y-coordinates outside the allowed range [%f, %f].",
                    gn, asp$scatter.data.min.y, asp$scatter.data.max.y),
            call. = FALSE)
