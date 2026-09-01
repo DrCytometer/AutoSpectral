@@ -345,7 +345,8 @@ get.fluorophore.spectra <- function(
     expr = {
       spectral.reference.plot(
         marker.spectra, asp,
-        fluorophore = attr( marker.spectra, "fluorophore" )
+        fluorophore = attr( marker.spectra, "fluorophore" ),
+        plot.dir    = asp$figure.spectra.dir
       )
     },
     error = function( e ) {
