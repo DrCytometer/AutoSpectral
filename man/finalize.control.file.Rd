@@ -29,9 +29,8 @@ data is also written back to \code{control.file.path}.
 Post-processes a control file created by \code{create.control.file()} so it
 is usable by either the legacy or automated AutoSpectral pipeline in the
 context of a bead-vs-cell comparison run. Sets \code{control.type} for every
-row according to the particle type of the folder, forces the single
-unstained/AF row to \code{control.type == "cells"} (required by both
-pipelines' validation), and back-fills \code{universal.negative} for the
+row -- including the single unstained row -- according to the true particle
+type of the folder, and back-fills \code{universal.negative} for the
 remaining rows with that row's filename.
 }
 \details{
@@ -40,5 +39,13 @@ If zero or more than one such row is found, the function leaves
 \code{fluorophore}/\code{universal.negative} unset for that file and emits a
 warning instructing the user to edit the control file manually rather than
 guessing which row is the background control.
+
+The reference (cell) folder's unstained row is labelled \code{"AF"}, per
+the package's usual convention. A bead folder's unstained row is left
+labelled \code{"Negative"} and typed \code{control.type == "beads"}, like
+every other row in that folder -- it is never relabelled to impersonate a
+cell-based AF control. \code{run.bead.cell.comparison()} resolves that row
+via \code{get.spectral.variants()}'s own \code{unstained.sample} argument
+instead of requiring a literal \code{"AF"} row.
 }
 \keyword{internal}
