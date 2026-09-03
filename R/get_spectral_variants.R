@@ -716,7 +716,7 @@ get.spectral.variants <- function(
       warning( "Noise floor could not be estimated at ",
                sum( is.na( noise.floor ) ), " detector(s).", call. = FALSE )
 
-    if ( verbose )
+    if ( verbose & FALSE )
       message( sprintf(
         "Noise floor from %d control(s): median SD %.1f (range %.1f - %.1f)",
         nrow( floor.mat ),
