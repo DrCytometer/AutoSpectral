@@ -1,3 +1,28 @@
+# AutoSpectral 1.8.1 (2026-09-03)
+
+## New Features
+
+- New metrics for comparing spectral profiles (e.g., beads vs. cells).
+- Dynamic scatter scaling for gating plots.
+- Plotting and comparison workflow functions used for the manuscript are included.
+
+## Improvements
+
+- Unmixing for AF extraction should be faster by default now due to switching off
+the `refine` option in `get.af.spectra()`, which does not help appreciably for
+low AF samples such as PBMCs and mouse splenocytes.
+- The unstained samples will now be matched to "Negative" or "AF" when calling
+`create.control.file()`, reducing the "No match" output messaging.
+- More fluorophore synonyms for automated matching.
+
+## Bug fixes
+
+- Gates with negative coordinates or otherwise slightly out of bounds due to
+rounding of the contour should now work without errors.
+- The Spectral Reference QC plots are now produced in the specified `plot.dir` 
+correctly.
+
+
 # AutoSpectral 1.8.0 (2026-08-26)
 
 ## New Features
@@ -19,6 +44,7 @@ the CSV file will be written using `output.dir`.
 
 
 ## Improvements
+
 - Faster FCS reading and unmixing thanks to improvements to the AutoSpectralRcpp
 backend suggested by Paul Heisig.
 - Better memory handling throughout using restricted reading of only the needed
@@ -27,6 +53,7 @@ parts of FCS files, removing redundant reads.
 - Faster plotting by side-stepping `ggsave` and using `fast` in `ragg`.
 
 ## Bug fixes
+
 - Many small things.
 - Handling of edge cases with weighting (WLS) using a noise floor cutoff to
 prevent approaching infinity.
