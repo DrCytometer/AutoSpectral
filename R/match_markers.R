@@ -54,8 +54,13 @@ match.markers <- function( control.filenames, marker.database ) {
 
     # decide best match
     if ( length( all.matches ) == 0 ) {
+
       marker.matches[[filename]] <- ""
-      message( sprintf( "\033[31mNo matching marker for: %s\033[0m", filename ) )
+
+      if ( !grepl( "Unstained", filename, ignore.case = TRUE ) &&
+           !grepl( "Negative", filename, ignore.case = TRUE ) ) {
+        message( sprintf( "\033[31mNo matching marker for: %s\033[0m", filename ) )
+      }
 
     } else {
       # choose longest antigen match

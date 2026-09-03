@@ -56,6 +56,15 @@ assign.gates <- function(
   control.table$is.viability[ is.na( control.table$is.viability ) ] <- FALSE
   control.table$large.gate[ is.na( control.table$large.gate ) ] <- FALSE
 
+  # some callers (e.g. create.control.file()) invoke assign.gates() before a
+  # `sample` column has been built; define.flow.control() always builds one
+  # ahead of time, so this guard only fires for other callers
+  if ( !"sample" %in% colnames( control.table ) ) {
+    control.table$sample <- .build.control.sample.names(
+      control.table$fluorophore, control.table$control.type, control.table$marker
+    )
+  }
+
   # universal.negative must be strictly filename or NA
   control.table$universal.negative[
     control.table$universal.negative == "" | is.na( control.table$universal.negative )

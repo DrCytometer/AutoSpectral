@@ -21,8 +21,12 @@ match.fluorophores <- function( control.filenames, fluorophore.database ) {
 
   fluorophore.matches <- list()
 
-  # Columns to check
-  fluor.cols <- c( "fluorophore", paste0("synonym", 1:4) )
+  # Columns to check -- pick up "fluorophore" plus any synonymN column present,
+  # so adding more synonym columns to fluorophore_database.csv works automatically
+  fluor.cols <- c(
+    "fluorophore",
+    grep( "^synonym[0-9]+$", colnames( fluorophore.database ), value = TRUE )
+  )
 
   for ( filename in control.filenames ) {
 
@@ -54,8 +58,29 @@ match.fluorophores <- function( control.filenames, fluorophore.database ) {
 
     # Decide best match based on length
     if ( length( all.matches ) == 0 ) {
-      fluorophore.matches[[ filename ]] <- "No match"
-      message( sprintf( "\033[31mNo matching fluorophore for: %s\033[0m", filename ) )
+
+      if ( grepl( "Unstained", filename, ignore.case = TRUE ) ) {
+
+        assigned <- if ( grepl( "cells", filename, ignore.case = TRUE ) ) "AF" else "Negative"
+
+        fluorophore.matches[[ filename ]] <- assigned
+        message( sprintf(
+          "\033[36mUnstained sample assigned to %s: %s\033[0m", assigned, filename
+        ) )
+
+      } else if ( grepl( "Negative", filename, ignore.case = TRUE ) ) {
+
+        fluorophore.matches[[ filename ]] <- "Negative"
+        message( sprintf(
+          "\033[36mSample assigned to Negative: %s\033[0m", filename
+        ) )
+
+      } else {
+
+        fluorophore.matches[[ filename ]] <- "No match"
+        message( sprintf( "\033[31mNo matching fluorophore for: %s\033[0m", filename ) )
+
+      }
 
     } else {
       # Choose the match with the longest string length
