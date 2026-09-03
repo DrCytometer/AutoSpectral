@@ -298,6 +298,7 @@ create.control.file <- function(
       gating.system = "density",
       gate = TRUE
     )
+    control.table <- control.table[ , desired.col ]
   }
 
   # fill AF for unstained cells, Negative for unstained beads
