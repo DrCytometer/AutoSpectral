@@ -40,6 +40,7 @@ utils::globalVariables(
      "CosineSim",
      "n",
      "Gate",
-     "subgroup"
+     "subgroup",
+     ".data"
   )
 )
