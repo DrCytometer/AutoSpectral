@@ -349,8 +349,9 @@ unmix.fcs <- function(
     }
   }
 
-  # determine original file name
-  file.name <- if ( !is.null( fcs.keywords$`$FIL` ) ) fcs.keywords$`$FIL` else basename( fcs.file )
+  # determine original file name, preferring the name on disk over a stale
+  # $FIL keyword if the file has been renamed since acquisition
+  file.name <- resolve.file.name( fcs.file, fcs.keywords$`$FIL`, verbose = verbose )
   if ( !grepl( "\\.fcs$", file.name, ignore.case = TRUE ) )  file.name <- paste0( file.name, ".fcs" )
 
   # deal with manufacturer peculiarities in writing FCS files

@@ -141,7 +141,7 @@ get.af.spectra <- function(
     deduplicate          = FALSE,
     duplication.threshold = 0.99,
     use.unmixed          = TRUE,
-    refine               = TRUE,
+    refine               = FALSE,
     problem.quantile     = 0.99,
     remove.contaminants  = TRUE,
     contaminant.threshold = 0.99,
@@ -199,7 +199,7 @@ get.af.spectra <- function(
   # ---------------------------------------------------------------------------
 
   unstained.ff   <- readFCS( unstained.sample, return.keywords = TRUE )
-  file.name      <- unstained.ff$keywords[[ "$FIL" ]]
+  file.name      <- resolve.file.name( unstained.sample, unstained.ff$keywords[[ "$FIL" ]], verbose = verbose )
 
   # retain scatter (and, where configured, imaging) columns alongside the
   # spectral data so that per-node scatter statistics can be computed when
@@ -357,7 +357,7 @@ get.af.spectra <- function(
 
   if ( refine ) {
 
-    if (FALSE) {
+    if ( return.model ) {
       warning( "`return.model = TRUE` with `refine = TRUE`: refined AF spectra ",
                "are synthesised rather than drawn from SOM node populations, ",
                "so several dictionary entries may attract few events and will ",
@@ -503,7 +503,7 @@ get.af.spectra <- function(
         new.specs <- lapply( contributing.af.ids, function( id ) {
           base.spec <- af.spectra[ id, ]
           updated   <- base.spec * ( 1 + median.ratio )
-          peak      <- max( updated )
+          peak      <- max( abs( updated ) )
           if ( peak > 1e-12 ) updated <- updated / peak
           return( updated )
         } )
@@ -651,11 +651,7 @@ get.af.spectra <- function(
   # ---------------------------------------------------------------------------
 
   if ( save ) {
-    if ( is.null( title ) )
-      af.file.name <- paste0( file.name, "_", asp$af.file.name, ".csv" )
-    else
-      af.file.name <- paste0( file.name, "_", title, ".csv" )
-
+    af.file.name <- paste0( file.name, "_", title, ".csv" )
     utils::write.csv( af.spectra, file = file.path( table.dir, af.file.name ) )
   }
 

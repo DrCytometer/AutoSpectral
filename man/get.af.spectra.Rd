@@ -18,7 +18,7 @@ get.af.spectra(
   deduplicate = FALSE,
   duplication.threshold = 0.99,
   use.unmixed = TRUE,
-  refine = TRUE,
+  refine = FALSE,
   problem.quantile = 0.99,
   remove.contaminants = TRUE,
   contaminant.threshold = 0.99,
