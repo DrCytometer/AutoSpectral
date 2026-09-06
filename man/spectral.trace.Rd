@@ -7,7 +7,7 @@
 spectral.trace(
   spectral.matrix,
   asp,
-  title = "Fluorophore_Spectra",
+  title = "Fluorophore Spectra",
   plot.dir = NULL,
   split.lasers = TRUE,
   figure.spectra.line.size = 1,
@@ -28,7 +28,7 @@ fluorophore names. Column names will be used as the detectors (channels).}
 \item{asp}{The AutoSpectral parameter list defined using
 \code{get.autospectral.param}.}
 
-\item{title}{Title for the plot. Default is \code{Fluorophore_Spectra}}
+\item{title}{Title for the plot. Default is \verb{Fluorophore Spectra}}
 
 \item{plot.dir}{Directory to save the plot files. Default is \code{NULL}, in
 which case the current working directory will be used.}

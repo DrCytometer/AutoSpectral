@@ -15,7 +15,7 @@
 #' fluorophore names. Column names will be used as the detectors (channels).
 #' @param asp The AutoSpectral parameter list defined using
 #' `get.autospectral.param`.
-#' @param title Title for the plot. Default is `Fluorophore_Spectra`
+#' @param title Title for the plot. Default is `Fluorophore Spectra`
 #' @param plot.dir Directory to save the plot files. Default is `NULL`, in
 #' which case the current working directory will be used.
 #' @param split.lasers Logical indicating whether to create a second plot split
@@ -45,7 +45,7 @@
 spectral.trace <- function(
     spectral.matrix,
     asp,
-    title = "Fluorophore_Spectra",
+    title = "Fluorophore Spectra",
     plot.dir = NULL,
     split.lasers = TRUE,
     figure.spectra.line.size = 1,
