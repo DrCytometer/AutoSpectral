@@ -7,7 +7,7 @@ input when users supply gates to
 ## Usage
 
 ``` r
-check.gates(gate.list, control.table, asp)
+check.gates(gate.list, control.table, asp, bound.tolerance = 0.05)
 ```
 
 ## Arguments
@@ -32,6 +32,20 @@ check.gates(gate.list, control.table, asp)
 
   The AutoSpectral parameter list defined using
   `get.autospectral.param`.
+
+- bound.tolerance:
+
+  Numeric, default `0.05`. Fractional margin, relative to each axis's
+  configured range (`scatter.data.max.* - scatter.data.min.*`), allowed
+  outside `scatter.data.min.*`/`scatter.data.max.*` before a gate's
+  coordinates are rejected.
+  [`do.gate()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.md)'s
+  own auto-gating search region is clamped to these same bounds rather
+  than erroring when real data extends slightly past them (raw scatter
+  from baseline-corrected digital detectors commonly dips a little
+  negative near the origin), so a pre-defined gate is held to the same
+  loose ceiling here rather than an exact boundary. Set to `0` to
+  restore a hard boundary.
 
 ## Value
 

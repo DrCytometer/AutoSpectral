@@ -10,7 +10,7 @@ files.
 spectral.trace(
   spectral.matrix,
   asp,
-  title = "Fluorophore_Spectra",
+  title = "Fluorophore Spectra",
   plot.dir = NULL,
   split.lasers = TRUE,
   figure.spectra.line.size = 1,
@@ -39,7 +39,7 @@ spectral.trace(
 
 - title:
 
-  Title for the plot. Default is `Fluorophore_Spectra`
+  Title for the plot. Default is `Fluorophore Spectra`
 
 - plot.dir:
 

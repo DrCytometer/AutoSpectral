@@ -18,26 +18,44 @@ that are negative for the target channel: their apparent abundance there
 is spillover from the source, so its slope against source abundance is
 the residual coefficient. Truncating the target from above shrinks that
 slope toward zero when the two markers are co-expressed, which is the
-safe direction. The second phase does not back-solve a spectrum out of
-the matrix. It uses the matrix only to define clean populations, then
-re-measures each fluorophore's signature directly from background
-subtracted raw data with
+safe direction. A negative correlation between a source's abundance and
+a channel's corrected value has no biological explanation the way
+co-expression or coverage disagreement can, so it is checked directly on
+the source's own positive population against the channel's negative
+boundary (the unstained population's own measured negative tail, not a
+mirror of the positive side) and treated as unambiguous: trust falls as
+the fraction of that population left past the boundary grows, reaching a
+hard rejection at `max.hypernegative.frac` regardless of whether this
+coefficient introduced the crossing or merely failed to fix one already
+there. Trust damping only controls what a given iteration adds; a pair
+that is only ever weakly accepted would otherwise settle at whatever
+that weak, repeated acceptance adds up to, never revised down for
+staying weak. `coefficient.decay` pulls every off-diagonal pair back
+toward zero in proportion to how little trust it currently earns, so a
+coefficient later supports erodes rather than persists. The second phase
+does not back-solve a spectrum out of the matrix. It uses the matrix
+only to define clean populations, then re-measures each fluorophore's
+signature directly from background subtracted raw data with
 [`extract.raw.signature()`](https://drcytometer.github.io/AutoSpectral/reference/extract.raw.signature.md),
 so the result is a physical spectrum rather than whichever combination
 of the existing rows happens to reproduce the required compensation.
-
-Both phases have a bias that can be measured without any ground truth.
-Run on the control the reference spectra came from, this function should
-return exactly what it was given; whatever it returns instead is its own
-artefact. Supplying that run as `null.fit` subtracts the artefact from
-the coefficients and from the signatures, which recovers substantially
-more than refusing the same quantities on the same information.
 
 Autofluorescence is fitted jointly with the panel from a multi-component
 basis (`bg.mode = "af.deconv"`), not represented by a single row. In a
 real sample the background a single row leaves behind tracks cell type,
 cell type determines marker expression, and the leftover is then
 indistinguishable from spillover by any channel-against-channel fit.
+
+When a distinct, strongly autofluorescent population is not well spanned
+by that shared low-rank basis, `bg.mode = "per.cell"` instead assigns
+each event a single discrete spectrum from an `af.spectra` library
+([`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md))
+and subtracts only that one. This is a more expressive background model,
+but its assignment criterion favours explaining away signal, so an event
+genuinely positive for a panel dye can be misassigned to a competing
+library row; see `af.assignment` in the return value and `max.hotspot`,
+which drops library rows that are themselves inseparable from a panel
+fluorophore before assignment runs.
 
 Every row update must pass an acceptance stack; a fluorophore that fails
 any gate keeps its starting spectrum.
@@ -55,8 +73,11 @@ fix.my.unmix(
   af.name = "AF",
   af.basis = NULL,
   af.n.pc = "auto",
-  bg.mode = c("af.deconv", "af.row", "global.mean", "none"),
+  af.spectra = NULL,
+  bg.mode = c("af.deconv", "af.row", "global.mean", "none", "per.cell"),
   large.gate = TRUE,
+  scatter.gate = TRUE,
+  landmark.quantile = NULL,
   max.iter = 20L,
   downsample = 20000,
   downsample.background.frac = 0.3,
@@ -67,6 +88,9 @@ fix.my.unmix(
   envelope.quantiles = c(0.05, 0.5),
   min.negative.frac = 0.1,
   max.disagreement = 0.5,
+  min.hypernegative.frac = 0.01,
+  max.hypernegative.frac = 0.05,
+  min.hypernegative.events = 200L,
   leakage.prior = TRUE,
   span.fraction = 0.6,
   min.negative.events = 200L,
@@ -87,11 +111,9 @@ fix.my.unmix(
   max.coefficient = 0.5,
   convergence.threshold = 0.01,
   convergence.quantile = 0.95,
+  coefficient.decay = 0.05,
   update.spectra = TRUE,
   step = 1,
-  null.fit = NULL,
-  max.resid.ratio = 3,
-  max.intercept.ratio = 3,
   intercept = TRUE,
   min.explained = 0.8,
   max.explained = 1.2,
@@ -111,7 +133,8 @@ fix.my.unmix(
   n.threads = 1L,
   figures = TRUE,
   save = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  keep.history = FALSE
 )
 ```
 
@@ -145,9 +168,13 @@ fix.my.unmix(
   The variant list returned by
   [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md).
   Only `variants$spillover.spread` is used, to set abundance-dependent
-  positivity boundaries and to correct the envelope for the widening of
-  the negative population. If `NULL`, boundaries are flat and the
-  correction is biased at the bright end.
+  positivity boundaries and correct the envelope for the widening of the
+  negative population. The negative boundary used to bound how far a
+  proposed coefficient may push events into hypernegative territory is
+  measured directly from the unstained sample's own negative tail inside
+  this function (see `max.hypernegative.frac`), not derived from
+  `variants`. If `variants` is `NULL`, positivity boundaries are flat
+  and the correction is biased at the bright end.
 
 - af.name:
 
@@ -168,17 +195,55 @@ fix.my.unmix(
   [`get.af.basis()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.basis.md).
   Default `"auto"`.
 
+- af.spectra:
+
+  Optional matrix (n.af x detectors), a library of candidate
+  autofluorescence spectra from
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md).
+  Required, with at least two rows, when `bg.mode = "per.cell"`; unused
+  otherwise.
+
 - bg.mode:
 
   Character. `"af.deconv"` (default) fits a multi-component
   autofluorescence basis jointly with the panel; `"af.row"` uses the
   single `af.name` row already in `spectra`; `"global.mean"` uses the
-  mean unstained spectrum as a single background row; `"none"` fits no
-  background.
+  mean unstained spectrum as a single background row; `"per.cell"`
+  assigns each event the single best-matching spectrum from the
+  `af.spectra` library and subtracts only that one, which can follow a
+  distinct, strongly autofluorescent population (e.g. alveolar
+  macrophages) that a shared low-rank basis averages away; `"none"` fits
+  no background. The condition-number and leakage checks in the
+  signature phase, and the frozen-fluorophore check, still run against
+  `af.spectra`'s row 1 (its population mean) under `"per.cell"` — only
+  the background actually subtracted from each event differs.
 
 - large.gate:
 
   Logical, whether to use a large scatter gate. Default `TRUE`.
+
+- scatter.gate:
+
+  Logical, whether to gate on scatter at all before fitting. `FALSE`
+  keeps every event in both `unstained.sample` and
+  `fully.stained.sample`, ignoring `large.gate` entirely. Turn off when
+  a population the correction needs – a large, highly autofluorescent
+  cell type such as alveolar macrophages, say – sits far enough outside
+  the main scatter population that even `large.gate`'s stretch does not
+  reach it, and no single gate shape can be expected to enclose everyone
+  the correction needs. Default `TRUE`.
+
+- landmark.quantile:
+
+  Numeric in `(0, 1)` or `NULL`, a lighter-weight alternative to turning
+  gating off outright: events above this quantile on either scatter
+  parameter are kept in addition to whatever the gate polygon already
+  keeps, rather than replacing it. The threshold is computed once from
+  `unstained.sample` and reused unchanged for `fully.stained.sample`, so
+  the same large-cell population is added to both the autofluorescence
+  basis and the correction it feeds, rather than one being widened
+  without the other. Ignored when `scatter.gate = FALSE`. `NULL`
+  (default) applies no landmark rescue.
 
 - max.iter:
 
@@ -234,6 +299,47 @@ fix.my.unmix(
 
   Numeric, envelope-versus-median slope disagreement above which the
   coefficient's trust weight is reduced. Default `0.5`.
+
+- min.hypernegative.frac:
+
+  Numeric, the fraction of a source's own positive population tolerated
+  past the channel's negative boundary before trust begins to fall at
+  all. The boundary is the channel's own spread-scaled negative
+  threshold, anchored to the unstained population's own negative tail
+  (measured directly, each iteration, alongside the positive threshold)
+  rather than mirrored from the positive boundary about zero –
+  autofluorescence is non-negative, so it inflates the positive tail of
+  an unstained control without inflating the negative tail
+  correspondingly, making the mirrored assumption systematically too
+  loose. Noise and incorrectly-unmixed, AF-skewed events always account
+  for some small tail here, and a fraction at or below this is not
+  itself evidence that a coefficient is wrong. Default `0.01`.
+
+- max.hypernegative.frac:
+
+  Numeric, the fraction at which trust reaches exactly zero. Between
+  `min.hypernegative.frac` and this cap trust falls off linearly; unlike
+  `max.disagreement`, which only damps a coefficient in proportion to
+  how far past a soft limit it sits, this reaches a hard rejection
+  rather than an asymptote, because a negative correlation between a
+  source's abundance and a channel's corrected value has no biological
+  explanation and so is not owed an indefinitely soft penalty. The
+  fraction checked is absolute, not a delta against whatever already sat
+  past the boundary before this coefficient: a pre-existing
+  hypernegative artefact is evidence of an incorrect coefficient
+  somewhere just as much as a newly-introduced one, even when a
+  different pair's coefficient is what put it there. `coefficient.log`'s
+  `hypernegative.base` and `hypernegative.new` columns separate the two
+  for diagnosis without treating either as free. Default `0.05`.
+
+- min.hypernegative.events:
+
+  Integer, the fewest events a source's own positive population may
+  contain before its hypernegative fraction is estimated at all. Below
+  this, `hypernegative.base`, `hypernegative.after` and
+  `hypernegative.new` are left `NA` in `coefficient.log` and only
+  `max.disagreement` and the prior variance bound the pair's trust.
+  Default `200L`.
 
 - leakage.prior:
 
@@ -356,6 +462,19 @@ fix.my.unmix(
   test uses, so that one pathological pair cannot define convergence.
   Default `0.95`.
 
+- coefficient.decay:
+
+  Numeric in `[0, 1)`, the maximum fraction by which an off-diagonal
+  spillover coefficient is pulled toward zero on a single iteration,
+  scaled by `1 - trust` for that pair. A pair earning strong trust this
+  iteration barely decays; a pair clearing the acceptance gates only
+  weakly, repeatedly, decays at close to the full rate every time, since
+  repeated low confidence is itself the signal that a coefficient is not
+  well identified, not evidence for holding it steady. Gating decay on
+  `trust == 0` alone catches only a pair that fails the hard gates
+  outright, missing the much more common case of a pair that clears them
+  every iteration but is never confidently estimated. Default `0.05`.
+
 - update.spectra:
 
   Logical, whether to run the raw-space signature phase. When `FALSE`,
@@ -366,25 +485,6 @@ fix.my.unmix(
 
   Numeric, the fraction of each accepted signature change applied.
   Default `1`.
-
-- null.fit:
-
-  Optional, the result of running this function on the control the
-  reference spectra were extracted from, where it should return exactly
-  what it was given. What it returns instead is its own artefact,
-  measured with no ground truth, and it is subtracted from both the
-  spillover matrix and the signatures. Its `signature.log` also sets
-  `max.resid` and `max.intercept` from the panel's own distribution.
-  Default `NULL`.
-
-- max.resid.ratio:
-
-  Numeric, multiple of the null run's median `resid.rel` above which a
-  fit is refused. Ignored without `null.fit`. Default `3`.
-
-- max.intercept.ratio:
-
-  Numeric, the same for `intercept.rel`. Default `3`.
 
 - intercept:
 
@@ -404,13 +504,11 @@ fix.my.unmix(
 
 - max.resid:
 
-  Numeric, maximum relative fit residual. Overridden by `null.fit` when
-  supplied. Default `0.03`.
+  Numeric, maximum relative fit residual. Default `0.03`.
 
 - max.intercept:
 
-  Numeric, maximum relative intercept. Overridden by `null.fit` when
-  supplied. Default `0.03`.
+  Numeric, maximum relative intercept. Default `0.03`.
 
 - min.bg.align:
 
@@ -429,9 +527,9 @@ fix.my.unmix(
   accepted (n=144, two substrates) - 90.7% on one substrate, a coin-flip
   47.2% on the other. The gate is net-harmful on the substrate where it
   discriminates worst and only weakly useful on the other, so it
-  defaults off rather than removed - `bias.impact` and the ratio are
-  still computed and logged either way, so the evidence for re-enabling
-  it on a new substrate remains visible without code changes.
+  defaults off rather than removed. `bias.impact`, the quantity it
+  compares against, has no source now that `null.fit` is gone, so the
+  gate is currently always inert regardless of this setting.
 
 - min.impact.ratio:
 
@@ -441,7 +539,9 @@ fix.my.unmix(
   alike and every dye alike; this weights each row by the abundances it
   actually produces, so a large rotation of a dim row is cheap and a
   small rotation of a bright collinear row is not. Requires
-  `null.spectra` and `gate.on.bias = TRUE`. Default `2`.
+  `gate.on.bias = TRUE` and a source for `bias.impact`, which no longer
+  exists now that `null.fit` is gone; the parameter is retained but
+  currently inert. Default `2`.
 
 - max.angle:
 
@@ -480,8 +580,10 @@ fix.my.unmix(
 - max.hotspot:
 
   Numeric, hotspot scale above which a fluorophore is considered
-  inseparable from the autofluorescence basis and is frozen. Default
-  `5`.
+  inseparable from the autofluorescence basis and is frozen. Under
+  `bg.mode = "per.cell"`, also applied to drop `af.spectra` rows that
+  are themselves inseparable from a panel fluorophore, before per-event
+  assignment. Default `5`.
 
 - leakage.margin:
 
@@ -495,10 +597,12 @@ fix.my.unmix(
 - n.threads:
 
   Integer, OpenMP threads for the batched pair estimator
-  (`fix_envelope_truncated_batch_rcpp()`). Keep at the default unless
-  this call is not itself running inside another parallel context (e.g.
-  one sample of several under `mclapply()`), since the two layers of
-  parallelism would otherwise compete for the same cores. Default `1L`.
+  (`fix_envelope_truncated_batch_rcpp()`) and, when
+  `bg.mode = "per.cell"`, for the per-event library assignment
+  (`assign.af.fluor.fast()`). Keep at the default unless this call is
+  not itself running inside another parallel context (e.g. one sample of
+  several under `mclapply()`), since the two layers of parallelism would
+  otherwise compete for the same cores. Default `1L`.
 
 - figures:
 
@@ -511,6 +615,17 @@ fix.my.unmix(
 - verbose:
 
   Logical, controls messaging. Default `TRUE`.
+
+- keep.history:
+
+  Logical, whether to retain a per-iteration snapshot of
+  `marker.spillover`, `trust`, the post-decay `spillover.next`, and that
+  iteration's `coefficient.log` in `spillover.history`, for tracing a
+  specific pair's trajectory – including its `hypernegative.base`/
+  `hypernegative.after` history – across the refinement loop rather than
+  inferring it from the final iteration alone. `FALSE` by default since
+  the snapshots are diagnostic only and add `max.iter` list entries of
+  otherwise-unused matrices to the return value. Default `FALSE`.
 
 ## Value
 
@@ -551,7 +666,49 @@ A named list:
 
   Per-iteration delta history.
 
+- `spillover.history`:
+
+  `NULL` unless `keep.history = TRUE`, in which case a list, one entry
+  per phase-one iteration, each holding that iteration's
+  `marker.spillover` (the raw fitted candidates, zero where nothing was
+  accepted), `trust`, `spillover.next` (the matrix after that
+  iteration's addition and decay, before the next iteration's row
+  renormalisation), and `coefficient.log` (that iteration's per-pair fit
+  diagnostics, including `hypernegative.base`/`hypernegative.after`).
+
+- `unmixed.final`, `residual.final`:
+
+  The fully-stained sample's abundance (events x fluorophores,
+  compensated with the final `compensation`) and background-subtracted
+  raw-space matrix (events x detectors) - what phase two itself measured
+  signatures from.
+
+- `thresholds.final`, `threshold.matrix.final`, `dominant.final`:
+
+  The final flat positivity threshold (one per fluorophore) and its
+  spread-scaled per-event boundary, and the resulting winning
+  fluorophore per event (`0` for none), identical to what phase two used
+  to define each fluorophore's own population.
+
+- `neg.thresholds.final`, `neg.threshold.matrix.final`:
+
+  The negative-side equivalents: the flat threshold measured directly
+  from the unstained population's own negative tail (not derived by
+  negating `thresholds.final`) and its spread-scaled per-event boundary,
+  identical to what the hypernegative check itself compared events
+  against at convergence. Use these, not `-threshold.matrix.final`, when
+  auditing this result against a negative boundary externally (e.g.
+  [`create.biplot()`](https://drcytometer.github.io/AutoSpectral/reference/create.biplot.md),
+  a cluster-centroid audit) – that mirrored shortcut is exactly the
+  assumption this pair was measured directly to avoid.
+
 - `af.basis`, `af.hotspot`, `af.frozen`:
 
   The autofluorescence basis, its coupling to the panel, and the
   fluorophores frozen because of it.
+
+- `af.assignment`:
+
+  `NULL` unless `bg.mode = "per.cell"`, in which case a table of how
+  often each `af.spectra` row was assigned and its mean fitted
+  abundance, over the (possibly downsampled) events actually used.

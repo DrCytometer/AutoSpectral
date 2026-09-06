@@ -10,6 +10,8 @@ create.biplot(
   x.dim,
   y.dim,
   asp,
+  variants = NULL,
+  spread.kappa = 2,
   x.lab = NULL,
   y.lab = NULL,
   x.min = -5000,
@@ -49,6 +51,34 @@ create.biplot(
 - asp:
 
   The AutoSpectral parameter list.
+
+- variants:
+
+  The variant list returned by
+  [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md).
+  When supplied, red curves are drawn for whichever of `x.dim`/`y.dim`
+  `variants$thresholds` covers: each channel's flat threshold
+  (`variants$thresholds`) plus `spread.kappa` spread standard deviations
+  from the *other* axis's own spillover into it
+  (`variants$spillover.spread`), and, below zero, the same spread
+  widening subtracted from the directly measured negative-tail flat
+  threshold (`variants$neg.thresholds`) rather than mirrored from the
+  positive curve about zero. Falls back to the mirrored positive
+  threshold, with a warning, when `variants$neg.thresholds` is absent
+  (an older cached `variants` object). This is the one-source
+  restriction of
+  [`get.spread.thresholds()`](https://drcytometer.github.io/AutoSpectral/reference/get.spread.thresholds.md)'s
+  formula to whichever fluorophore the other axis actually shows -
+  contributions from every other fluorophore in the panel are not
+  visualisable on a 2D plot and are not included. `NULL` (default) draws
+  no reference curves.
+
+- spread.kappa:
+
+  Numeric, spread standard deviations allowed above the flat threshold
+  when `variants` is supplied - see
+  [`get.spread.thresholds()`](https://drcytometer.github.io/AutoSpectral/reference/get.spread.thresholds.md).
+  Default `2`.
 
 - x.lab:
 

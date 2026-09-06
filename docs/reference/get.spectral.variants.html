@@ -51,7 +51,7 @@ produced if requested."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -316,6 +316,14 @@ arguments: <code>af.spectra</code>, <code>refine</code>, <code>problem.quantile<
     <p>A named list with elements:</p><dl><dt><code>thresholds</code></dt>
 <dd><p>Named numeric vector of positivity thresholds in
 the unmixed space, one per fluorophore.</p></dd>
+
+<dt><code>neg.thresholds</code></dt>
+<dd><p>Named numeric vector, the 0.5th percentile of
+each fluorophore's unstained unmixed distribution – the flat component
+of the negative positivity boundary, measured directly from the
+unstained population's own negative tail rather than mirrored from
+<code>thresholds</code> about zero. <code>NA</code> for every fluorophore when
+<code>use.unmixed = FALSE</code>.</p></dd>
 
 <dt><code>variants</code></dt>
 <dd><p>Named list of variant-spectra matrices, one per

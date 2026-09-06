@@ -31,7 +31,7 @@ consolidated results object."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,9 +101,11 @@ consolidated results object.</p>
 <span>  fluor.df <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  legacy.pipeline <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  legacy.pipeline <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  legacy.gating.system <span class="op">=</span> <span class="st">"density"</span>,</span>
 <span>  legacy.gate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  gate.lists <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  af.remove <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  n.candidates <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  n.spectral <span class="op">=</span> <span class="fl">200L</span>,</span>
 <span>  k.neighbors <span class="op">=</span> <span class="fl">2L</span>,</span>
@@ -185,7 +187,7 @@ are extracted with the legacy gated pipeline
 (<code><a href="define.flow.control.html">define.flow.control()</a></code> / <code><a href="clean.controls.html">clean.controls()</a></code> /
 <code><a href="get.fluorophore.spectra.html">get.fluorophore.spectra()</a></code>); if <code>FALSE</code>, the automated
 (non-gated) pipeline (<code><a href="get.spectra.automated.html">get.spectra.automated()</a></code>) is used. Defaults
-to <code>FALSE</code>.</p></dd>
+to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-legacy-gating-system">legacy.gating.system<a class="anchor" aria-label="anchor" href="#arg-legacy-gating-system"></a></dt>
@@ -198,6 +200,32 @@ to <code>"density"</code>.</p></dd>
 <dd><p>Logical scalar. Whether to perform gating in
 <code><a href="define.flow.control.html">define.flow.control()</a></code> when <code>legacy.pipeline = TRUE</code>. Defaults
 to <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-gate-lists">gate.lists<a class="anchor" aria-label="anchor" href="#arg-gate-lists"></a></dt>
+<dd><p>Optional named list, or <code>NULL</code> (the default). Names
+must match entries in <code>particle.dirs</code>; each value is itself a named
+list of pre-defined gates (as produced by <code><a href="define.gate.landmarks.html">define.gate.landmarks()</a></code>
+and/or <code><a href="define.gate.density.html">define.gate.density()</a></code>) to pass through to
+<code><a href="define.flow.control.html">define.flow.control()</a></code>'s own <code>gate.list</code> argument for that
+particle type. Only used when <code>legacy.pipeline = TRUE</code>; ignored for
+any particle type not present in <code>gate.lists</code> and for the automated
+pipeline, which has no gating step. As with <code><a href="define.flow.control.html">define.flow.control()</a></code>
+itself, each per-particle-type gate list's names must correspond to the
+<code>gate.name</code> values in that particle type's control file, so
+<code>gate.name</code> generally needs to be filled in by hand (or carried
+over from a previous run's control file) rather than left for
+<code><a href="assign.gates.html">assign.gates()</a></code> to generate automatically.</p></dd>
+
+
+<dt id="arg-af-remove">af.remove<a class="anchor" aria-label="anchor" href="#arg-af-remove"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. Passed through to
+<code><a href="clean.controls.html">clean.controls()</a></code> when <code>legacy.pipeline = TRUE</code>; ignored for
+the automated pipeline. Intrusive-autofluorescence removal is aimed at
+tissue-derived cell controls and isn't relevant to comparing raw
+single-color signatures across particle types, so it defaults off here
+(unlike <code><a href="clean.controls.html">clean.controls()</a></code>'s own default of <code>TRUE</code>). Set to
+<code>TRUE</code> if the reference (cell) folder's controls do need it.</p></dd>
 
 
 <dt id="arg-n-candidates">n.candidates<a class="anchor" aria-label="anchor" href="#arg-n-candidates"></a></dt>
@@ -287,8 +315,9 @@ each containing <code>spectra</code>, <code>brightness</code>, and <code>variant
 
 <dt>Comparison</dt>
 <dd><p>Named list (by non-reference particle type) of
-<code>Cosine</code>, <code>Variability</code>, <code>VariabilityMAD</code>, and
-<code>Distance</code> results versus <code>reference.type</code>.</p></dd>
+<code>Cosine</code>, <code>Angle</code>, <code>Variability</code>,
+<code>VariabilityMAD</code>, <code>Distance</code>, and <code>Alignment</code>
+results versus <code>reference.type</code>.</p></dd>
 
 <dt>Stats</dt>
 <dd><p>Named list (by non-reference particle type) of
@@ -310,9 +339,10 @@ MAD spectra of the mismatch distance matrix.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Processing proceeds in four stages:</p><ol><li><p><strong>Per-particle-type extraction.</strong> For each entry in
 <code>particle.dirs</code>, a control file is created if absent, validated
-for unresolved fluorophore matches and a resolved AF row, and then run
-through the selected extraction pipeline to yield spectra, automated
-brightness, and spectral variants. Results are cached to
+for unresolved fluorophore matches and a resolved unstained row
+(<code>"AF"</code> or <code>"Negative"</code>), and then run through the selected
+extraction pipeline to yield spectra, automated brightness, and
+spectral variants. Results are cached to
 <code>&lt;result.dir&gt;/&lt;particle.type&gt;/&lt;particle.type&gt;_extraction_&lt;pipeline&gt;.rds</code>
 and reused on subsequent calls; switching <code>legacy.pipeline</code>
 between runs uses a distinct cache file rather than reusing a stale
@@ -339,14 +369,19 @@ L-infinity convention (peak detector fixed to 1.0) to unit L2
 distance-based comparisons are not artificially biased toward zero
 variance at each spectrum's peak detector. The renormalized variants
 are then compared against the reference type's renormalized variants
-via <code><a href="assess.mismatch.html">assess.mismatch()</a></code> (cosine similarity, unaffected by the
-choice of per-row normalization), <code><a href="assess.variability.html">assess.variability()</a></code>,
-<code><a href="assess.variability.mad.html">assess.variability.mad()</a></code>, and <code><a href="bead.cell.dist.html">bead.cell.dist()</a></code>
-(per-detector signed distance). <code>Extraction</code> in the return
-value retains the original L-infinity-normalized spectra/variants
-as produced by the extraction pipeline; only the comparison stages
-below use the L2-renormalized versions.</p></li>
-<li><p><strong>Error-metric plots.</strong> <code>plot.mismatch()</code> is called per
+via <code><a href="assess.mismatch.html">assess.mismatch()</a></code> and <code><a href="assess.mismatch.angle.html">assess.mismatch.angle()</a></code>
+(cosine similarity and spectral angle, unaffected by the choice of
+per-row normalization), <code><a href="assess.variability.html">assess.variability()</a></code>,
+<code><a href="assess.variability.mad.html">assess.variability.mad()</a></code>, <code><a href="bead.cell.dist.html">bead.cell.dist()</a></code>
+(per-detector signed distance), and <code><a href="assess.variability.alignment.html">assess.variability.alignment()</a></code>
+(cosine similarity between the per-detector variability profile and
+the per-detector mismatch magnitude profile, i.e. whether variability
+and mismatch are concentrated at the same detectors).
+<code>Extraction</code> in the return value retains the original
+L-infinity-normalized spectra/variants as produced by the extraction
+pipeline; only the comparison stages below use the L2-renormalized
+versions.</p></li>
+<li><p><strong>Error-metric plots.</strong> <code><a href="mismatch.plot.html">mismatch.plot()</a></code> is called per
 non-reference particle type, with shared axis limits computed across
 all particle types for comparability.</p></li>
 <li><p><strong>Spectral location of mismatch.</strong> Per-detector MAD of the

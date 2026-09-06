@@ -7,12 +7,18 @@
   : AutoSpectral: Tools for Unmixing Spectral Flow Cytometry Data
 - [`af.qc.plot()`](https://drcytometer.github.io/AutoSpectral/reference/af.qc.plot.md)
   : Autofluorescence QC Plot
+- [`apply.gate()`](https://drcytometer.github.io/AutoSpectral/reference/apply.gate.md)
+  : Apply Gate
 - [`assess.mismatch()`](https://drcytometer.github.io/AutoSpectral/reference/assess.mismatch.md)
   : Assess Spectral Mismatch Between Reference and Test Spectra
+- [`assess.mismatch.angle()`](https://drcytometer.github.io/AutoSpectral/reference/assess.mismatch.angle.md)
+  : Assess Spectral Angle Between Reference and Test Spectra
 - [`assess.mismatch.clusters()`](https://drcytometer.github.io/AutoSpectral/reference/assess.mismatch.clusters.md)
   : Cluster-Based Permutation Test for Spectral Mismatch Regions
 - [`assess.variability()`](https://drcytometer.github.io/AutoSpectral/reference/assess.variability.md)
   : Assess Within-Fluorophore Spectral Variability
+- [`assess.variability.alignment()`](https://drcytometer.github.io/AutoSpectral/reference/assess.variability.alignment.md)
+  : Spectral-Location Alignment Between Variability and Mismatch
 - [`assess.variability.mad()`](https://drcytometer.github.io/AutoSpectral/reference/assess.variability.mad.md)
   : Denoised Per-Detector Variability (MAD)
 - [`assign.af.fluorophores()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.fluorophores.md)
@@ -59,12 +65,16 @@
   : Check Spectra for Duplicate Fluorophores
 - [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
   : Clean Controls
+- [`cluster.unmixed.events()`](https://drcytometer.github.io/AutoSpectral/reference/cluster.unmixed.events.md)
+  : Cluster Unmixed Events into Micro-Clusters
 - [`compare.af()`](https://drcytometer.github.io/AutoSpectral/reference/compare.af.md)
   : Compare Autofluorescence Spectra Sets
 - [`compare.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/compare.unmix.md)
   : Compare Unmixing Quality Across Two Spectral References
 - [`concatenateFCS()`](https://drcytometer.github.io/AutoSpectral/reference/concatenateFCS.md)
   : Concatenate Multiple FCS Files
+- [`correct.spectra.glasso()`](https://drcytometer.github.io/AutoSpectral/reference/correct.spectra.glasso.md)
+  : Correct Spectra by Graphical Lasso
 - [`correct.spectra.mean.delta()`](https://drcytometer.github.io/AutoSpectral/reference/correct.spectra.mean.delta.md)
   : Correct Reference Spectra for Systematic Variant Offset
 - [`correct.unmixing.signatures()`](https://drcytometer.github.io/AutoSpectral/reference/correct.unmixing.signatures.md)
@@ -97,6 +107,8 @@
   : Do Gate
 - [`do.gate.af()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.af.md)
   : Perform Gating on Autofluorescence Parameters
+- [`.AS.check.github.update()`](https://drcytometer.github.io/AutoSpectral/reference/dot-AS.check.github.update.md)
+  : Check GitHub for a newer tagged release of a package
 - [`.build.control.sample.names()`](https://drcytometer.github.io/AutoSpectral/reference/dot-build.control.sample.names.md)
   : Build Unique Control Sample Names
 - [`.contour.polygons.from.grid()`](https://drcytometer.github.io/AutoSpectral/reference/dot-contour.polygons.from.grid.md)
@@ -165,6 +177,8 @@
   : Get Fluorophore Spectra
 - [`get.gated.flow.expression.data()`](https://drcytometer.github.io/AutoSpectral/reference/get.gated.flow.expression.data.md)
   : Get Gated Flow Expression Data
+- [`get.scatter.occupancy()`](https://drcytometer.github.io/AutoSpectral/reference/get.scatter.occupancy.md)
+  : Get Scatter Occupancy
 - [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md)
   : Get Fluorophore Spectra - Automated Workflow
 - [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
@@ -186,7 +200,8 @@
 - [`match.markers()`](https://drcytometer.github.io/AutoSpectral/reference/match.markers.md)
   : Match Markers
 - [`mismatch.plot()`](https://drcytometer.github.io/AutoSpectral/reference/mismatch.plot.md)
-  : Plot Spectral Mismatch, Variability, and Brightness by Dye Class
+  : Plot Spectral Mismatch, Angle, Variability, Alignment, and
+  Brightness by Dye Class
 - [`optimize.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/optimize.unmix.md)
   : Optimize Spectral Unmixing
 - [`parallel.backend()`](https://drcytometer.github.io/AutoSpectral/reference/parallel.backend.md)

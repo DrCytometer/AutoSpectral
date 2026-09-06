@@ -219,6 +219,14 @@ A named list with elements:
   Named numeric vector of positivity thresholds in the unmixed space,
   one per fluorophore.
 
+- `neg.thresholds`:
+
+  Named numeric vector, the 0.5th percentile of each fluorophore's
+  unstained unmixed distribution – the flat component of the negative
+  positivity boundary, measured directly from the unstained population's
+  own negative tail rather than mirrored from `thresholds` about zero.
+  `NA` for every fluorophore when `use.unmixed = FALSE`.
+
 - `variants`:
 
   Named list of variant-spectra matrices, one per fluorophore. Each

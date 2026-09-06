@@ -5,7 +5,8 @@ points describing the gate boundary.
 
 The gating proceeds in three steps:
 
-- Defines bounds by data trimming
+- Defines bounds from the region of scatter space the data actually
+  occupies, then trims those bounds further
 
 - Defines a region around the target maximum found within the bounds
 
@@ -13,6 +14,17 @@ The gating proceeds in three steps:
 
 The method uses numerical search of maxima over estimated densities and
 Voronoi tessellations to improve density estimation around maxima.
+
+When `region.auto` is `TRUE` in the relevant `default.gate.param.cells`
+/ `default.gate.param.beads` entry (the default), the bounds are
+computed with
+[`get.scatter.occupancy()`](https://drcytometer.github.io/AutoSpectral/reference/get.scatter.occupancy.md),
+a density-relative method that is robust to a handful of extreme events
+and to cytometers with a much larger theoretical scatter range than any
+one sample occupies. `scatter.data.min.x` / `scatter.data.max.x` /
+`scatter.data.min.y` / `scatter.data.max.y` still apply as an outer
+sanity ceiling, and become the working bounds again if `region.auto` is
+set to `FALSE`.
 
 ## Usage
 
@@ -81,3 +93,7 @@ do.gate(
 ## Value
 
 A set of points describing the gate boundary.
+
+## See also
+
+[`get.scatter.occupancy()`](https://drcytometer.github.io/AutoSpectral/reference/get.scatter.occupancy.md)

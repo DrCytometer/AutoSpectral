@@ -30,6 +30,7 @@ get.spread.thresholds(
   spillover.spread = NULL,
   spread.kappa = 2,
   margin = 1,
+  side = c("upper", "lower"),
   verbose = TRUE
 )
 ```
@@ -64,6 +65,15 @@ get.spread.thresholds(
   `unstained.margin` convention in
   [`fix.my.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/fix.my.unmix.md).
   Default `1`.
+
+- side:
+
+  Character, `"upper"` (default) or `"lower"`. `"upper"` adds the
+  spread-widening term to `flat`, for a positive positivity boundary
+  that grows away from zero as spillover-spread increases. `"lower"`
+  subtracts it instead, for the mirrored negative boundary –
+  `thresholds` should then already be a negative, directly measured flat
+  value, not `-thresholds` negated from the positive side.
 
 - verbose:
 

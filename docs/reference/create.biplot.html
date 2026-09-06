@@ -17,7 +17,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,6 +75,8 @@
 <span>  <span class="va">x.dim</span>,</span>
 <span>  <span class="va">y.dim</span>,</span>
 <span>  <span class="va">asp</span>,</span>
+<span>  variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  spread.kappa <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  x.lab <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  y.lab <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  x.min <span class="op">=</span> <span class="op">-</span><span class="fl">5000</span>,</span>
@@ -115,6 +117,30 @@ the plot.</p></dd>
 
 <dt id="arg-asp">asp<a class="anchor" aria-label="anchor" href="#arg-asp"></a></dt>
 <dd><p>The AutoSpectral parameter list.</p></dd>
+
+
+<dt id="arg-variants">variants<a class="anchor" aria-label="anchor" href="#arg-variants"></a></dt>
+<dd><p>The variant list returned by <code><a href="get.spectral.variants.html">get.spectral.variants()</a></code>.
+When supplied, red curves are drawn for whichever of <code>x.dim</code>/<code>y.dim</code>
+<code>variants$thresholds</code> covers: each channel's flat threshold
+(<code>variants$thresholds</code>) plus <code>spread.kappa</code> spread standard deviations
+from the <em>other</em> axis's own spillover into it
+(<code>variants$spillover.spread</code>), and, below zero, the same spread widening
+subtracted from the directly measured negative-tail flat threshold
+(<code>variants$neg.thresholds</code>) rather than mirrored from the positive curve
+about zero. Falls back to the mirrored positive threshold, with a
+warning, when <code>variants$neg.thresholds</code> is absent (an older cached
+<code>variants</code> object). This is the one-source restriction of
+<code><a href="get.spread.thresholds.html">get.spread.thresholds()</a></code>'s formula to whichever fluorophore the other
+axis actually shows - contributions from every other fluorophore in the
+panel are not visualisable on a 2D plot and are not included. <code>NULL</code>
+(default) draws no reference curves.</p></dd>
+
+
+<dt id="arg-spread-kappa">spread.kappa<a class="anchor" aria-label="anchor" href="#arg-spread-kappa"></a></dt>
+<dd><p>Numeric, spread standard deviations allowed above the
+flat threshold when <code>variants</code> is supplied - see <code><a href="get.spread.thresholds.html">get.spread.thresholds()</a></code>.
+Default <code>2</code>.</p></dd>
 
 
 <dt id="arg-x-lab">x.lab<a class="anchor" aria-label="anchor" href="#arg-x-lab"></a></dt>

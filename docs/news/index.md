@@ -1,5 +1,45 @@
 # Changelog
 
+## AutoSpectral 1.8.1 (2026-09-03)
+
+### New Features
+
+- New metrics for comparing spectral profiles (e.g., beads vs. cells).
+- Dynamic scatter scaling for gating plots.
+- Plotting and comparison workflow functions used for the manuscript are
+  included.
+- Spillover spread boundaries can be included on
+  [`create.biplot()`](https://drcytometer.github.io/AutoSpectral/reference/create.biplot.md)
+  if you supply `spectral.variants`, which now calculates those as part
+  of its workflow.
+- Spectral correction functions are now included as they have reached a
+  useful stage of development.
+
+### Improvements
+
+- Unmixing for AF extraction should be faster by default now due to
+  switching off the `refine` option in
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md),
+  which does not help appreciably for low AF samples such as PBMCs and
+  mouse splenocytes.
+- The unstained samples will now be matched to “Negative” or “AF” when
+  calling
+  [`create.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/create.control.file.md),
+  reducing the “No match” output messaging.
+- More fluorophore synonyms for automated matching.
+
+### Bug fixes
+
+- Gates with negative coordinates or otherwise slightly out of bounds
+  due to rounding of the contour should now work without errors.
+- The Spectral Reference QC plots are now produced in the specified
+  `plot.dir` correctly.
+- If unnamed channels are passed to
+  [`unmixed.mxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.mxn.plot.md)
+  or
+  [`unmixed.nxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.nxn.plot.md),
+  they are now dropped with a warning.
+
 ## AutoSpectral 1.8.0 (2026-08-26)
 
 ### New Features

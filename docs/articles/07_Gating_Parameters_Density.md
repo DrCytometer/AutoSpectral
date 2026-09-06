@@ -29,7 +29,6 @@ this yourself.
 ``` r
 
 library(AutoSpectral)
-knitr::opts_knit$set(root.dir = 'C:/Users/Oliver Burton/OneDrive - University of Cambridge/Documents/AutoSpectral_data/Gating_params')
 ```
 
 Today we’re going to use a [simple PBMC

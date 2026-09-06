@@ -8,22 +8,40 @@
 </script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Do Gate — do.gate"><meta name="description" content="Performs gating on scatter parameters and returns a vector with the points
 describing the gate boundary.
 The gating proceeds in three steps:
-Defines bounds by data trimming
+Defines bounds from the region of scatter space the data actually
+occupies, then trims those bounds further
 Defines a region around the target maximum found within the bounds
 Defines a gate around the target maximum, only within that region
 
 
 The method uses numerical search of maxima over estimated densities and
-Voronoi tessellations to improve density estimation around maxima."><meta property="og:description" content="Performs gating on scatter parameters and returns a vector with the points
+Voronoi tessellations to improve density estimation around maxima.
+When region.auto is TRUE in the relevant default.gate.param.cells /
+default.gate.param.beads entry (the default), the bounds are computed
+with get.scatter.occupancy(), a density-relative method that is robust
+to a handful of extreme events and to cytometers with a much larger
+theoretical scatter range than any one sample occupies.
+scatter.data.min.x / scatter.data.max.x / scatter.data.min.y /
+scatter.data.max.y still apply as an outer sanity ceiling, and become the
+working bounds again if region.auto is set to FALSE."><meta property="og:description" content="Performs gating on scatter parameters and returns a vector with the points
 describing the gate boundary.
 The gating proceeds in three steps:
-Defines bounds by data trimming
+Defines bounds from the region of scatter space the data actually
+occupies, then trims those bounds further
 Defines a region around the target maximum found within the bounds
 Defines a gate around the target maximum, only within that region
 
 
 The method uses numerical search of maxima over estimated densities and
-Voronoi tessellations to improve density estimation around maxima."><script>
+Voronoi tessellations to improve density estimation around maxima.
+When region.auto is TRUE in the relevant default.gate.param.cells /
+default.gate.param.beads entry (the default), the bounds are computed
+with get.scatter.occupancy(), a density-relative method that is robust
+to a handful of extreme events and to cytometers with a much larger
+theoretical scatter range than any one sample occupies.
+scatter.data.min.x / scatter.data.max.x / scatter.data.min.y /
+scatter.data.max.y still apply as an outer sanity ceiling, and become the
+working bounds again if region.auto is set to FALSE."><script>
   window.MathJax = {
     tex: { packages: {'[+]': ['boldsymbol']} }
   };
@@ -35,7 +53,7 @@ Voronoi tessellations to improve density estimation around maxima."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,11 +103,20 @@ Voronoi tessellations to improve density estimation around maxima."><script>
     <div class="ref-description section level2">
     <p>Performs gating on scatter parameters and returns a vector with the points
 describing the gate boundary.</p>
-<p>The gating proceeds in three steps:</p><ul><li><p>Defines bounds by data trimming</p></li>
+<p>The gating proceeds in three steps:</p><ul><li><p>Defines bounds from the region of scatter space the data actually
+occupies, then trims those bounds further</p></li>
 <li><p>Defines a region around the target maximum found within the bounds</p></li>
 <li><p>Defines a gate around the target maximum, only within that region</p></li>
 </ul><p>The method uses numerical search of maxima over estimated densities and
 Voronoi tessellations to improve density estimation around maxima.</p>
+<p>When <code>region.auto</code> is <code>TRUE</code> in the relevant <code>default.gate.param.cells</code> /
+<code>default.gate.param.beads</code> entry (the default), the bounds are computed
+with <code><a href="get.scatter.occupancy.html">get.scatter.occupancy()</a></code>, a density-relative method that is robust
+to a handful of extreme events and to cytometers with a much larger
+theoretical scatter range than any one sample occupies.
+<code>scatter.data.min.x</code> / <code>scatter.data.max.x</code> / <code>scatter.data.min.y</code> /
+<code>scatter.data.max.y</code> still apply as an outer sanity ceiling, and become the
+working bounds again if <code>region.auto</code> is set to <code>FALSE</code>.</p>
     </div>
 
     <div class="section level2">
@@ -161,6 +188,10 @@ and <code>turbo</code>.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A set of points describing the gate boundary.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="get.scatter.occupancy.html">get.scatter.occupancy()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

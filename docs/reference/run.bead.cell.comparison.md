@@ -22,9 +22,11 @@ run.bead.cell.comparison(
   fluor.df = NULL,
   figures = TRUE,
   verbose = TRUE,
-  legacy.pipeline = FALSE,
+  legacy.pipeline = TRUE,
   legacy.gating.system = "density",
   legacy.gate = TRUE,
+  gate.lists = NULL,
+  af.remove = FALSE,
   n.candidates = 1000L,
   n.spectral = 200L,
   k.neighbors = 2L,
@@ -108,7 +110,7 @@ run.bead.cell.comparison(
   [`get.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluorophore.spectra.md));
   if `FALSE`, the automated (non-gated) pipeline
   ([`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md))
-  is used. Defaults to `FALSE`.
+  is used. Defaults to `TRUE`.
 
 - legacy.gating.system:
 
@@ -121,6 +123,40 @@ run.bead.cell.comparison(
   Logical scalar. Whether to perform gating in
   [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
   when `legacy.pipeline = TRUE`. Defaults to `TRUE`.
+
+- gate.lists:
+
+  Optional named list, or `NULL` (the default). Names must match entries
+  in `particle.dirs`; each value is itself a named list of pre-defined
+  gates (as produced by
+  [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md)
+  and/or
+  [`define.gate.density()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.density.md))
+  to pass through to
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)'s
+  own `gate.list` argument for that particle type. Only used when
+  `legacy.pipeline = TRUE`; ignored for any particle type not present in
+  `gate.lists` and for the automated pipeline, which has no gating step.
+  As with
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
+  itself, each per-particle-type gate list's names must correspond to
+  the `gate.name` values in that particle type's control file, so
+  `gate.name` generally needs to be filled in by hand (or carried over
+  from a previous run's control file) rather than left for
+  [`assign.gates()`](https://drcytometer.github.io/AutoSpectral/reference/assign.gates.md)
+  to generate automatically.
+
+- af.remove:
+
+  Logical, default `FALSE`. Passed through to
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+  when `legacy.pipeline = TRUE`; ignored for the automated pipeline.
+  Intrusive-autofluorescence removal is aimed at tissue-derived cell
+  controls and isn't relevant to comparing raw single-color signatures
+  across particle types, so it defaults off here (unlike
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)'s
+  own default of `TRUE`). Set to `TRUE` if the reference (cell) folder's
+  controls do need it.
 
 - n.candidates:
 
@@ -212,9 +248,9 @@ A list with components:
 
 - Comparison:
 
-  Named list (by non-reference particle type) of `Cosine`,
-  `Variability`, `VariabilityMAD`, and `Distance` results versus
-  `reference.type`.
+  Named list (by non-reference particle type) of `Cosine`, `Angle`,
+  `Variability`, `VariabilityMAD`, `Distance`, and `Alignment` results
+  versus `reference.type`.
 
 - Stats:
 
@@ -242,9 +278,10 @@ Processing proceeds in four stages:
 
 1.  **Per-particle-type extraction.** For each entry in `particle.dirs`,
     a control file is created if absent, validated for unresolved
-    fluorophore matches and a resolved AF row, and then run through the
-    selected extraction pipeline to yield spectra, automated brightness,
-    and spectral variants. Results are cached to
+    fluorophore matches and a resolved unstained row (`"AF"` or
+    `"Negative"`), and then run through the selected extraction pipeline
+    to yield spectra, automated brightness, and spectral variants.
+    Results are cached to
     `<result.dir>/<particle.type>/<particle.type>_extraction_<pipeline>.rds`
     and reused on subsequent calls; switching `legacy.pipeline` between
     runs uses a distinct cache file rather than reusing a stale
@@ -275,20 +312,27 @@ Processing proceeds in four stages:
     renormalized variants are then compared against the reference type's
     renormalized variants via
     [`assess.mismatch()`](https://drcytometer.github.io/AutoSpectral/reference/assess.mismatch.md)
-    (cosine similarity, unaffected by the choice of per-row
-    normalization),
+    and
+    [`assess.mismatch.angle()`](https://drcytometer.github.io/AutoSpectral/reference/assess.mismatch.angle.md)
+    (cosine similarity and spectral angle, unaffected by the choice of
+    per-row normalization),
     [`assess.variability()`](https://drcytometer.github.io/AutoSpectral/reference/assess.variability.md),
     [`assess.variability.mad()`](https://drcytometer.github.io/AutoSpectral/reference/assess.variability.mad.md),
-    and
     [`bead.cell.dist()`](https://drcytometer.github.io/AutoSpectral/reference/bead.cell.dist.md)
-    (per-detector signed distance). `Extraction` in the return value
-    retains the original L-infinity-normalized spectra/variants as
-    produced by the extraction pipeline; only the comparison stages
-    below use the L2-renormalized versions.
+    (per-detector signed distance), and
+    [`assess.variability.alignment()`](https://drcytometer.github.io/AutoSpectral/reference/assess.variability.alignment.md)
+    (cosine similarity between the per-detector variability profile and
+    the per-detector mismatch magnitude profile, i.e. whether
+    variability and mismatch are concentrated at the same detectors).
+    `Extraction` in the return value retains the original
+    L-infinity-normalized spectra/variants as produced by the extraction
+    pipeline; only the comparison stages below use the L2-renormalized
+    versions.
 
-4.  **Error-metric plots.** `plot.mismatch()` is called per
-    non-reference particle type, with shared axis limits computed across
-    all particle types for comparability.
+4.  **Error-metric plots.**
+    [`mismatch.plot()`](https://drcytometer.github.io/AutoSpectral/reference/mismatch.plot.md)
+    is called per non-reference particle type, with shared axis limits
+    computed across all particle types for comparability.
 
 5.  **Spectral location of mismatch.** Per-detector MAD of the distance
     matrix is computed and visualized with

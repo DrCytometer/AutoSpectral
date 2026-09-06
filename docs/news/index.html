@@ -17,7 +17,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,6 +63,29 @@
       <small>Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.8.1" id="autospectral-181-2026-09-03">AutoSpectral 1.8.1 (2026-09-03)<a class="anchor" aria-label="anchor" href="#autospectral-181-2026-09-03"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-8-1">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-8-1"></a></h3>
+<ul><li>New metrics for comparing spectral profiles (e.g., beads vs. cells).</li>
+<li>Dynamic scatter scaling for gating plots.</li>
+<li>Plotting and comparison workflow functions used for the manuscript are included.</li>
+<li>Spillover spread boundaries can be included on <code><a href="../reference/create.biplot.html">create.biplot()</a></code> if you supply <code>spectral.variants</code>, which now calculates those as part of its workflow.</li>
+<li>Spectral correction functions are now included as they have reached a useful stage of development.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="improvements-1-8-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-8-1"></a></h3>
+<ul><li>Unmixing for AF extraction should be faster by default now due to switching off the <code>refine</code> option in <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code>, which does not help appreciably for low AF samples such as PBMCs and mouse splenocytes.</li>
+<li>The unstained samples will now be matched to “Negative” or “AF” when calling <code><a href="../reference/create.control.file.html">create.control.file()</a></code>, reducing the “No match” output messaging.</li>
+<li>More fluorophore synonyms for automated matching.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-8-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-8-1"></a></h3>
+<ul><li>Gates with negative coordinates or otherwise slightly out of bounds due to rounding of the contour should now work without errors.</li>
+<li>The Spectral Reference QC plots are now produced in the specified <code>plot.dir</code> correctly.</li>
+<li>If unnamed channels are passed to <code><a href="../reference/unmixed.mxn.plot.html">unmixed.mxn.plot()</a></code> or <code><a href="../reference/unmixed.nxn.plot.html">unmixed.nxn.plot()</a></code>, they are now dropped with a warning.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.8.0" id="autospectral-180-2026-08-26">AutoSpectral 1.8.0 (2026-08-26)<a class="anchor" aria-label="anchor" href="#autospectral-180-2026-08-26"></a></h2>
 <div class="section level3">

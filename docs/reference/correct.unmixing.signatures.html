@@ -101,7 +101,7 @@ contaminates the dominance populations and the background estimate."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -217,10 +217,14 @@ contaminates the dominance populations and the background estimate.</p>
 <span>  min.explained <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  min.gain <span class="op">=</span> <span class="fl">0.002</span>,</span>
 <span>  step.grid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.03125</span>, <span class="fl">0.0625</span>, <span class="fl">0.125</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  max.step <span class="op">=</span> <span class="fl">0.08</span>,</span>
+<span>  n.split.trials <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  min.split.frac <span class="op">=</span> <span class="fl">0.6</span>,</span>
+<span>  max.step <span class="op">=</span> <span class="fl">0.15</span>,</span>
 <span>  max.span.drift <span class="op">=</span> <span class="fl">1.1</span>,</span>
 <span>  max.bg.alignment <span class="op">=</span> <span class="op">-</span><span class="fl">0.9</span>,</span>
 <span>  nuisance.frac <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  footprint.frac <span class="op">=</span> <span class="fl">0.02</span>,</span>
+<span>  footprint.min.channels <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>  background.n <span class="op">=</span> <span class="fl">5000L</span>,</span>
 <span>  true.spectra <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -355,10 +359,27 @@ small steps matter for tandem dyes, whose abundance-dependent variant
 mixture makes the residual objective a narrow valley.</p></dd>
 
 
+<dt id="arg-n-split-trials">n.split.trials<a class="anchor" aria-label="anchor" href="#arg-n-split-trials"></a></dt>
+<dd><p>Integer, number of independent random 50/50 splits
+used by the held-out step search. Default <code>1</code>, which reproduces the
+original fixed, un-reseeded split exactly. Raising this trades a
+single split's noise for a vote across <code>n.split.trials</code> splits (see
+<code>min.split.frac</code>); useful for fluorophores whose true correction is
+real but small relative to per-event noise, where a lone 50/50 split
+can land on the unlucky side.</p></dd>
+
+
+<dt id="arg-min-split-frac">min.split.frac<a class="anchor" aria-label="anchor" href="#arg-min-split-frac"></a></dt>
+<dd><p>Numeric in (0, 1], the minimum fraction of
+<code>n.split.trials</code> splits that must independently find a beneficial step
+before one is accepted. Ignored when <code>n.split.trials = 1</code>. Default
+<code>0.6</code>.</p></dd>
+
+
 <dt id="arg-max-step">max.step<a class="anchor" aria-label="anchor" href="#arg-max-step"></a></dt>
 <dd><p>Numeric, maximum norm of the correction relative to the
 norm of the row it corrects. Larger proposed corrections are rejected
-outright rather than scaled down. Default <code>0.08</code>.</p></dd>
+outright rather than scaled down. Default <code>0.15</code>.</p></dd>
 
 
 <dt id="arg-max-span-drift">max.span.drift<a class="anchor" aria-label="anchor" href="#arg-max-span-drift"></a></dt>
@@ -377,6 +398,27 @@ falls at or below this value. Default <code>-0.9</code>.</p></dd>
 <dd><p>Numeric in (0, 1), fraction of a dominance
 population that must be co-active for another fluorophore before it is
 carried as a nuisance term in the restricted design. Default <code>0.5</code>.</p></dd>
+
+
+<dt id="arg-footprint-frac">footprint.frac<a class="anchor" aria-label="anchor" href="#arg-footprint-frac"></a></dt>
+<dd><p>Numeric in <code>[0, 1)</code>. Restricts the slope fit and
+the held-out step search to detectors where the dominant dye's own
+current spectrum exceeds <code>footprint.frac</code> of its own peak. A dye
+cannot carry real shape-error signal in a detector it does not
+meaningfully emit into; for a narrow-emission dye read out on a wide
+detector array, those channels only dilute the held-out residual
+objective with noise from channels that are pure background for that
+dye. Abundance estimation and the <code>explained</code>/<code>bg.align</code> gates are
+unaffected; only the slope fit's response and the held-out
+objective's norm are restricted. <code>0</code> reproduces the previous,
+unrestricted behaviour exactly. Default <code>0.02</code>.</p></dd>
+
+
+<dt id="arg-footprint-min-channels">footprint.min.channels<a class="anchor" aria-label="anchor" href="#arg-footprint-min-channels"></a></dt>
+<dd><p>Integer, minimum detectors the
+<code>footprint.frac</code> mask must keep; below this the mask is dropped and
+every detector is used, so a pathologically narrow spectrum cannot
+leave too few channels to fit. Default <code>3L</code>.</p></dd>
 
 
 <dt id="arg-background-n">background.n<a class="anchor" aria-label="anchor" href="#arg-background-n"></a></dt>
@@ -405,6 +447,12 @@ failed any acceptance gate are unchanged.</p></dd>
 <dd><p>Data frame, one row per fluorophore per iteration,
 with the fit statistics and every gate quantity, including
 <code>bg.align</code>.</p></dd>
+
+<dt><code>proposed.spectra</code></dt>
+<dd><p>Numeric matrix, one row per fluorophore per
+iteration (<code>"&lt;fluorophore&gt;.iter&lt;n&gt;"</code>), the L-infinity normalised
+candidate row that iteration would have produced, whether or not it
+was accepted. Row-matched to <code>fit.log</code> in the same order.</p></dd>
 
 <dt><code>accepted</code></dt>
 <dd><p>Named logical vector, whether each panel fluorophore
