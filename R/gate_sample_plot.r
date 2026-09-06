@@ -21,6 +21,12 @@
 #' @param control.type Type of control: `beads` or `cells`. Deprecated.
 #' @param asp The AutoSpectral parameter list.
 #' Prepare using `get.autospectral.param`
+#' @param x.axis.max Numeric. Upper x-axis limit. When plotting several
+#' samples together, pass the same value (e.g. the highest occupied-range
+#' maximum found across all of them) so the plots share a common scale.
+#' The lower limit is always `asp$scatter.data.min.x`.
+#' @param y.axis.max Numeric. Upper y-axis limit, analogous to `x.axis.max`.
+#' The lower limit is always `asp$scatter.data.min.y`.
 #' @param color.palette Optional character string defining the viridis color
 #' palette to be used for the fluorophore traces. Default is `mako`. Use `rainbow`
 #' to be similar to FlowJo or SpectroFlo. Other options are the viridis color
@@ -47,12 +53,14 @@ gate.sample.plot <- function(
     scatter.and.channel.label,
     control.type,
     asp,
+    x.axis.max,
+    y.axis.max,
     color.palette = "mako",
     max.points = 5e4,
     gate.color = "darkgoldenrod1",
     switch.n = 1e4,
     raster.bins = 256L
-  ) {
+) {
 
   # ---------------------------------------------------------------------------
   # 1. Downsample and clip to axis limits
@@ -73,15 +81,10 @@ gate.sample.plot <- function(
   # 2. Axis geometry (computed once, reused by raster + contours + scales)
   # ---------------------------------------------------------------------------
 
-  # use the range this sample's events actually occupy (density-relative,
-  # robust to a handful of extreme events) rather than the cytometer's full
-  # sanity range, so the plot isn't dominated by empty space
-  occupancy <- get.scatter.occupancy( gate.data, bird.seed = asp$bird.seed )
-
-  x.axis.min <- max( asp$scatter.data.min.x, occupancy$x.range[ 1 ] )
-  x.axis.max <- min( asp$scatter.data.max.x, occupancy$x.range[ 2 ] )
-  y.axis.min <- max( asp$scatter.data.min.y, occupancy$y.range[ 1 ] )
-  y.axis.max <- min( asp$scatter.data.max.y, occupancy$y.range[ 2 ] )
+  # fixed instrument minimum, shared batch-wide maximum (supplied by the
+  # caller) -- keeps every sample plot in this batch on the same scale
+  x.axis.min <- asp$scatter.data.min.x
+  y.axis.min <- asp$scatter.data.min.y
 
   x.limits <- c( x.axis.min, x.axis.max )
   y.limits <- c( y.axis.min, y.axis.max )

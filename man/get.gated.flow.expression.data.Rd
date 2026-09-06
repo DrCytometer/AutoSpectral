@@ -16,8 +16,7 @@ get.gated.flow.expression.data(
   scatter.param,
   scatter.and.channel.label,
   asp,
-  apply.gate,
-  color.palette = "mako"
+  apply.gate
 )
 }
 \arguments{
@@ -44,12 +43,6 @@ get.gated.flow.expression.data(
 \item{asp}{The AutoSpectral parameter list.}
 
 \item{apply.gate}{Logical, whether to apply a scatter gate (supplied to \code{gate.list}).}
-
-\item{color.palette}{Optional character string defining the viridis color
-palette to be used for the fluorophore traces. Default is \code{mako}. Use \code{rainbow}
-to be similar to FlowJo or SpectroFlo. Other options are the viridis color
-options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
-and \code{turbo}.}
 }
 \value{
 A matrix with the gated expression data.

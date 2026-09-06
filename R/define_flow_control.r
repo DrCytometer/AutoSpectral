@@ -338,17 +338,14 @@ define.flow.control <- function(
     scatter.param = flow.scatter.parameter,
     scatter.and.channel.label = flow.scatter.and.channel.label,
     asp = asp,
-    apply.gate = gate,
-    color.palette = if ( is.null(color.palette) ) "mako" else color.palette
+    apply.gate = gate
   )
 
   # set up parallel processing
   if ( parallel ) {
     if ( is.null( threads ) ) threads <- asp$worker.process.n
 
-    if ( verbose & gate ) message( "\033[34mPlotting gates... \033[0m" )
-
-    exports <- c( "control.table", "args.list", "gate.sample.plot",
+    exports <- c( "control.table", "args.list",
                   "get.gated.flow.expression.data", "readFCS" )
     result <- create.parallel.lapply(
       asp,
@@ -498,9 +495,58 @@ define.flow.control <- function(
     rownames( flow.expr.data[[ fs.idx ]] ) <- paste(
       control.table$sample[ fs.idx ], seq_len( flow.sample.event.number ), sep = "_" )
 
-
     if ( flow.sample.event.number > flow.sample.event.number.max )
       flow.sample.event.number.max <- flow.sample.event.number
+  }
+
+  # plot each sample's gate, holding axis limits consistent across the
+  # whole batch: the lower limit is fixed at the instrument's sanity
+  # minimum, and the upper limit is the highest occupied-range maximum
+  # found among all samples, so the plots are directly comparable
+  if ( gate && !is.null( asp$figure.gate.dir ) ) {
+
+    if ( verbose ) message( "\033[34mPlotting gates... \033[0m" )
+
+    sample.x.max <- rep( NA_real_, flow.sample.n )
+    sample.y.max <- rep( NA_real_, flow.sample.n )
+
+    for ( fs.idx in 1 : flow.sample.n ) {
+      if ( is.null( flow.expr.data[[ fs.idx ]] ) ||
+           nrow( flow.expr.data[[ fs.idx ]] ) == 0 ) next
+
+      sample.gate.data <- flow.expr.data[[ fs.idx ]][ , flow.scatter.parameter, drop = FALSE ]
+      sample.occupancy <- get.scatter.occupancy( sample.gate.data, bird.seed = asp$bird.seed )
+      sample.x.max[ fs.idx ] <- sample.occupancy$x.range[ 2 ]
+      sample.y.max[ fs.idx ] <- sample.occupancy$y.range[ 2 ]
+    }
+
+    shared.x.max <- min( asp$scatter.data.max.x, max( sample.x.max, na.rm = TRUE ) )
+    shared.y.max <- min( asp$scatter.data.max.y, max( sample.y.max, na.rm = TRUE ) )
+
+    for ( fs.idx in 1 : flow.sample.n ) {
+      if ( is.null( flow.expr.data[[ fs.idx ]] ) ||
+           nrow( flow.expr.data[[ fs.idx ]] ) == 0 ) next
+
+      samp.name <- control.table$sample[ fs.idx ]
+      gate.idx  <- flow.gate[[ samp.name ]]
+      gate.population.boundary <- final.gate.list[[ gate.idx ]]
+      sample.gate.data <- flow.expr.data[[ fs.idx ]][ , flow.scatter.parameter, drop = FALSE ]
+
+      suppressWarnings(
+        gate.sample.plot(
+          samp.name,
+          sample.gate.data,
+          flow.scatter.parameter,
+          gate.population.boundary,
+          flow.scatter.and.channel.label,
+          "cells",
+          asp,
+          x.axis.max = shared.x.max,
+          y.axis.max = shared.y.max,
+          color.palette = if ( is.null( color.palette ) ) "mako" else color.palette
+        )
+      )
+    }
   }
 
   flow.event.number.width <-
