@@ -10,6 +10,7 @@ get.spread.thresholds(
   spillover.spread = NULL,
   spread.kappa = 2,
   margin = 1,
+  side = c("upper", "lower"),
   verbose = TRUE
 )
 }
@@ -30,6 +31,13 @@ above the flat threshold. Default \code{2}.}
 
 \item{margin}{Numeric multiplier applied to the flat component only, matching
 the \code{unstained.margin} convention in \code{fix.my.unmix()}. Default \code{1}.}
+
+\item{side}{Character, \code{"upper"} (default) or \code{"lower"}. \code{"upper"} adds the
+spread-widening term to \code{flat}, for a positive positivity boundary that
+grows away from zero as spillover-spread increases. \code{"lower"} subtracts
+it instead, for the mirrored negative boundary -- \code{thresholds} should
+then already be a negative, directly measured flat value, not
+\code{-thresholds} negated from the positive side.}
 
 \item{verbose}{Logical, controls messaging. Default \code{TRUE}.}
 }

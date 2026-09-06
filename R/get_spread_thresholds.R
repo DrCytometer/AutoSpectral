@@ -91,6 +91,12 @@
 #'   above the flat threshold. Default `2`.
 #' @param margin Numeric multiplier applied to the flat component only, matching
 #'   the `unstained.margin` convention in `fix.my.unmix()`. Default `1`.
+#' @param side Character, `"upper"` (default) or `"lower"`. `"upper"` adds the
+#'   spread-widening term to `flat`, for a positive positivity boundary that
+#'   grows away from zero as spillover-spread increases. `"lower"` subtracts
+#'   it instead, for the mirrored negative boundary -- `thresholds` should
+#'   then already be a negative, directly measured flat value, not
+#'   `-thresholds` negated from the positive side.
 #' @param verbose Logical, controls messaging. Default `TRUE`.
 #'
 #' @return Numeric matrix with the same dimensions and dimnames as `unmixed`,
@@ -104,8 +110,11 @@ get.spread.thresholds <- function(
     spillover.spread = NULL,
     spread.kappa     = 2,
     margin           = 1,
+    side             = c( "upper", "lower" ),
     verbose          = TRUE
-  ) {
+) {
+
+  side <- match.arg( side )
 
   if ( !is.matrix( unmixed ) ) unmixed <- as.matrix( unmixed )
 
@@ -122,6 +131,8 @@ get.spread.thresholds <- function(
 
   spread <- .align.spillover.spread( spillover.spread, fluor.names, verbose = verbose )
 
+  spread.sign <- if ( side == "upper" ) 1 else -1
+
   if ( all( spread == 0 ) ) {
 
     threshold.matrix <- matrix(
@@ -131,7 +142,8 @@ get.spread.thresholds <- function(
   } else {
 
     spread.variance  <- pmax( unmixed, 0 ) %*% spread
-    threshold.matrix <- sweep( spread.kappa * sqrt( spread.variance ), 2, flat, "+" )
+    threshold.matrix <- sweep(
+      spread.sign * spread.kappa * sqrt( spread.variance ), 2, flat, "+" )
 
   }
 
