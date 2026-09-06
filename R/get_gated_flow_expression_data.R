@@ -20,6 +20,11 @@
 #' @param scatter.and.channel.label A label for scatter and channel.
 #' @param asp The AutoSpectral parameter list.
 #' @param apply.gate Logical, whether to apply a scatter gate (supplied to `gate.list`).
+#' @param color.palette Optional character string defining the viridis color
+#' palette to be used for the fluorophore traces. Default is `mako`. Use `rainbow`
+#' to be similar to FlowJo or SpectroFlo. Other options are the viridis color
+#' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
+#' and `turbo`.
 #'
 #' @return A matrix with the gated expression data.
 
@@ -35,7 +40,8 @@ get.gated.flow.expression.data <- function(
     scatter.param,
     scatter.and.channel.label,
     asp,
-    apply.gate
+    apply.gate,
+    color.palette = "mako"
 ) {
 
   # read in the FCS file
@@ -66,6 +72,25 @@ get.gated.flow.expression.data <- function(
     )
 
     gate.population.idx <- which( gate.population.pip != 0 )
+
+    # plot gate applied to sample against the full (pre-gate) scatter cloud,
+    # not just the events that passed the gate, so the plot actually shows
+    # what the boundary is excluding
+    if ( ! is.null( asp$figure.gate.dir ) ) {
+      message( paste0( "\033[34m", "Plotting gate for: ", samp, "\033[0m" ) )
+      suppressWarnings(
+        gate.sample.plot(
+          samp,
+          gate.data,
+          scatter.param,
+          gate.population.boundary,
+          scatter.and.channel.label,
+          "cells",
+          asp,
+          color.palette = color.palette
+        )
+      )
+    }
 
     return( expr.data[ gate.population.idx, ] )
   } else {

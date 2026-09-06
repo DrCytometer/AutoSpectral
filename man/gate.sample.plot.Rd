@@ -12,8 +12,6 @@ gate.sample.plot(
   scatter.and.channel.label,
   control.type,
   asp,
-  x.axis.max,
-  y.axis.max,
   color.palette = "mako",
   max.points = 50000,
   gate.color = "darkgoldenrod1",
@@ -37,14 +35,6 @@ channel labels.}
 
 \item{asp}{The AutoSpectral parameter list.
 Prepare using \code{get.autospectral.param}}
-
-\item{x.axis.max}{Numeric. Upper x-axis limit. When plotting several
-samples together, pass the same value (e.g. the highest occupied-range
-maximum found across all of them) so the plots share a common scale.
-The lower limit is always \code{asp$scatter.data.min.x}.}
-
-\item{y.axis.max}{Numeric. Upper y-axis limit, analogous to \code{x.axis.max}.
-The lower limit is always \code{asp$scatter.data.min.y}.}
 
 \item{color.palette}{Optional character string defining the viridis color
 palette to be used for the fluorophore traces. Default is \code{mako}. Use \code{rainbow}

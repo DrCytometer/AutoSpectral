@@ -21,12 +21,6 @@
 #' @param control.type Type of control: `beads` or `cells`. Deprecated.
 #' @param asp The AutoSpectral parameter list.
 #' Prepare using `get.autospectral.param`
-#' @param x.axis.max Numeric. Upper x-axis limit. When plotting several
-#' samples together, pass the same value (e.g. the highest occupied-range
-#' maximum found across all of them) so the plots share a common scale.
-#' The lower limit is always `asp$scatter.data.min.x`.
-#' @param y.axis.max Numeric. Upper y-axis limit, analogous to `x.axis.max`.
-#' The lower limit is always `asp$scatter.data.min.y`.
 #' @param color.palette Optional character string defining the viridis color
 #' palette to be used for the fluorophore traces. Default is `mako`. Use `rainbow`
 #' to be similar to FlowJo or SpectroFlo. Other options are the viridis color
@@ -53,8 +47,6 @@ gate.sample.plot <- function(
     scatter.and.channel.label,
     control.type,
     asp,
-    x.axis.max,
-    y.axis.max,
     color.palette = "mako",
     max.points = 5e4,
     gate.color = "darkgoldenrod1",
@@ -63,7 +55,7 @@ gate.sample.plot <- function(
 ) {
 
   # ---------------------------------------------------------------------------
-  # 1. Downsample and clip to axis limits
+  # 1. Downsample
   # ---------------------------------------------------------------------------
 
   n.points <- nrow( gate.data )
@@ -73,18 +65,26 @@ gate.sample.plot <- function(
     n.points  <- max.points
   }
 
-  # clip to preset scatter limits before binning
-  gate.data[ , 1 ] <- pmin( gate.data[ , 1 ], asp$scatter.data.max.x )
-  gate.data[ , 2 ] <- pmin( gate.data[ , 2 ], asp$scatter.data.max.y )
-
   # ---------------------------------------------------------------------------
   # 2. Axis geometry (computed once, reused by raster + contours + scales)
   # ---------------------------------------------------------------------------
 
-  # fixed instrument minimum, shared batch-wide maximum (supplied by the
-  # caller) -- keeps every sample plot in this batch on the same scale
+  # the instrument's fixed sanity range is the baseline for every sample, so
+  # plots are comparable across a batch; only extend the upper bound when
+  # this sample's occupied range (density-relative, robust to a handful of
+  # extreme events) genuinely goes beyond it. Occupancy is computed before
+  # any clipping, otherwise a clip to the baseline would always erase the
+  # very events that should trigger the extension.
+  occupancy <- get.scatter.occupancy( gate.data, bird.seed = asp$bird.seed )
+
   x.axis.min <- asp$scatter.data.min.x
+  x.axis.max <- max( asp$scatter.data.max.x, occupancy$x.range[ 2 ] )
   y.axis.min <- asp$scatter.data.min.y
+  y.axis.max <- max( asp$scatter.data.max.y, occupancy$y.range[ 2 ] )
+
+  # clip to the (possibly extended) axis limits before binning
+  gate.data[ , 1 ] <- pmin( gate.data[ , 1 ], x.axis.max )
+  gate.data[ , 2 ] <- pmin( gate.data[ , 2 ], y.axis.max )
 
   x.limits <- c( x.axis.min, x.axis.max )
   y.limits <- c( y.axis.min, y.axis.max )
@@ -197,8 +197,8 @@ gate.sample.plot <- function(
     x = c( gate.boundary$x, gate.boundary$x[ 1 ] ),
     y = c( gate.boundary$y, gate.boundary$y[ 1 ] )
   )
-  gate.boundary.ggp$x <- pmin( gate.boundary.ggp$x, asp$scatter.data.max.x )
-  gate.boundary.ggp$y <- pmin( gate.boundary.ggp$y, asp$scatter.data.max.y )
+  gate.boundary.ggp$x <- pmin( gate.boundary.ggp$x, x.axis.max )
+  gate.boundary.ggp$y <- pmin( gate.boundary.ggp$y, y.axis.max )
 
   # ---------------------------------------------------------------------------
   # 6. Build the plot
