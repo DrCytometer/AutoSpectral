@@ -165,9 +165,11 @@ this in absolute value are treated as exactly zero. Default \code{1e-4}.}
 fraction of \code{lambda.max}, the value at which every coefficient is
 already zero. Default \code{1e-3}.}
 
-\item{margin.frac}{Numeric, how far above the minimum two-way holdout
-error a larger, sparser \code{lambda} may sit and still be preferred.
-Default \code{0.05}.}
+\item{margin.frac}{Numeric, the share of the two-way holdout error
+reduction a larger, sparser \code{lambda} may give up and still be
+preferred, measured from the intercept-only fit at \code{lambda.max} down to
+the best point on the grid. Scale free, so it keeps its meaning
+whatever the target-negative population's own variance. Default \code{0.05}.}
 
 \item{max.iter}{Integer, maximum outer spillover-matrix iterations.
 Default \code{5}.}
@@ -386,11 +388,11 @@ background offset the way the pairwise estimator's anchor bin does.
 \eqn{\lambda} is chosen per target by a two-way split-half holdout: fit on
 one half, score squared error on the other, and back; the two error curves
 are summed over a shared \eqn{\lambda} grid, and the largest \eqn{\lambda}
-(sparsest fit) within \code{margin.frac} of the minimum is kept, then refit on
-the full target-negative set at that \eqn{\lambda}. Preferring the sparser
-of two disagreeing halves is the same safe-direction bias
-\code{fix.my.unmix()}'s target-negative truncation uses when co-expression
-would otherwise shrink a slope toward zero.
+(sparsest fit) costing no more than \code{margin.frac} of the curve's total
+error reduction is kept, then refit on the full target-negative set at
+that \eqn{\lambda}. Preferring the sparser of two disagreeing halves is
+the same safe-direction bias \code{fix.my.unmix()}'s target-negative truncation
+uses when co-expression would otherwise shrink a slope toward zero.
 
 In lay terms: instead of asking "does fluorophore A leak into fluorophore
 B's channel, checked one pair at a time," this asks fluorophore B's whole

@@ -80,11 +80,11 @@
 #' \eqn{\lambda} is chosen per target by a two-way split-half holdout: fit on
 #' one half, score squared error on the other, and back; the two error curves
 #' are summed over a shared \eqn{\lambda} grid, and the largest \eqn{\lambda}
-#' (sparsest fit) within `margin.frac` of the minimum is kept, then refit on
-#' the full target-negative set at that \eqn{\lambda}. Preferring the sparser
-#' of two disagreeing halves is the same safe-direction bias
-#' `fix.my.unmix()`'s target-negative truncation uses when co-expression
-#' would otherwise shrink a slope toward zero.
+#' (sparsest fit) costing no more than `margin.frac` of the curve's total
+#' error reduction is kept, then refit on the full target-negative set at
+#' that \eqn{\lambda}. Preferring the sparser of two disagreeing halves is
+#' the same safe-direction bias `fix.my.unmix()`'s target-negative truncation
+#' uses when co-expression would otherwise shrink a slope toward zero.
 #'
 #' In lay terms: instead of asking "does fluorophore A leak into fluorophore
 #' B's channel, checked one pair at a time," this asks fluorophore B's whole
@@ -173,9 +173,11 @@
 #' @param lambda.min.ratio Numeric in (0, 1), the smallest path value as a
 #'   fraction of `lambda.max`, the value at which every coefficient is
 #'   already zero. Default `1e-3`.
-#' @param margin.frac Numeric, how far above the minimum two-way holdout
-#'   error a larger, sparser `lambda` may sit and still be preferred.
-#'   Default `0.05`.
+#' @param margin.frac Numeric, the share of the two-way holdout error
+#'   reduction a larger, sparser `lambda` may give up and still be
+#'   preferred, measured from the intercept-only fit at `lambda.max` down to
+#'   the best point on the grid. Scale free, so it keeps its meaning
+#'   whatever the target-negative population's own variance. Default `0.05`.
 #' @param max.iter Integer, maximum outer spillover-matrix iterations.
 #'   Default `5`.
 #' @param convergence.threshold Numeric, residual spillover coefficient at
@@ -1124,11 +1126,15 @@ correct.spectra.glasso <- function(
 #' the other, over a single lambda grid shared by both fits so the two error
 #' curves are comparable point for point. Their sum is the two-way holdout
 #' error curve. Rather than take its minimiser outright, the largest lambda
-#' (sparsest fit) whose error is within `margin.frac` of the minimum is
-#' preferred - the same bias toward the more conservative of two disagreeing
-#' estimates `correct.unmixing.signatures()`'s held-out step search already
-#' uses, taking the smaller of two step sizes when the two orderings
-#' disagree.
+#' (sparsest fit) that gives up no more than `margin.frac` of the curve's
+#' total error reduction is preferred - the same bias toward the more
+#' conservative of two disagreeing estimates
+#' `correct.unmixing.signatures()`'s held-out step search already uses,
+#' taking the smaller of two step sizes when the two orderings disagree.
+#' The reduction, rather than the absolute error, is the reference because
+#' the absolute error carries the target-negative population's own variance,
+#' which no spillover coefficient can explain and which therefore sets no
+#' meaningful scale for how much a sparser fit may cost.
 #'
 #' @param X Numeric matrix (events x sources).
 #' @param y Numeric vector, length `nrow(X)`.
@@ -1187,8 +1193,21 @@ correct.spectra.glasso <- function(
 
   total <- err.1 + err.2
 
+  # The margin is taken against the error the fit actually removes, not
+  # against the absolute error. `total` is dominated by the target-negative
+  # population's own variance, which no spillover coefficient can explain,
+  # so a fraction of `total` is a fraction of a quantity unrelated to the
+  # fit: where the fit explains less than that fraction the band reaches
+  # `lambda.max` and the row is zeroed outright, and where it explains more
+  # the band is narrow and the rule is plain error minimisation. `total[1]`
+  # is the error at `lambda.max`, where only the intercept is fitted, so
+  # `total[1] - total[best]` is the whole reduction on offer.
   best      <- which.min( total )
-  tolerated <- total <= ( 1 + margin.frac ) * total[ best ]
+  reduction <- total[ 1 ] - total[ best ]
+
+  tolerated <- if ( !is.finite( reduction ) || reduction <= 0 )
+    rep( TRUE, length( total ) ) else
+      total <= total[ best ] + margin.frac * reduction
 
   chosen <- max( grid[ tolerated ] )
   li     <- which( grid == chosen )[ 1 ]
