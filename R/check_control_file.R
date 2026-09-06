@@ -124,8 +124,8 @@ check.control.file <- function(
         "Detector voltage/gain settings differ between single-stained control",
         "files for one or more spectral channels.", paste( unique( x$message ), collapse = " " ),
         "AutoSpectral does not currently correct for voltage/gain differences;",
-        "unmixing accuracy may be reduced. On the ID7000, Sony does not adhere
-        to FCS standards, so this cannot be checked..",
+        "unmixing accuracy may be reduced. On the ID7000, Sony does not adhere",
+        "to FCS standards, so this cannot be checked.",
         "\033[0m"
       )
     },
