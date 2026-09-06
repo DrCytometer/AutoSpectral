@@ -167,6 +167,10 @@
 #'   \item{`fit.log`}{Data frame, one row per fluorophore per iteration,
 #'     with the fit statistics and every gate quantity, including
 #'     `bg.align`.}
+#'   \item{`proposed.spectra`}{Numeric matrix, one row per fluorophore per
+#'     iteration (`"<fluorophore>.iter<n>"`), the L-infinity normalised
+#'     candidate row that iteration would have produced, whether or not it
+#'     was accepted. Row-matched to `fit.log` in the same order.}
 #'   \item{`accepted`}{Named logical vector, whether each panel fluorophore
 #'     accepted at least one correction step.}
 #'   \item{`dominant`}{Integer vector over the (gated) events: the index
@@ -300,14 +304,13 @@ correct.unmixing.signatures <- function(
                     2, unmixed.thresholds[ panel ], ">" )
   } else {
     threshold.matrix <- get.spread.thresholds(
-      unmixed          = unmixed,
+      unmixed          = unmixed[ , panel, drop = FALSE ],
       thresholds       = unmixed.thresholds,
       spillover.spread = spillover.spread,
       spread.kappa     = spread.kappa,
       verbose          = FALSE
     )
-    above <- unmixed[ , panel, drop = FALSE ] >
-      threshold.matrix[ , panel, drop = FALSE ]
+    above <- unmixed[ , panel, drop = FALSE ] > threshold.matrix
   }
 
   # Dominance is scored as a fraction of each dye's own dynamic range above
@@ -354,9 +357,10 @@ correct.unmixing.signatures <- function(
   # Correction loop
   # ---------------------------------------------------------------------------
 
-  spectra.new <- spectra
-  fit.log     <- list()
-  span.first  <- stats::setNames( rep( NA_real_, length( panel ) ), panel )
+  spectra.new  <- spectra
+  fit.log      <- list()
+  proposed.log <- list()
+  span.first   <- stats::setNames( rep( NA_real_, length( panel ) ), panel )
 
   for ( iter in seq_len( n.iter ) ) {
 
@@ -574,6 +578,15 @@ correct.unmixing.signatures <- function(
         is.finite( span.drift ) && span.drift <= max.span.drift &&
         ( !is.finite( bg.align ) || bg.align > max.bg.alignment )
 
+      candidate.row <- pmax( spectra.new[ j, ] + t.hat * slope, 0 )
+      if ( max( candidate.row ) > 0 )
+        candidate.row <- candidate.row / max( candidate.row )
+
+      proposed.log[[ length( proposed.log ) + 1L ]] <- matrix(
+        candidate.row, nrow = 1,
+        dimnames = list( paste( j, iter, sep = ".iter" ),
+                         colnames( spectra.new ) ) )
+
       if ( accepted ) {
         spectra.new[ j, ] <- pmax( spectra.new[ j, ] + t.hat * slope, 0 )
         iter.accepted     <- TRUE
@@ -604,6 +617,9 @@ correct.unmixing.signatures <- function(
   }
 
   fit.log <- if ( length( fit.log ) > 0 ) do.call( rbind, fit.log ) else NULL
+
+  proposed.spectra <- if ( length( proposed.log ) > 0 )
+    do.call( rbind, proposed.log ) else NULL
 
   accepted <- vapply( panel, function( j ) {
     if ( is.null( fit.log ) ) return( FALSE )
@@ -648,13 +664,14 @@ correct.unmixing.signatures <- function(
   }
 
   list(
-    spectra   = spectra.new,
-    fit.log   = fit.log,
-    accepted  = accepted,
-    dominant  = dominant,
-    panel     = panel,
-    gate.keep = gate.keep,
-    recovery  = recovery
+    spectra           = spectra.new,
+    fit.log           = fit.log,
+    proposed.spectra  = proposed.spectra,
+    accepted          = accepted,
+    dominant          = dominant,
+    panel             = panel,
+    gate.keep         = gate.keep,
+    recovery          = recovery
   )
 }
 

@@ -186,6 +186,10 @@ failed any acceptance gate are unchanged.}
 \item{\code{fit.log}}{Data frame, one row per fluorophore per iteration,
 with the fit statistics and every gate quantity, including
 \code{bg.align}.}
+\item{\code{proposed.spectra}}{Numeric matrix, one row per fluorophore per
+iteration (\code{"<fluorophore>.iter<n>"}), the L-infinity normalised
+candidate row that iteration would have produced, whether or not it
+was accepted. Row-matched to \code{fit.log} in the same order.}
 \item{\code{accepted}}{Named logical vector, whether each panel fluorophore
 accepted at least one correction step.}
 \item{\code{dominant}}{Integer vector over the (gated) events: the index
