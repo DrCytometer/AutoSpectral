@@ -9,6 +9,8 @@ create.biplot(
   x.dim,
   y.dim,
   asp,
+  variants = NULL,
+  spread.kappa = 2,
   x.lab = NULL,
   y.lab = NULL,
   x.min = -5000,
@@ -38,6 +40,26 @@ the plot.}
 the plot.}
 
 \item{asp}{The AutoSpectral parameter list.}
+
+\item{variants}{The variant list returned by \code{get.spectral.variants()}.
+When supplied, red curves are drawn for whichever of \code{x.dim}/\code{y.dim}
+\code{variants$thresholds} covers: each channel's flat threshold
+(\code{variants$thresholds}) plus \code{spread.kappa} spread standard deviations
+from the \emph{other} axis's own spillover into it
+(\code{variants$spillover.spread}), and, below zero, the same spread widening
+subtracted from the directly measured negative-tail flat threshold
+(\code{variants$neg.thresholds}) rather than mirrored from the positive curve
+about zero. Falls back to the mirrored positive threshold, with a
+warning, when \code{variants$neg.thresholds} is absent (an older cached
+\code{variants} object). This is the one-source restriction of
+\code{get.spread.thresholds()}'s formula to whichever fluorophore the other
+axis actually shows - contributions from every other fluorophore in the
+panel are not visualisable on a 2D plot and are not included. \code{NULL}
+(default) draws no reference curves.}
+
+\item{spread.kappa}{Numeric, spread standard deviations allowed above the
+flat threshold when \code{variants} is supplied - see \code{get.spread.thresholds()}.
+Default \code{2}.}
 
 \item{x.lab}{An optional label for the x-axis. If none is given (default
 \code{NULL}), the column name specified by \code{x.dim} will be used.}

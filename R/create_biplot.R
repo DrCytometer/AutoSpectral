@@ -6,6 +6,7 @@
 #' @importFrom ggplot2 scale_x_continuous scale_y_continuous theme_bw theme
 #' @importFrom ggplot2 margin element_line element_text element_rect element_blank
 #' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn stat_density_2d
+#' @importFrom ggplot2 geom_line
 #' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom scattermore geom_scattermore
 #' @importFrom ragg agg_jpeg
@@ -18,6 +19,24 @@
 #' @param y.dim String specifying the column of `plot.data` for the y-axis of
 #' the plot.
 #' @param asp The AutoSpectral parameter list.
+#' @param variants The variant list returned by `get.spectral.variants()`.
+#'   When supplied, red curves are drawn for whichever of `x.dim`/`y.dim`
+#'   `variants$thresholds` covers: each channel's flat threshold
+#'   (`variants$thresholds`) plus `spread.kappa` spread standard deviations
+#'   from the *other* axis's own spillover into it
+#'   (`variants$spillover.spread`), and, below zero, the same spread widening
+#'   subtracted from the directly measured negative-tail flat threshold
+#'   (`variants$neg.thresholds`) rather than mirrored from the positive curve
+#'   about zero. Falls back to the mirrored positive threshold, with a
+#'   warning, when `variants$neg.thresholds` is absent (an older cached
+#'   `variants` object). This is the one-source restriction of
+#'   `get.spread.thresholds()`'s formula to whichever fluorophore the other
+#'   axis actually shows - contributions from every other fluorophore in the
+#'   panel are not visualisable on a 2D plot and are not included. `NULL`
+#'   (default) draws no reference curves.
+#' @param spread.kappa Numeric, spread standard deviations allowed above the
+#'   flat threshold when `variants` is supplied - see `get.spread.thresholds()`.
+#'   Default `2`.
 #' @param x.lab An optional label for the x-axis. If none is given (default
 #' `NULL`), the column name specified by `x.dim` will be used.
 #' @param y.lab An optional label for the y-axis. If none is given (default
@@ -57,6 +76,8 @@ create.biplot <- function(
     x.dim,
     y.dim,
     asp,
+    variants = NULL,
+    spread.kappa = 2,
     x.lab = NULL,
     y.lab = NULL,
     x.min = -5000,
@@ -172,6 +193,92 @@ create.biplot <- function(
     widthBasis = y.width.basis,
     inverse = FALSE )
 
+  # Spillover-spread reference curves. The boundary widens with the square
+  # root of whichever fluorophore is spilling into the channel on the other
+  # axis, so a flat line understates it at the bright end and overstates it
+  # at the dim end - only a curve is honest about either. `abs()` on the
+  # axis value keeps the curve real-valued across the biexponential display's
+  # negative decades; `get.spread.thresholds()` itself is unaffected and
+  # still clips negative abundance to zero contribution.
+  spread.curve.data <- NULL
+
+  if ( !is.null( variants ) ) {
+
+    get.spillover.spread <- function( source, target ) {
+      ss <- variants$spillover.spread
+      if ( is.null( ss ) || !( source %in% rownames( ss ) ) ||
+           !( target %in% colnames( ss ) ) ) return( 0 )
+      val <- ss[ source, target ]
+      if ( !is.finite( val ) || val < 0 ) val <- 0
+      val
+    }
+
+    ss.xy <- get.spillover.spread( x.dim, y.dim )
+    ss.yx <- get.spillover.spread( y.dim, x.dim )
+
+    flat.y <- variants$thresholds[ y.dim ]
+    flat.x <- variants$thresholds[ x.dim ]
+
+    # Directly measured negative-tail flat component (see
+    # `get.spectral.variants()$neg.thresholds`), falling back to the mirrored
+    # positive threshold with a warning if an older cached `variants` object
+    # does not carry it.
+    flat.y.neg <- variants$neg.thresholds[ y.dim ]
+    if ( length( flat.y.neg ) != 1 || !is.finite( flat.y.neg ) ) {
+      flat.y.neg <- -flat.y
+      if ( length( flat.y ) == 1 && is.finite( flat.y ) )
+        warning( paste0( "No `neg.thresholds` in `variants` for ", y.dim,
+                         "; mirroring the positive threshold about zero." ),
+                 call. = FALSE )
+    }
+
+    flat.x.neg <- variants$neg.thresholds[ x.dim ]
+    if ( length( flat.x.neg ) != 1 || !is.finite( flat.x.neg ) ) {
+      flat.x.neg <- -flat.x
+      if ( length( flat.x ) == 1 && is.finite( flat.x ) )
+        warning( paste0( "No `neg.thresholds` in `variants` for ", x.dim,
+                         "; mirroring the positive threshold about zero." ),
+                 call. = FALSE )
+    }
+
+    x.seq <- seq( x.min, x.max, length.out = 300 )
+    y.seq <- seq( y.min, y.max, length.out = 300 )
+
+    spread.curve.data <- list()
+
+    if ( length( flat.y ) == 1 && is.finite( flat.y ) ) {
+
+      y.pos.raw <- flat.y + spread.kappa * sqrt( ss.xy * abs( x.seq ) )
+
+      spread.curve.data$y.pos <- data.frame(
+        x = biexp.transform.x( x.seq ), y = biexp.transform.y( y.pos.raw ) )
+    }
+
+    if ( length( flat.y.neg ) == 1 && is.finite( flat.y.neg ) ) {
+
+      y.neg.raw <- flat.y.neg - spread.kappa * sqrt( ss.xy * abs( x.seq ) )
+
+      spread.curve.data$y.neg <- data.frame(
+        x = biexp.transform.x( x.seq ), y = biexp.transform.y( y.neg.raw ) )
+    }
+
+    if ( length( flat.x ) == 1 && is.finite( flat.x ) ) {
+
+      x.pos.raw <- flat.x + spread.kappa * sqrt( ss.yx * abs( y.seq ) )
+
+      spread.curve.data$x.pos <- data.frame(
+        x = biexp.transform.x( x.pos.raw ), y = biexp.transform.y( y.seq ) )
+    }
+
+    if ( length( flat.x.neg ) == 1 && is.finite( flat.x.neg ) ) {
+
+      x.neg.raw <- flat.x.neg - spread.kappa * sqrt( ss.yx * abs( y.seq ) )
+
+      spread.curve.data$x.neg <- data.frame(
+        x = biexp.transform.x( x.neg.raw ), y = biexp.transform.y( y.seq ) )
+    }
+  }
+
   # convert to data frame for plotting
   plot.data <- data.frame(
     x = plot.data[ , x.dim ],
@@ -219,6 +326,25 @@ create.biplot <- function(
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()
     )
+
+  if ( !is.null( spread.curve.data ) ) {
+    if ( !is.null( spread.curve.data$y.pos ) )
+      biplot <- biplot +
+        geom_line( data = spread.curve.data$y.pos, aes( x = x, y = y ),
+                   color = "red", inherit.aes = FALSE )
+    if ( !is.null( spread.curve.data$y.neg ) )
+      biplot <- biplot +
+        geom_line( data = spread.curve.data$y.neg, aes( x = x, y = y ),
+                   color = "red", inherit.aes = FALSE )
+    if ( !is.null( spread.curve.data$x.pos ) )
+      biplot <- biplot +
+        geom_line( data = spread.curve.data$x.pos, aes( x = x, y = y ),
+                   color = "red", inherit.aes = FALSE )
+    if ( !is.null( spread.curve.data$x.neg ) )
+      biplot <- biplot +
+        geom_line( data = spread.curve.data$x.neg, aes( x = x, y = y ),
+                   color = "red", inherit.aes = FALSE )
+  }
 
   # color options
   viridis.colors <- c(
