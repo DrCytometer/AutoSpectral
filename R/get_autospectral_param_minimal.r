@@ -205,22 +205,20 @@ get.autospectral.param.minimal <- function() {
       sim.threshold = 0.985,
 
       rlm.downsample.n = 25000,
+
       ### directory parameters
       unmixed.fcs.dir = "AutoSpectral_unmixed",
-
+      fix.unmixing.dir <- "./figure_fix_my_unmix",
       figure.scatter.dir.base = NULL,
-
       figure.gate.dir = NULL,
       figure.af.dir = NULL,
       figure.peacoqc.dir = NULL,
       figure.clean.control.dir = NULL,
       figure.spectral.ribbon.dir = NULL,
       figure.spectra.dir = NULL,
-
       figure.similarity.heatmap.dir = NULL,
       figure.similarity.width = 8.0,
       figure.similarity.height = 6.0,
-
       table.spectra.dir = "table_spectra",
 
       ### filename parameters
@@ -232,6 +230,9 @@ get.autospectral.param.minimal <- function() {
       af.file.name = "autospectral_autofluorescence",
       spectra.file.name = "autospectral_spectra",
       similarity.heatmap.file.name = "autospectral_similarity_matrix",
+      fix.spillover.filename = "FixMyUnmix_spillover.csv",
+      fix.compensation.filename = "FixMyUnmix_compensation.csv",
+      fix.spectra.filename = "FixMyUnmix_spectra.csv",
 
       ### plotting parameters
       # color palette for dot plots
