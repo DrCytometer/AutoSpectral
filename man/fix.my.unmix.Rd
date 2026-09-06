@@ -17,6 +17,8 @@ fix.my.unmix(
   af.spectra = NULL,
   bg.mode = c("af.deconv", "af.row", "global.mean", "none", "per.cell"),
   large.gate = TRUE,
+  scatter.gate = TRUE,
+  landmark.quantile = NULL,
   max.iter = 20L,
   downsample = 20000,
   downsample.background.frac = 0.3,
@@ -53,9 +55,6 @@ fix.my.unmix(
   coefficient.decay = 0.05,
   update.spectra = TRUE,
   step = 1,
-  null.fit = NULL,
-  max.resid.ratio = 3,
-  max.intercept.ratio = 3,
   intercept = TRUE,
   min.explained = 0.8,
   max.explained = 1.2,
@@ -134,6 +133,25 @@ differs.}
 
 \item{large.gate}{Logical, whether to use a large scatter gate. Default
 \code{TRUE}.}
+
+\item{scatter.gate}{Logical, whether to gate on scatter at all before
+fitting. \code{FALSE} keeps every event in both \code{unstained.sample} and
+\code{fully.stained.sample}, ignoring \code{large.gate} entirely. Turn off when a
+population the correction needs -- a large, highly autofluorescent cell
+type such as alveolar macrophages, say -- sits far enough outside the
+main scatter population that even \code{large.gate}'s stretch does not reach
+it, and no single gate shape can be expected to enclose everyone the
+correction needs. Default \code{TRUE}.}
+
+\item{landmark.quantile}{Numeric in \verb{(0, 1)} or \code{NULL}, a lighter-weight
+alternative to turning gating off outright: events above this quantile
+on either scatter parameter are kept in addition to whatever the gate
+polygon already keeps, rather than replacing it. The threshold is
+computed once from \code{unstained.sample} and reused unchanged for
+\code{fully.stained.sample}, so the same large-cell population is added to
+both the autofluorescence basis and the correction it feeds, rather
+than one being widened without the other. Ignored when
+\code{scatter.gate = FALSE}. \code{NULL} (default) applies no landmark rescue.}
 
 \item{max.iter}{Integer, maximum spillover-matrix iterations. Default \code{20}.}
 
@@ -303,20 +321,6 @@ Default \code{TRUE}.}
 \item{step}{Numeric, the fraction of each accepted signature change applied.
 Default \code{1}.}
 
-\item{null.fit}{Optional, the result of running this function on the control
-the reference spectra were extracted from, where it should return exactly
-what it was given. What it returns instead is its own artefact, measured
-with no ground truth, and it is subtracted from both the spillover matrix
-and the signatures. Its \code{signature.log} also sets \code{max.resid} and
-\code{max.intercept} from the panel's own distribution. Default \code{NULL}.}
-
-\item{max.resid.ratio}{Numeric, multiple of the null run's median
-\code{resid.rel} above which a fit is refused. Ignored without \code{null.fit}.
-Default \code{3}.}
-
-\item{max.intercept.ratio}{Numeric, the same for \code{intercept.rel}. Default
-\code{3}.}
-
 \item{intercept}{Logical, whether the signature fit carries an intercept,
 which absorbs any constant offset the removal of the other panel rows left
 behind. Default \code{TRUE}.}
@@ -327,11 +331,9 @@ brightest bin's signal the whole signature fit reproduces. Default \code{0.8}.}
 \item{max.explained}{Numeric, the maximum of the same quantity. A value above
 one means the nuisance removal over-subtracted. Default \code{1.2}.}
 
-\item{max.resid}{Numeric, maximum relative fit residual. Overridden by
-\code{null.fit} when supplied. Default \code{0.03}.}
+\item{max.resid}{Numeric, maximum relative fit residual. Default \code{0.03}.}
 
-\item{max.intercept}{Numeric, maximum relative intercept. Overridden by
-\code{null.fit} when supplied. Default \code{0.03}.}
+\item{max.intercept}{Numeric, maximum relative intercept. Default \code{0.03}.}
 
 \item{min.bg.align}{Numeric, minimum cosine between the fitted intercept and
 the candidate signature. A value near minus one means the fit is trading a
@@ -346,17 +348,19 @@ truth): of every candidate this gate rejected, 79.9\% would have helped
 if accepted (n=144, two substrates) - 90.7\% on one substrate, a
 coin-flip 47.2\% on the other. The gate is net-harmful on the substrate
 where it discriminates worst and only weakly useful on the other, so it
-defaults off rather than removed - \code{bias.impact} and the ratio are still
-computed and logged either way, so the evidence for re-enabling it on a
-new substrate remains visible without code changes.}
+defaults off rather than removed. \code{bias.impact}, the quantity it
+compares against, has no source now that \code{null.fit} is gone, so the
+gate is currently always inert regardless of this setting.}
 
 \item{min.impact.ratio}{Numeric, how many times a proposed step's abundance
 effect must exceed the effect of the same phase's bias on its own control,
 measured through the current unmixing operator. Degrees weight every
 detector alike and every dye alike; this weights each row by the abundances
 it actually produces, so a large rotation of a dim row is cheap and a small
-rotation of a bright collinear row is not. Requires \code{null.spectra} and
-\code{gate.on.bias = TRUE}. Default \code{2}.}
+rotation of a bright collinear row is not. Requires \code{gate.on.bias = TRUE}
+and a source for \code{bias.impact}, which no longer exists now that
+\code{null.fit} is gone; the parameter is retained but currently inert.
+Default \code{2}.}
 
 \item{max.angle}{Numeric, maximum angular change of a row in degrees.}
 
@@ -505,13 +509,6 @@ define clean populations, then re-measures each fluorophore's signature
 directly from background subtracted raw data with \code{extract.raw.signature()},
 so the result is a physical spectrum rather than whichever combination of the
 existing rows happens to reproduce the required compensation.
-
-Both phases have a bias that can be measured without any ground truth. Run on
-the control the reference spectra came from, this function should return
-exactly what it was given; whatever it returns instead is its own artefact.
-Supplying that run as \code{null.fit} subtracts the artefact from the coefficients
-and from the signatures, which recovers substantially more than refusing the
-same quantities on the same information.
 
 Autofluorescence is fitted jointly with the panel from a multi-component
 basis (\code{bg.mode = "af.deconv"}), not represented by a single row. In a real

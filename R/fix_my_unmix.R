@@ -40,13 +40,6 @@
 #' so the result is a physical spectrum rather than whichever combination of the
 #' existing rows happens to reproduce the required compensation.
 #'
-#' Both phases have a bias that can be measured without any ground truth. Run on
-#' the control the reference spectra came from, this function should return
-#' exactly what it was given; whatever it returns instead is its own artefact.
-#' Supplying that run as `null.fit` subtracts the artefact from the coefficients
-#' and from the signatures, which recovers substantially more than refusing the
-#' same quantities on the same information.
-#'
 #' Autofluorescence is fitted jointly with the panel from a multi-component
 #' basis (`bg.mode = "af.deconv"`), not represented by a single row. In a real
 #' sample the background a single row leaves behind tracks cell type, cell type
@@ -112,6 +105,23 @@
 #'   differs.
 #' @param large.gate Logical, whether to use a large scatter gate. Default
 #'   `TRUE`.
+#' @param scatter.gate Logical, whether to gate on scatter at all before
+#'   fitting. `FALSE` keeps every event in both `unstained.sample` and
+#'   `fully.stained.sample`, ignoring `large.gate` entirely. Turn off when a
+#'   population the correction needs -- a large, highly autofluorescent cell
+#'   type such as alveolar macrophages, say -- sits far enough outside the
+#'   main scatter population that even `large.gate`'s stretch does not reach
+#'   it, and no single gate shape can be expected to enclose everyone the
+#'   correction needs. Default `TRUE`.
+#' @param landmark.quantile Numeric in `(0, 1)` or `NULL`, a lighter-weight
+#'   alternative to turning gating off outright: events above this quantile
+#'   on either scatter parameter are kept in addition to whatever the gate
+#'   polygon already keeps, rather than replacing it. The threshold is
+#'   computed once from `unstained.sample` and reused unchanged for
+#'   `fully.stained.sample`, so the same large-cell population is added to
+#'   both the autofluorescence basis and the correction it feeds, rather
+#'   than one being widened without the other. Ignored when
+#'   `scatter.gate = FALSE`. `NULL` (default) applies no landmark rescue.
 #' @param max.iter Integer, maximum spillover-matrix iterations. Default `20`.
 #' @param downsample Logical or numeric. `FALSE` disables downsampling; a
 #'   numeric gives the number of events to use. Values above the event count
@@ -244,17 +254,6 @@
 #'   Default `TRUE`.
 #' @param step Numeric, the fraction of each accepted signature change applied.
 #'   Default `1`.
-#' @param null.fit Optional, the result of running this function on the control
-#'   the reference spectra were extracted from, where it should return exactly
-#'   what it was given. What it returns instead is its own artefact, measured
-#'   with no ground truth, and it is subtracted from both the spillover matrix
-#'   and the signatures. Its `signature.log` also sets `max.resid` and
-#'   `max.intercept` from the panel's own distribution. Default `NULL`.
-#' @param max.resid.ratio Numeric, multiple of the null run's median
-#'   `resid.rel` above which a fit is refused. Ignored without `null.fit`.
-#'   Default `3`.
-#' @param max.intercept.ratio Numeric, the same for `intercept.rel`. Default
-#'   `3`.
 #' @param intercept Logical, whether the signature fit carries an intercept,
 #'   which absorbs any constant offset the removal of the other panel rows left
 #'   behind. Default `TRUE`.
@@ -262,10 +261,8 @@
 #'   brightest bin's signal the whole signature fit reproduces. Default `0.8`.
 #' @param max.explained Numeric, the maximum of the same quantity. A value above
 #'   one means the nuisance removal over-subtracted. Default `1.2`.
-#' @param max.resid Numeric, maximum relative fit residual. Overridden by
-#'   `null.fit` when supplied. Default `0.03`.
-#' @param max.intercept Numeric, maximum relative intercept. Overridden by
-#'   `null.fit` when supplied. Default `0.03`.
+#' @param max.resid Numeric, maximum relative fit residual. Default `0.03`.
+#' @param max.intercept Numeric, maximum relative intercept. Default `0.03`.
 #' @param min.bg.align Numeric, minimum cosine between the fitted intercept and
 #'   the candidate signature. A value near minus one means the fit is trading a
 #'   background floor against the slope, the event-level signature of an
@@ -278,16 +275,18 @@
 #'   if accepted (n=144, two substrates) - 90.7% on one substrate, a
 #'   coin-flip 47.2% on the other. The gate is net-harmful on the substrate
 #'   where it discriminates worst and only weakly useful on the other, so it
-#'   defaults off rather than removed - `bias.impact` and the ratio are still
-#'   computed and logged either way, so the evidence for re-enabling it on a
-#'   new substrate remains visible without code changes.
+#'   defaults off rather than removed. `bias.impact`, the quantity it
+#'   compares against, has no source now that `null.fit` is gone, so the
+#'   gate is currently always inert regardless of this setting.
 #' @param min.impact.ratio Numeric, how many times a proposed step's abundance
 #'   effect must exceed the effect of the same phase's bias on its own control,
 #'   measured through the current unmixing operator. Degrees weight every
 #'   detector alike and every dye alike; this weights each row by the abundances
 #'   it actually produces, so a large rotation of a dim row is cheap and a small
-#'   rotation of a bright collinear row is not. Requires `null.spectra` and
-#'   `gate.on.bias = TRUE`. Default `2`.
+#'   rotation of a bright collinear row is not. Requires `gate.on.bias = TRUE`
+#'   and a source for `bias.impact`, which no longer exists now that
+#'   `null.fit` is gone; the parameter is retained but currently inert.
+#'   Default `2`.
 #' @param max.angle Numeric, maximum angular change of a row in degrees.
 #' @param max.clamp.frac Numeric, maximum fraction of a candidate row's
 #'   absolute mass that non-negativity clamping may remove. Default `0.15`.
@@ -400,6 +399,8 @@ fix.my.unmix <- function(
     af.spectra             = NULL,
     bg.mode                = c( "af.deconv", "af.row", "global.mean", "none", "per.cell" ),
     large.gate             = TRUE,
+    scatter.gate           = TRUE,
+    landmark.quantile      = NULL,
     max.iter               = 20L,
     downsample             = 20000,
     downsample.background.frac = 0.3,
@@ -436,9 +437,6 @@ fix.my.unmix <- function(
     coefficient.decay      = 0.05,
     update.spectra         = TRUE,
     step                   = 1,
-    null.fit               = NULL,
-    max.resid.ratio        = 3,
-    max.intercept.ratio    = 3,
     intercept              = TRUE,
     min.explained          = 0.8,
     max.explained          = 1.2,
@@ -468,27 +466,6 @@ fix.my.unmix <- function(
   # Set once, not only around the downsample, because the pair estimator also
   # subsamples the negative bulk and the whole run should be reproducible.
   if ( !is.null( asp$bird.seed ) ) set.seed( asp$bird.seed )
-
-  # The same estimator, run on the control the reference spectra were extracted
-  # from, should return exactly what it was given. What it returns instead is
-  # its own artefact, measured with no ground truth, and it is removed from both
-  # the spillover matrix and the signatures rather than used to refuse them.
-  null.spillover <- null.fit$spillover
-  null.spectra   <- null.fit$spectra
-
-  # `resid.rel` and `intercept.rel` describe the row's population and its
-  # background, not whether the spectra are wrong, so they reproduce almost
-  # exactly on the null run and their absolute scale is a property of the
-  # particle type. The thresholds are therefore set against the panel's own
-  # distribution.
-  if ( !is.null( null.fit$signature.log ) ) {
-
-    max.resid <- max.resid.ratio * stats::median(
-      null.fit$signature.log$resid.rel, na.rm = TRUE )
-
-    max.intercept <- max.intercept.ratio * stats::median(
-      null.fit$signature.log$intercept.rel, na.rm = TRUE )
-  }
 
   spectra <- as.matrix( spectra )
 
@@ -547,7 +524,8 @@ fix.my.unmix <- function(
   # Read and gate
   # ---------------------------------------------------------------------------
 
-  read.gated <- function( file.name, gate.polygon = NULL, label ) {
+  read.gated <- function( file.name, gate.polygon = NULL,
+                          landmark.threshold = NULL, label ) {
 
     if ( verbose )
       message( sprintf( "\033[34mReading %s.\033[0m", label ) )
@@ -555,23 +533,49 @@ fix.my.unmix <- function(
     expr.data <- readFCS( file.name, columns = flow.control$scatter.and.channel.spectral )
     gate.data <- expr.data[ , flow.control$scatter.parameter ]
 
-    if ( is.null( gate.polygon ) )
-      gate.polygon <- do.gate(
-        gate.data, viability.gate = FALSE, large.gate = large.gate,
-        samp = label,
-        scatter.and.channel.label = flow.control$scatter.and.channel.label,
-        control.type = "cells", asp )
+    if ( !scatter.gate ) {
 
-    keep <- which( sp::point.in.polygon( gate.data[ , 1 ], gate.data[ , 2 ],
-                                         gate.polygon$x, gate.polygon$y ) != 0 )
+      keep <- seq_len( nrow( expr.data ) )
+      gate.polygon       <- NULL
+      landmark.threshold <- NULL
+
+    } else {
+
+      if ( is.null( gate.polygon ) )
+        gate.polygon <- do.gate(
+          gate.data, viability.gate = FALSE, large.gate = large.gate,
+          samp = label,
+          scatter.and.channel.label = flow.control$scatter.and.channel.label,
+          control.type = "cells", asp )
+
+      if ( is.null( landmark.threshold ) && !is.null( landmark.quantile ) )
+        landmark.threshold <- apply(
+          gate.data, 2, stats::quantile, probs = landmark.quantile, names = FALSE )
+
+      in.polygon <- sp::point.in.polygon(
+        gate.data[ , 1 ], gate.data[ , 2 ], gate.polygon$x, gate.polygon$y ) != 0
+
+      # A scatter-only rescue, not a fluorescence one, so it applies
+      # identically to the unstained file that defines `landmark.threshold`
+      # and the stained file that reuses it unchanged - the large, bright
+      # events `large.gate`'s stretch still misses are added to both, so
+      # the autofluorescence basis and the correction it feeds are measured
+      # from the same cell population rather than one being widened alone.
+      in.landmark <- if ( is.null( landmark.threshold ) ) FALSE else
+        gate.data[ , 1 ] > landmark.threshold[ 1 ] |
+        gate.data[ , 2 ] > landmark.threshold[ 2 ]
+
+      keep <- which( in.polygon | in.landmark )
+    }
 
     list( data = expr.data[ keep, flow.control$spectral.channel, drop = FALSE ],
-          gate = gate.polygon )
+          gate = gate.polygon,
+          landmark = landmark.threshold )
   }
 
-  unstained.in <- read.gated( unstained.sample, NULL, "unstained raw" )
+  unstained.in <- read.gated( unstained.sample, NULL, NULL, "unstained raw" )
   stained.in   <- read.gated( fully.stained.sample, unstained.in$gate,
-                              "fully stained raw" )
+                              unstained.in$landmark, "fully stained raw" )
 
   unstained.raw <- unstained.in$data
   stained.raw   <- stained.in$data
@@ -741,6 +745,13 @@ fix.my.unmix <- function(
   stained.fit   <- project( stained.raw )
   unstained.fit <- project( unstained.raw )
 
+  # Kept aside, undownsampled, so `unmixed.final`/`residual.final` below
+  # report every event that survived gating rather than whatever fraction
+  # of it the downsample below happened to keep -- the downsample exists to
+  # keep the iterative pair-fit fast, not to define what counts as the data
+  # once a compensation has been fit.
+  stained.fit.full <- stained.fit
+
   # A uniform downsample keeps every population in the same proportion the
   # raw file already had it in, so it thins a dim or rare fluorophore's own
   # positive population at the same rate as a background bulk that was
@@ -748,7 +759,11 @@ fix.my.unmix <- function(
   # dominant fluorophore under the starting spectra fixes that: every
   # fluorophore's stratum gets its own quota, with a floor that protects a
   # dim dye's whole positive population and a separate cap on the events
-  # dominant for nothing.
+  # dominant for nothing. That floor is a per-stratum count, not a fraction,
+  # so a panel with many fluorophores can push every stratum's actual
+  # retention far below `downsample.min.stratum` once the floors are scaled
+  # down to fit the shared budget -- worth checking directly against
+  # `downsample = FALSE` on a panel this size, not assumed negligible.
   if ( !isFALSE( downsample ) && !is.null( downsample ) ) {
 
     n.keep <- min( as.integer( downsample ), nrow( stained.raw ) )
@@ -1119,26 +1134,6 @@ fix.my.unmix <- function(
 
   coefficient.log <- do.call( rbind, pair.log )
 
-  # Run on the control the reference spectra were extracted from, this estimator
-  # should return the identity. Whatever it returns instead is its own bias,
-  # measured without any ground truth, and it is subtracted here. The correction
-  # is worth more than refusing the same coefficients on the same information.
-  if ( !is.null( null.spillover ) ) {
-
-    shared <- intersect( fluorophores, rownames( null.spillover ) )
-
-    if ( length( shared ) > 1 ) {
-
-      bias <- null.spillover[ shared, shared, drop = FALSE ] -
-        diag( length( shared ) )
-
-      spillover.curr[ shared, shared ] <-
-        spillover.curr[ shared, shared ] - bias
-
-      diag( spillover.curr ) <- 1
-    }
-  }
-
   compensation.curr <- solve( spillover.curr )
 
   # Exposed for post-hoc auditing - e.g. cluster-centroid negativity checks -
@@ -1146,8 +1141,12 @@ fix.my.unmix <- function(
   # itself works from, without a caller needing to re-derive any of it from
   # `spillover`/`compensation` and the raw, AF-aware projection this function
   # already did once.
-  unmixed.final  <- stained.fit$abundance %*% compensation.curr
-  residual.final <- stained.fit$residual
+  # `stained.fit.full`, not the (possibly downsampled) `stained.fit` phase
+  # one iterated on, so a coefficient fit on a manageable subsample gets
+  # applied back to every event that survived gating, not just the ones
+  # the stratified sample happened to keep.
+  unmixed.final  <- stained.fit.full$abundance %*% compensation.curr
+  residual.final <- stained.fit.full$residual
 
   thresholds.final <- unstained.margin * apply(
     unstained.fit$abundance %*% compensation.curr, 2, stats::quantile,
@@ -1235,29 +1234,6 @@ fix.my.unmix <- function(
 
     condition.curr <- calculate.condition.number( design )
 
-    # How far the signature phase moves each row on a control where there is
-    # nothing to correct. A proposed change that is not several times this is
-    # the estimator moving the row rather than the data.
-    deg.bias <- stats::setNames( rep( NA_real_, fluorophore.n ), fluorophores )
-
-    if ( !is.null( null.spectra ) ) {
-
-      shared <- intersect( fluorophores, rownames( null.spectra ) )
-
-      if ( length( shared ) > 0 ) {
-
-        a <- null.spectra[ shared, colnames( spectra ), drop = FALSE ]
-        b <- spectra[ shared, , drop = FALSE ]
-
-        cos.bias <- rowSums( a * b ) /
-          pmax( sqrt( rowSums( a^2 ) ) * sqrt( rowSums( b^2 ) ),
-                .Machine$double.eps )
-
-        deg.bias[ shared ] <-
-          180 / pi * acos( pmin( 1, pmax( -1, cos.bias ) ) )
-      }
-    }
-
     log.rows <- list()
 
     for ( f in seq_along( fluorophores ) ) {
@@ -1302,11 +1278,6 @@ fix.my.unmix <- function(
         step.impact <- abundance.high[ j ] * sqrt( sum(
           ( ( candidate$signature - spectra.new[ j, ] ) %*%
               t( unmixing.curr ) )^2 ) )
-
-        if ( !is.null( null.spectra ) && j %in% rownames( null.spectra ) )
-          bias.impact <- abundance.high[ j ] * sqrt( sum(
-            ( ( null.spectra[ j, colnames( spectra ) ] - spectra[ j, ] ) %*%
-                t( unmixing.curr ) )^2 ) )
 
         st <- candidate$stats
 
@@ -1353,10 +1324,6 @@ fix.my.unmix <- function(
       if ( is.na( reject ) ) {
 
         proposed <- candidate$signature
-
-        if ( !is.null( null.spectra ) && j %in% rownames( null.spectra ) )
-          proposed <- proposed -
-            ( null.spectra[ j, colnames( spectra ) ] - spectra[ j, ] )
 
         stepped <- pmax( spectra.new[ j, ] +
                            step * ( proposed - spectra.new[ j, ] ), 0 )
@@ -1419,7 +1386,6 @@ fix.my.unmix <- function(
         fluorophore = j,
         n.events    = length( idx ),
         stats.block,
-        deg.bias        = unname( deg.bias[ j ] ),
         leak.before     = leak.before,
         leak.after      = leak.after,
         condition.after = condition.after,
