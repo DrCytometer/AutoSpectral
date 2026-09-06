@@ -249,6 +249,7 @@ create.biplot <- function(
     if ( length( flat.y ) == 1 && is.finite( flat.y ) ) {
 
       y.pos.raw <- flat.y + spread.kappa * sqrt( ss.xy * abs( x.seq ) )
+      y.pos.raw <- pmin( pmax( y.pos.raw, y.min ), y.max )
 
       spread.curve.data$y.pos <- data.frame(
         x = biexp.transform.x( x.seq ), y = biexp.transform.y( y.pos.raw ) )
@@ -257,6 +258,7 @@ create.biplot <- function(
     if ( length( flat.y.neg ) == 1 && is.finite( flat.y.neg ) ) {
 
       y.neg.raw <- flat.y.neg - spread.kappa * sqrt( ss.xy * abs( x.seq ) )
+      y.neg.raw <- pmin( pmax( y.neg.raw, y.min ), y.max )
 
       spread.curve.data$y.neg <- data.frame(
         x = biexp.transform.x( x.seq ), y = biexp.transform.y( y.neg.raw ) )
@@ -265,6 +267,7 @@ create.biplot <- function(
     if ( length( flat.x ) == 1 && is.finite( flat.x ) ) {
 
       x.pos.raw <- flat.x + spread.kappa * sqrt( ss.yx * abs( y.seq ) )
+      x.pos.raw <- pmin( pmax( x.pos.raw, x.min ), x.max )
 
       spread.curve.data$x.pos <- data.frame(
         x = biexp.transform.x( x.pos.raw ), y = biexp.transform.y( y.seq ) )
@@ -273,6 +276,7 @@ create.biplot <- function(
     if ( length( flat.x.neg ) == 1 && is.finite( flat.x.neg ) ) {
 
       x.neg.raw <- flat.x.neg - spread.kappa * sqrt( ss.yx * abs( y.seq ) )
+      x.neg.raw <- pmin( pmax( x.neg.raw, x.min ), x.max )
 
       spread.curve.data$x.neg <- data.frame(
         x = biexp.transform.x( x.neg.raw ), y = biexp.transform.y( y.seq ) )
@@ -331,19 +335,19 @@ create.biplot <- function(
     if ( !is.null( spread.curve.data$y.pos ) )
       biplot <- biplot +
         geom_line( data = spread.curve.data$y.pos, aes( x = x, y = y ),
-                   color = "red", inherit.aes = FALSE )
+                   color = "red", inherit.aes = FALSE, na.rm = TRUE )
     if ( !is.null( spread.curve.data$y.neg ) )
       biplot <- biplot +
         geom_line( data = spread.curve.data$y.neg, aes( x = x, y = y ),
-                   color = "red", inherit.aes = FALSE )
+                   color = "red", inherit.aes = FALSE, na.rm = TRUE )
     if ( !is.null( spread.curve.data$x.pos ) )
       biplot <- biplot +
         geom_line( data = spread.curve.data$x.pos, aes( x = x, y = y ),
-                   color = "red", inherit.aes = FALSE )
+                   color = "red", inherit.aes = FALSE, na.rm = TRUE )
     if ( !is.null( spread.curve.data$x.neg ) )
       biplot <- biplot +
         geom_line( data = spread.curve.data$x.neg, aes( x = x, y = y ),
-                   color = "red", inherit.aes = FALSE )
+                   color = "red", inherit.aes = FALSE, na.rm = TRUE )
   }
 
   # color options
