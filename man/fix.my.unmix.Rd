@@ -14,7 +14,8 @@ fix.my.unmix(
   af.name = "AF",
   af.basis = NULL,
   af.n.pc = "auto",
-  bg.mode = c("af.deconv", "af.row", "global.mean", "none"),
+  af.spectra = NULL,
+  bg.mode = c("af.deconv", "af.row", "global.mean", "none", "per.cell"),
   large.gate = TRUE,
   max.iter = 20L,
   downsample = 20000,
@@ -26,6 +27,9 @@ fix.my.unmix(
   envelope.quantiles = c(0.05, 0.5),
   min.negative.frac = 0.1,
   max.disagreement = 0.5,
+  min.hypernegative.frac = 0.01,
+  max.hypernegative.frac = 0.05,
+  min.hypernegative.events = 200L,
   leakage.prior = TRUE,
   span.fraction = 0.6,
   min.negative.events = 200L,
@@ -46,6 +50,7 @@ fix.my.unmix(
   max.coefficient = 0.5,
   convergence.threshold = 0.01,
   convergence.quantile = 0.95,
+  coefficient.decay = 0.05,
   update.spectra = TRUE,
   step = 1,
   null.fit = NULL,
@@ -70,7 +75,8 @@ fix.my.unmix(
   n.threads = 1L,
   figures = TRUE,
   save = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  keep.history = FALSE
 )
 }
 \arguments{
@@ -90,9 +96,13 @@ sample.}
 
 \item{variants}{The variant list returned by \code{get.spectral.variants()}. Only
 \code{variants$spillover.spread} is used, to set abundance-dependent positivity
-boundaries and to correct the envelope for the widening of the negative
-population. If \code{NULL}, boundaries are flat and the correction is biased at
-the bright end.}
+boundaries and correct the envelope for the widening of the negative
+population. The negative boundary used to bound how far a proposed
+coefficient may push events into hypernegative territory is measured
+directly from the unstained sample's own negative tail inside this
+function (see \code{max.hypernegative.frac}), not derived from \code{variants}.
+If \code{variants} is \code{NULL}, positivity boundaries are flat and the
+correction is biased at the bright end.}
 
 \item{af.name}{Character or \code{NULL}, the name of an autofluorescence row in
 \code{spectra}. It is never treated as a panel fluorophore and never corrected.
@@ -105,10 +115,22 @@ the unstained sample. Default \code{NULL}.}
 \item{af.n.pc}{Integer or \code{"auto"}, passed to \code{get.af.basis()}. Default
 \code{"auto"}.}
 
+\item{af.spectra}{Optional matrix (n.af x detectors), a library of
+candidate autofluorescence spectra from \code{get.af.spectra()}. Required,
+with at least two rows, when \code{bg.mode = "per.cell"}; unused otherwise.}
+
 \item{bg.mode}{Character. \code{"af.deconv"} (default) fits a multi-component
 autofluorescence basis jointly with the panel; \code{"af.row"} uses the single
 \code{af.name} row already in \code{spectra}; \code{"global.mean"} uses the mean unstained
-spectrum as a single background row; \code{"none"} fits no background.}
+spectrum as a single background row; \code{"per.cell"} assigns each event the
+single best-matching spectrum from the \code{af.spectra} library and subtracts
+only that one, which can follow a distinct, strongly autofluorescent
+population (e.g. alveolar macrophages) that a shared low-rank basis
+averages away; \code{"none"} fits no background. The condition-number and
+leakage checks in the signature phase, and the frozen-fluorophore check,
+still run against \code{af.spectra}'s row 1 (its population mean) under
+\code{"per.cell"} — only the background actually subtracted from each event
+differs.}
 
 \item{large.gate}{Logical, whether to use a large scatter gate. Default
 \code{TRUE}.}
@@ -148,6 +170,41 @@ unidentifiable and left alone. Default \code{0.10}.}
 
 \item{max.disagreement}{Numeric, envelope-versus-median slope disagreement
 above which the coefficient's trust weight is reduced. Default \code{0.5}.}
+
+\item{min.hypernegative.frac}{Numeric, the fraction of a source's own
+positive population tolerated past the channel's negative boundary
+before trust begins to fall at all. The boundary is the channel's own
+spread-scaled negative threshold, anchored to the unstained population's
+own negative tail (measured directly, each iteration, alongside the
+positive threshold) rather than mirrored from the positive boundary
+about zero -- autofluorescence is non-negative, so it inflates the
+positive tail of an unstained control without inflating the negative
+tail correspondingly, making the mirrored assumption systematically too
+loose. Noise and incorrectly-unmixed, AF-skewed events always account
+for some small tail here, and a fraction at or below this is not itself
+evidence that a coefficient is wrong. Default \code{0.01}.}
+
+\item{max.hypernegative.frac}{Numeric, the fraction at which trust reaches
+exactly zero. Between \code{min.hypernegative.frac} and this cap trust falls
+off linearly; unlike \code{max.disagreement}, which only damps a coefficient
+in proportion to how far past a soft limit it sits, this reaches a hard
+rejection rather than an asymptote, because a negative correlation
+between a source's abundance and a channel's corrected value has no
+biological explanation and so is not owed an indefinitely soft penalty.
+The fraction checked is absolute, not a delta against whatever already
+sat past the boundary before this coefficient: a pre-existing
+hypernegative artefact is evidence of an incorrect coefficient somewhere
+just as much as a newly-introduced one, even when a different pair's
+coefficient is what put it there. \code{coefficient.log}'s
+\code{hypernegative.base} and \code{hypernegative.new} columns separate the two
+for diagnosis without treating either as free. Default \code{0.05}.}
+
+\item{min.hypernegative.events}{Integer, the fewest events a source's own
+positive population may contain before its hypernegative fraction is
+estimated at all. Below this, \code{hypernegative.base}, \code{hypernegative.after}
+and \code{hypernegative.new} are left \code{NA} in \code{coefficient.log} and only
+\code{max.disagreement} and the prior variance bound the pair's trust.
+Default \code{200L}.}
 
 \item{leakage.prior}{Logical, whether to weight coefficients by the spillover
 a plausible spectral error could produce, from \code{get.variant.leakage.prior()}.
@@ -227,6 +284,17 @@ iteration stops. Default \code{0.01}.}
 \item{convergence.quantile}{Numeric, the quantile of the off-diagonal
 coefficients the convergence test uses, so that one pathological pair
 cannot define convergence. Default \code{0.95}.}
+
+\item{coefficient.decay}{Numeric in \verb{[0, 1)}, the maximum fraction by which
+an off-diagonal spillover coefficient is pulled toward zero on a single
+iteration, scaled by \code{1 - trust} for that pair. A pair earning strong
+trust this iteration barely decays; a pair clearing the acceptance gates
+only weakly, repeatedly, decays at close to the full rate every time,
+since repeated low confidence is itself the signal that a coefficient
+is not well identified, not evidence for holding it steady. Gating decay
+on \code{trust == 0} alone catches only a pair that fails the hard gates
+outright, missing the much more common case of a pair that clears them
+every iteration but is never confidently estimated. Default \code{0.05}.}
 
 \item{update.spectra}{Logical, whether to run the raw-space signature phase.
 When \code{FALSE}, only the spillover and compensation matrices are returned.
@@ -315,7 +383,9 @@ Default \code{0.7}.}
 
 \item{max.hotspot}{Numeric, hotspot scale above which a fluorophore is
 considered inseparable from the autofluorescence basis and is frozen.
-Default \code{5}.}
+Under \code{bg.mode = "per.cell"}, also applied to drop \code{af.spectra} rows
+that are themselves inseparable from a panel fluorophore, before
+per-event assignment. Default \code{5}.}
 
 \item{leakage.margin}{Numeric, the fraction by which held-out leakage must
 increase, not merely be numerically larger, before a candidate is
@@ -326,10 +396,12 @@ consecutive fits that would demonstrably have helped if accepted.
 Default \code{0.05}.}
 
 \item{n.threads}{Integer, OpenMP threads for the batched pair estimator
-(\code{fix_envelope_truncated_batch_rcpp()}). Keep at the default unless this
-call is not itself running inside another parallel context (e.g. one
-sample of several under \code{mclapply()}), since the two layers of
-parallelism would otherwise compete for the same cores. Default \code{1L}.}
+(\code{fix_envelope_truncated_batch_rcpp()}) and, when \code{bg.mode = "per.cell"},
+for the per-event library assignment (\code{assign.af.fluor.fast()}). Keep at
+the default unless this call is not itself running inside another
+parallel context (e.g. one sample of several under \code{mclapply()}), since
+the two layers of parallelism would otherwise compete for the same
+cores. Default \code{1L}.}
 
 \item{figures}{Logical, whether to write the spillover heatmap. Default
 \code{TRUE}.}
@@ -337,6 +409,15 @@ parallelism would otherwise compete for the same cores. Default \code{1L}.}
 \item{save}{Logical, whether to write the csv outputs. Default \code{TRUE}.}
 
 \item{verbose}{Logical, controls messaging. Default \code{TRUE}.}
+
+\item{keep.history}{Logical, whether to retain a per-iteration snapshot of
+\code{marker.spillover}, \code{trust}, the post-decay \code{spillover.next}, and that
+iteration's \code{coefficient.log} in \code{spillover.history}, for tracing a
+specific pair's trajectory -- including its \code{hypernegative.base}/
+\code{hypernegative.after} history -- across the refinement loop rather than
+inferring it from the final iteration alone. \code{FALSE} by default since the
+snapshots are diagnostic only and add \code{max.iter} list entries of
+otherwise-unused matrices to the return value. Default \code{FALSE}.}
 }
 \value{
 A named list:
@@ -355,8 +436,36 @@ iteration.}
 \item{\code{signature.log}}{Per-fluorophore signature statistics and gate
 outcomes.}
 \item{\code{convergence.log}}{Per-iteration delta history.}
+\item{\code{spillover.history}}{\code{NULL} unless \code{keep.history = TRUE}, in which
+case a list, one entry per phase-one iteration, each holding that
+iteration's \code{marker.spillover} (the raw fitted candidates, zero where
+nothing was accepted), \code{trust}, \code{spillover.next} (the matrix after that
+iteration's addition and decay, before the next iteration's row
+renormalisation), and \code{coefficient.log} (that iteration's per-pair fit
+diagnostics, including \code{hypernegative.base}/\code{hypernegative.after}).}
+\item{\code{unmixed.final}, \code{residual.final}}{The fully-stained sample's
+abundance (events x fluorophores, compensated with the final
+\code{compensation}) and background-subtracted raw-space matrix (events x
+detectors) - what phase two itself measured signatures from.}
+\item{\code{thresholds.final}, \code{threshold.matrix.final}, \code{dominant.final}}{The
+final flat positivity threshold (one per fluorophore) and its
+spread-scaled per-event boundary, and the resulting winning
+fluorophore per event (\code{0} for none), identical to what phase two used
+to define each fluorophore's own population.}
+\item{\code{neg.thresholds.final}, \code{neg.threshold.matrix.final}}{The
+negative-side equivalents: the flat threshold measured directly from
+the unstained population's own negative tail (not derived by negating
+\code{thresholds.final}) and its spread-scaled per-event boundary,
+identical to what the hypernegative check itself compared events
+against at convergence. Use these, not \code{-threshold.matrix.final}, when
+auditing this result against a negative boundary externally (e.g.
+\code{create.biplot()}, a cluster-centroid audit) -- that mirrored shortcut
+is exactly the assumption this pair was measured directly to avoid.}
 \item{\code{af.basis}, \code{af.hotspot}, \code{af.frozen}}{The autofluorescence basis, its
 coupling to the panel, and the fluorophores frozen because of it.}
+\item{\code{af.assignment}}{\code{NULL} unless \code{bg.mode = "per.cell"}, in which case
+a table of how often each \code{af.spectra} row was assigned and its mean
+fitted abundance, over the (possibly downsampled) events actually used.}
 }
 }
 \description{
@@ -376,7 +485,21 @@ matrix pair by pair, from a robust line through the events that are negative
 for the target channel: their apparent abundance there is spillover from the
 source, so its slope against source abundance is the residual coefficient.
 Truncating the target from above shrinks that slope toward zero when the two
-markers are co-expressed, which is the safe direction. The second phase does
+markers are co-expressed, which is the safe direction. A negative
+correlation between a source's abundance and a channel's corrected value has
+no biological explanation the way co-expression or coverage disagreement
+can, so it is checked directly on the source's own positive population
+against the channel's negative boundary (the unstained population's own
+measured negative tail, not a mirror of the positive side) and treated as
+unambiguous: trust falls as the fraction of that population left past the
+boundary grows, reaching a hard rejection at \code{max.hypernegative.frac}
+regardless of whether this coefficient introduced the crossing or merely
+failed to fix one already there. Trust damping only controls what a given
+iteration adds; a pair that is only ever weakly accepted would otherwise
+settle at whatever that weak, repeated acceptance adds up to, never revised
+down for staying weak. \code{coefficient.decay} pulls every off-diagonal pair
+back toward zero in proportion to how little trust it currently earns, so a
+coefficient later supports erodes rather than persists. The second phase does
 not back-solve a spectrum out of the matrix. It uses the matrix only to
 define clean populations, then re-measures each fluorophore's signature
 directly from background subtracted raw data with \code{extract.raw.signature()},
@@ -395,6 +518,16 @@ basis (\code{bg.mode = "af.deconv"}), not represented by a single row. In a real
 sample the background a single row leaves behind tracks cell type, cell type
 determines marker expression, and the leftover is then indistinguishable from
 spillover by any channel-against-channel fit.
+
+When a distinct, strongly autofluorescent population is not well spanned by
+that shared low-rank basis, \code{bg.mode = "per.cell"} instead assigns each
+event a single discrete spectrum from an \code{af.spectra} library
+(\code{get.af.spectra()}) and subtracts only that one. This is a more expressive
+background model, but its assignment criterion favours explaining away
+signal, so an event genuinely positive for a panel dye can be misassigned to
+a competing library row; see \code{af.assignment} in the return value and
+\code{max.hotspot}, which drops library rows that are themselves inseparable from
+a panel fluorophore before assignment runs.
 
 Every row update must pass an acceptance stack; a fluorophore that fails any
 gate keeps its starting spectrum.
