@@ -53,9 +53,44 @@
         call. = FALSE
       )
     mat <- mat[ , channels, drop = FALSE ]
+  } else {
+    mat <- .drop.unnamed.channels( mat )
   }
 
   mat
+}
+
+
+# -----------------------------------------------------------------------------
+# .drop.unnamed.channels
+#   Subsets a matrix to columns with a non-blank name, warning about any that
+#   are dropped. Used whenever the caller has not explicitly requested a
+#   channel subset, so blank/NA column names (e.g. scatter parameters or
+#   unlabeled detectors carried through from an FCS file) never reach the
+#   plotting code, where they previously caused an opaque
+#   "subscript out of bounds" error.
+# -----------------------------------------------------------------------------
+.drop.unnamed.channels <- function( mat ) {
+
+  nm       <- colnames( mat )
+  is.named <- !is.na( nm ) & nzchar( trimws( nm ) )
+
+  if ( !all( is.named ) ) {
+    n.dropped <- sum( !is.named )
+    warning(
+      paste0(
+        n.dropped, " column", if ( n.dropped > 1 ) "s" else "",
+        " with no channel name ", if ( n.dropped > 1 ) "were" else "was",
+        " found in the data and will be excluded from the plot."
+      ),
+      call. = FALSE
+    )
+  }
+
+  if ( !any( is.named ) )
+    stop( "No named channels are available to plot.", call. = FALSE )
+
+  mat[ , is.named, drop = FALSE ]
 }
 
 
