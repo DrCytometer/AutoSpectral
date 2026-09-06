@@ -5,6 +5,10 @@
 - New metrics for comparing spectral profiles (e.g., beads vs. cells).
 - Dynamic scatter scaling for gating plots.
 - Plotting and comparison workflow functions used for the manuscript are included.
+- Spillover spread boundaries can be included on `create.biplot()` if you supply
+`spectral.variants`, which now calculates those as part of its workflow.
+- Spectral correction functions are now included as they have reached a useful
+stage of development.
 
 ## Improvements
 
@@ -21,6 +25,8 @@ low AF samples such as PBMCs and mouse splenocytes.
 rounding of the contour should now work without errors.
 - The Spectral Reference QC plots are now produced in the specified `plot.dir` 
 correctly.
+- If unnamed channels are passed to `unmixed.mxn.plot()` or `unmixed.nxn.plot()`,
+they are now dropped with a warning.
 
 
 # AutoSpectral 1.8.0 (2026-08-26)
