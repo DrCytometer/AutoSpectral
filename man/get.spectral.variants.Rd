@@ -145,6 +145,12 @@ A named list with elements:
 \describe{
 \item{\code{thresholds}}{Named numeric vector of positivity thresholds in
 the unmixed space, one per fluorophore.}
+\item{\code{neg.thresholds}}{Named numeric vector, the 0.5th percentile of
+each fluorophore's unstained unmixed distribution -- the flat component
+of the negative positivity boundary, measured directly from the
+unstained population's own negative tail rather than mirrored from
+\code{thresholds} about zero. \code{NA} for every fluorophore when
+\code{use.unmixed = FALSE}.}
 \item{\code{variants}}{Named list of variant-spectra matrices, one per
 fluorophore. Each matrix has variants in rows and detectors in columns.}
 \item{\code{delta.list}}{Named list of delta matrices (variant minus

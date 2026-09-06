@@ -114,6 +114,12 @@
 #' \describe{
 #'   \item{\code{thresholds}}{Named numeric vector of positivity thresholds in
 #'     the unmixed space, one per fluorophore.}
+#'   \item{\code{neg.thresholds}}{Named numeric vector, the 0.5th percentile of
+#'     each fluorophore's unstained unmixed distribution -- the flat component
+#'     of the negative positivity boundary, measured directly from the
+#'     unstained population's own negative tail rather than mirrored from
+#'     \code{thresholds} about zero. \code{NA} for every fluorophore when
+#'     \code{use.unmixed = FALSE}.}
 #'   \item{\code{variants}}{Named list of variant-spectra matrices, one per
 #'     fluorophore. Each matrix has variants in rows and detectors in columns.}
 #'   \item{\code{delta.list}}{Named list of delta matrices (variant minus
@@ -594,10 +600,22 @@ get.spectral.variants <- function(
         stats::quantile( col, 0.995 )
     )
 
+    # Measured directly from the unstained population's own negative tail,
+    # rather than mirrored from `unmixed.thresholds` about zero. AF is
+    # non-negative, so it stretches the positive tail of an unstained control
+    # without stretching the negative tail correspondingly -- the mirrored
+    # assumption is systematically too loose for the negative boundary.
+    neg.thresholds <- apply(
+      unstained.unmixed[ , fluorophores, drop = FALSE ], 2, function( col )
+        stats::quantile( col, 0.005 )
+    )
+
   } else {
 
     unstained.unmixed  <- NULL
     unmixed.thresholds <- stats::setNames(
+      rep( NA_real_, length( fluorophores ) ), fluorophores )
+    neg.thresholds <- stats::setNames(
       rep( NA_real_, length( fluorophores ) ), fluorophores )
 
   }
@@ -869,7 +887,8 @@ get.spectral.variants <- function(
     message( paste0( "\033[34m", "Spectral variation computed!", "\033[0m" ) )
 
   variants <- list(
-    thresholds  = unmixed.thresholds,
+    thresholds     = unmixed.thresholds,
+    neg.thresholds = neg.thresholds,
     variants    = spectral.variants,
     delta.list  = delta.list,
     delta.norms = delta.norms,
