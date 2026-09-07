@@ -168,39 +168,26 @@ unmix.autospectral <- function(
   )
   colnames( unmixed ) <- c( fluors.af, "AF Index" )
 
-  fitted.af <- matrix(
-    0,
-    nrow = nrow( raw.data ),
-    ncol = ncol( spectra )
-  )
-
   # add AF assignments
   unmixed[ , "AF Index" ] <- af.assignments
 
-  # perform initial unmixing using these AF assignments
-  for ( af in seq_len( af.n ) ) {
-    # set this AF as the spectrum to use
-    combined.spectra[ af.idx.in.spectra, ] <- af.spectra[ af, ]
+  # perform initial unmixing using these AF assignments. Each cell carries its
+  # own AF spectrum, which naively means a separate design matrix per cell.
+  # Frisch-Waugh avoids that: the part of each AF spectrum that the panel
+  # cannot explain is precomputed once, so the per-cell AF abundance and the
+  # AF-corrected fluorophore abundances follow from two matrix products.
+  af.fit <- unmix.af.fwl(
+    raw.data         = raw.data,
+    spectra          = spectra,
+    af.spectra       = af.spectra,
+    af.index         = af.assignments,
+    return.fitted.af = !af.only
+  )
 
-    # get the cells using this AF
-    cell.idx <- which( af.assignments == af )
+  unmixed[ , fluorophores ] <- af.fit$fluorophores
+  unmixed[ , "AF" ]         <- af.fit$af
 
-    if ( length( cell.idx ) > 0 ) {
-      # unmix with this AF
-      unmixed.af <- unmix.ols.fast(
-        raw.data[ cell.idx, , drop = FALSE ],
-        combined.spectra
-      )
-      # update the raw autofluorescence fit if performing fluorophore optimization
-      if ( !af.only ) {
-        fitted.af[ cell.idx, ] <- unmixed.af[ , "AF", drop = FALSE ] %*%
-          af.spectra[ af, , drop = FALSE ]
-      }
-
-      # store unmixed data
-      unmixed[ cell.idx, fluors.af ] <- unmixed.af
-    }
-  }
+  if ( !af.only ) fitted.af <- af.fit$fitted.af
 
   # if we don't have spectral variants, stop here
   if ( is.null( spectra.variants ) ) return( unmixed )

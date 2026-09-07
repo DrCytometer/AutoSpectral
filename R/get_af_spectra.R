@@ -395,23 +395,20 @@ get.af.spectra <- function(
     combined.spectra <- matrix( NA_real_, nrow = nrow( spectra ) + 1, ncol = ncol( spectra ) )
     combined.spectra[ fluor.idx, ] <- spectra
 
-    for ( af in seq_len( nrow( af.spectra ) ) ) {
-      combined.spectra[ 1, ] <- af.spectra[ af, ]
-      cell.idx <- which( af.assignments == af )
+    af.fit <- unmix.af.fwl(
+      raw.data         = unstained.exprs,
+      spectra          = spectra,
+      af.spectra       = af.spectra,
+      af.index         = af.assignments,
+      unmixed.no.af    = unmixed.no.af,
+      return.fitted.af = TRUE
+    )
 
-      if ( length( cell.idx ) > 0 ) {
-        unmixed[ cell.idx, ] <- unmix.ols.fast(
-          unstained.exprs[ cell.idx, , drop = FALSE ],
-          combined.spectra
-        )
-        residuals[ cell.idx, ] <-
-          unstained.exprs[ cell.idx, , drop = FALSE ] -
-          ( unmixed[ cell.idx, , drop = FALSE ] %*% combined.spectra )
-        proj.fluor[ cell.idx, ] <-
-          unmixed[ cell.idx, fluor.idx, drop = FALSE ] %*%
-          combined.spectra[ fluor.idx, , drop = FALSE ]
-      }
-    }
+    unmixed[ , 1 ]          <- af.fit$af
+    unmixed[ , fluor.idx ]  <- af.fit$fluorophores
+
+    proj.fluor <- af.fit$fluorophores %*% spectra
+    residuals  <- unstained.exprs - proj.fluor - af.fit$fitted.af
 
     # detector-space error = fluorophore projection + raw residuals
     error <- residuals + proj.fluor
@@ -585,18 +582,16 @@ get.af.spectra <- function(
             af.spectra = af.spectra
           )
 
-          unmixed.second <- unmixed
+          af.fit.second <- unmix.af.fwl(
+            raw.data   = unstained.exprs,
+            spectra    = spectra,
+            af.spectra = af.spectra,
+            af.index   = af.assignments.second
+          )
 
-          for ( af in seq_len( nrow( af.spectra ) ) ) {
-            combined.spectra[ 1, ] <- af.spectra[ af, ]
-            cell.idx <- which( af.assignments.second == af )
-            if ( length( cell.idx ) > 0 ) {
-              unmixed.second[ cell.idx, ] <- unmix.ols.fast(
-                unstained.exprs[ cell.idx, , drop = FALSE ],
-                combined.spectra
-              )
-            }
-          }
+          unmixed.second <- unmixed
+          unmixed.second[ , 1 ]         <- af.fit.second$af
+          unmixed.second[ , fluor.idx ] <- af.fit.second$fluorophores
         }
 
         if ( ncol( unmixed.no.af ) > 1 ) {

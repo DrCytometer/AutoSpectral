@@ -364,11 +364,17 @@ unmix.gls <- function(
                    dimnames = list( NULL, c( rownames( spectra ),
                                              if ( use.af ) "AF" ) ) )
 
-  for ( g in unique( group ) ) {
-    idx <- which( group == g )
-    S.g <- if ( use.af )
-      rbind( spectra, AF = af.spectra[ g, ] ) else spectra
-    x.mat[ idx, ] <- unmix.ols.fast( raw.data[ idx, , drop = FALSE ], S.g )
+  if ( use.af ) {
+    af.fit <- unmix.af.fwl(
+      raw.data   = raw.data,
+      spectra    = spectra,
+      af.spectra = af.spectra,
+      af.index   = group
+    )
+    x.mat[ , seq_len( fluor.n ) ] <- af.fit$fluorophores
+    x.mat[ , fluor.n + 1L ]       <- af.fit$af
+  } else {
+    x.mat[ ] <- unmix.ols.fast( raw.data, spectra )
   }
 
   se.mat <- if ( return.variance )

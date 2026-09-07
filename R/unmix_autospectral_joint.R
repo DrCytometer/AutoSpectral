@@ -84,8 +84,8 @@
 #'   AF component) and `"AF Index"` (1-based index into `af.spectra` of the
 #'   selected AF spectrum).
 #'
-#' @seealso [unmix.autospectral()], [unmix.autospectral.rcpp()],
-#'   [get.spectral.variants()], [create.parallel.lapply()]
+#' @seealso [unmix.autospectral()], [get.spectral.variants()],
+#'   [create.parallel.lapply()]
 #'
 #' @export
 
@@ -105,6 +105,7 @@ unmix.autospectral.joint <- function(
     joint.pair.resolution = TRUE,
     n.af.passes           = 1L,
     refine.af.quantile    = 0.5,
+    exact.variant.scan    = FALSE,
     verbose               = TRUE
 ) {
 
@@ -176,13 +177,23 @@ unmix.autospectral.joint <- function(
   P.w       <- solve( spectra.w %*% t( spectra.w ), spectra.w )
   P         <- sweep( P.w, 2, sqrt.w.global, `*` )
 
+  # Unweighted inverse Gram. Its f-th diagonal entry is 1 / ||M_f s_f||^2, with
+  # M_f the projector orthogonal to the other F-1 endmembers.
+  SS.inv <- solve( spectra %*% t( spectra ) )
+
+  # The exact swap solution is derived in the unweighted inner product, so
+  # per-cell detector weighting falls back to the incremental residual scan.
+  use.exact <- isTRUE( exact.variant.scan ) && !cell.weight
+
   # AF helpers, mirroring the C++ weighted/unweighted split exactly.
   v_lib_af      <- P %*% t( af.spectra )                             # F x nAF
   r_lib_af      <- t( af.spectra ) - t( spectra ) %*% v_lib_af       # D x nAF
-  r_dots_af     <- colSums( ( r_lib_af^2 ) * w.global )                      # nAF, weighted
-  r_dots_af     <- pmax( r_dots_af, 0.01 * max( r_dots_af, 1e-10 ) )
-  r_lib_af_w2   <- sweep( r_lib_af, 1, w.global^2, `*` )             # D x nAF
-  r_dots_af_raw <- colSums( r_lib_af^2 )                              # nAF, unweighted
+  r_lib_af_w    <- sweep( r_lib_af, 1, w.global, `*` )               # D x nAF
+  # True weighted self-dot, kept before the identifiability floor: the floor
+  # belongs in the abundance denominator only, while the rank-1 residual-norm
+  # update needs the unmodified value.
+  r_dots_af_w   <- colSums( r_lib_af * r_lib_af_w )                  # nAF, weighted
+  r_dots_af     <- pmax( r_dots_af_w, 0.01 * max( r_dots_af_w, 1e-10 ) )
 
   # Covariance-propagated AF endmember weights.
   af.cov.mat <- P %*% stats::cov( af.spectra ) %*% t( P )
@@ -194,17 +205,29 @@ unmix.autospectral.joint <- function(
   # AF pass and any refinement passes. Mirrors the `score_af` lambda in the
   # C++ pipeline exactly, including the rank-1 residual-norm update trick.
   score.af <- function( active.raw ) {
-    init.f          <- as.numeric( P %*% active.raw )
-    base.resid.af   <- active.raw - as.numeric( t( spectra ) %*% init.f )
-    base.resid.sq   <- max( sum( base.resid.af^2 ), 1e-16 )
+    init.f        <- as.numeric( P %*% active.raw )
+    base.resid.af <- active.raw - as.numeric( t( spectra ) %*% init.f )
+
+    # All residual terms are taken in the same weighted inner product as the
+    # abundance, so presid.af measures the residual the abundance minimises.
+    if ( cell.weight ) {
+      resid.w.af <- base.resid.af * w.global
+      k.af.vec   <- pmax( as.numeric( t( r_lib_af_w ) %*% active.raw ), 0 ) / r_dots_af
+      cross.af   <- as.numeric( t( r_lib_af ) %*% resid.w.af )
+    } else {
+      # r_j lies in the orthogonal complement of the panel span, so
+      # <r_j, Pperp y> == <r_j, y>: one product serves both terms.
+      cross.af   <- as.numeric( t( r_lib_af ) %*% active.raw )
+      k.af.vec   <- pmax( cross.af, 0 ) / r_dots_af
+      resid.w.af <- base.resid.af
+    }
+
+    base.resid.sq   <- max( sum( resid.w.af * base.resid.af ), 1e-16 )
     base.resid.norm <- sqrt( base.resid.sq )
     base.fluor.l1   <- max( sum( w_af * abs( init.f ) ), 1e-8 )
 
-    k.af.vec <- pmax( as.numeric( t( r_lib_af_w2 ) %*% active.raw ), 0 ) / r_dots_af
-
-    cross.af    <- as.numeric( t( r_lib_af ) %*% base.resid.af )
     resid.sq.af <- base.resid.sq - 2 * ( k.af.vec * cross.af ) +
-                   ( k.af.vec^2 * r_dots_af_raw )
+      ( k.af.vec^2 * r_dots_af_w )
     presid.af   <- sqrt( pmax( resid.sq.af, 0 ) ) / base.resid.norm
 
     diffs.af  <- sweep( v_lib_af, 2, k.af.vec, `*` )
@@ -265,8 +288,19 @@ unmix.autospectral.joint <- function(
       r_lib_sq <- r_lib^2                                              # D x n_var
       r_dots   <- colSums( r_lib^2 )                                   # n_var, unweighted
 
+      # exact single-swap helpers: M delta = delta - S_nof^T (U_nof delta),
+      # and U_nof delta is already v_lib
+      master.idx <- which( fluorophores == fl )
+      c.ff       <- SS.inv[ master.idx, master.idx ]
+      u_f        <- as.numeric( U_nof %*% master.row )                 # F-1
+      g_lib      <- t( delta ) - t( S_nof ) %*% v_lib                  # D x n_var
+      q.var      <- 1 / max( c.ff, 1e-12 ) +
+        2 * as.numeric( master.row %*% g_lib ) +
+        colSums( g_lib^2 )
+      q.var      <- pmax( q.var, 1e-4 / max( c.ff, 1e-12 ) )
+
       precomp[[ fl ]] <- list(
-        master.idx = which( fluorophores == fl ),
+        master.idx = master.idx,
         other.fl   = other.fl,
         v.mats     = v.mats,
         n.var      = n.var,
@@ -275,6 +309,10 @@ unmix.autospectral.joint <- function(
         r_lib      = r_lib,
         r_lib_sq   = r_lib_sq,
         r_dots     = r_dots,
+        c.ff       = c.ff,
+        u_f        = u_f,
+        g_lib      = g_lib,
+        q.var      = q.var,
         pos.thresh = pos.thresholds[ fl ]
       )
       active.names <- c( active.names, fl )
@@ -332,11 +370,12 @@ unmix.autospectral.joint <- function(
   # cluster creation) produces identical results to a forked backend.
   worker.exports <- c(
     "spectra", "af.spectra", "F", "D", "nAF", "fluorophores",
-    "P", "v_lib_af", "r_lib_af", "r_lib_af_w2", "r_dots_af", "r_dots_af_raw", "w_af",
-    "score.af",
+    "P", "v_lib_af", "r_lib_af", "r_lib_af_w", "r_dots_af", "r_dots_af_w", "w_af",
+    "w.global", "score.af",
     "af.only", "precomp", "active.names", "is.collinear",
     "cell.weight", "sqrt.w.global", "noise.floor",
-    "n.passes", "alpha", "collinear.thresh", "joint.pair.resolution"
+    "n.passes", "alpha", "collinear.thresh", "joint.pair.resolution",
+    "use.exact"
   )
 
   result.setup <- create.parallel.lapply(
@@ -391,6 +430,12 @@ unmix.autospectral.joint <- function(
     best.v        <- stats::setNames( rep( -1L, length( active.names ) ), active.names )
     y.vec         <- cell.resid * sw
     rss.accepted  <- NULL   # (re)initialised at the top of every pass below
+
+    # base-panel coefficients and unconstrained RSS, from the normal equations
+    a.base <- fl.unm
+    R0     <- max( cell.resid.ss -
+                     sum( fl.unm * as.numeric( cell.S.w %*% ( cell.resid * sw ) ) ),
+                   1e-12 )
 
     # ---------------------------------------------------------------------
     # try.commit: verifies a single candidate swap by re-solving the F x F
@@ -459,51 +504,87 @@ unmix.autospectral.joint <- function(
         base.leak <- max( sum( pc$w.leakage * abs( other.unm ) ), 1e-8 )
         cur.v     <- best.v[ fl ]
 
-        if ( cell.weight ) {
-          if ( !q.ready[ fl ] ) {
-            q.by.active[[ fl ]] <- as.numeric( t( pc$r_lib_sq ) %*% w.eff )
-            q.ready[ fl ]       <- TRUE
+        if ( use.exact ) {
+          # Exact single-swap solution: with M orthogonal to the other F-1
+          # endmembers, everything they explain is fixed, so the swap reduces
+          # to a one-dimensional fit with a closed-form coefficient and RSS.
+          # Ratios are taken against the base panel because the form is
+          # absolute, not incremental.
+          ms.y    <- a.base[ pc$master.idx ] / pc$c.ff
+          R0.f    <- R0 + a.base[ pc$master.idx ] * ms.y
+          R0.sqrt <- sqrt( R0 )
+          R0.gate <- 1.1025 * R0
+
+          cross.v <- as.numeric( t( pc$g_lib ) %*% cell.resid )
+          c.vec   <- a.base[ -pc$master.idx ] + a.base[ pc$master.idx ] * pc$u_f
+
+          for ( v in seq_len( pc$n.var ) ) {
+            num.v   <- ms.y + cross.v[ v ]
+            new.rss <- R0.f - num.v * num.v / pc$q.var[ v ]
+            if ( new.rss > R0.gate ) next
+
+            a.f.v    <- num.v / pc$q.var[ v ]
+            leak.num <- sum( pc$w.leakage *
+                               abs( c.vec - a.f.v * ( pc$u_f + pc$v_lib[ , v ] ) ) )
+
+            leakage.ratio <- leak.num / base.leak
+            resid.ratio   <- sqrt( max( new.rss, 0 ) ) / R0.sqrt
+
+            joint.score <- max( resid.ratio,   1e-8 )^alpha *
+              max( leakage.ratio, 1e-8 )^( 1 - alpha )
+
+            if ( joint.score < 1.0 )
+              candidates[[ length( candidates ) + 1L ]] <- list(
+                score = joint.score, fl = fl, v = v
+              )
           }
-          q.ref <- q.by.active[[ fl ]]
         } else {
-          q.ref <- pc$r_dots
-        }
-
-        cross.v <- as.numeric( t( pc$r_lib ) %*% rsw )
-        if ( cur.v < 0L ) {
-          drsq.v <- q.ref
-        } else {
-          g.cur   <- if ( cell.weight )
-            as.numeric( t( pc$r_lib ) %*% ( pc$r_lib[ , cur.v ] * w.eff ) )
-          else
-            as.numeric( t( pc$r_lib ) %*% pc$r_lib[ , cur.v ] )
-          drsq.v  <- q.ref + q.ref[ cur.v ] - 2 * g.cur
-          cross.v <- cross.v - cross.v[ cur.v ]
-        }
-
-        abund2 <- abund * abund
-
-        for ( v in seq_len( pc$n.var ) ) {
-          new.rss <- rss.curr - 2 * abund * cross.v[ v ] + abund2 * drsq.v[ v ]
-          if ( new.rss > ratio.thresh.sq ) next   # fast reject: resid_ratio > 1.05
-
-          vl <- pc$v_lib[ , v ]
-          if ( cur.v < 0L ) {
-            leak.num <- sum( pc$w.leakage * abs( other.unm - abund * vl ) )
+          if ( cell.weight ) {
+            if ( !q.ready[ fl ] ) {
+              q.by.active[[ fl ]] <- as.numeric( t( pc$r_lib_sq ) %*% w.eff )
+              q.ready[ fl ]       <- TRUE
+            }
+            q.ref <- q.by.active[[ fl ]]
           } else {
-            vlc      <- pc$v_lib[ , cur.v ]
-            leak.num <- sum( pc$w.leakage * abs( other.unm - abund * ( vl - vlc ) ) )
+            q.ref <- pc$r_dots
           }
-          leakage.ratio <- leak.num / base.leak
-          resid.ratio   <- sqrt( max( new.rss, 0 ) ) / rss.curr.sqrt
 
-          joint.score <- max( resid.ratio,   1e-8 )^alpha *
-                         max( leakage.ratio, 1e-8 )^( 1 - alpha )
+          cross.v <- as.numeric( t( pc$r_lib ) %*% rsw )
+          if ( cur.v < 0L ) {
+            drsq.v <- q.ref
+          } else {
+            g.cur   <- if ( cell.weight )
+              as.numeric( t( pc$r_lib ) %*% ( pc$r_lib[ , cur.v ] * w.eff ) )
+            else
+              as.numeric( t( pc$r_lib ) %*% pc$r_lib[ , cur.v ] )
+            drsq.v  <- q.ref + q.ref[ cur.v ] - 2 * g.cur
+            cross.v <- cross.v - cross.v[ cur.v ]
+          }
 
-          if ( joint.score < 1.0 )
-            candidates[[ length( candidates ) + 1L ]] <- list(
-              score = joint.score, fl = fl, v = v
-            )
+          abund2 <- abund * abund
+
+          for ( v in seq_len( pc$n.var ) ) {
+            new.rss <- rss.curr - 2 * abund * cross.v[ v ] + abund2 * drsq.v[ v ]
+            if ( new.rss > ratio.thresh.sq ) next   # fast reject: resid_ratio > 1.05
+
+            vl <- pc$v_lib[ , v ]
+            if ( cur.v < 0L ) {
+              leak.num <- sum( pc$w.leakage * abs( other.unm - abund * vl ) )
+            } else {
+              vlc      <- pc$v_lib[ , cur.v ]
+              leak.num <- sum( pc$w.leakage * abs( other.unm - abund * ( vl - vlc ) ) )
+            }
+            leakage.ratio <- leak.num / base.leak
+            resid.ratio   <- sqrt( max( new.rss, 0 ) ) / rss.curr.sqrt
+
+            joint.score <- max( resid.ratio,   1e-8 )^alpha *
+              max( leakage.ratio, 1e-8 )^( 1 - alpha )
+
+            if ( joint.score < 1.0 )
+              candidates[[ length( candidates ) + 1L ]] <- list(
+                score = joint.score, fl = fl, v = v
+              )
+          }
         }
       }
 

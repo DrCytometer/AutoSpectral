@@ -7,3 +7,4 @@
 ^vignettes/articles$
 ^\.positai$
 ^\.claude$
+^dev$
