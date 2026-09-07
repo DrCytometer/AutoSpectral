@@ -35,6 +35,7 @@
 #'   actually consumed elsewhere in AutoSpectral (`map$codes`).
 #'
 #' @keywords internal
+#' @export
 
 get.som.codes <- function(
     data,

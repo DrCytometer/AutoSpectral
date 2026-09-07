@@ -20,6 +20,7 @@ unmix.autospectral.joint(
   joint.pair.resolution = TRUE,
   n.af.passes = 1L,
   refine.af.quantile = 0.5,
+  exact.variant.scan = FALSE,
   verbose = TRUE
 )
 }
@@ -123,6 +124,6 @@ and reverted if it does not improve it.
 }
 }
 \seealso{
-\code{\link[=unmix.autospectral]{unmix.autospectral()}}, \code{\link[AutoSpectralRcpp:unmix.autospectral.rcpp]{unmix.autospectral.rcpp()}},
-\code{\link[=get.spectral.variants]{get.spectral.variants()}}, \code{\link[=create.parallel.lapply]{create.parallel.lapply()}}
+\code{\link[=unmix.autospectral]{unmix.autospectral()}}, \code{\link[=get.spectral.variants]{get.spectral.variants()}},
+\code{\link[=create.parallel.lapply]{create.parallel.lapply()}}
 }

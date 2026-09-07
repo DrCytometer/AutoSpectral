@@ -41,6 +41,8 @@ utils::globalVariables(
      "n",
      "Gate",
      "subgroup",
-     ".data"
+     ".data",
+     ".color.group",
+     "folder"
   )
 )
