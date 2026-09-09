@@ -6,6 +6,7 @@
 \usage{
 build.variant.basis(
   spectra.variants,
+  spectra = NULL,
   rank = 6L,
   var.explained = 0.99,
   min.lambda = 1e-04,
@@ -18,8 +19,13 @@ build.variant.basis(
 \code{get.spectral.variants()} (containing \verb{$delta.list}), or a named list of
 delta matrices (variants x detectors).}
 
+\item{spectra}{Optional numeric matrix (fluorophores x detectors), the
+panel reference spectra. When supplied, variant deltas are projected
+onto the orthogonal complement of the panel span before fitting, so
+the basis captures only panel-oblique variation. Default \code{NULL}.}
+
 \item{rank}{Integer, maximum number of components retained per
-fluorophore. Default \code{2}.}
+fluorophore. Default \code{6}.}
 
 \item{var.explained}{Numeric in (0, 1]. Components are dropped once this
 fraction of the delta variance is captured. Default \code{0.99}.}
@@ -49,4 +55,13 @@ The \emph{mean} delta is returned separately rather than folded into the
 covariance: a systematic offset from the reference spectrum is a
 correction to \code{spectra}, not a source of variance, and treating it as
 variance both inflates the noise model and leaves the bias uncorrected.
+
+When \code{spectra} is supplied, the centred deltas are projected onto the
+orthogonal complement of the panel span before the SVD. Only the
+panel-oblique component of spectral variation is visible to unmixing;
+the in-span component is collinear with the fluorophore columns, and
+carrying it in the covariance inflates the variance of the abundance
+estimates along exactly the spillover directions. Supplying \code{spectra}
+is strongly recommended whenever the basis will be used by
+\code{unmix.gls()}.
 }
