@@ -4,12 +4,15 @@
 \alias{match.markers}
 \title{Match Markers}
 \usage{
-match.markers(control.filenames, marker.database)
+match.markers(control.filenames, marker.database, verbose = TRUE)
 }
 \arguments{
 \item{control.filenames}{Vector of control filenames.}
 
 \item{marker.database}{Data frame containing marker information.}
+
+\item{verbose}{Logical. Whether to print progress messages. Default
+\code{TRUE}.}
 }
 \value{
 A named vector of matched markers for each control filename.

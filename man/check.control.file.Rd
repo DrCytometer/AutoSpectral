@@ -12,7 +12,8 @@ check.control.file(
   min.event.warning = 5000,
   min.event.error = 1000,
   legacy = FALSE,
-  allow.duplicate.controls = FALSE
+  allow.duplicate.controls = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -42,6 +43,9 @@ extraction pipeline using \code{get.spectra.automated()}. To use the version 1
 \item{allow.duplicate.controls}{Logical, default \code{FALSE}. Passed through to
 \code{validate.control.file()}. Set \code{TRUE} to permit multiple controls for the
 same fluorophore (diagnostic/QC use only).}
+
+\item{verbose}{Logical. Whether to print progress messages. Default
+\code{TRUE}.}
 }
 \value{
 A dataframe of errors and warnings intended to help the user fix

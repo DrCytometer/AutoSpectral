@@ -25,6 +25,8 @@
 #' @param allow.duplicate.controls Logical, default `FALSE`. Passed through to
 #' `validate.control.file()`. Set `TRUE` to permit multiple controls for the
 #' same fluorophore (diagnostic/QC use only).
+#' @param verbose Logical. Whether to print progress messages. Default
+#'   \code{TRUE}.
 #'
 #' @return A dataframe of errors and warnings intended to help the user fix
 #' problems with the `control.def.file`.
@@ -39,7 +41,8 @@ check.control.file <- function(
     min.event.warning = 5000,
     min.event.error = 1000,
     legacy = FALSE,
-    allow.duplicate.controls = FALSE
+    allow.duplicate.controls = FALSE,
+    verbose = TRUE
 ) {
 
   issues <- validate.control.file(

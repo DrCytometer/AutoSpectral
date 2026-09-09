@@ -9,12 +9,15 @@
 #'
 #' @param control.filenames Vector of control filenames.
 #' @param fluorophore.database Data frame containing fluorophore information.
+#' @param verbose Logical. Whether to print progress messages. Default
+#'   \code{TRUE}.
 #'
 #' @return A named vector of matched fluorophores for each control filename.
 #'
 #' @export
 
-match.fluorophores <- function( control.filenames, fluorophore.database ) {
+match.fluorophores <- function( control.filenames, fluorophore.database,
+                                verbose = TRUE ) {
 
   delim.start <- "(?<![A-Za-z0-9])"
   delim.end   <- "(?![A-Za-z0-9])"
@@ -64,22 +67,25 @@ match.fluorophores <- function( control.filenames, fluorophore.database ) {
         assigned <- if ( grepl( "cells", filename, ignore.case = TRUE ) ) "AF" else "Negative"
 
         fluorophore.matches[[ filename ]] <- assigned
-        message( sprintf(
-          "\033[36mUnstained sample assigned to %s: %s\033[0m", assigned, filename
-        ) )
-
+        if ( verbose ) {
+          message( sprintf(
+            "\033[36mUnstained sample assigned to %s: %s\033[0m", assigned, filename
+          ) )
+        }
       } else if ( grepl( "Negative", filename, ignore.case = TRUE ) ) {
 
         fluorophore.matches[[ filename ]] <- "Negative"
-        message( sprintf(
-          "\033[36mSample assigned to Negative: %s\033[0m", filename
-        ) )
-
+        if ( verbose ) {
+          message( sprintf(
+            "\033[36mSample assigned to Negative: %s\033[0m", filename
+          ) )
+        }
       } else {
 
         fluorophore.matches[[ filename ]] <- "No match"
-        message( sprintf( "\033[31mNo matching fluorophore for: %s\033[0m", filename ) )
-
+        if ( verbose ) {
+          message( sprintf( "\033[31mNo matching fluorophore for: %s\033[0m", filename ) )
+        }
       }
 
     } else {
@@ -88,10 +94,12 @@ match.fluorophores <- function( control.filenames, fluorophore.database ) {
       best <- all.matches[[ which.max( sapply( all.matches, `[[`, "nchar" ) ) ]]
 
       fluorophore.matches[[ filename ]] <- best$fluorophore
-      message( sprintf(
-        "\033[32mFluorophore match: %s -> %s in %s\033[0m",
-        best$matched.text, best$fluorophore, filename
-      ) )
+      if ( verbose ) {
+        message( sprintf(
+          "\033[32mFluorophore match: %s -> %s in %s\033[0m",
+          best$matched.text, best$fluorophore, filename
+        ) )
+      }
     }
   }
 

@@ -4,12 +4,15 @@
 \alias{match.fluorophores}
 \title{Match Fluorophores}
 \usage{
-match.fluorophores(control.filenames, fluorophore.database)
+match.fluorophores(control.filenames, fluorophore.database, verbose = TRUE)
 }
 \arguments{
 \item{control.filenames}{Vector of control filenames.}
 
 \item{fluorophore.database}{Data frame containing fluorophore information.}
+
+\item{verbose}{Logical. Whether to print progress messages. Default
+\code{TRUE}.}
 }
 \value{
 A named vector of matched fluorophores for each control filename.

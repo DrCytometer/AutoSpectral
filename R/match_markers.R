@@ -8,12 +8,14 @@
 #'
 #' @param control.filenames Vector of control filenames.
 #' @param marker.database Data frame containing marker information.
+#' @param verbose Logical. Whether to print progress messages. Default
+#'   \code{TRUE}.
 #'
 #' @return A named vector of matched markers for each control filename.
 #'
 #' @export
 
-match.markers <- function( control.filenames, marker.database ) {
+match.markers <- function( control.filenames, marker.database, verbose = TRUE ) {
 
   delim.start <- "(?<![A-Za-z0-9-])"
   delim.end   <- "(?![A-Za-z0-9-])"
@@ -58,7 +60,8 @@ match.markers <- function( control.filenames, marker.database ) {
       marker.matches[[filename]] <- ""
 
       if ( !grepl( "Unstained", filename, ignore.case = TRUE ) &&
-           !grepl( "Negative", filename, ignore.case = TRUE ) ) {
+           !grepl( "Negative", filename, ignore.case = TRUE )
+           & verbose ) {
         message( sprintf( "\033[31mNo matching marker for: %s\033[0m", filename ) )
       }
 
@@ -67,10 +70,12 @@ match.markers <- function( control.filenames, marker.database ) {
       best <- all.matches[[ which.max( sapply( all.matches, `[[`, "nchar" ) ) ]]
 
       marker.matches[[ filename ]] <- best$marker
-      message( sprintf(
-        "\033[32mMarker match: %s -> %s in %s\033[0m",
-        best$antigen, best$marker, filename
-      ) )
+      if ( verbose ) {
+        message( sprintf(
+          "\033[32mMarker match: %s -> %s in %s\033[0m",
+          best$antigen, best$marker, filename
+        ) )
+      }
     }
   }
 
