@@ -1,0 +1,612 @@
+# CONTEXT: additional information sources for the spillover phase
+ 
+Five candidate sources of information the spillover phase does not currently
+use, their mathematical basis, how each would be implemented, how each is being
+tested, and what the tests can and cannot settle. Written before the diagnostics
+have been run; every expectation below is a prediction, not a result.
+ 
+Companion documents: `CONTEXT_fix_my_unmix.md` (estimator and gate stack),
+`CONTEXT_fix_my_unmix_session_summary.md` (the self-censorship fix and the
+principles it established), `CONTEXT_signature_correction2.md` (the row-shape
+path and its identifiability ceiling), `CONTEXT_parameter_sweep_results.md`
+(current defaults and their evidence).
+ 
+Harness: `run_fix_my_unmix_diagnostics_A9.R`, Stages V, W, X, Y, Z, run after
+`run_fix_my_unmix_diagnostics_A8.R` in the same session.
+ 
+---
+ 
+## 1. Summary
+ 
+| # | Idea | Adds over current code | Priority |
+|---|---|---|---|
+| 1 | Hypernegativity and sign asymmetry | Yes, as a gate and a sign-dependent trust term | 3 |
+| 2 | Structural row completion from the error covariance | Yes; the only route to a pair the estimator refuses | 2 |
+| 3 | Spread as a variance; VIF as trust | Half. Spread yes, VIF no | 4 |
+| 4 | Secondary Stain Index | Not as an estimator; yes as a profile and a scoreboard | 5 |
+| 5 | Local topology: the shear and its mode trace | Yes, and it attacks the estimator's central limitation | 1 |
+ 
+Ideas 1, 2 and 5 all address the same failure. Section 2.1 of the session
+summary established that the six worst pairs came back at 1e-05 against an
+estimator noise floor of 1e-03 — **unfitted, not misfitted** — and that in each
+case the refused coefficient was the largest in its row (56% of PE's row mass on
+cells, 50% of Spark Blue 550's, 48% of PerCP-eFluor 710's). No refinement of a
+masked estimator reaches that class. Idea 5 removes the mask; idea 2 predicts
+the entry from the rest of the row; idea 1 detects it without fitting a slope at
+all.
+ 
+---
+ 
+## 2. Idea 5: local topology
+ 
+### 2.1 Mechanism
+ 
+An unmixing error maps
+ 
+```
+y  ->  y + m x
+```
+ 
+In linear coordinates this is a **shear**: a linear map of unit determinant, a
+straight-line displacement, not a curve. The boomerang a cytometrist recognises
+is what a shear looks like *through a biexponential axis* — near the origin the
+axis is linear so the displacement shows as an offset, and out in the log region
+the same absolute displacement compresses, so the population appears to bend
+back toward the axis.
+ 
+The consequence for implementation: **estimate in linear units, where the
+signature is a straight line; use asinh only for binning and density, where a
+flow population needs even occupancy across four decades.** A mode is not
+equivariant under a nonlinear transform, so an asinh-space peak may be used to
+choose a window but the location must be taken in linear units inside it.
+ 
+The discrimination against co-expression is a statement about the conditional
+distribution of target given source:
+ 
+```
+error          p( y | x ) = p0( y - m x )
+co-expression  p( y | x ) = ( 1 - pi(x) ) p0( y )  +  pi(x) q( y )
+```
+ 
+An error translates the **whole** conditional distribution rigidly: shape,
+spread, modes and mass all preserved, only location moved. Co-expression leaves
+the lowest mode exactly where it was and changes only the mixing weight. That is
+the L-or-T versus boomerang distinction, stated exactly.
+ 
+*In lay terms.* A wrong reference row shifts every cell that carries the source
+dye by the same amount for the same brightness, so the entire cloud slides. Real
+co-expression does not move the cells that lack the second marker at all; it
+adds a separate cloud beside them. So the question to ask of a population is not
+"where is its middle" but "has all of it moved, or has some of it split off".
+ 
+Two estimators follow.
+ 
+**Mode trace.** Bin the source-positive events by source abundance and track the
+location of the lowest well-supported mode of the target. Under a shear it moves
+with slope `m`; under co-expression it stays flat while mass drains upward. The
+intercept is unidentifiable without an unstained control — that is the dye's own
+baseline — but the intercept is not what is needed.
+ 
+**Within-cluster shear.** A shear is global; biology is local. Cluster in the
+full abundance space and fit
+ 
+```
+y_ic = alpha_c + m x_ic + e_ic
+```
+ 
+with cluster-specific intercepts. Between-cluster variation, where the biology
+lives, is absorbed by `alpha_c`; only within-cluster covariance identifies `m`.
+The per-cluster slopes must then *agree*, which is a falsification test that
+costs nothing, and because co-expression can only add, the minimum over clusters
+is the safe estimate.
+ 
+### 2.2 Merit
+ 
+The mode trace applies **no negativity mask at any point**. The masked
+estimator's leverage collapses as the coefficient grows, because the bright
+source events it needs are exactly the ones pushed across the target boundary
+and excluded; the mode trace gains leverage in the same limit, since brighter
+source means longer lever arm. The regime where the production estimator fails
+is the regime where this one is strongest. It also needs no threshold and no
+unstained control, which makes it deployable where the negativity machinery is
+not.
+ 
+The cluster form connects to the clustering approach originally taken in
+`correct_unmixing_signatures.R` and gives it a principled objective: not "fit
+residuals per cluster" but "one shear, many intercepts".
+ 
+### 2.3 Implementation
+ 
+Package-side, a new internal alongside `.fix.envelope.slope()`, returning
+`slope`, `se`, `coexpr.trend`, `curvature` and `n.bins.used`. It slots into the
+pair loop as a second estimator whose result is used when the masked estimator
+refuses the pair (`trust == 0`), or as the primary estimator if it wins
+outright. Clustering reuses `cluster.unmixed.events()`, computed once per call
+rather than per pair.
+ 
+### 2.4 Diagnostic: Stage Z
+ 
+Per pair: mode-trace slope, standard error, co-expression trend, curvature; and
+the within-cluster pooled slope, per-cluster median, floor and disagreement.
+Scored against `m.induced` overall, on the pairs the masked estimator fitted,
+and — the line that decides it — on `refused, real`: pairs with `trust == 0`
+whose true induced coefficient exceeds the panel median.
+ 
+### 2.5 Expected result
+ 
+- **Confirming:** median `|err|` on `refused, real` materially below the mask
+  arm's, which on those pairs is close to `|induced|` itself because the
+  estimate is zero. Anything above about a 40% reduction there is decisive.
+- **Stronger than expected:** the mode trace also beats the mask on `fitted`.
+  That makes it a replacement estimator rather than a rescue path, and the
+  masked estimator becomes the fallback.
+- **Refuting:** `err.mode` comparable to or worse than `err.mask` everywhere,
+  which would mean the per-bin mode is too noisy at coefficients of 0.002-0.003
+  — the same variance-dominates-bias verdict that retired the envelope
+  estimator. Watch `n.bins.used`: fewer than six usable bins on the pairs that
+  matter is a sample-size failure rather than a method failure, and
+  `fx9.z.min.bin` should be lowered before concluding anything.
+- **`m.spread` near zero** confirms the common-shear model holds on this
+  substrate. It is a weak test here (see section 8).
+---
+ 
+## 3. Idea 2: structural row completion
+ 
+### 3.1 Mechanism
+ 
+A row of residual spillover coefficients is not `F-1` free numbers. It is one
+spectral error read through the unmixing operator:
+ 
+```
+m_j = e_j W'
+```
+ 
+If the error is confined to the directions the dye actually varies in, spanned
+by its measured variant deltas `V_j`, then
+ 
+```
+m_j = c_j V_j W'  =  c_j B_j,        B_j = V_j W'   ( r x F )
+```
+ 
+so the row carries `r` free parameters, not `F-1`. Fit `c_j` on the pairs that
+are identifiable and evaluate `c_j B_j` on the pairs that are not. In Gaussian
+form, with `Sigma_j = W Sigma_e W'` and an observed / missing partition,
+ 
+```
+m_M = Sigma_MO ( Sigma_OO + R_OO )^-1 m_O
+```
+ 
+which reduces to the measurement where the measurement is good, and to the
+prior-implied conditional mean where it is absent.
+ 
+*In lay terms.* A dye cannot be wrong in arbitrary ways. A tandem loses transfer
+efficiency and slides along one axis; a peak that drops lifts everything else in
+compensation. So the sixteen coefficients in a row are not sixteen independent
+facts, they are two or three facts seen sixteen ways. Measure the ones visible
+and the rest follow.
+ 
+### 3.2 Merit, and the caveat against it
+ 
+`get.variant.leakage.prior()` already returns `covariance[[j]]`, the full
+F x F prior covariance of row *j*'s induced spillover. `fix.my.unmix()` reads
+only `prior$variance[source, channel]` — the diagonal. Every off-diagonal
+element, which is exactly the statement that an emission-ratio shift appears on
+every laser at once, is discarded.
+ 
+**The caveat.** Section 2.6 of `CONTEXT_signature_correction2.md` tested
+variant-subspace *projection* and rejected it: the true bead-versus-cell error
+is only 45-75% inside the variant span, and PE's recovery went 0.97
+unconstrained to 0.14 constrained. Three differences make this a different test:
+ 
+1. That fraction was measured in **detector space**. Only the panel-oblique
+   component reaches abundances, so the question that matters is what fraction
+   of the *induced spillover row* `B_j` reproduces. Stage V measures this.
+2. This is **completion**, not projection. Measured entries stay measured; only
+   unmeasured ones are predicted.
+3. The earlier rejection of the leakage prior as a gate
+   (`corr(|induced|, prior.sd)` 0.486) tested its **magnitudes**. Its
+   **directions** have never been tested.
+### 3.3 Implementation
+ 
+After the pair loop fills `marker.spillover` and `trust`, and before the update
+step, complete each row: fit `c_j` on the entries with `trust > 0`, fill the
+entries with `trust == 0` with predictions, and give them a reduced trust
+constant. The existing damping then propagates them. No restructuring of the
+update.
+ 
+Three guards are required, not optional:
+ 
+- **Null calibration.** Run the completion on the control the spectra came from,
+  where the answer is zero, and subtract whatever it predicts. Same mechanism
+  that is already the strongest single lever in the stack.
+- **Per-row licensing.** A row is completed only where leave-one-out on its
+  fitted pairs beats the direct estimate. The prior earns access dye by dye, on
+  this run's data.
+- **`prior.frac` in the log.** The share of a row's corrected mass that came
+  from predicted rather than measured entries, so every correction stays
+  auditable.
+### 3.4 Diagnostic: Stage V
+ 
+Four arms per dye: `oracle` (the ceiling — fit to the truth itself over all
+channels), `complete` (fit to the estimate over fitted pairs, predict the
+unfitted), `loo` (leave one fitted pair out and predict it), and `gauss` (the
+same completion through `get.variant.leakage.prior()`'s covariance). The ceiling
+is decomposed by tier: variants only, donor axis only, both, and a
+mismatched-parent control.
+ 
+### 3.5 Expected result
+ 
+- **`frac.oracle` above ~0.7 on the high-impact rows:** the structure is real
+  and worth carrying into production.
+- **Below ~0.4:** it is not, and neither completion arm can be trusted whatever
+  it scores. This is the go/no-go and it is checked before anything else.
+- **`mae.unfit.pred` below `mae.unfit.base` on a majority of rows:** completion
+  beats leaving unfitted pairs at zero, which is the current behaviour.
+- **`loo.mae.pred` below `loo.mae.base`:** prediction from the rest of the row
+  beats direct measurement even where measurement exists — a strong result and
+  the licence for per-row completion.
+- **`frac.donor` clearly above `frac.wrong`:** the tandem relationship carries
+  information rather than degrees of freedom. If a mismatched parent scores as
+  well, the axis is dropped and no database change is made.
+- Expect `gauss` and `complete` to disagree; they are two implementations of one
+  idea and the better-conditioned one wins. Do not average them.
+---
+ 
+## 4. Idea 1: hypernegativity and sign asymmetry
+ 
+### 4.1 Mechanism
+ 
+Write `y = m x + b(x) + e` with `b(x) >= 0` the co-expression contribution:
+biology can add target signal, never subtract it. Then any slope estimator
+returns
+ 
+```
+E[ m_hat ] = m + cov( x, b ) / var( x )   >=   m
+```
+ 
+An **upward** slope is an upper bound on the residual spillover and is
+confounded with real co-expression. A **downward** slope can only understate how
+negative `m` is, so it is unambiguous.
+ 
+*In lay terms.* If a population sinks below zero as another dye gets brighter,
+nothing biological explains it — no cell expresses less than nothing. If it
+rises, it could be an unmixing error or the two markers could genuinely be
+co-expressed. Downward evidence is cheaper to trust than upward evidence of the
+same size.
+ 
+### 4.2 Merit and caveat
+ 
+Every current gate is a function of `|slope|`: `max.coefficient`, `min.rise`,
+the trust weight. Nothing in the stack knows the asymmetry exists. `coverage` is
+the co-expression test but it acts only through the mask.
+ 
+**Caveat.** Truncating the target from above biases the slope downward, so a raw
+negative slope is not automatically real. The asymmetry must be applied to the
+**null-debiased** coefficient, and the hypernegativity count differenced against
+the null run — the same discipline as everywhere else in this stack.
+ 
+### 4.3 Implementation
+ 
+Two additions. A `hyper` statistic per pair: the excess frequency with which
+source-bright events fall below a low quantile of the unstained control in the
+target channel, relative to the source-negative bulk. And a sign-dependent trust
+term, applied after null debiasing, that discounts positive coefficients whose
+`coverage` is weak while leaving negative ones at full weight. `hyper` also acts
+as a rescue condition in the gate: a pair with high `hyper` is one a cytometrist
+would flag by eye and the estimator is refusing.
+ 
+### 4.4 Diagnostic: Stage W
+ 
+Per pair: `hyper`, its upper-tail mirror `hyper.high`, and the estimate and
+truth. Reported by sign of the truth, and against the set of damaging pairs the
+estimator leaves at zero.
+ 
+### 4.5 Expected result
+ 
+- **Median `|err|` materially lower where the truth is negative:** the asymmetry
+  is real and belongs in the trust weight.
+- **`hyper` separates the damaging-but-unfitted pairs from everything else:** it
+  belongs in the gate.
+- **`cor(hyper.high, induced)` weaker than `cor(hyper, induced)`:** the built-in
+  control. If the upper tail is the stronger predictor on this substrate, the
+  asymmetry argument does not hold here and the whole idea is suspect — though
+  note that single-stain concatenates have no co-expression, so the upper tail
+  is unusually clean here and this control is easier to pass than it will be in
+  production.
+---
+ 
+## 5. Idea 3: spread as a variance, VIF as trust
+ 
+### 5.1 Mechanism and the gap it exposes
+ 
+The target's negative population widens with every bright source spilling into
+it:
+ 
+```
+var( y | x ) = neg.var + sum_a SS[a, target] x_a
+```
+ 
+That is the same quantity `get.spread.thresholds()` uses to place the boundary.
+The binned envelope already weights bins by it. The **truncated estimator, which
+supplies the production coefficients, is unweighted** and returns no standard
+error, so the trust weight
+ 
+```
+w = prior.var / ( prior.var + se^2 )
+```
+ 
+is set by the *envelope's* standard error attached to a coefficient the envelope
+did not produce. Under `estimator = "truncated"`, which is the default and was
+confirmed twice as the better arm, the trust weight is being set by the arm that
+was rejected.
+ 
+### 5.2 Merit
+ 
+Spread as a **variance** is well founded and cheap. A calibrated per-coefficient
+error is also a prerequisite for idea 2, which needs it as the `R` matrix in the
+conditional expectation.
+ 
+Spread or VIF as a **trust multiplier** is not supported by the evidence.
+`vif.target` collapsed on its own once the censoring was fixed (PE 62.3 to 1.59
+on cells, PerCP-eFluor 710 40.3 to 2.67) without any change aimed at
+collinearity; `corr(err, hotspot)` is ~0.00; and the proposed direction is the
+opposite of the historical failure mode, in which large-spread pairs kept their
+bright events negative and survived while small-spread pairs were censored.
+ 
+### 5.3 Implementation
+ 
+Three package changes, the first two inert:
+ 
+1. `.fix.huber.slope()` returns `c(intercept, slope, se)`, the Huber-White error
+   under the final IRLS weights. Existing callers index `[2]` and are unaffected.
+2. `.fix.envelope.slope()` carries `se.truncated` separately from `se`, and
+   `fix.my.unmix()` logs it. No decision changes.
+3. **Held pending Stage X.** The trust weight uses the estimator-matched error.
+### 5.4 Diagnostic: Stage X
+ 
+Both arms fitted at the mask the converged estimate defines, so weighting is the
+only difference. Reports `rms`, `p90 |err|`, and the calibration
+`z = (m_hat - truth) / se`.
+ 
+### 5.5 Expected result
+ 
+Two independent questions.
+ 
+- **`rms` and `p90`** decide whether weighting improves the coefficient. Expect
+  a modest improvement concentrated on pairs with large spillover spread.
+- **`sd(z)`** decides whether the error is usable. Near 1 and it is honest, and
+  change 3 can be applied. **Expect it well above 1**, because a spillover
+  residual is dominated by structure a two-parameter line does not model; in
+  that case the error understates by a stable factor and the right change is
+  `se.use <- k * est$se.truncated` with `k` a constant fitted across substrates,
+  not a new user argument. Inconsistent between Cells and Beads means no
+  analytic error will work and the trust weight should be sourced from the null
+  run's own coefficient spread instead.
+The behavioural risk in change 3, stated plainly: the truncated error is
+computed over tens of thousands of events and will be one to two orders of
+magnitude smaller than the envelope's ten-point error, so a naive swap drives
+`w` to ~1 everywhere and removes the damping entirely. That may be correct — the
+trust weight has never been shown to earn its keep — but it is a substantive
+change to every coefficient in the panel wearing the costume of a bug fix, and
+it must not land in the middle of a second-dataset validation.
+ 
+---
+ 
+## 6. Idea 4: the Secondary Stain Index
+ 
+### 6.1 Mechanism
+ 
+CompensAID (Olsman et al., Cytometry A 109(2):124-134, 2026) computes the MFI
+and SD of the secondary channel for the negative and positive populations
+defined in the primary channel, then segments the positive population and scores
+each segment:
+ 
+```
+SSI_s = ( MFI_target(s) - MFI_target(neg) ) / ( 2 sd_target(neg) )
+      ~  m x_s / ( 2 sigma_neg )
+```
+ 
+which is the existing `min.rise` gate rescaled: `|m| span >= 1 sigma` is
+SSI ~ 0.5 across the span. **No new estimator.**
+ 
+### 6.2 Merit
+ 
+Two things are new. The **profile shape**: a single wrong reference row gives
+SSI proportional to abundance through the origin, so curvature means the correct
+row is abundance-dependent — the variant-mixture signature already confirmed for
+BV711 and PerCP-eFluor 710 in section 2.5 of the signature-correction document.
+That statistic says *stop trying to replace this row; emit it as a variant into
+the per-cell pipeline*. And a **ground-truth-free scoreboard**: an independent,
+published, expert-validated tool that can score a correction on a production
+sample, where panel impact cannot be computed. Given the manuscript revision, an
+independent tool agreeing is worth having.
+ 
+Its documented weaknesses — false positives from suboptimal gating and from low
+event counts within segments — are both things the spread-scaled boundaries and
+`min.bin.negative` already handle better, so equal-count segments are used here
+rather than equal-width.
+ 
+### 6.3 Diagnostic: Stage Y
+ 
+`ssi.max`, `ssi.slope` and `ssi.nonlinear` per pair, under three arms: the
+starting spectra, Stage R's corrected spectra, and the true spectra.
+ 
+### 6.4 Expected result
+ 
+The `truth` arm is the floor: whatever it flags is what the metric flags on
+correctly unmixed data, so only the excess counts as a detection. **`after` near
+`truth`** means the correction is measurable without ground truth and the count
+transfers to production. **High `ssi.nonlinear` on a row that will not correct**
+is the variant-mixture verdict, and should agree with Stage Z's `curvature`; if
+the two disagree, one of the two implementations is wrong, since they measure
+the same departure from linearity by different routes.
+ 
+---
+ 
+## 7. Priors and the data-driven question
+ 
+Three things get called "prior" and they are not equally external.
+ 
+**Tier 1, the tandem parent axis.** Where the parent is in the panel (PerCP for
+PerCP-eFluor 710), the axis `s_donor - s_tandem` is built from two rows measured
+on this instrument, this day, from these controls. The database contributes no
+number — it contributes one bit of topology: *these two rows are chemically
+related, look along the line between them first*. That is a prior on the search
+order, not on the data.
+ 
+**Tier 2, cross-substrate and cross-conjugate covariance.** External numbers
+describing directions. This is the stronger of the two ideas raised, because the
+variants are measured on controls while the error being corrected is a
+control-versus-sample difference — which is precisely why `span.fraction`'s
+ridge exists. A library of bead-versus-cell deltas measures the class of error
+being corrected rather than a proxy for it. The existing paired bead/cell set is
+already one observation of it.
+ 
+**Tier 3, pre-assessed instability vectors.** Instrument-, gain-, lot- and
+configuration-specific in ways that do not announce themselves, and largely
+duplicating what the local variant family measures when the controls are
+adequate. Defer.
+ 
+### 7.1 The invariance that keeps this honest
+ 
+> The prior supplies the **subspace**. The data supplies the **coordinates**.
+ 
+`m_j = c_j B_j`: `B_j` comes from the prior, `c_j` is fitted every time to this
+sample. A prior can then fail in only two ways — **incomplete**, omitting a
+direction the error has, which under-corrects, or **over-complete**, adding
+directions the error lacks, which adds variance. Neither injects a value. This
+is why tier 3 is acceptable as "this dye typically moves along direction v" and
+not as "this dye's error is typically 0.03 along v".
+ 
+The one place a prior *does* inject a number is completing an unfitted pair,
+which is what the three guards in section 3.3 exist for.
+ 
+### 7.2 Tier hierarchy
+ 
+Concatenate directions; never average numbers. Per-tier rank cap, automatic
+demotion.
+ 
+```
+Tier 0  local variant deltas          this run, this instrument
+Tier 1  tandem parent axis            topology from database, spectra from this run
+Tier 2  curated cross-substrate deltas same instrument family, versioned
+Tier 3  panel-median fallback         already implemented
+```
+ 
+A dye with good local variants effectively ignores tiers 1-2, because they add
+nothing orthogonal to what it already has.
+ 
+For tier 2, a transferability check is required so a stale library cannot do
+harm silently: principal angles between the library subspace and the locally
+measured variant subspace. Where the library subspace does not contain the local
+one, it is describing a different instrument state and is refused for that dye.
+ 
+### 7.3 Database schema, conditional on Stage V
+ 
+`class` already distinguishes `Protein tandem` and `SIRIGEN tandem`, so half the
+topology is present. Two columns, and no more:
+ 
+- `tandem.donor` — a name matching a `fluorophore` row (`PerCP-eFluor 710` ->
+  `PerCP`, `APC-Cy7` -> `APC`, `PE-Cy7` -> `PE`).
+- `tandem.donor.exact` — logical. `TRUE` for protein tandems, where the donor is
+  literally that molecule; `FALSE` for polymer tandems, where BV421 is a proxy
+  for a donor emitting near 421 nm. An approximate axis should enter at lower
+  weight.
+No numeric instability values in this file. It is a lookup table of facts; the
+moment it carries fitted magnitudes it becomes a parameter set that rots.
+ 
+---
+ 
+## 8. What these diagnostics cannot settle
+ 
+The benchmark is paired bead and cell **single-stained concatenates**. That
+substrate has no co-expression at all, so `pi(x)` is zero everywhere and an
+entire half of the reasoning above is untestable on it.
+ 
+**Untestable until a fully stained sample with a same-day unstained control:**
+ 
+1. **The shear-versus-mixture discriminator.** `coexpr.trend` and the
+   bimodality of `p(y|x)` will compute cleanly and mean nothing, because there
+   is no second mode to detect. Whether they separate a genuine double-positive
+   from an unmixing error is the central claim of idea 5 and cannot be checked
+   here.
+2. **The within-cluster shear as a co-expression control.** Source-positive
+   events in a concatenate are essentially one dye's own population, so the
+   cross-cluster agreement test is barely exercised. `m.spread` near zero here
+   confirms only that the arithmetic works.
+3. **`coverage` as the identifiability gate.** It has never fired on real data,
+   and it cannot fire on this substrate. Carried forward from
+   `CONTEXT_fix_my_unmix.md` section 6, item 6, unchanged.
+4. **The sign asymmetry under real biology.** `b(x) >= 0` is the whole argument
+   for idea 1, and `b(x)` is identically zero here. Stage W measures whether the
+   estimator is more accurate on negative-truth pairs, which is a weaker claim
+   than the one the production gate would rest on.
+5. **Whether structural completion survives co-expression.** The predicted
+   coefficients in idea 2 are fitted to observed pairs whose slopes will be
+   biased upward in a real sample. A prior fitted to biased observations
+   propagates that bias into the pairs it predicts, at full confidence. This is
+   the largest single risk in the proposal and there is no way to see it here.
+6. **Dominance under genuine co-expression.** Already flagged as item 2 of
+   section 7 in `CONTEXT_signature_correction2.md`; on concatenates co-activity
+   is mostly spillover, on real samples it is biology, and the nuisance
+   machinery has never been exercised against that.
+7. **The SSI scoreboard's production claim.** Stage Y can show `after` near
+   `truth` here. Whether that relation holds on a sample where `truth` is
+   unavailable is the assumption the scoreboard rests on and it cannot be
+   verified on data that has a truth arm.
+8. **AF-heavy behaviour.** Neither PBMC nor bead data exercises the background
+   machinery; `bg.mode = "af.deconv"` and the AF-coupling freeze are effectively
+   untested for the regime they were built for.
+9. **Tandems whose parent is not in the panel.** Tier 1's cheapness depends on
+   the donor being a measured row. Where it is not, tier 1 becomes tier 2 and
+   inherits tier 2's transferability problem.
+**Also outstanding, and not a substrate limitation:** everything here is one
+Aurora panel plus the A8 run. The parameters at risk of overfitting remain
+`fx.impact.ratio`, `fx.step.decay`, `min.bin.events` and `max.mask.passes`, and
+any new constant introduced by these five ideas joins that list.
+ 
+---
+ 
+## 9. Defects found while preparing this
+ 
+1. **Stage C compares the wrong quantity.** `.fx.estimate.spillover()` saves
+   `final.log` at the iteration with the *smallest residual*, where `m.best` is
+   the accumulated matrix and the logged `slope.truncated` values are the small
+   residual on top of it. Stage C puts those residuals in `estimate` and
+   differences them against the *total* `induced`. Stage T does it correctly,
+   using `spillover.final`. Consequence: Stage C's `err` column and its
+   "recovered fraction" understate, and its "worst eight pairs" ranks on the
+   wrong statistic. Patched.
+2. **The trust weight uses the wrong estimator's standard error.** Section 5.1
+   above. `se.truncated` added; the swap held pending Stage X.
+3. **A8's Stage C prune drops what the new stages need.** `spillover` and `log`
+   are not recoverable without re-running the estimator; the unstained
+   abundances are cheap to rebuild and A9 does so rather than asking A8 to carry
+   them.
+---
+ 
+## 10. Change order
+ 
+1. A8 Stage C: compare `ph$spillover` against `induced`, keep the residual
+   slopes in a separate column, and retain `spillover` and `log` through the
+   prune.
+2. `fix_my_unmix.R`: `.fix.huber.slope()` returns `se`;
+   `.fix.envelope.slope()` returns `se.truncated`; `fix.my.unmix()` logs it.
+   Inert — no decision changes.
+3. Run A8, then `run_fix_my_unmix_diagnostics_A9.R`.
+4. Conditional on Stage X's `sd(z)`: the trust weight takes the
+   estimator-matched error, with an inflation constant if one is needed.
+5. Conditional on Stage V's `frac.oracle` and `frac.donor` versus `frac.wrong`:
+   `tandem.donor` and `tandem.donor.exact` columns in
+   `fluorophore_database.csv`, and row completion after the pair loop with the
+   three guards of section 3.3.
+6. Conditional on Stage Z's `refused, real` line: the mode-trace estimator as a
+   rescue path in the pair loop, or as the primary estimator if it also wins on
+   fitted pairs.
+7. Conditional on Stage W: the sign-dependent trust term and `hyper` as a gate
+   rescue condition.
+8. Stage Y's SSI count reported alongside the impact metric, as the
+   ground-truth-free scoreboard for the manuscript.
+Items 5-7 each need a re-run of the P2 parameter sweep before being treated as
+production defaults, since each introduces at least one constant and the sweep
+was one-at-a-time to begin with.
