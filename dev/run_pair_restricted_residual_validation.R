@@ -31,18 +31,12 @@
 #                         Defaults to a per-column quantile of the unmixed data.
 #
 # Run top to bottom.
-prv.raw.data <- lung.stained.data[,colnames(spectra)]
-prv.spectra.before <- spectra
-prv.spectra.after <- fixed.sig.lung.nods$spectra
-prv.af.name <- "AF"
-prv.background.basis <- fixed.sig.lung.nods$af.basis
-prv.thresholds <- fixed.sig.lung.nods$thresholds.final
 
 # ---------------------------------------------------------------------------
 # 0. Setup - EDIT THIS SECTION
 # ---------------------------------------------------------------------------
 
-prv.output.dir <- "./pair_restricted_residual_validation_before"
+prv.output.dir <- "./pair_restricted_residual_validation"
 
 # How many pairs to score, taken in descending order of cosine similarity
 # under the starting spectra. The whole panel is F(F-1)/2 pairs; the ones
@@ -56,7 +50,7 @@ prv.min.events <- 300L
 # so a before/after difference reflects only what happened to s_j and s_k.
 # "before" scores the panel as a whole and will mix in every other accepted
 # row change. Run both; they answer different questions.
-prv.a.from <- "before"
+prv.a.from <- "after"
 
 # Number of independent 50/50 event splits used to put an error bar on each
 # angle. The spread across splits is the noise floor a real improvement has
@@ -327,33 +321,14 @@ prv.result$identifiable <- with( prv.result,
 prv.result$delta.j <- prv.result$deg.j.after - prv.result$deg.j.before
 prv.result$delta.k <- prv.result$deg.k.after - prv.result$deg.k.before
 
-# Each member's own status against its own split-half noise floor, kept
-# separate so a pair where one row improves and the other worsens cannot be
-# collapsed into a single "improved" verdict.
-.prv.member.status <- function( delta, sd ) {
-  ifelse( !is.finite( delta ) | !is.finite( sd ), "unchanged",
-          ifelse( delta < -sd, "improved",
-                  ifelse( delta > sd, "worsened", "unchanged" ) ) )
-}
-
-prv.result$status.j <- ifelse( prv.result$identifiable,
-                               .prv.member.status( prv.result$delta.j, prv.result$deg.j.sd ),
-                               NA_character_ )
-prv.result$status.k <- ifelse( prv.result$identifiable,
-                               .prv.member.status( prv.result$delta.k, prv.result$deg.k.sd ),
-                               NA_character_ )
-
-prv.result$verdict <- ifelse( !prv.result$identifiable, "unidentifiable",
-                              ifelse(
-                                ( prv.result$status.j == "improved" & prv.result$status.k == "worsened" ) |
-                                  ( prv.result$status.j == "worsened" & prv.result$status.k == "improved" ),
-                                "mixed",
-                                ifelse(
-                                  prv.result$status.j == "improved" | prv.result$status.k == "improved",
-                                  "improved",
-                                  ifelse(
-                                    prv.result$status.j == "worsened" | prv.result$status.k == "worsened",
-                                    "worsened", "unchanged" ) ) ) )
+# Improvement is only claimed where it exceeds the split-half noise.
+prv.result$verdict <- with( prv.result, ifelse(
+  !identifiable, "unidentifiable", ifelse(
+    is.finite( delta.j ) & delta.j < -deg.j.sd |
+      is.finite( delta.k ) & delta.k < -deg.k.sd, "improved", ifelse(
+        is.finite( delta.j ) & delta.j > deg.j.sd |
+          is.finite( delta.k ) & delta.k > deg.k.sd, "worsened",
+        "unchanged" ) ) ) )
 
 # Panel-level scalar, weighted by the abundance each row actually reaches so
 # a large angle on a dye that never gets bright does not dominate. A true
@@ -371,7 +346,6 @@ prv.summary <- data.frame(
   n.unidentifiable = sum( prv.result$verdict == "unidentifiable" ),
   n.improved       = sum( prv.result$verdict == "improved" ),
   n.worsened       = sum( prv.result$verdict == "worsened" ),
-  n.mixed          = sum( prv.result$verdict == "mixed" ),
   n.unchanged      = sum( prv.result$verdict == "unchanged" ),
   panel.before     = prv.panel.score( "deg.j.before", "deg.k.before" ),
   panel.after      = prv.panel.score( "deg.j.after",  "deg.k.after" ),
