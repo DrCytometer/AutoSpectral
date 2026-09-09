@@ -14,6 +14,7 @@ unmix.af.gls(
   use.af.covariance = TRUE,
   use.node.prior = TRUE,
   use.abundance.prior = FALSE,
+  lambda.impact = 0,
   include.spillover = FALSE,
   spillover.kappa = NULL,
   gain.cv = 0,
@@ -54,6 +55,22 @@ Set \code{FALSE} for the A/B comparison. Default \code{TRUE}.}
 
 \item{use.abundance.prior}{Logical, add the per-node lognormal prior on
 abundance. Default \code{FALSE}.}
+
+\item{lambda.impact}{Numeric, weight on a fluorophore-leakage penalty
+added to the per-candidate score: \code{-lambda.impact * log(score_ik)},
+where \code{score_ik} is the same covariance-weighted proportional score
+\code{assign.af.joint.cov()} uses to build the candidate shortlist
+(\code{p_resid * p_fluor}, lower is better). The likelihood term
+(\code{logdet} + \code{chisq}) answers "how well does this node explain the raw
+detector counts under the fitted noise model"; the leakage term
+answers "how little does this node disturb the fluorophore estimates"
+-- these can disagree, most often for fluorophores whose channels
+overlap the AF dictionary. \code{0} (default) reproduces the pure-likelihood
+selection exactly. Larger values increasingly favour the
+leakage-minimising node; in the limit, selection converges to
+\code{assign.af.joint.cov()}'s own ranking, restricted to whichever nodes
+reached the \code{n.candidates} shortlist. Requires \code{spectra} to be
+supplied. Default \code{0}.}
 
 \item{include.spillover}{Logical, include the multinomial spillover term
 for active fluorophores and the AF row itself. Default \code{FALSE} -- see

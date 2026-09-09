@@ -42,6 +42,21 @@
 #' @param use.node.prior Logical, add `log(prior_k)` to the score. Default `TRUE`.
 #' @param use.abundance.prior Logical, add the per-node lognormal prior on
 #'   abundance. Default `FALSE`.
+#' @param lambda.impact Numeric, weight on a fluorophore-leakage penalty
+#'   added to the per-candidate score: `-lambda.impact * log(score_ik)`,
+#'   where `score_ik` is the same covariance-weighted proportional score
+#'   `assign.af.joint.cov()` uses to build the candidate shortlist
+#'   (`p_resid * p_fluor`, lower is better). The likelihood term
+#'   (`logdet` + `chisq`) answers "how well does this node explain the raw
+#'   detector counts under the fitted noise model"; the leakage term
+#'   answers "how little does this node disturb the fluorophore estimates"
+#'   -- these can disagree, most often for fluorophores whose channels
+#'   overlap the AF dictionary. `0` (default) reproduces the pure-likelihood
+#'   selection exactly. Larger values increasingly favour the
+#'   leakage-minimising node; in the limit, selection converges to
+#'   `assign.af.joint.cov()`'s own ranking, restricted to whichever nodes
+#'   reached the `n.candidates` shortlist. Requires `spectra` to be
+#'   supplied. Default `0`.
 #' @param include.spillover Logical, include the multinomial spillover term
 #'   for active fluorophores and the AF row itself. Default `FALSE` -- see
 #'   `unmix.gls()` for why this double-counts shot noise under the usual
@@ -101,6 +116,7 @@ unmix.af.gls <- function(
     use.af.covariance   = TRUE,
     use.node.prior      = TRUE,
     use.abundance.prior = FALSE,
+    lambda.impact       = 0,
     include.spillover   = FALSE,
     spillover.kappa     = NULL,
     gain.cv             = 0,
@@ -130,6 +146,12 @@ unmix.af.gls <- function(
           "`attr(af.spectra, \"af.model\")` from the same `get.af.spectra()` ",
           "call that produced this `af.spectra`, without reordering or ",
           "subsetting either one afterward.", call. = FALSE )
+
+  if ( lambda.impact != 0 && is.null( spectra ) )
+    stop( "`lambda.impact` requires `spectra` to be supplied: the leakage ",
+          "term penalises disturbance to the fluorophore estimates, which ",
+          "is undefined without a fluorophore model. Set `lambda.impact = 0` ",
+          "for AF-only scoring.", call. = FALSE )
 
   # spectral reference matrix (if supplied) must contain exactly one row per
   # fluorophore before any unmixing method runs
@@ -394,6 +416,9 @@ unmix.af.gls <- function(
       }
 
       ll <- -0.5 * ( sigma.out$logdet + chisq.k ) + log.prior[ k ]
+
+      if ( lambda.impact != 0 )
+        ll <- ll - lambda.impact * log( max( score[ i, k ], 1e-12 ) )
 
       if ( use.abundance.prior && !is.null( nd ) ) {
         if ( is.finite( nd$log.alpha.sd ) && nd$log.alpha.sd > 0 && x[ p.n ] > 0 )
