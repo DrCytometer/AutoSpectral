@@ -208,7 +208,7 @@ get.autospectral.param.minimal <- function() {
 
       ### directory parameters
       unmixed.fcs.dir = "AutoSpectral_unmixed",
-      fix.unmixing.dir <- "./figure_fix_my_unmix",
+      fix.unmixing.dir = "./figure_fix_my_unmix",
       figure.scatter.dir.base = NULL,
       figure.gate.dir = NULL,
       figure.af.dir = NULL,
