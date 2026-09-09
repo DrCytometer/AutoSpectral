@@ -89,6 +89,19 @@ the one selected on the first pass.}
 (type 7) of the first-pass AF abundance used to select which cells are
 eligible for AF refinement passes.}
 
+\item{exact.variant.scan}{Logical, default \code{FALSE}. When \code{TRUE}, scores
+candidate variant swaps with the exact Frisch-Waugh-Lovell closed form
+against the fixed pass-1 base panel instead of the incremental residual
+scan. \code{try.commit()} still re-solves and verifies every candidate
+against the true RSS regardless of this setting, so a less accurate
+score can only cost time, never correctness. Automatically falls back
+to the incremental scan when \code{cell.weight = TRUE}, since the exact form
+is derived in the unweighted inner product. Exact only against the
+fixed base panel of the first pass; from \code{n.passes > 1} onward the
+projector for an already-swapped endmember is stale, so later passes
+are a better approximation than the incremental scan but no longer
+exact.}
+
 \item{verbose}{Logical, default \code{TRUE}.}
 }
 \value{

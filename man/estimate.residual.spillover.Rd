@@ -16,6 +16,41 @@ estimate.residual.spillover(
   ...
 )
 }
+\arguments{
+\item{unmixed}{Numeric matrix, cells x fluorophores, already-unmixed
+abundances. Must contain a column named \code{source} and one column per
+entry of \code{targets}.}
+
+\item{source}{Character scalar, the name of the source fluorophore's
+column in \code{unmixed}.}
+
+\item{targets}{Character vector, the names of the target fluorophores'
+columns in \code{unmixed} to estimate residual spillover into.}
+
+\item{negative.mask}{Logical vector, length \code{nrow(unmixed)}, \code{TRUE} for
+events already known to be target-negative. Used directly in place of
+the batched estimator's own negative-event inference.}
+
+\item{threshold.source}{Numeric scalar or vector of length
+\code{nrow(unmixed)}, the source fluorophore's own per-event positivity
+boundary.}
+
+\item{threshold.target}{Optional numeric matrix, cells x fluorophores,
+containing at least the columns in \code{targets}, giving each target's own
+per-event positivity boundary. When \code{NULL}, every event is treated as
+below threshold before \code{negative.mask} is applied.}
+
+\item{spread.var}{Optional numeric vector, length \code{length(targets)}, the
+source's contribution to each target's spillover-spread variance.
+Defaults to zero for every target when \code{NULL}.}
+
+\item{neg.var}{Optional numeric vector, length \code{length(targets)}, each
+target's negative-population variance. When \code{NULL}, computed as
+\code{stats::mad()^2} on each target's column of \code{unmixed}.}
+
+\item{...}{Additional arguments passed through to
+\code{.fix.envelope.slope.batch()}.}
+}
 \description{
 Thin, in-memory wrapper over the batched pair estimator, for callers that
 already know which events are target-negative and do not need the
