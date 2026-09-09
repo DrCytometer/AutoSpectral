@@ -9,6 +9,10 @@ unmix.gls(
   spectra,
   noise.model,
   variant.basis = NULL,
+  spectra.variants = NULL,
+  spread.kappa = 2,
+  n.select.sweeps = 2L,
+  n.variants = Inf,
   af.spectra = NULL,
   af.index = NULL,
   af.basis = NULL,
@@ -32,7 +36,35 @@ unmix.gls(
 
 \item{noise.model}{List from \code{estimate.noise.model()}.}
 
-\item{variant.basis}{Optional list from \code{build.variant.basis()}.}
+\item{variant.basis}{Optional list from \code{build.variant.basis()}. Build it
+with the \code{spectra} argument supplied so that the basis is
+panel-oblique: an unprojected basis carries in-span directions that
+are collinear with the fluorophore columns and inflates the variance
+of the abundance estimates along the spillover directions.}
+
+\item{spectra.variants}{Optional list, the full output of
+\code{get.spectral.variants()}. When supplied, enables per-cell discrete
+variant commitment: fluorophores above their spread-scaled positivity
+boundary have their reference row replaced by the best-fitting
+variant, selected on a restricted design by Poisson-weighted,
+non-negative-clamped residual. This moves spectral variation out of
+the covariance and into the design, which is what suppresses
+spillover spread; the covariance form alone cannot, since adding
+spectral uncertainty to \code{Sigma} can only widen the abundance
+estimates. Also switches the active set for the low-rank \code{Sigma}
+terms from the relative \code{active.threshold} rule to the spread-scaled
+boundary built from \verb{$thresholds} and \verb{$spillover.spread}.}
+
+\item{spread.kappa}{Numeric, number of spillover-spread standard
+deviations added to the flat positivity threshold when
+\code{spectra.variants} is supplied, matching \code{fix.my.unmix()}. Default \code{2}.}
+
+\item{n.select.sweeps}{Integer, coordinate sweeps of per-fluorophore
+variant selection on the restricted design. Default \code{2}.}
+
+\item{n.variants}{Numeric, maximum number of variant candidates scored
+per fluorophore per cell (evenly subsampled when the library is
+larger). \code{Inf} scores all. Default \code{Inf}.}
 
 \item{af.spectra}{Optional AF dictionary. When supplied with \code{af.index},
 each cell's assigned AF spectrum is appended to \code{spectra} for that cell.}

@@ -13,11 +13,24 @@
 #' correction to `spectra`, not a source of variance, and treating it as
 #' variance both inflates the noise model and leaves the bias uncorrected.
 #'
+#' When `spectra` is supplied, the centred deltas are projected onto the
+#' orthogonal complement of the panel span before the SVD. Only the
+#' panel-oblique component of spectral variation is visible to unmixing;
+#' the in-span component is collinear with the fluorophore columns, and
+#' carrying it in the covariance inflates the variance of the abundance
+#' estimates along exactly the spillover directions. Supplying `spectra`
+#' is strongly recommended whenever the basis will be used by
+#' `unmix.gls()`.
+#'
 #' @param spectra.variants Either the full list returned by
 #'   `get.spectral.variants()` (containing `$delta.list`), or a named list of
 #'   delta matrices (variants x detectors).
+#' @param spectra Optional numeric matrix (fluorophores x detectors), the
+#'   panel reference spectra. When supplied, variant deltas are projected
+#'   onto the orthogonal complement of the panel span before fitting, so
+#'   the basis captures only panel-oblique variation. Default `NULL`.
 #' @param rank Integer, maximum number of components retained per
-#'   fluorophore. Default `2`.
+#'   fluorophore. Default `6`.
 #' @param var.explained Numeric in (0, 1]. Components are dropped once this
 #'   fraction of the delta variance is captured. Default `0.99`.
 #' @param min.lambda Numeric, eigenvalues below this fraction of the leading
@@ -36,19 +49,32 @@
 
 build.variant.basis <- function(
     spectra.variants,
+    spectra         = NULL,
     rank            = 6L,
     var.explained   = 0.99,
     min.lambda      = 1e-4,
     pooled.fallback = TRUE,
     verbose         = TRUE
 ) {
-
   delta.list <- if ( !is.null( spectra.variants$delta.list ) )
     spectra.variants$delta.list else spectra.variants
 
   if ( !is.list( delta.list ) || is.null( names( delta.list ) ) )
     stop( "`spectra.variants` must be a named list of delta matrices or the ",
           "output of `get.spectral.variants()`.", call. = FALSE )
+
+  # residual-maker onto the orthogonal complement of the panel span: only
+  # the panel-oblique component of a delta is identifiable from unmixing
+  # residuals, and only that component is safe to carry as covariance
+  proj.mat <- NULL
+  proj.det <- NULL
+  if ( !is.null( spectra ) ) {
+    S.ref    <- as.matrix( spectra )
+    proj.det <- colnames( S.ref )
+    G        <- S.ref %*% t( S.ref )
+    diag( G ) <- diag( G ) + 1e-10 * mean( diag( G ) )
+    proj.mat <- diag( ncol( S.ref ) ) - t( S.ref ) %*% solve( G, S.ref )
+  }
 
   fit.one <- function( delta ) {
 
@@ -57,6 +83,14 @@ build.variant.basis <- function(
 
     mean.delta <- colMeans( delta )
     centred    <- sweep( delta, 2L, mean.delta, "-" )
+
+    if ( !is.null( proj.mat ) ) {
+      if ( !all( proj.det %in% colnames( centred ) ) )
+        stop( "`spectra` and the variant deltas do not share detector names.",
+              call. = FALSE )
+      centred <- centred[ , proj.det, drop = FALSE ] %*% proj.mat
+      colnames( centred ) <- proj.det
+    }
 
     sv  <- svd( centred )
     lam <- sv$d^2 / ( nrow( centred ) - 1L )
@@ -72,7 +106,7 @@ build.variant.basis <- function(
       keep <- keep[ seq_len( which( cum >= var.explained )[ 1L ] ) ]
 
     basis <- t( sv$v[ , keep, drop = FALSE ] )
-    colnames( basis ) <- colnames( delta )
+    colnames( basis ) <- colnames( centred )
 
     list( basis = basis, lambda = lam[ keep ], mean.delta = mean.delta,
           n.variants = nrow( delta ), source = "fitted" )
@@ -101,6 +135,10 @@ build.variant.basis <- function(
         delta      <- as.matrix( delta.list[[ fl ]] )
         mean.delta <- colMeans( delta )
         centred    <- sweep( delta, 2L, mean.delta, "-" )
+        if ( !is.null( proj.mat ) ) {
+          centred <- centred[ , proj.det, drop = FALSE ] %*% proj.mat
+          colnames( centred ) <- proj.det
+        }
         row.norm   <- sqrt( rowSums( centred^2 ) )
         centred[ row.norm > 0, , drop = FALSE ] / row.norm[ row.norm > 0 ]
       } ) )
@@ -224,7 +262,31 @@ build.variant.basis <- function(
 #' @param raw.data Numeric matrix (events x detectors).
 #' @param spectra Numeric matrix (fluorophores x detectors), no `"AF"` row.
 #' @param noise.model List from `estimate.noise.model()`.
-#' @param variant.basis Optional list from `build.variant.basis()`.
+#' @param variant.basis Optional list from `build.variant.basis()`. Build it
+#'   with the `spectra` argument supplied so that the basis is
+#'   panel-oblique: an unprojected basis carries in-span directions that
+#'   are collinear with the fluorophore columns and inflates the variance
+#'   of the abundance estimates along the spillover directions.
+#' @param spectra.variants Optional list, the full output of
+#'   `get.spectral.variants()`. When supplied, enables per-cell discrete
+#'   variant commitment: fluorophores above their spread-scaled positivity
+#'   boundary have their reference row replaced by the best-fitting
+#'   variant, selected on a restricted design by Poisson-weighted,
+#'   non-negative-clamped residual. This moves spectral variation out of
+#'   the covariance and into the design, which is what suppresses
+#'   spillover spread; the covariance form alone cannot, since adding
+#'   spectral uncertainty to `Sigma` can only widen the abundance
+#'   estimates. Also switches the active set for the low-rank `Sigma`
+#'   terms from the relative `active.threshold` rule to the spread-scaled
+#'   boundary built from `$thresholds` and `$spillover.spread`.
+#' @param spread.kappa Numeric, number of spillover-spread standard
+#'   deviations added to the flat positivity threshold when
+#'   `spectra.variants` is supplied, matching `fix.my.unmix()`. Default `2`.
+#' @param n.select.sweeps Integer, coordinate sweeps of per-fluorophore
+#'   variant selection on the restricted design. Default `2`.
+#' @param n.variants Numeric, maximum number of variant candidates scored
+#'   per fluorophore per cell (evenly subsampled when the library is
+#'   larger). `Inf` scores all. Default `Inf`.
 #' @param af.spectra Optional AF dictionary. When supplied with `af.index`,
 #'   each cell's assigned AF spectrum is appended to `spectra` for that cell.
 #' @param af.index Optional integer vector, length `nrow(raw.data)`, giving
@@ -295,6 +357,10 @@ unmix.gls <- function(
     spectra,
     noise.model,
     variant.basis     = NULL,
+    spectra.variants  = NULL,
+    spread.kappa      = 2,
+    n.select.sweeps   = 2L,
+    n.variants        = Inf,
     af.spectra        = NULL,
     af.index          = NULL,
     af.basis          = NULL,
@@ -397,6 +463,47 @@ unmix.gls <- function(
              "Rebuild `variant.basis` with `build.variant.basis(..., ",
              "pooled.fallback = TRUE)` to avoid this.", call. = FALSE )
 
+  # discrete variant commitment: library, positivity thresholds and
+  # spillover-spread boundary, mirroring the joint pipeline's inputs
+  use.commit      <- !is.null( spectra.variants )
+  variant.library <- NULL
+  pos.thresholds  <- NULL
+  spread.mat      <- NULL
+
+  if ( use.commit ) {
+
+    if ( is.null( spectra.variants$variants ) ||
+         is.null( spectra.variants$thresholds ) )
+      stop( "`spectra.variants` must be the output of ",
+            "`get.spectral.variants()`, with `$variants` and `$thresholds`.",
+            call. = FALSE )
+
+    fl.names <- rownames( spectra )
+
+    variant.library <- lapply( spectra.variants$variants, function( v ) {
+      v <- as.matrix( v )
+      if ( !all( det.names %in% colnames( v ) ) )
+        stop( "A variant matrix does not cover all detectors in `spectra`.",
+              call. = FALSE )
+      v[ , det.names, drop = FALSE ]
+    } )
+    variant.library <- variant.library[
+      names( variant.library ) %in% fl.names ]
+
+    pos.thresholds <- rep( Inf, fluor.n )
+    names( pos.thresholds ) <- fl.names
+    shared.thr <- intersect( fl.names, names( spectra.variants$thresholds ) )
+    pos.thresholds[ shared.thr ] <- spectra.variants$thresholds[ shared.thr ]
+
+    spread.mat <- .align.spillover.spread(
+      spectra.variants$spillover.spread, fl.names, verbose = FALSE )
+
+    if ( verbose )
+      message( sprintf(
+        "Variant commitment enabled for %d fluorophore(s)",
+        length( variant.library ) ) )
+  }
+
   # index of the AF covariance basis aligned to rows of af.spectra
   ab.idx <- if ( is.null( af.basis ) || !use.af ) NULL else {
     if ( !is.null( names( af.basis ) ) && !is.null( rownames( af.spectra ) ) )
@@ -424,6 +531,79 @@ unmix.gls <- function(
 
     x <- x.mat[ i, ]
 
+    if ( use.commit ) {
+
+      xf0  <- pmax( x[ seq_len( fluor.n ) ], 0 )
+      bnd0 <- pos.thresholds +
+        spread.kappa * sqrt( pmax( as.vector( xf0 %*% spread.mat ), 0 ) )
+      commit.f <- which( xf0 > bnd0 &
+                           rownames( spectra ) %in% names( variant.library ) )
+
+      if ( length( commit.f ) > 0L ) {
+
+        r.rows <- if ( use.af ) c( commit.f, k.i ) else commit.f
+        R      <- S.i[ r.rows, , drop = FALSE ]
+        f.pos  <- seq_along( commit.f )
+
+        cand.list <- lapply( commit.f, function( f ) {
+          v  <- variant.library[[ rownames( spectra )[ f ] ]]
+          nv <- nrow( v )
+          if ( is.finite( n.variants ) && nv > n.variants )
+            v <- v[ unique( round( seq( 1L, nv, length.out = n.variants ) ) ),
+                    , drop = FALSE ]
+          rbind( spectra[ f, , drop = FALSE ], v )
+        } )
+
+        # restricted weighted least squares, coefficients clamped at zero
+        # so the scoring residual is the non-negative reconstruction
+        .fit.restricted <- function( R.try, d.try ) {
+          A <- R.try %*% ( t( R.try ) / d.try )
+          diag( A ) <- diag( A ) + ridge * mean( abs( diag( A ) ) )
+          tryCatch(
+            pmax( as.vector( solve( A, R.try %*% ( y / d.try ) ) ), 0 ),
+            error = function( e ) rep( 0, nrow( R.try ) ) )
+        }
+
+        d.plug <- read.var + pmax( as.vector( pmax( x, 0 ) %*% S.i ), 0 ) / kappa
+
+        for ( sw in seq_len( n.select.sweeps ) ) {
+
+          # freeze the diagonal noise within a sweep so every candidate is
+          # scored under the same Sigma; comparison is then invariant to
+          # the overall noise scale and needs no log-determinant
+          xc.r   <- .fit.restricted( R, d.plug )
+          mu.r   <- as.vector( xc.r %*% R )
+          d.plug <- read.var + pmax( mu.r, 0 ) / kappa
+
+          for ( j in f.pos ) {
+
+            cand    <- cand.list[[ j ]]
+            best.sc <- Inf
+            best.rw <- R[ j, ]
+
+            for ( v in seq_len( nrow( cand ) ) ) {
+              R.v       <- R
+              R.v[ j, ] <- cand[ v, ]
+              x.v       <- .fit.restricted( R.v, d.plug )
+              r.v       <- y - as.vector( x.v %*% R.v )
+              sc.v      <- sum( r.v * r.v / d.plug )
+              if ( sc.v < best.sc ) {
+                best.sc <- sc.v
+                best.rw <- cand[ v, ]
+              }
+            }
+
+            R[ j, ] <- best.rw
+          }
+        }
+
+        S.i[ commit.f, ] <- R[ f.pos, , drop = FALSE ]
+        m.i <- rowSums( pmax( S.i, 0 ) )
+        if ( include.spillover )
+          P.i[ commit.f, ] <- .prob.rows( S.i[ commit.f, , drop = FALSE ] )
+      }
+    }
+
     for ( it in seq_len( n.iter ) ) {
 
       xc <- pmax( x, 0 )
@@ -434,8 +614,16 @@ unmix.gls <- function(
       u.list <- list()
       c.vals <- numeric( 0 )
 
-      x.max <- max( xc )
-      act   <- if ( x.max > 0 ) which( xc >= active.threshold * x.max ) else integer( 0 )
+      if ( use.commit ) {
+        xf  <- xc[ seq_len( fluor.n ) ]
+        bnd <- pos.thresholds +
+          spread.kappa * sqrt( pmax( as.vector( xf %*% spread.mat ), 0 ) )
+        act <- which( xf > bnd )
+        if ( use.af && xc[ k.i ] > 0 ) act <- c( act, k.i )
+      } else {
+        x.max <- max( xc )
+        act   <- if ( x.max > 0 ) which( xc >= active.threshold * x.max ) else integer( 0 )
+      }
 
       for ( f in act ) {
 
