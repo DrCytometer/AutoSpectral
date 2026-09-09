@@ -112,7 +112,7 @@
 #'   type such as alveolar macrophages, say -- sits far enough outside the
 #'   main scatter population that even `large.gate`'s stretch does not reach
 #'   it, and no single gate shape can be expected to enclose everyone the
-#'   correction needs. Default `TRUE`.
+#'   correction needs. Default `FALSE`.
 #' @param landmark.quantile Numeric in `(0, 1)` or `NULL`, a lighter-weight
 #'   alternative to turning gating off outright: events above this quantile
 #'   on either scatter parameter are kept in addition to whatever the gate
@@ -128,7 +128,7 @@
 #'   are reduced to it by a stratified sample over each event's dominant
 #'   fluorophore under the starting spectra, so a dim or rare dye's own
 #'   positive population is not thinned at the same rate as the background
-#'   bulk. Default `20000`.
+#'   bulk. Tested number: `20000`.
 #' @param downsample.background.frac Numeric in (0, 1), the share of
 #'   `downsample` reserved for events dominant for nothing. Default `0.3`.
 #' @param downsample.min.stratum Integer, the floor below which a
@@ -399,10 +399,10 @@ fix.my.unmix <- function(
     af.spectra             = NULL,
     bg.mode                = c( "af.deconv", "af.row", "global.mean", "none", "per.cell" ),
     large.gate             = TRUE,
-    scatter.gate           = TRUE,
+    scatter.gate           = FALSE,
     landmark.quantile      = NULL,
     max.iter               = 20L,
-    downsample             = 20000,
+    downsample             = FALSE,
     downsample.background.frac = 0.3,
     downsample.min.stratum     = 2000L,
     unstained.threshold    = 0.99,
