@@ -7,6 +7,7 @@
 create.control.file(
   control.dir,
   asp,
+  control.files = NULL,
   fill.gate.name = TRUE,
   filename = "fcs_control_file",
   legacy = FALSE,
@@ -18,6 +19,14 @@ create.control.file(
 
 \item{asp}{The AutoSpectral parameter list. Generate using
 \code{get.autospectral.param}}
+
+\item{control.files}{Optional specification of the control files to use. This
+will override the default, which is to use all the FCS files in the
+\code{control.dir} to create the control file. Files and path(s) may be specified,
+allowing you to use files from different subdirectories. For instance, you may
+wish to exclude bead controls from a folder containing both bead and cell
+controls, saving you the work of deleting the lines from the created control
+file.}
 
 \item{fill.gate.name}{Logical, default is \code{TRUE}. Will attempt to automatically
 assign gate names for the \code{gate.name} column if \code{TRUE}.}

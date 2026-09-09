@@ -19,6 +19,13 @@
 #' @param control.dir file path to the single stained control fcs files
 #' @param asp The AutoSpectral parameter list. Generate using
 #' `get.autospectral.param`
+#' @param control.files Optional specification of the control files to use. This
+#' will override the default, which is to use all the FCS files in the
+#' `control.dir` to create the control file. Files and path(s) may be specified,
+#' allowing you to use files from different subdirectories. For instance, you may
+#' wish to exclude bead controls from a folder containing both bead and cell
+#' controls, saving you the work of deleting the lines from the created control
+#' file.
 #' @param fill.gate.name Logical, default is `TRUE`. Will attempt to automatically
 #' assign gate names for the `gate.name` column if `TRUE`.
 #' @param filename Character string defining the output filename. Default is
@@ -37,6 +44,7 @@
 create.control.file <- function(
     control.dir,
     asp,
+    control.files = NULL,
     fill.gate.name = TRUE,
     filename = "fcs_control_file",
     legacy = FALSE,
@@ -53,10 +61,14 @@ create.control.file <- function(
   }
 
   # find the files
-  control.files <- list.files( control.dir, pattern = ".fcs", ignore.case = TRUE )
+  if ( is.null( control.files ) ) {
+    control.files <- list.files( control.dir, pattern = ".fcs",
+                                 ignore.case = TRUE )
+  }
 
   if ( is.null( control.files ) || length( control.files ) <= 1 ) {
-    stop( "Single-stained control files not found. Check directory.", call. = FALSE )
+    stop( "Single-stained control files not found. Check directory.",
+          call. = FALSE )
   }
 
   control.colnames <- c(
