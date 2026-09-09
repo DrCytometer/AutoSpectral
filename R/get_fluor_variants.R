@@ -104,6 +104,23 @@
 #'   column, using every event in the control file. Lower values isolate a
 #'   purer background tail but with fewer events to estimate from; higher
 #'   values are more stable but risk pulling in dim positive events.
+#' @param noise.mask.threshold Numeric in (0, 1), default \code{0.05}. A
+#'   detector is excluded from this control's contribution to the pooled
+#'   noise-model regression (see \code{"noise.mask"} below) when this
+#'   fluorophore's own reference spectrum exceeds this fraction of its own
+#'   peak there -- the channels where unmodelled spectral-variant wobble,
+#'   not photon noise, would otherwise dominate the residual.
+#' @param noise.n.cells Integer, default \code{2000L}. Maximum events used
+#'   for the noise-model residual (see \code{"noise.resid"} below), sampled
+#'   from \code{keep.idx} -- the same unambiguously-positive events already
+#'   selected below for spillover-spread and SOM input. The negative/dim
+#'   majority of a single-stained control carries no information the
+#'   unstained sample doesn't already supply, and pools to a very large,
+#'   AF-dominated mass across many controls; restricting to the positive
+#'   gate avoids re-fitting that problem at high cost. Cell-to-cell
+#'   abundance variation within the gate typically spans a decade or more,
+#'   proportionally across every detector via the fixed spectral shape, so
+#'   this subset alone covers the dynamic range the regression needs.
 #' @param variant.fill.color Color for the shaded ribbon in the variant plot.
 #'   Default \code{"red"}.
 #' @param variant.fill.alpha Alpha for \code{variant.fill.color}. Default
@@ -123,12 +140,20 @@
 #' passed cosine QC. When too few positive events are available, or no
 #' centroids survive cosine QC, the single reference spectrum is returned
 #' (one row). Carries three attributes: \code{"noise.floor"} (per-detector
-#' background SD, described above), \code{"spillover.spread"} (named
-#' numeric vector, per-detector MAD of this control's unmixed positive
-#' population, or \code{NULL} if fewer than 20 positive events were found or
-#' if \code{use.unmixed = FALSE}), and \code{"on.channel.mfi"} (this
-#' control's own median unmixed abundance, \code{NA} if
-#' \code{use.unmixed = FALSE}).
+#' background SD, described above), \code{"noise.events"} (up to
+#' \code{noise.n.cells} events x detectors matrix, sampled from
+#' \code{keep.idx}, background-corrected -- and AF-corrected where the
+#' projection above ran -- but not otherwise fit; pooled and fit jointly
+#' against the full panel in \code{get.spectral.variants()}),
+#' \code{"noise.mask"} (logical vector, length \code{ncol(spectra)},
+#' \code{TRUE} at detectors this fluorophore's own spectrum dominates and
+#' which should therefore be excluded from this control's contribution to
+#' the pooled fit), \code{"spillover.spread"} (named numeric vector,
+#' per-detector MAD of this
+#' control's unmixed positive population, or \code{NULL} if fewer than 20
+#' positive events were found or if \code{use.unmixed = FALSE}), and
+#' \code{"on.channel.mfi"} (this control's own median unmixed abundance,
+#' \code{NA} if \code{use.unmixed = FALSE}).
 #'
 #' @references
 #' Van Gassen S et al. (2015). FlowSOM. \emph{Cytometry Part A}, 87(7),
@@ -160,6 +185,8 @@ get.fluor.variants <- function(
     sim.threshold.floor    = 0.90,
     af.collinear.threshold = 0.95,
     noise.floor.tail.fraction = 0.20,
+    noise.mask.threshold = 0.05,
+    noise.n.cells = 2000L,
     variant.fill.color = "red",
     variant.fill.alpha = 0.7,
     median.line.color  = "black",
@@ -362,6 +389,38 @@ get.fluor.variants <- function(
   }
 
   # ---------------------------------------------------------------------------
+  # Noise-model events (downsampled positive population)
+  # ---------------------------------------------------------------------------
+  # `keep.idx` above already identifies events unambiguously positive for
+  # this fluorophore -- see `noise.n.cells` for why the negative/dim
+  # majority is deliberately excluded here. Only the background-corrected
+  # (and, for cells/non-collinear, AF-corrected) raw events are exported;
+  # get.spectral.variants() fits these jointly against the full panel rather
+  # than fitting each control against its own single reference row here.
+  # A single-row fit is only identified at this control's own peak -- at
+  # every other detector it is a near-zero, noise-dominated coefficient, the
+  # wrong axis to bin a mean-variance regression against. A joint fit is
+  # identified everywhere at once, using whichever control actually excites
+  # each detector.
+
+  noise.idx <- keep.idx
+  if ( length( noise.idx ) > noise.n.cells ) {
+    set.seed( asp$bird.seed )
+    noise.idx <- sample( noise.idx, noise.n.cells )
+  }
+
+  if ( length( noise.idx ) < 20 ) {
+
+    noise.events <- NULL
+    noise.mask   <- rep( NA, length( spectral.channel ) )
+
+  } else {
+
+    noise.events <- pos.corrected[ noise.idx, , drop = FALSE ]
+    noise.mask   <- orig.vec > noise.mask.threshold * max( orig.vec )
+  }
+
+  # ---------------------------------------------------------------------------
   # Spillover spread (per detector)
   # ---------------------------------------------------------------------------
   # Per-channel MAD of this control's unmixed positive population, plus its
@@ -418,6 +477,8 @@ get.fluor.variants <- function(
                      " even after relaxing to sim.threshold.floor = ",
                      sim.threshold.floor, ". Returning reference spectrum." ) )
     attr( original.spectrum, "noise.floor" )           <- noise.floor.est
+    attr( original.spectrum, "noise.events" )          <- noise.events
+    attr( original.spectrum, "noise.mask" )            <- noise.mask
     attr( original.spectrum, "spillover.spread" )      <- spread.mad
     attr( original.spectrum, "on.channel.mfi" )        <- on.channel.mfi
     attr( original.spectrum, "cosine.threshold.used" ) <- NA_real_
@@ -511,6 +572,8 @@ get.fluor.variants <- function(
   }
 
   attr( variant.spectra, "noise.floor" )           <- noise.floor.est
+  attr( variant.spectra, "noise.events" )          <- noise.events
+  attr( variant.spectra, "noise.mask" )            <- noise.mask
   attr( variant.spectra, "spillover.spread" )      <- spread.mad
   attr( variant.spectra, "on.channel.mfi" )        <- on.channel.mfi
   attr( variant.spectra, "cosine.threshold.used" ) <- threshold.used

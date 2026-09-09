@@ -70,6 +70,18 @@
 #' @param noise.floor.tail.fraction Numeric in (0, 1), default \code{0.20}.
 #'   Fraction of each detector's raw values (lowest end) used to estimate the
 #'   per-control noise floor. Passed to \code{get.fluor.variants}.
+#' @param noise.spillover.floor Numeric in (0, 1), default \code{0.002}. A
+#'   detector is excluded from a control's contribution to the pooled
+#'   noise-model regression when that control's own reference spectrum
+#'   falls below this fraction of its own peak there, in addition to the
+#'   upper exclusion already applied for detectors it dominates (see
+#'   \code{get.fluor.variants(noise.mask.threshold)}). Below this floor a
+#'   control's fitted contribution at that detector has negligible dynamic
+#'   range and is mostly estimation noise -- pooling it in adds no signal
+#'   and distorts the mean-variance relationship other controls establish
+#'   there. What remains between the two thresholds is the useful
+#'   spillover band: real loading, real dynamic range, not this control's
+#'   own emission peak.
 #' @param variant.fill.color Color for the shaded ribbon in variant plots.
 #'   Default \code{"red"}.
 #' @param variant.fill.alpha Alpha for \code{variant.fill.color}. Default
@@ -160,6 +172,7 @@ get.spectral.variants <- function(
     sim.threshold.floor    = 0.90,
     af.collinear.threshold = 0.95,
     noise.floor.tail.fraction = 0.20,
+    noise.spillover.floor = 0.002,
     variant.fill.color = "red",
     variant.fill.alpha = 0.7,
     median.line.color  = "black",
@@ -270,11 +283,7 @@ get.spectral.variants <- function(
     )
     fluor.db <- utils::read.csv( fluor.db.path, stringsAsFactors = FALSE )
 
-    check.fluor <- if ( verbose ) {
-      match.fluorophores( non.af.rows, fluor.db )
-    } else {
-      suppressMessages( match.fluorophores( non.af.rows, fluor.db ) )
-    }
+    check.fluor <- match.fluorophores( non.af.rows, fluor.db, verbose = FALSE )
     names( check.fluor ) <- NULL
 
     unmatched <- non.af.rows[ check.fluor == "No match" ]
@@ -390,7 +399,7 @@ get.spectral.variants <- function(
     stop( paste( "Unable to locate control.def.file:", control.def.file ),
           call. = FALSE )
 
-  if ( verbose ) message( "\033[32mChecking control file for errors \033[0m" )
+  if ( verbose ) message( "\033[32mChecking control file and fluorophore labels for errors \033[0m" )
   # get.spectral.variants() does not support multiple controls per
   # fluorophore (see the `table.fluors` duplicate check below for why), so
   # this is always strict regardless of what the rest of the pipeline allows
@@ -734,13 +743,107 @@ get.spectral.variants <- function(
       warning( "Noise floor could not be estimated at ",
                sum( is.na( noise.floor ) ), " detector(s).", call. = FALSE )
 
-    if ( verbose & FALSE )
+    if ( verbose )
       message( sprintf(
         "Noise floor from %d control(s): median SD %.1f (range %.1f - %.1f)",
         nrow( floor.mat ),
         stats::median( noise.floor, na.rm = TRUE ),
         min( noise.floor, na.rm = TRUE ),
         max( noise.floor, na.rm = TRUE ) ) )
+  }
+
+  # ---------------------------------------------------------------------------
+  # Noise model (read.var, kappa), pooled across single-stained controls
+  # ---------------------------------------------------------------------------
+  # Each control's noise.events (attached by get.fluor.variants()) are
+  # background-corrected raw events from its positive gate, not yet fit
+  # against anything. They are pooled and fit ONCE, jointly, against the
+  # full panel: a per-control single-row fit is only identified at that
+  # control's own peak, and is a near-zero, noise-dominated coefficient at
+  # every other detector -- the wrong axis to bin a mean-variance regression
+  # against. A joint fit is identified everywhere at once, using whichever
+  # control actually excites each detector. noise.mask still flags each
+  # control's own peak channels, where unmodelled spectral-variant wobble
+  # would otherwise contaminate the residual, and excludes them from that
+  # control's contribution to the pooled fit; every detector remains covered
+  # by whichever other control's spillover reaches it cleanly. This replaces
+  # fitting kappa from an unstained sample, whose AF-only signal spans too
+  # narrow a dynamic range to identify a slope reliably.
+
+  if ( verbose )
+    message( paste0( "\033[34m", "Modelling detector noise", "\033[0m" ) )
+
+  noise.model <- NULL
+  events.list <- lapply( spectral.variants, function( v ) attr( v, "noise.events" ) )
+  mask.list   <- lapply( spectral.variants, function( v ) attr( v, "noise.mask" ) )
+  have.noise  <- !vapply( events.list, is.null, logical( 1 ) )
+
+  if ( sum( have.noise ) >= 2L ) {
+
+    noise.fluors <- names( spectral.variants )[ have.noise ]
+
+    # Per-control single-row fit: rank 1, well identified. A joint fit
+    # against the full panel is badly ill-conditioned here -- a
+    # single-stained event has genuinely rank-1 true signal, and forcing a
+    # ~40-parameter fit onto it amplifies noise into every other
+    # fluorophore's "coefficient" via whatever near-collinearity exists
+    # across the panel, producing implausible fitted values (thousands of
+    # units below zero) rather than a usable mean axis.
+    fit.list <- lapply( noise.fluors, function( fl ) {
+      ev  <- events.list[[ fl ]]
+      ref <- spectra[ fl, , drop = FALSE ]
+      co  <- unmix.ols( ev, ref )
+      list( fitted = co %*% ref, resid = ev - ( co %*% ref ) )
+    } )
+    names( fit.list ) <- noise.fluors
+
+    pool.fitted  <- do.call( rbind, lapply( fit.list, function( x ) x$fitted ) )
+    pool.resid   <- do.call( rbind, lapply( fit.list, function( x ) x$resid ) )
+    pool.file.id <- unlist( lapply( noise.fluors, function( fl )
+      rep( fl, nrow( events.list[[ fl ]] ) ) ) )
+
+    # Band mask: exclude this control's own peak (noise.mask -- spectral-
+    # variant wobble, not photon noise, dominates the residual there) AND
+    # detectors where this control's loading is negligible (no real
+    # dynamic range, mostly estimation noise). What survives is the useful
+    # spillover band.
+    row.start <- 1L
+    for ( fl in noise.fluors ) {
+      n.fl     <- nrow( events.list[[ fl ]] )
+      rows     <- row.start:( row.start + n.fl - 1L )
+      low.mask <- spectra[ fl, ] < noise.spillover.floor * max( spectra[ fl, ] )
+      excl     <- mask.list[[ fl ]] | low.mask
+      pool.resid[ rows, excl ] <- NA_real_
+      row.start <- row.start + n.fl
+    }
+
+    noise.model <- tryCatch(
+      .fit.noise.regression(
+        y.hat          = pool.fitted,
+        resid          = pool.resid,
+        det.names      = spectral.channel,
+        read.var.floor = if ( length( floor.list ) > 0 ) noise.floor^2 else NULL,
+        unstained.data = unstained,
+        file.id        = pool.file.id,
+        verbose        = verbose
+      ),
+      error = function( e ) {
+        warning( "Pooled single-stained-control noise model failed: ",
+                 conditionMessage( e ), call. = FALSE )
+        NULL
+      }
+    )
+
+    if ( verbose && !is.null( noise.model ) )
+      message( sprintf(
+        "Noise model from %d control(s): median read SD %.1f, median counts.per.unit %.3g",
+        length( noise.fluors ),
+        stats::median( sqrt( noise.model$read.var ) ),
+        stats::median( noise.model$counts.per.unit ) ) )
+
+  } else if ( verbose ) {
+    message( "Fewer than 2 controls carried noise-model events; ",
+             "skipping pooled noise-model estimation." )
   }
 
   # ---------------------------------------------------------------------------
@@ -893,6 +996,7 @@ get.spectral.variants <- function(
     delta.list  = delta.list,
     delta.norms = delta.norms,
     noise.floor = noise.floor,
+    noise.model = noise.model,
     spillover.spread  = spillover.spread,
     optimize.scores      = necessity$scores.norm,
     optimize.recommended = necessity$optimize.recommended

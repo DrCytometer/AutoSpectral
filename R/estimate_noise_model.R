@@ -225,20 +225,6 @@ estimate.noise.model <- function(
   y.hat <- x.hat %*% basis
   resid <- raw.data - y.hat
 
-  # Between-file offsets (gain drift, voltage differences across acquisition
-  # days) show up as a mean shift in the residual that has nothing to do
-  # with photon statistics. Left in, it inflates whichever of read.var/kappa
-  # absorbs a shift correlated with brightness. Centering residuals within
-  # each file removes it while leaving the within-file photon-driven spread
-  # -- the thing kappa actually measures -- untouched.
-  if ( !is.null( file.id ) ) {
-    if ( length( file.id ) != nrow( raw.data ) )
-      stop( "`file.id` must have one entry per row of `raw.data`.", call. = FALSE )
-    file.id <- as.factor( file.id )
-    resid   <- apply( resid, 2, function( col ) col - stats::ave( col, file.id ) )
-    colnames( resid ) <- det.names
-  }
-
   # residual variance is deflated by the projection: E[r_d^2] = sigma_d^2 (1 - h_d),
   # where h_d is the d-th diagonal of the detector-space hat matrix
   # H = t(basis) (basis t(basis))^{-1} basis. Leverage is far from uniform:
@@ -248,6 +234,58 @@ estimate.noise.model <- function(
   hat.diag <- colSums( ( MASS::ginv( basis %*% t( basis ) ) %*% basis ) * basis )
   hat.diag <- pmin( pmax( hat.diag, 0 ), 1 - 1e-3 )
   dof.correction <- 1 / ( 1 - hat.diag )
+
+  return( .fit.noise.regression(
+    y.hat          = y.hat,
+    resid          = resid,
+    det.names      = det.names,
+    n.bins         = n.bins,
+    min.bin.n      = min.bin.n,
+    trim.quantile  = trim.quantile,
+    read.var.floor = read.var.floor,
+    unstained.data = unstained.data,
+    dark.quantile  = dark.quantile,
+    n.tranche      = n.tranche,
+    dof.correction = dof.correction,
+    file.id        = file.id,
+    verbose        = verbose
+  ) )
+}
+
+#' @keywords internal
+.fit.noise.regression <- function(
+    y.hat,
+    resid,
+    det.names,
+    n.bins         = 40L,
+    min.bin.n      = 50L,
+    trim.quantile  = 0.999,
+    read.var.floor = NULL,
+    unstained.data = NULL,
+    dark.quantile  = 0.95,
+    n.tranche      = 10L,
+    dof.correction = NULL,
+    file.id        = NULL,
+    verbose        = TRUE
+) {
+
+  det.n <- length( det.names )
+  if ( is.null( dof.correction ) ) dof.correction <- rep( 1, det.n )
+
+  # Between-file offsets (gain drift, voltage differences across acquisition
+  # days, or -- pooling across controls -- different controls entirely) show
+  # up as a mean shift in the residual that has nothing to do with photon
+  # statistics. Left in, it inflates whichever of read.var/kappa absorbs a
+  # shift correlated with brightness. Centering residuals within each file
+  # removes it while leaving the within-file photon-driven spread -- the
+  # thing kappa actually measures -- untouched.
+  if ( !is.null( file.id ) ) {
+    if ( length( file.id ) != nrow( resid ) )
+      stop( "`file.id` must have one entry per row of `resid`.", call. = FALSE )
+    file.id <- as.factor( file.id )
+    resid   <- apply( resid, 2, function( col ) col - stats::ave( col, file.id ) )
+    colnames( resid ) <- det.names
+  }
 
   # ---------------------------------------------------------------------------
   # Per-detector mean-variance regression
@@ -488,13 +526,6 @@ estimate.noise.model <- function(
       "  %d / %d detectors show significant curvature (quadratic term p < 0.01)",
       n.curved, n.tested ) )
   }
-
-  if ( stats::median( extrap, na.rm = TRUE ) > 20 )
-    warning( "The variance floor is being extrapolated from data far above ",
-             "zero signal (median ratio ", round( stats::median( extrap, na.rm = TRUE ) ),
-             "). `read.var` is poorly identified. Estimate on beads or on a ",
-             "blank acquisition if the floor matters for your application.",
-             call. = FALSE )
 
   if ( n.tested > 0 && n.curved / n.tested > 0.25 )
     warning( "Significant curvature (quadratic term p < 0.01) detected at ",

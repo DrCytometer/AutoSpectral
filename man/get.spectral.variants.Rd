@@ -21,6 +21,7 @@ get.spectral.variants(
   sim.threshold.floor = 0.9,
   af.collinear.threshold = 0.95,
   noise.floor.tail.fraction = 0.2,
+  noise.spillover.floor = 0.002,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
@@ -91,6 +92,19 @@ push real fluorophore signal into the AF term. Recorded as the
 \item{noise.floor.tail.fraction}{Numeric in (0, 1), default \code{0.20}.
 Fraction of each detector's raw values (lowest end) used to estimate the
 per-control noise floor. Passed to \code{get.fluor.variants}.}
+
+\item{noise.spillover.floor}{Numeric in (0, 1), default \code{0.002}. A
+detector is excluded from a control's contribution to the pooled
+noise-model regression when that control's own reference spectrum
+falls below this fraction of its own peak there, in addition to the
+upper exclusion already applied for detectors it dominates (see
+\code{get.fluor.variants(noise.mask.threshold)}). Below this floor a
+control's fitted contribution at that detector has negligible dynamic
+range and is mostly estimation noise -- pooling it in adds no signal
+and distorts the mean-variance relationship other controls establish
+there. What remains between the two thresholds is the useful
+spillover band: real loading, real dynamic range, not this control's
+own emission peak.}
 
 \item{variant.fill.color}{Color for the shaded ribbon in variant plots.
 Default \code{"red"}.}

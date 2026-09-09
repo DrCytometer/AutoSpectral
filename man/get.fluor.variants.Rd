@@ -30,6 +30,8 @@ get.fluor.variants(
   sim.threshold.floor = 0.9,
   af.collinear.threshold = 0.95,
   noise.floor.tail.fraction = 0.2,
+  noise.mask.threshold = 0.05,
+  noise.n.cells = 2000L,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
@@ -143,6 +145,25 @@ column, using every event in the control file. Lower values isolate a
 purer background tail but with fewer events to estimate from; higher
 values are more stable but risk pulling in dim positive events.}
 
+\item{noise.mask.threshold}{Numeric in (0, 1), default \code{0.05}. A
+detector is excluded from this control's contribution to the pooled
+noise-model regression (see \code{"noise.mask"} below) when this
+fluorophore's own reference spectrum exceeds this fraction of its own
+peak there -- the channels where unmodelled spectral-variant wobble,
+not photon noise, would otherwise dominate the residual.}
+
+\item{noise.n.cells}{Integer, default \code{2000L}. Maximum events used
+for the noise-model residual (see \code{"noise.resid"} below), sampled
+from \code{keep.idx} -- the same unambiguously-positive events already
+selected below for spillover-spread and SOM input. The negative/dim
+majority of a single-stained control carries no information the
+unstained sample doesn't already supply, and pools to a very large,
+AF-dominated mass across many controls; restricting to the positive
+gate avoids re-fitting that problem at high cost. Cell-to-cell
+abundance variation within the gate typically spans a decade or more,
+proportionally across every detector via the fixed spectral shape, so
+this subset alone covers the dynamic range the regression needs.}
+
 \item{variant.fill.color}{Color for the shaded ribbon in the variant plot.
 Default \code{"red"}.}
 
@@ -168,12 +189,20 @@ spectrum for \code{fluor}; subsequent rows are SOM-derived variants that
 passed cosine QC. When too few positive events are available, or no
 centroids survive cosine QC, the single reference spectrum is returned
 (one row). Carries three attributes: \code{"noise.floor"} (per-detector
-background SD, described above), \code{"spillover.spread"} (named
-numeric vector, per-detector MAD of this control's unmixed positive
-population, or \code{NULL} if fewer than 20 positive events were found or
-if \code{use.unmixed = FALSE}), and \code{"on.channel.mfi"} (this
-control's own median unmixed abundance, \code{NA} if
-\code{use.unmixed = FALSE}).
+background SD, described above), \code{"noise.events"} (up to
+\code{noise.n.cells} events x detectors matrix, sampled from
+\code{keep.idx}, background-corrected -- and AF-corrected where the
+projection above ran -- but not otherwise fit; pooled and fit jointly
+against the full panel in \code{get.spectral.variants()}),
+\code{"noise.mask"} (logical vector, length \code{ncol(spectra)},
+\code{TRUE} at detectors this fluorophore's own spectrum dominates and
+which should therefore be excluded from this control's contribution to
+the pooled fit), \code{"spillover.spread"} (named numeric vector,
+per-detector MAD of this
+control's unmixed positive population, or \code{NULL} if fewer than 20
+positive events were found or if \code{use.unmixed = FALSE}), and
+\code{"on.channel.mfi"} (this control's own median unmixed abundance,
+\code{NA} if \code{use.unmixed = FALSE}).
 }
 \description{
 Assesses variation in the spectral signature of a single-stained flow
