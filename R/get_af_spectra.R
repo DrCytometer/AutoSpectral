@@ -26,6 +26,9 @@
 #' @param spectra Spectral signatures of fluorophores, normalized between 0 and
 #'   1, with fluorophores in rows and detectors in columns.
 #' @param som.dim Number of x and y dimensions for the SOM. Default is `10`.
+#' @param dist Integer 1:4, distance function (1 manhattan, 2 euclidean,
+#'   3 chebyshev, 4 cosine). Default `2`. Only used on the AutoSpectralRcpp
+#'   path.
 #' @param figures Logical, whether to plot the spectral traces and heatmap for
 #'   the AF signatures. Default is `TRUE`.
 #' @param save Logical, whether to save the CSV file for the AF signatures.
@@ -57,6 +60,29 @@
 #'   `use.unmixed = FALSE` also forces `refine = FALSE`, since the
 #'   second-pass refinement identifies "problem cells" from per-cell
 #'   unmixing residuals and is subject to the same instability.
+#' @param af.basis.components Integer, default `NULL`. When supplied, appends
+#'   this many components of the panel-oblique autofluorescence structure of
+#'   the unstained sample to the SOM training features, alongside the raw
+#'   detector data and (when `use.unmixed = TRUE`) the unmixed coefficients.
+#'   Computed directly from the panel residual of the unstained events
+#'   (trimming the top 1% by residual norm, subsampling to 50000 events for
+#'   the decomposition, then projecting every event), reusing the unmixing
+#'   matrix already computed for `unmixed.no.af` rather than re-deriving it.
+#'   Training-time use carries none of the collinearity risk a per-cell
+#'   regression design would, since clustering is not a regression; this
+#'   only gives the SOM extra shape-discriminating features to place nodes
+#'   with. Forced to `NULL` when `use.unmixed = FALSE`, since it depends on
+#'   the same unmixing matrix. Default `NULL` disables it, matching prior
+#'   behaviour.
+#' @param raw.pca.components Integer, default `NULL`. When supplied, appends
+#'   this many raw-event principal components of the unstained sample
+#'   (ordinary singular vectors of the raw detector data, not restricted to
+#'   the part the panel cannot explain, subsampled to 50000 events for the
+#'   decomposition) to the SOM training features. Unlike
+#'   `af.basis.components`, these components are free to cross into the
+#'   panel's span; that carries no collinearity risk here for the same
+#'   reason as above. Not affected by `use.unmixed`, since it does not use
+#'   the unmixing matrix at all. Default `NULL` disables it.
 #' @param refine Logical, default `FALSE`. Controls whether to perform a second
 #'   round of autofluorescence measurement on "problem cells": those with the
 #'   highest residual fluorophore signal after the first-pass per-cell AF
@@ -132,6 +158,7 @@ get.af.spectra <- function(
     asp,
     spectra,
     som.dim              = 10,
+    dist                 = 2L,
     figures              = TRUE,
     save                 = TRUE,
     plot.dir             = NULL,
@@ -141,6 +168,8 @@ get.af.spectra <- function(
     deduplicate          = FALSE,
     duplication.threshold = 0.99,
     use.unmixed          = TRUE,
+    af.basis.components  = NULL,
+    raw.pca.components   = NULL,
     refine               = FALSE,
     problem.quantile     = 0.99,
     remove.contaminants  = TRUE,
@@ -180,6 +209,18 @@ get.af.spectra <- function(
       call. = FALSE
     )
     refine <- FALSE
+  }
+
+  if ( !use.unmixed && !is.null( af.basis.components ) ) {
+    warning(
+      "`use.unmixed = FALSE` forces `af.basis.components = NULL`: it ",
+      "requires unmixing against `spectra` to find the panel-oblique ",
+      "directions, which is exactly the instability `use.unmixed = FALSE` ",
+      "is meant to avoid. `raw.pca.components` does not have this problem, ",
+      "since it never unmixes against `spectra`.",
+      call. = FALSE
+    )
+    af.basis.components <- NULL
   }
 
   # spectral reference matrix must contain exactly one row per fluorophore
@@ -249,11 +290,66 @@ get.af.spectra <- function(
   # unmix against a collinear `spectra` (e.g. several similar fluorophores
   # in a bead-cell comparison panel) is itself unstable and would corrupt
   # rather than enrich the clustering features.
+  #
+  # The unmixing matrix is computed directly here, rather than through
+  # unmix.ols.fast(), so af.basis.components below can reuse it instead of
+  # re-deriving the same solve a second time.
+  if ( use.unmixed || !is.null( af.basis.components ) ) {
+    unmixing.matrix <- solve.default( tcrossprod( spectra ), spectra )
+  }
+
   if ( use.unmixed ) {
-    unmixed.no.af <- unmix.ols.fast( unstained.exprs, spectra )
+    unmixed.no.af <- unstained.exprs %*% t( unmixing.matrix )
     cluster.data  <- cbind( unstained.exprs, unmixed.no.af )
   } else {
     cluster.data  <- unstained.exprs
+  }
+
+  # Optional extra shape-discriminating features for SOM training. Neither
+  # carries the collinearity risk a per-cell regression design would, since
+  # clustering is not a regression; both only change which directions the
+  # SOM has to differentiate nodes along.
+  if ( !is.null( af.basis.components ) ) {
+
+    # Panel residual of every event -- the part the fluorophores cannot
+    # explain, which is where the leading out-of-span directions live.
+    # Trimmed and subsampled for the decomposition only; the resulting
+    # directions are then applied to every event.
+    resid      <- unstained.exprs - ( unstained.exprs %*% t( unmixing.matrix ) ) %*% spectra
+    resid.norm <- sqrt( rowSums( resid^2 ) )
+    keep.basis <- resid.norm <= stats::quantile( resid.norm, 0.99, na.rm = TRUE )
+
+    events.basis <- unstained.exprs[ keep.basis, , drop = FALSE ]
+    if ( nrow( events.basis ) > 5e4 ) {
+      set.seed( asp$bird.seed )
+      events.basis <- events.basis[ sample( nrow( events.basis ), 5e4 ), , drop = FALSE ]
+    }
+    resid.basis <- events.basis - ( events.basis %*% t( unmixing.matrix ) ) %*% spectra
+
+    n.pc <- min( as.integer( af.basis.components ), nrow( resid.basis ) - 1L,
+                 length( spectral.channels ) )
+    sv   <- svd( t( resid.basis ), nu = n.pc, nv = 0L )
+
+    emp.scores <- unstained.exprs %*% sv$u[ , seq_len( n.pc ), drop = FALSE ]
+    colnames( emp.scores ) <- paste0( "EmpAF", seq_len( n.pc ) )
+    cluster.data <- cbind( cluster.data, emp.scores )
+  }
+
+  if ( !is.null( raw.pca.components ) ) {
+
+    fit.data <- unstained.exprs
+    if ( nrow( fit.data ) > 5e4 ) {
+      set.seed( asp$bird.seed )
+      fit.data <- fit.data[ sample( nrow( fit.data ), 5e4 ), , drop = FALSE ]
+    }
+
+    n.pc <- min( as.integer( raw.pca.components ), nrow( fit.data ) - 1L,
+                 length( spectral.channels ) )
+    sv   <- svd( fit.data, nu = 0L, nv = n.pc )
+
+    pca.scores <- unstained.exprs %*% sv$v[ , seq_len( n.pc ), drop = FALSE ]
+    colnames( pca.scores ) <- paste0( "RawPC", seq_len( n.pc ) )
+    cluster.data <- cbind( cluster.data, pca.scores )
   }
 
   # ---------------------------------------------------------------------------
@@ -273,6 +369,7 @@ get.af.spectra <- function(
   map <- get.som.codes(
     data    = cluster.data,
     som.dim = som.dim,
+    dist    = dist,
     seed    = asp$bird.seed,
     threads = if ( parallel ) threads else 1L
   )
@@ -472,6 +569,7 @@ get.af.spectra <- function(
       map.error <- get.som.codes(
         data    = spill.ratios,
         som.dim = som.dim.error,
+        dist    = dist,
         seed    = asp$bird.seed,
         threads = if ( parallel ) threads else 1L
       )
@@ -924,7 +1022,6 @@ deduplicate.spectra <- function( spectra, threshold = 0.99 ) {
 
   keep
 }
-
 
 # ---------------------------------------------------------------------------
 # Helper: cross cosine similarity matrix

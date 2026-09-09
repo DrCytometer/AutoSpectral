@@ -9,6 +9,7 @@ get.af.spectra(
   asp,
   spectra,
   som.dim = 10,
+  dist = 2L,
   figures = TRUE,
   save = TRUE,
   plot.dir = NULL,
@@ -18,6 +19,8 @@ get.af.spectra(
   deduplicate = FALSE,
   duplication.threshold = 0.99,
   use.unmixed = TRUE,
+  af.basis.components = NULL,
+  raw.pca.components = NULL,
   refine = FALSE,
   problem.quantile = 0.99,
   remove.contaminants = TRUE,
@@ -47,6 +50,10 @@ stained samples to which the AF will be applied, ideally.}
 1, with fluorophores in rows and detectors in columns.}
 
 \item{som.dim}{Number of x and y dimensions for the SOM. Default is \code{10}.}
+
+\item{dist}{Integer 1:4, distance function (1 manhattan, 2 euclidean,
+3 chebyshev, 4 cosine). Default \code{2}. Only used on the AutoSpectralRcpp
+path.}
 
 \item{figures}{Logical, whether to plot the spectral traces and heatmap for
 the AF signatures. Default is \code{TRUE}.}
@@ -87,6 +94,31 @@ would corrupt the clustering features rather than enrich them.
 \code{use.unmixed = FALSE} also forces \code{refine = FALSE}, since the
 second-pass refinement identifies "problem cells" from per-cell
 unmixing residuals and is subject to the same instability.}
+
+\item{af.basis.components}{Integer, default \code{NULL}. When supplied, appends
+this many components of the panel-oblique autofluorescence structure of
+the unstained sample to the SOM training features, alongside the raw
+detector data and (when \code{use.unmixed = TRUE}) the unmixed coefficients.
+Computed directly from the panel residual of the unstained events
+(trimming the top 1\% by residual norm, subsampling to 50000 events for
+the decomposition, then projecting every event), reusing the unmixing
+matrix already computed for \code{unmixed.no.af} rather than re-deriving it.
+Training-time use carries none of the collinearity risk a per-cell
+regression design would, since clustering is not a regression; this
+only gives the SOM extra shape-discriminating features to place nodes
+with. Forced to \code{NULL} when \code{use.unmixed = FALSE}, since it depends on
+the same unmixing matrix. Default \code{NULL} disables it, matching prior
+behaviour.}
+
+\item{raw.pca.components}{Integer, default \code{NULL}. When supplied, appends
+this many raw-event principal components of the unstained sample
+(ordinary singular vectors of the raw detector data, not restricted to
+the part the panel cannot explain, subsampled to 50000 events for the
+decomposition) to the SOM training features. Unlike
+\code{af.basis.components}, these components are free to cross into the
+panel's span; that carries no collinearity risk here for the same
+reason as above. Not affected by \code{use.unmixed}, since it does not use
+the unmixing matrix at all. Default \code{NULL} disables it.}
 
 \item{refine}{Logical, default \code{FALSE}. Controls whether to perform a second
 round of autofluorescence measurement on "problem cells": those with the

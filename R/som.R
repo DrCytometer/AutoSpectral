@@ -100,7 +100,14 @@ get.som.codes <- function(
         call. = FALSE
       )
 
-    map   <- FlowSOM::SOM( data, xdim = som.dim, ydim = som.dim, rlen = rlen, silent = TRUE )
+    map   <- FlowSOM::SOM(
+      data,
+      xdim = som.dim,
+      ydim = som.dim,
+      rlen = rlen,
+      distf = dist,
+      silent = TRUE
+    )
     codes <- map$codes
 
   }
