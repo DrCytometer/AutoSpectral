@@ -9,6 +9,8 @@ unmixed.mxn.plot(
   fluorophore,
   asp,
   channels = NULL,
+  gate.boundary = NULL,
+  scatter.param = asp$default.scatter.parameter,
   max.points = 50000,
   title = "mxn_biplot",
   biplot.size = 3,
@@ -41,6 +43,18 @@ element must be present in \code{colnames(unmixed.data)} (or the FCS columns).}
 \item{channels}{Optional character vector. Subset of channels to use as
 y-axis columns. When \code{NULL} (default) all columns except those in
 \code{fluorophore} are used. Must be present in the data if supplied.}
+
+\item{gate.boundary}{Optional gate boundary, as returned by
+\code{define.gate.landmarks()}, \code{define.gate.density()}, or \code{do.gate()} — a
+list containing at least numeric \code{x} and \code{y} components describing the
+polygon vertices. When supplied and \code{scatter.param} columns are present in
+the data, events are gated with \code{apply.gate()} before downsampling to
+\code{max.points}. When \code{scatter.param} columns are absent, gating is skipped
+with a warning. Default \code{NULL} (no gating).}
+
+\item{scatter.param}{Character vector of length 2 giving the names of the
+two scatter columns to gate on when \code{gate.boundary} is supplied. Default
+\code{asp$default.scatter.parameter}. Ignored if \code{gate.boundary} is \code{NULL}.}
 
 \item{max.points}{Integer. Total number of events to retain after a single
 random downsample applied before drawing any panel. Default \code{5e4}.}

@@ -27,6 +27,16 @@
 #' @param channels Optional character vector. Subset of columns to include.
 #' When `NULL` (default) all columns are used. Large panels sets (\eqn{n > 20})
 #' will produce very large PDFs; consider subsetting.
+#' @param gate.boundary Optional gate boundary, as returned by
+#' `define.gate.landmarks()`, `define.gate.density()`, or `do.gate()` — a
+#' list containing at least numeric `x` and `y` components describing the
+#' polygon vertices. When supplied and `scatter.param` columns are present in
+#' the data, events are gated with `apply.gate()` before downsampling to
+#' `max.points`. When `scatter.param` columns are absent, gating is skipped
+#' with a warning. Default `NULL` (no gating).
+#' @param scatter.param Character vector of length 2 giving the names of the
+#' two scatter columns to gate on when `gate.boundary` is supplied. Default
+#' `asp$default.scatter.parameter`. Ignored if `gate.boundary` is `NULL`.
 #' @param max.points Integer. Total number of events retained after a single
 #' random downsample applied before any panel is drawn. Default `5e4`.
 #' @param title Character string used as the PDF filename stem. Default
@@ -89,6 +99,8 @@ unmixed.nxn.plot <- function(
     unmixed.data,
     asp,
     channels      = NULL,
+    gate.boundary = NULL,
+    scatter.param = asp$default.scatter.parameter,
     max.points    = 5e4,
     title         = "nxn_biplot",
     biplot.size   = 3,
@@ -119,7 +131,43 @@ unmixed.nxn.plot <- function(
   )
 
   # --- read and validate data ---
-  mat <- .read.unmixed.input( unmixed.data, channels = channels )
+  if ( is.null( gate.boundary ) ) {
+    mat <- .read.unmixed.input( unmixed.data, channels = channels )
+  } else {
+    mat <- .read.unmixed.input( unmixed.data, channels = NULL )
+
+    has.scatter <- !is.null( scatter.param ) && all( scatter.param %in% colnames( mat ) )
+    if ( has.scatter ) {
+      mat <- apply.gate(
+        flow.data     = mat,
+        gate.boundary = gate.boundary,
+        scatter.param = scatter.param,
+        asp           = asp
+      )
+    } else {
+      warning(
+        paste0(
+          "`gate.boundary` was supplied but scatter.param column(s) (",
+          paste( scatter.param, collapse = ", " ),
+          ") were not found in the data; skipping gating."
+        ),
+        call. = FALSE
+      )
+    }
+
+    if ( !is.null( channels ) ) {
+      missing.ch <- setdiff( channels, colnames( mat ) )
+      if ( length( missing.ch ) > 0 )
+        stop(
+          paste0(
+            "The following `channels` are absent from the data: ",
+            paste( missing.ch, collapse = ", " )
+          ),
+          call. = FALSE
+        )
+      mat <- mat[ , channels, drop = FALSE ]
+    }
+  }
 
   n <- ncol( mat )
   if ( n < 2 )

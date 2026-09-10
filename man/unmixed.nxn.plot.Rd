@@ -8,6 +8,8 @@ unmixed.nxn.plot(
   unmixed.data,
   asp,
   channels = NULL,
+  gate.boundary = NULL,
+  scatter.param = asp$default.scatter.parameter,
   max.points = 50000,
   title = "nxn_biplot",
   biplot.size = 3,
@@ -36,6 +38,18 @@ channels and whose rows are cells.}
 \item{channels}{Optional character vector. Subset of columns to include.
 When \code{NULL} (default) all columns are used. Large panels sets (\eqn{n > 20})
 will produce very large PDFs; consider subsetting.}
+
+\item{gate.boundary}{Optional gate boundary, as returned by
+\code{define.gate.landmarks()}, \code{define.gate.density()}, or \code{do.gate()} — a
+list containing at least numeric \code{x} and \code{y} components describing the
+polygon vertices. When supplied and \code{scatter.param} columns are present in
+the data, events are gated with \code{apply.gate()} before downsampling to
+\code{max.points}. When \code{scatter.param} columns are absent, gating is skipped
+with a warning. Default \code{NULL} (no gating).}
+
+\item{scatter.param}{Character vector of length 2 giving the names of the
+two scatter columns to gate on when \code{gate.boundary} is supplied. Default
+\code{asp$default.scatter.parameter}. Ignored if \code{gate.boundary} is \code{NULL}.}
 
 \item{max.points}{Integer. Total number of events retained after a single
 random downsample applied before any panel is drawn. Default \code{5e4}.}

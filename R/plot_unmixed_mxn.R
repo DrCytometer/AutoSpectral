@@ -360,6 +360,16 @@
 #' @param channels Optional character vector. Subset of channels to use as
 #' y-axis columns. When `NULL` (default) all columns except those in
 #' `fluorophore` are used. Must be present in the data if supplied.
+#' @param gate.boundary Optional gate boundary, as returned by
+#' `define.gate.landmarks()`, `define.gate.density()`, or `do.gate()` — a
+#' list containing at least numeric `x` and `y` components describing the
+#' polygon vertices. When supplied and `scatter.param` columns are present in
+#' the data, events are gated with `apply.gate()` before downsampling to
+#' `max.points`. When `scatter.param` columns are absent, gating is skipped
+#' with a warning. Default `NULL` (no gating).
+#' @param scatter.param Character vector of length 2 giving the names of the
+#' two scatter columns to gate on when `gate.boundary` is supplied. Default
+#' `asp$default.scatter.parameter`. Ignored if `gate.boundary` is `NULL`.
 #' @param max.points Integer. Total number of events to retain after a single
 #' random downsample applied before drawing any panel. Default `5e4`.
 #' @param title Character string used as the PDF filename stem and as the
@@ -421,6 +431,8 @@ unmixed.mxn.plot <- function(
     fluorophore,
     asp,
     channels      = NULL,
+    gate.boundary = NULL,
+    scatter.param = asp$default.scatter.parameter,
     max.points    = 5e4,
     title         = "mxn_biplot",
     biplot.size   = 3,
@@ -452,6 +464,28 @@ unmixed.mxn.plot <- function(
 
   # --- read and validate data ---
   mat <- .read.unmixed.input( unmixed.data, channels = NULL )
+
+  # --- optional scatter gating (before column subsetting/downsampling) ---
+  if ( !is.null( gate.boundary ) ) {
+    has.scatter <- !is.null( scatter.param ) && all( scatter.param %in% colnames( mat ) )
+    if ( has.scatter ) {
+      mat <- apply.gate(
+        flow.data     = mat,
+        gate.boundary = gate.boundary,
+        scatter.param = scatter.param,
+        asp           = asp
+      )
+    } else {
+      warning(
+        paste0(
+          "`gate.boundary` was supplied but scatter.param column(s) (",
+          paste( scatter.param, collapse = ", " ),
+          ") were not found in the data; skipping gating."
+        ),
+        call. = FALSE
+      )
+    }
+  }
 
   missing.fluor <- setdiff( fluorophore, colnames( mat ) )
   if ( length( missing.fluor ) > 0 )
