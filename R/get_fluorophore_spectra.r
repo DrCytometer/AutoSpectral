@@ -58,6 +58,13 @@ get.fluorophore.spectra <- function(
                   "built from -- the refine step re-reads the controls ",
                   "fresh, one file at a time." ), call. = FALSE )
 
+  # Shared timestamp for this run's outputs (spectra CSV, trace, heatmap,
+  # similarity/hotspot/unmixing-matrix plots, library reference report), so
+  # repeated calls -- including a routine "Initial" pass followed by a
+  # "Clean" pass against the same `asp$figure.spectra.dir` /
+  # `asp$table.spectra.dir` -- never overwrite each other's output.
+  run.timestamp <- format( Sys.time(), "%Y%m%d_%H%M%S" )
+
   # empty collection vector
   spectra.zero <- rep( 0, flow.control$spectral.channel.n )
   names( spectra.zero ) <- flow.control$spectral.channel
@@ -259,7 +266,7 @@ get.fluorophore.spectra <- function(
         spectral.trace(
           spectral.matrix = fluorophore.spectra.plot,
           asp = asp,
-          title = paste( title, asp$spectra.file.name, sep = "_" ),
+          title = paste( title, asp$spectra.file.name, run.timestamp, sep = "_" ),
           plot.dir = asp$figure.spectra.dir,
           split.lasers = TRUE,
           figure.spectra.line.size = asp$figure.spectra.line.size,
@@ -268,14 +275,14 @@ get.fluorophore.spectra <- function(
 
         spectral.heatmap(
           fluorophore.spectra.plot,
-          title = paste( title, asp$spectra.file.name, sep = "_" ),
+          title = paste( title, asp$spectra.file.name, run.timestamp, sep = "_" ),
           plot.dir = asp$figure.spectra.dir
         )
 
         cosine.similarity.plot(
           fluorophore.spectra.plot,
           filename = asp$similarity.heatmap.file.name,
-          title,
+          paste( title, run.timestamp, sep = "_" ),
           output.dir = asp$figure.similarity.heatmap.dir,
           figure.width = asp$figure.similarity.width,
           figure.height = asp$figure.similarity.height
@@ -286,7 +293,7 @@ get.fluorophore.spectra <- function(
 
         create.heatmap(
           hotspot.matrix,
-          title = paste( title, "Hotspot_Matrix", sep = "_" ),
+          title = paste( title, "Hotspot_Matrix", run.timestamp, sep = "_" ),
           legend.label = expression( "Hotspot Matrix"^"TM" ),
           triangular = TRUE,
           plot.dir = asp$figure.similarity.heatmap.dir,
@@ -307,7 +314,7 @@ get.fluorophore.spectra <- function(
         # plot the unmixing matrix as a heatmap
         spectral.heatmap(
           spectra = unmixing.matrix,
-          title = paste( title, "unmixing_matrix", sep = "_" ),
+          title = paste( title, "unmixing_matrix", run.timestamp, sep = "_" ),
           plot.dir = asp$figure.spectra.dir,
           legend.label = "Coefficients",
           color.palette = "mako"
@@ -327,7 +334,7 @@ get.fluorophore.spectra <- function(
     marker.spectra,
     file = file.path(
       asp$table.spectra.dir,
-      paste0( title, "_", asp$spectra.file.name, ".csv" )
+      paste0( title, "_", asp$spectra.file.name, "_", run.timestamp, ".csv" )
     )
   )
 
@@ -396,7 +403,8 @@ get.fluorophore.spectra <- function(
       spectral.reference.plot(
         marker.spectra, asp,
         fluorophore = attr( marker.spectra, "fluorophore" ),
-        plot.dir    = asp$figure.spectra.dir
+        plot.dir    = asp$figure.spectra.dir,
+        filename    = paste0( title, "_spectral_qc_report_", run.timestamp, ".pdf" )
       )
     },
     error = function( e ) {

@@ -416,6 +416,13 @@ get.spectra.automated <- function(
     verbose                 = TRUE
 ) {
 
+  # Shared timestamp for this run's final spectral-profile outputs (spectra
+  # CSVs, trace, heatmap, similarity/hotspot QC plots, reference report), so
+  # repeated calls against the same output directories never overwrite a
+  # prior run's results. Processing outputs (cosine-filter PDF, scatter-match
+  # plots) intentionally keep static names and are expected to overwrite.
+  run.timestamp <- format( Sys.time(), "%Y%m%d_%H%M%S" )
+
   # -- 0. Validate inputs
   if ( !dir.exists( control.dir ) )
     stop( "control.dir does not exist: ", control.dir, call. = FALSE )
@@ -1187,7 +1194,7 @@ get.spectra.automated <- function(
           spectral.matrix           = marker.spectra,
           asp                       = asp,
           title                     = paste( "Automated", asp$spectra.file.name,
-                                             sep = "_" ),
+                                             run.timestamp, sep = "_" ),
           plot.dir                  = asp$figure.spectra.dir,
           split.lasers              = TRUE,
           figure.spectra.line.size  = asp$figure.spectra.line.size,
@@ -1196,14 +1203,14 @@ get.spectra.automated <- function(
 
         spectral.heatmap(
           marker.spectra,
-          title    = paste( "Automated", asp$spectra.file.name, sep = "_" ),
+          title    = paste( "Automated", asp$spectra.file.name, run.timestamp, sep = "_" ),
           plot.dir = asp$figure.spectra.dir
         )
 
         cosine.similarity.plot(
           marker.spectra,
           filename      = asp$similarity.heatmap.file.name,
-          "Automated",
+          paste0( "Automated_", run.timestamp ),
           output.dir    = asp$figure.similarity.heatmap.dir,
           figure.width  = asp$figure.similarity.width,
           figure.height = asp$figure.similarity.height
@@ -1214,7 +1221,7 @@ get.spectra.automated <- function(
 
         create.heatmap(
           hotspot.matrix,
-          title         = "Automated_Hotspot_Matrix",
+          title         = paste0( "Automated_Hotspot_Matrix_", run.timestamp ),
           legend.label  = expression( "Hotspot Matrix"^"TM" ),
           triangular    = TRUE,
           plot.dir      = asp$figure.similarity.heatmap.dir,
@@ -1240,7 +1247,7 @@ get.spectra.automated <- function(
           asp               = asp,
           fluorophore       = attr( marker.spectra, "fluorophore" ),
           plot.dir          = asp$figure.spectra.dir,
-          filename          = "Automated_spectral_qc_report.pdf",
+          filename          = paste0( "Automated_spectral_qc_report_refined_", run.timestamp, ".pdf" ),
           comparison.spectra = if ( length( refined.fluors ) > 0 ) automated.spectra else NULL,
           comparison.label  = "Automated (pre-legacy)",
           highlight.fluors  = refined.fluors
@@ -1275,7 +1282,7 @@ get.spectra.automated <- function(
     marker.spectra,
     file = file.path(
       asp$table.spectra.dir,
-      paste0( "Automated_", asp$spectra.file.name, ".csv" )
+      paste0( "Automated_", asp$spectra.file.name, "_", run.timestamp, ".csv" )
     )
   )
 
@@ -1286,7 +1293,7 @@ get.spectra.automated <- function(
       automated.spectra,
       file = file.path(
         asp$table.spectra.dir,
-        paste0( "Automated_original_", asp$spectra.file.name, ".csv" )
+        paste0( "Automated_original_(unused)_", asp$spectra.file.name, "_", run.timestamp, ".csv" )
       )
     )
 

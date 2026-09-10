@@ -272,6 +272,13 @@ get.af.spectra <- function(
   unstained.ff   <- readFCS( unstained.sample, return.keywords = TRUE )
   file.name      <- resolve.file.name( unstained.sample, unstained.ff$keywords[[ "$FIL" ]], verbose = verbose )
 
+  # Shared timestamp for this run's final spectral-profile outputs (CSV,
+  # trace, heatmap, variant plots), so repeated calls against the same
+  # `plot.dir` / `table.dir` never overwrite a prior run's saved spectra.
+  # Processing/QC outputs (contamination report, AF-extraction comparison)
+  # intentionally keep static names and are expected to overwrite.
+  run.timestamp <- format( Sys.time(), "%Y%m%d_%H%M%S" )
+
   # retain scatter (and, where configured, imaging) columns alongside the
   # spectral data so that per-node scatter statistics can be computed when
   # return.model = TRUE. Rows are kept aligned with unstained.exprs through
@@ -452,21 +459,21 @@ get.af.spectra <- function(
         spectral.trace(
           spectral.matrix      = af.spectra.plot,
           asp                  = asp,
-          title                = paste( file.name, title ),
+          title                = paste( file.name, title, run.timestamp ),
           plot.dir             = plot.dir,
           split.lasers         = FALSE,
           color.palette        = spectral.trace.color.palette
         )
         spectral.heatmap(
           spectra              = af.spectra.plot,
-          title                = paste( file.name, title ),
+          title                = paste( file.name, title, run.timestamp ),
           plot.dir             = plot.dir,
           color.palette        = heatmap.color.palette
         )
         spectral.variant.plot.dens(
           spectra.variants   = af.spectra.plot,
           median.spectrum    = mean.af,
-          title              = paste0( file.name, " ", title, " density" ),
+          title              = paste0( file.name, " ", title, " density ", run.timestamp ),
           save               = TRUE,
           plot.dir           = plot.dir,
           variant.color = af.fill.color,
@@ -835,7 +842,7 @@ get.af.spectra <- function(
   # ---------------------------------------------------------------------------
 
   if ( save ) {
-    af.file.name <- paste0( file.name, " ", title, ".csv" )
+    af.file.name <- paste0( file.name, " ", title, " ", run.timestamp, ".csv" )
     utils::write.csv( af.spectra, file = file.path( table.dir, af.file.name ) )
   }
 
@@ -847,7 +854,7 @@ get.af.spectra <- function(
         spectral.variant.plot(
           af.spectra.plot,
           mean.af,
-          title               = paste( file.name, "Autofluorescence variation" ),
+          title               = paste( file.name, "Autofluorescence variation", run.timestamp ),
           save                = TRUE,
           plot.dir            = plot.dir,
           variant.fill.color  = af.fill.color,
