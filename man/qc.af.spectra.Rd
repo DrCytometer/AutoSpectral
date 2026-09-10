@@ -9,7 +9,8 @@ qc.af.spectra(
   spectra,
   output.dir = "./figure_autofluorescence",
   remove = TRUE,
-  pass = 1
+  pass = 1,
+  sample.label = NULL
 )
 }
 \arguments{
@@ -30,6 +31,12 @@ fluorophore spectrum.}
 
 \item{pass}{Numeric, default \code{1}. Counter to separate multiple passes of AF
 extraction, such as occur when \code{refine=TRUE} in \code{get.af.spectra()}.}
+
+\item{sample.label}{Optional character string identifying the sample (e.g.
+the unstained FCS file name), prepended to the QC table and report
+filenames. Prevents different samples writing to the same \code{output.dir}
+from overwriting each other's QC output. Default \code{NULL}, which omits the
+prefix.}
 }
 \value{
 None. Plots are saved to a PDF in \code{plot.dir}.

@@ -24,6 +24,11 @@
 #' fluorophore spectrum.
 #' @param pass Numeric, default `1`. Counter to separate multiple passes of AF
 #' extraction, such as occur when `refine=TRUE` in `get.af.spectra()`.
+#' @param sample.label Optional character string identifying the sample (e.g.
+#' the unstained FCS file name), prepended to the QC table and report
+#' filenames. Prevents different samples writing to the same `output.dir`
+#' from overwriting each other's QC output. Default `NULL`, which omits the
+#' prefix.
 #'
 #' @seealso
 #' * [af.qc.plot()]
@@ -38,8 +43,9 @@ qc.af.spectra <- function(
     spectra,
     output.dir = "./figure_autofluorescence",
     remove = TRUE,
-    pass = 1
-  ) {
+    pass = 1,
+    sample.label = NULL
+) {
 
   # ensure rownames exist so AF spectra can be identified in QC plots
   if ( is.null( rownames( af.spectra ) ) ) {
@@ -112,14 +118,19 @@ qc.af.spectra <- function(
       stringsAsFactors = FALSE
     )
     print( contaminant.table )
-    filename <- paste0( "Contaminant_table_AF_spectra_QC_pass_", pass, ".csv" )
+
+    label.prefix <- if ( !is.null( sample.label ) && nzchar( sample.label ) )
+      paste0( sample.label, "_" ) else ""
+
+    filename <- paste0( label.prefix, "Contaminant_table_AF_spectra_QC_pass_", pass, ".csv" )
     utils::write.csv( contaminant.table, file.path( output.dir, filename ) )
 
     # print pdf with QC table and plots
     tryCatch(
       expr = {
         af.qc.plot( af.spectra, spectra, contaminant.table,
-                    plot.dir = output.dir )
+                    plot.dir = output.dir,
+                    filename = paste0( label.prefix, "autofluorescence_qc_report_pass_", pass, ".pdf" ) )
       },
       error = function( e ) {
         message( "Error in plotting AF spectral QC: ", e$message )
