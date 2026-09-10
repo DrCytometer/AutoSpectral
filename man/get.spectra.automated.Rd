@@ -22,6 +22,8 @@ get.spectra.automated(
   plot.cosine.filter = TRUE,
   plot.scatter.match = TRUE,
   allow.duplicate.controls = FALSE,
+  refine = FALSE,
+  refine.args = list(),
   verbose = TRUE
 )
 }
@@ -93,12 +95,25 @@ permit multiple single-stained controls for the same fluorophore
 the true fluorophore identity is preserved as a \code{"fluorophore"} attribute
 for reference-library matching and for \code{check.spectra.duplicates()}.}
 
+\item{refine}{Logical, default \code{FALSE}. Whether to re-measure each row
+directly on its own single-color control after assembly, via
+\code{refine.fluorophore.spectra()}. Re-reads the controls fresh, one file at a
+time, from \code{control.dir}/\code{control.def.file} (already required above)
+rather than reusing the cosine-filtered events this function selected --
+checking a spectrum against the same selection it was fit from cannot
+surface bias that selection introduced.}
+
+\item{refine.args}{Named list of further arguments passed to
+\code{refine.fluorophore.spectra()} when \code{refine = TRUE}.}
+
 \item{verbose}{Logical, default \code{TRUE}. Print progress messages.}
 }
 \value{
 A numeric matrix with fluorophores in rows and spectral detector
 channels in columns, values normalised to \verb{[0, 1]} (L-infinity norm,
-peak = 1). Compatible with all downstream AutoSpectral functions.
+peak = 1). Compatible with all downstream AutoSpectral functions. When
+\code{refine = TRUE}, also carries \code{attr(., "refine.log")} and
+\code{attr(., "refine.crosstalk")} with the per-iteration diagnostics.
 }
 \description{
 Single-function replacement for the three-step

@@ -371,11 +371,22 @@
 #' `sample` identifier and carried through to `marker.spectra`'s rownames;
 #' the true fluorophore identity is preserved as a `"fluorophore"` attribute
 #' for reference-library matching and for `check.spectra.duplicates()`.
+#' @param refine Logical, default `FALSE`. Whether to re-measure each row
+#' directly on its own single-color control after assembly, via
+#' `refine.fluorophore.spectra()`. Re-reads the controls fresh, one file at a
+#' time, from `control.dir`/`control.def.file` (already required above)
+#' rather than reusing the cosine-filtered events this function selected --
+#' checking a spectrum against the same selection it was fit from cannot
+#' surface bias that selection introduced.
+#' @param refine.args Named list of further arguments passed to
+#' `refine.fluorophore.spectra()` when `refine = TRUE`.
 #' @param verbose Logical, default `TRUE`. Print progress messages.
 #'
 #' @return A numeric matrix with fluorophores in rows and spectral detector
 #'   channels in columns, values normalised to `[0, 1]` (L-infinity norm,
-#'   peak = 1). Compatible with all downstream AutoSpectral functions.
+#'   peak = 1). Compatible with all downstream AutoSpectral functions. When
+#'   `refine = TRUE`, also carries `attr(., "refine.log")` and
+#'   `attr(., "refine.crosstalk")` with the per-iteration diagnostics.
 #'
 #' @seealso [get.fluorophore.spectra()] for the legacy workflow.
 #'   [spectral.reference.plot()] for the QC report produced when `figures = TRUE`.
@@ -400,6 +411,8 @@ get.spectra.automated <- function(
     plot.cosine.filter      = TRUE,
     plot.scatter.match      = TRUE,
     allow.duplicate.controls = FALSE,
+    refine                  = FALSE,
+    refine.args             = list(),
     verbose                 = TRUE
 ) {
 
@@ -1037,6 +1050,35 @@ get.spectra.automated <- function(
   automated.spectra <- do.call( rbind, automated.spectra.list )
   rownames( automated.spectra ) <- fluor.samples
   attr( automated.spectra, "fluorophore" ) <- fluor.names
+
+  # -- 7b. Optional refine pass: re-measure each row directly on its own
+  # single-color control, read fresh one file at a time, using the
+  # raw-signature engine fix.my.unmix() uses for its own phase two.
+  # `automated.spectra` is left untouched -- it stays the pre-refine
+  # snapshot used for the comparison plot and secondary CSV below.
+  if ( refine ) {
+    if ( verbose )
+      message( "\033[32m-- Refining spectra on single-color controls --\033[0m" )
+
+    refine.result <- do.call(
+      refine.fluorophore.spectra,
+      modifyList(
+        list(
+          marker.spectra           = marker.spectra,
+          control.dir               = control.dir,
+          control.def.file          = control.def.file,
+          asp                        = asp,
+          allow.duplicate.controls  = allow.duplicate.controls
+        ),
+        refine.args
+      )
+    )
+
+    marker.spectra <- refine.result$spectra
+    attr( marker.spectra, "fluorophore" ) <- fluor.names
+    attr( marker.spectra, "refine.log" ) <- refine.result$log
+    attr( marker.spectra, "refine.crosstalk" ) <- refine.result$crosstalk
+  }
 
   # -- 8. Pairwise cosine similarity warning
   sim.mat  <- cosine.similarity( marker.spectra )

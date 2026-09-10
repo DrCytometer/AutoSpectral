@@ -10,7 +10,11 @@ get.fluorophore.spectra(
   use.clean.expr = TRUE,
   af.spectra = NULL,
   title = NULL,
-  figures = TRUE
+  figures = TRUE,
+  refine = FALSE,
+  control.dir = NULL,
+  control.def.file = NULL,
+  refine.args = list()
 )
 }
 \arguments{
@@ -30,9 +34,27 @@ is \code{TRUE}.}
 
 \item{figures}{Logical, default is \code{TRUE}. Whether to produce plots of the
 fluorophore spectra and cosine similarity.}
+
+\item{refine}{Logical, default \code{FALSE}. Whether to re-measure each row
+directly on its own single-color control after the first pass, via
+\code{refine.fluorophore.spectra()}. Unlike the first pass, this re-reads the
+controls fresh from \code{control.dir}/\code{control.def.file}, one file at a time,
+rather than using \code{flow.control}'s already-gated and possibly downsampled
+data -- checking a spectrum against the same selection it was fit from
+cannot surface bias that selection introduced. Requires \code{control.dir} and
+\code{control.def.file}.}
+
+\item{control.dir, control.def.file}{As in \code{define.flow.control()}. Ignored
+unless \code{refine = TRUE}, in which case both are required and should
+normally be the same files \code{flow.control} was built from.}
+
+\item{refine.args}{Named list of further arguments passed to
+\code{refine.fluorophore.spectra()} when \code{refine = TRUE}.}
 }
 \value{
-A matrix with the fluorophore spectra.
+A matrix with the fluorophore spectra. When \code{refine = TRUE}, also
+carries \code{attr(., "refine.log")} and \code{attr(., "refine.crosstalk")} with the
+per-iteration diagnostics.
 }
 \description{
 This function retrieves the fluorophore spectra for flow cytometry data,

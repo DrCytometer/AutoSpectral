@@ -19,8 +19,23 @@
 #' is `TRUE`.
 #' @param figures Logical, default is `TRUE`. Whether to produce plots of the
 #' fluorophore spectra and cosine similarity.
+#' @param refine Logical, default `FALSE`. Whether to re-measure each row
+#' directly on its own single-color control after the first pass, via
+#' `refine.fluorophore.spectra()`. Unlike the first pass, this re-reads the
+#' controls fresh from `control.dir`/`control.def.file`, one file at a time,
+#' rather than using `flow.control`'s already-gated and possibly downsampled
+#' data -- checking a spectrum against the same selection it was fit from
+#' cannot surface bias that selection introduced. Requires `control.dir` and
+#' `control.def.file`.
+#' @param control.dir,control.def.file As in `define.flow.control()`. Ignored
+#' unless `refine = TRUE`, in which case both are required and should
+#' normally be the same files `flow.control` was built from.
+#' @param refine.args Named list of further arguments passed to
+#' `refine.fluorophore.spectra()` when `refine = TRUE`.
 #'
-#' @return A matrix with the fluorophore spectra.
+#' @return A matrix with the fluorophore spectra. When `refine = TRUE`, also
+#' carries `attr(., "refine.log")` and `attr(., "refine.crosstalk")` with the
+#' per-iteration diagnostics.
 #'
 #' @export
 
@@ -30,8 +45,18 @@ get.fluorophore.spectra <- function(
     use.clean.expr = TRUE,
     af.spectra = NULL,
     title = NULL,
-    figures = TRUE
-  ) {
+    figures = TRUE,
+    refine = FALSE,
+    control.dir = NULL,
+    control.def.file = NULL,
+    refine.args = list()
+) {
+
+  if ( refine && ( is.null( control.dir ) || is.null( control.def.file ) ) )
+    stop( paste0( "`refine = TRUE` requires `control.dir` and ",
+                  "`control.def.file`, the same files `flow.control` was ",
+                  "built from -- the refine step re-reads the controls ",
+                  "fresh, one file at a time." ), call. = FALSE )
 
   # empty collection vector
   spectra.zero <- rep( 0, flow.control$spectral.channel.n )
@@ -187,6 +212,31 @@ get.fluorophore.spectra <- function(
     marker.spectra <- do.call( rbind, marker.spectra )
     rownames( marker.spectra ) <- fluorophore.samples
     attr( marker.spectra, "fluorophore" ) <- fluorophore.identity
+  }
+
+  # optional second pass: re-measure each row directly on its own
+  # single-color control, read fresh one file at a time, using the
+  # raw-signature engine fix.my.unmix() uses for its own phase two
+  if ( refine ) {
+    message( paste0( "\033[32m", "Refining spectra on single-color controls", "\033[0m" ) )
+
+    refine.result <- do.call(
+      refine.fluorophore.spectra,
+      modifyList(
+        list(
+          marker.spectra   = marker.spectra,
+          control.dir      = control.dir,
+          control.def.file = control.def.file,
+          asp              = asp
+        ),
+        refine.args
+      )
+    )
+
+    marker.spectra <- refine.result$spectra
+    attr( marker.spectra, "fluorophore" ) <- fluorophore.identity
+    attr( marker.spectra, "refine.log" ) <- refine.result$log
+    attr( marker.spectra, "refine.crosstalk" ) <- refine.result$crosstalk
   }
 
   # plot spectra
