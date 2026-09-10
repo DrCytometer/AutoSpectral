@@ -9,7 +9,7 @@ get.af.spectra(
   asp,
   spectra,
   som.dim = 10,
-  dist = 2L,
+  dist = 4L,
   figures = TRUE,
   save = TRUE,
   plot.dir = NULL,
@@ -23,6 +23,8 @@ get.af.spectra(
   raw.pca.components = NULL,
   refine = FALSE,
   problem.quantile = 0.99,
+  plot.unmixed = FALSE,
+  plot.unmixed.n = 30000,
   remove.contaminants = TRUE,
   contaminant.threshold = 0.99,
   parallel = TRUE,
@@ -52,8 +54,7 @@ stained samples to which the AF will be applied, ideally.}
 \item{som.dim}{Number of x and y dimensions for the SOM. Default is \code{10}.}
 
 \item{dist}{Integer 1:4, distance function (1 manhattan, 2 euclidean,
-3 chebyshev, 4 cosine). Default \code{2}. Only used on the AutoSpectralRcpp
-path.}
+3 chebyshev, 4 cosine). Default \code{4}.}
 
 \item{figures}{Logical, whether to plot the spectral traces and heatmap for
 the AF signatures. Default is \code{TRUE}.}
@@ -91,9 +92,9 @@ to cluster on raw detector space only, which is appropriate when
 \code{spectra} contains several similar or collinear fluorophores (e.g. a
 bead-cell comparison panel), where an OLS unmix is itself unstable and
 would corrupt the clustering features rather than enrich them.
-\code{use.unmixed = FALSE} also forces \code{refine = FALSE}, since the
-second-pass refinement identifies "problem cells" from per-cell
-unmixing residuals and is subject to the same instability.}
+\code{use.unmixed = FALSE} also forces \code{refine = FALSE} and
+\code{plot.unmixed = FALSE}, since both rely on the same per-cell OLS
+unmixing residuals and are subject to the same instability.}
 
 \item{af.basis.components}{Integer, default \code{NULL}. When supplied, appends
 this many components of the panel-oblique autofluorescence structure of
@@ -134,6 +135,23 @@ which cells are "problematic" after first-pass per-cell AF extraction. Cells
 at or above this quantile with respect to the L2 norm of their unmixed
 fluorophore channels (i.e. still furthest from zero) are selected for the
 second-round modulation. A value of \code{0.99} means the top 1\% of cells.}
+
+\item{plot.unmixed}{Logical, default \code{FALSE}. Whether to unmix the
+unstained sample before and after AF extraction and plot the comparison
+as a single side-by-side biplot (\code{unmixed.no.af}, \code{unmixed}, and, when
+\code{refine = TRUE} and modulation succeeds, \code{unmixed.second}). This runs a
+full per-cell AF unmixing pass purely for diagnostic plotting, so it
+defaults off. When \code{refine = FALSE}, the comparison plot is drawn
+immediately from the first-pass unmixing. When \code{refine = TRUE}, plotting
+is deferred until the refinement loop finishes, so the plot always
+reflects the final (possibly modulated) AF spectra rather than an
+intermediate state.}
+
+\item{plot.unmixed.n}{Integer, default \code{30000}. When \code{plot.unmixed = TRUE}
+and \code{refine = FALSE}, the unstained sample is subsampled to this many
+events before the diagnostic unmixing pass, since the full refinement
+population isn't otherwise needed. Ignored when \code{refine = TRUE}, since
+the full population is already required for problem-cell identification.}
 
 \item{remove.contaminants}{Logical, default \code{TRUE}. A QC check is performed
 to exclude any autofluorescence spectrum that is nearly identical to a

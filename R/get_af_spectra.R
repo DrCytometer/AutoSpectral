@@ -17,6 +17,9 @@
 #'
 #' @importFrom parallelly availableCores
 #' @importFrom FNN knnx.index
+#' @importFrom cowplot plot_grid
+#' @importFrom ggplot2 ggsave ggtitle
+#' @importFrom ragg agg_jpeg
 #'
 #' @param unstained.sample Path and file name for an unstained sample FCS file.
 #'   The sample type and processing (protocol) method should match the fully
@@ -27,8 +30,7 @@
 #'   1, with fluorophores in rows and detectors in columns.
 #' @param som.dim Number of x and y dimensions for the SOM. Default is `10`.
 #' @param dist Integer 1:4, distance function (1 manhattan, 2 euclidean,
-#'   3 chebyshev, 4 cosine). Default `2`. Only used on the AutoSpectralRcpp
-#'   path.
+#'   3 chebyshev, 4 cosine). Default `4`.
 #' @param figures Logical, whether to plot the spectral traces and heatmap for
 #'   the AF signatures. Default is `TRUE`.
 #' @param save Logical, whether to save the CSV file for the AF signatures.
@@ -57,9 +59,9 @@
 #'   `spectra` contains several similar or collinear fluorophores (e.g. a
 #'   bead-cell comparison panel), where an OLS unmix is itself unstable and
 #'   would corrupt the clustering features rather than enrich them.
-#'   `use.unmixed = FALSE` also forces `refine = FALSE`, since the
-#'   second-pass refinement identifies "problem cells" from per-cell
-#'   unmixing residuals and is subject to the same instability.
+#'   `use.unmixed = FALSE` also forces `refine = FALSE` and
+#'   `plot.unmixed = FALSE`, since both rely on the same per-cell OLS
+#'   unmixing residuals and are subject to the same instability.
 #' @param af.basis.components Integer, default `NULL`. When supplied, appends
 #'   this many components of the panel-oblique autofluorescence structure of
 #'   the unstained sample to the SOM training features, alongside the raw
@@ -96,6 +98,21 @@
 #'   at or above this quantile with respect to the L2 norm of their unmixed
 #'   fluorophore channels (i.e. still furthest from zero) are selected for the
 #'   second-round modulation. A value of `0.99` means the top 1% of cells.
+#' @param plot.unmixed Logical, default `FALSE`. Whether to unmix the
+#'   unstained sample before and after AF extraction and plot the comparison
+#'   as a single side-by-side biplot (`unmixed.no.af`, `unmixed`, and, when
+#'   `refine = TRUE` and modulation succeeds, `unmixed.second`). This runs a
+#'   full per-cell AF unmixing pass purely for diagnostic plotting, so it
+#'   defaults off. When `refine = FALSE`, the comparison plot is drawn
+#'   immediately from the first-pass unmixing. When `refine = TRUE`, plotting
+#'   is deferred until the refinement loop finishes, so the plot always
+#'   reflects the final (possibly modulated) AF spectra rather than an
+#'   intermediate state.
+#' @param plot.unmixed.n Integer, default `30000`. When `plot.unmixed = TRUE`
+#'   and `refine = FALSE`, the unstained sample is subsampled to this many
+#'   events before the diagnostic unmixing pass, since the full refinement
+#'   population isn't otherwise needed. Ignored when `refine = TRUE`, since
+#'   the full population is already required for problem-cell identification.
 #' @param remove.contaminants Logical, default `TRUE`. A QC check is performed
 #'   to exclude any autofluorescence spectrum that is nearly identical to a
 #'   fluorophore signature in `spectra`. This guards against low-level
@@ -158,7 +175,7 @@ get.af.spectra <- function(
     asp,
     spectra,
     som.dim              = 10,
-    dist                 = 2L,
+    dist                 = 4L,
     figures              = TRUE,
     save                 = TRUE,
     plot.dir             = NULL,
@@ -172,6 +189,8 @@ get.af.spectra <- function(
     raw.pca.components   = NULL,
     refine               = FALSE,
     problem.quantile     = 0.99,
+    plot.unmixed         = FALSE,
+    plot.unmixed.n       = 30000,
     remove.contaminants  = TRUE,
     contaminant.threshold = 0.99,
     parallel             = TRUE,
@@ -209,6 +228,17 @@ get.af.spectra <- function(
       call. = FALSE
     )
     refine <- FALSE
+  }
+
+  if ( !use.unmixed && plot.unmixed ) {
+    warning(
+      "`use.unmixed = FALSE` forces `plot.unmixed = FALSE`: the before/after ",
+      "diagnostic plot requires the same OLS `unmixed.no.af` baseline against ",
+      "`spectra`, which is exactly the instability `use.unmixed = FALSE` is ",
+      "meant to avoid.",
+      call. = FALSE
+    )
+    plot.unmixed <- FALSE
   }
 
   if ( !use.unmixed && !is.null( af.basis.components ) ) {
@@ -375,7 +405,8 @@ get.af.spectra <- function(
   )
 
   # L-infinity normalise SOM node codes
-  af.spectra <- t( apply( map$codes[ , spectral.channels ], 1, function( x ) x / max( abs( x ) ) ) )
+  af.spectra <- t( apply( map$codes[ , spectral.channels ], 1,
+                          function( x ) x / max( abs( x ) ) ) )
   af.spectra <- as.matrix( stats::na.omit( af.spectra ) )
 
   # Prepend population mean
@@ -384,7 +415,8 @@ get.af.spectra <- function(
   rownames( af.spectra ) <- paste0( "AF", seq_len( nrow( af.spectra ) ) )
 
   # Contamination QC: remove spectra resembling fluorophores
-  af.spectra <- qc.af.spectra( af.spectra, spectra, plot.dir, remove.contaminants, pass = 2 )
+  af.spectra <- qc.af.spectra( af.spectra, spectra, plot.dir, remove.contaminants, pass = 2,
+                               sample.label = file.name )
 
   # Deduplication of base spectra
   if ( deduplicate ) {
@@ -420,21 +452,21 @@ get.af.spectra <- function(
         spectral.trace(
           spectral.matrix      = af.spectra.plot,
           asp                  = asp,
-          title                = paste( title, "Autofluorescence spectra" ),
+          title                = paste( file.name, title ),
           plot.dir             = plot.dir,
           split.lasers         = FALSE,
           color.palette        = spectral.trace.color.palette
         )
         spectral.heatmap(
           spectra              = af.spectra.plot,
-          title                = title,
+          title                = paste( file.name, title ),
           plot.dir             = plot.dir,
           color.palette        = heatmap.color.palette
         )
         spectral.variant.plot.dens(
           spectra.variants   = af.spectra.plot,
           median.spectrum    = mean.af,
-          title              = paste0( title, "_autofluorescence_density" ),
+          title              = paste0( file.name, " ", title, " density" ),
           save               = TRUE,
           plot.dir           = plot.dir,
           variant.color = af.fill.color,
@@ -449,12 +481,20 @@ get.af.spectra <- function(
   }
 
   # ---------------------------------------------------------------------------
-  # Stage 2 Refine: targeted modulation for problem cells
+  # Stage 2: first-pass per-cell AF unmixing
   # ---------------------------------------------------------------------------
+  # Runs whenever the refinement loop needs problem cells (`refine = TRUE`) or
+  # a before/after diagnostic plot has been requested (`plot.unmixed = TRUE`).
+  # When only the diagnostic plot is wanted, the unstained sample is
+  # subsampled to `plot.unmixed.n` events first, since the full refinement
+  # population is not otherwise needed and per-cell unmixing is the slow part
+  # of this function.
 
-  if ( refine ) {
+  unmixed.second <- NULL
 
-    if ( return.model ) {
+  if ( refine || plot.unmixed ) {
+
+    if ( refine && return.model ) {
       warning( "`return.model = TRUE` with `refine = TRUE`: refined AF spectra ",
                "are synthesised rather than drawn from SOM node populations, ",
                "so several dictionary entries may attract few events and will ",
@@ -462,20 +502,34 @@ get.af.spectra <- function(
                "building an AF model.", call. = FALSE )
     }
 
-    if ( verbose ) message( "Refine: identifying best-fitting AF - first pass" )
+    if ( verbose ) message( "Identifying best-fitting AF - first pass" )
+
+    # Full population when refining (problem-cell quantiles need the real
+    # population); a speed subsample when only plotting.
+    if ( refine ) {
+      plot.idx <- seq_len( nrow( unstained.exprs ) )
+    } else if ( nrow( unstained.exprs ) > plot.unmixed.n ) {
+      set.seed( asp$bird.seed )
+      plot.idx <- sample( nrow( unstained.exprs ), plot.unmixed.n )
+    } else {
+      plot.idx <- seq_len( nrow( unstained.exprs ) )
+    }
+
+    unstained.exprs.pass <- unstained.exprs[ plot.idx, , drop = FALSE ]
+    unmixed.no.af.pass   <- unmixed.no.af[ plot.idx, , drop = FALSE ]
 
     # Per-cell AF assignment on the unstained sample using the base spectra
     if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
          "assign.af.fluor.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
       af.assignments <- AutoSpectralRcpp::assign.af.fluor.fast(
-        raw.data  = unstained.exprs,
+        raw.data  = unstained.exprs.pass,
         spectra   = spectra,
         af.spectra = af.spectra,
         threads   = asp$worker.process.n
       )
     } else {
       af.assignments <- assign.af.fluorophores(
-        raw.data   = unstained.exprs,
+        raw.data   = unstained.exprs.pass,
         spectra    = spectra,
         af.spectra = af.spectra
       )
@@ -483,21 +537,16 @@ get.af.spectra <- function(
 
     # Unmix each cell with its assigned AF spectrum, tracking residuals and
     # projected fluorophore signal so we can compute a detector-space error
-    fluor.idx        <- 2:( nrow( spectra ) + 1 )
-    af.abundance     <- rep( 0, nrow( unstained.exprs ) )
-    unmixed          <- cbind( af.abundance, unmixed.no.af )
-    residuals        <- matrix( 0, nrow = nrow( unstained.exprs ), ncol = ncol( spectra ) )
-    proj.fluor       <- matrix( 0, nrow = nrow( unstained.exprs ), ncol = ncol( spectra ) )
-
-    combined.spectra <- matrix( NA_real_, nrow = nrow( spectra ) + 1, ncol = ncol( spectra ) )
-    combined.spectra[ fluor.idx, ] <- spectra
+    fluor.idx    <- 2:( nrow( spectra ) + 1 )
+    af.abundance <- rep( 0, nrow( unstained.exprs.pass ) )
+    unmixed      <- cbind( af.abundance, unmixed.no.af.pass )
 
     af.fit <- unmix.af.fwl(
-      raw.data         = unstained.exprs,
+      raw.data         = unstained.exprs.pass,
       spectra          = spectra,
       af.spectra       = af.spectra,
       af.index         = af.assignments,
-      unmixed.no.af    = unmixed.no.af,
+      unmixed.no.af    = unmixed.no.af.pass,
       return.fitted.af = TRUE
     )
 
@@ -505,246 +554,288 @@ get.af.spectra <- function(
     unmixed[ , fluor.idx ]  <- af.fit$fluorophores
 
     proj.fluor <- af.fit$fluorophores %*% spectra
-    residuals  <- unstained.exprs - proj.fluor - af.fit$fitted.af
+    residuals  <- unstained.exprs.pass - proj.fluor - af.fit$fitted.af
 
     # detector-space error = fluorophore projection + raw residuals
     error <- residuals + proj.fluor
 
-    # ---- Identify problem cells (those still furthest from zero) -------------
+    # -------------------------------------------------------------------
+    # Stage 2 Refine: targeted modulation for problem cells
+    # -------------------------------------------------------------------
 
-    if ( verbose ) message( "Refine: calculating error magnitude for problem cell selection" )
+    if ( refine ) {
 
-    if ( length( fluor.idx ) > 1 ) {
-      error.magnitude <- sqrt( rowSums( unmixed[ , fluor.idx ]^2 ) )
-    } else {
-      error.magnitude <- abs( unmixed[ , fluor.idx ] )
-    }
+      # ---- Identify problem cells (those still furthest from zero) ------
 
-    # Step the quantile down in 5 % increments until we have >= 500 cells
-    while ( TRUE ) {
-      threshold      <- stats::quantile( error.magnitude, problem.quantile )
-      problem.idx    <- which( error.magnitude > threshold )
-      problem.cell.n <- length( problem.idx )
+      if ( verbose ) message( "Refine: calculating error magnitude for problem cell selection" )
 
-      if ( problem.cell.n >= 500 ) break
+      if ( length( fluor.idx ) > 1 ) {
+        error.magnitude <- sqrt( rowSums( unmixed[ , fluor.idx ]^2 ) )
+      } else {
+        error.magnitude <- abs( unmixed[ , fluor.idx ] )
+      }
 
-      problem.quantile <- problem.quantile - 0.05
-
-      if ( problem.quantile < 0.5 ) {
+      # Step the quantile down in 5 % increments until we have >= 500 cells
+      while ( TRUE ) {
         threshold      <- stats::quantile( error.magnitude, problem.quantile )
         problem.idx    <- which( error.magnitude > threshold )
         problem.cell.n <- length( problem.idx )
-        break
+
+        if ( problem.cell.n >= 500 ) break
+
+        problem.quantile <- problem.quantile - 0.05
+
+        if ( problem.quantile < 0.5 ) {
+          threshold      <- stats::quantile( error.magnitude, problem.quantile )
+          problem.idx    <- which( error.magnitude > threshold )
+          problem.cell.n <- length( problem.idx )
+          break
+        }
       }
-    }
-
-    if ( verbose )
-      message(
-        sprintf(
-          "Refine: %d problem cells selected (quantile = %.2f, threshold = %.2f)",
-          problem.cell.n, problem.quantile, threshold
-        )
-      )
-
-    # ---- Modulate base spectra using error clusters -------------------------
-
-    if ( problem.cell.n > 10 ) {
-
-      # AF abundance for the problem cells (normalisation denominator)
-      af.abundance.problem <- unmixed[ problem.idx, 1 ]
-      af.abundance.problem[ af.abundance.problem == 0 ] <- 1e-6
-
-      # Spill ratios: per-channel error normalised by AF abundance,
-      # giving a dimensionless signature of how the current AF estimate is wrong
-      spill.ratios <- error[ problem.idx, ] / af.abundance.problem
 
       if ( verbose )
         message(
-          paste( "Refine: clustering", problem.cell.n, "problem cells by spillover error pattern" )
+          sprintf(
+            "Refine: %d problem cells selected (quantile = %.2f, threshold = %.2f)",
+            problem.cell.n, problem.quantile, threshold
+          )
         )
 
-      som.dim.error <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
+      # ---- Modulate base spectra using error clusters --------------------
 
-      colnames( spill.ratios ) <- colnames( spectra )
-      map.error <- get.som.codes(
-        data    = spill.ratios,
-        som.dim = som.dim.error,
-        dist    = dist,
-        seed    = asp$bird.seed,
-        threads = if ( parallel ) threads else 1L
-      )
+      if ( problem.cell.n > 10 ) {
 
-      error.assign <- as.integer(
-        FNN::knnx.index( data = map.error$codes, query = spill.ratios, k = 1 )
-      )
+        # AF abundance for the problem cells (normalisation denominator)
+        af.abundance.problem <- unmixed[ problem.idx, 1 ]
+        af.abundance.problem[ af.abundance.problem == 0 ] <- 1e-6
 
-      cluster.ids <- unique( error.assign )
+        # Spill ratios: per-channel error normalised by AF abundance,
+        # giving a dimensionless signature of how the current AF estimate is wrong
+        spill.ratios <- error[ problem.idx, ] / af.abundance.problem
 
-      modulated.list <- lapply( cluster.ids, function( cl ) {
-        cl.sub.idx <- which( error.assign == cl )
-        global.idx <- problem.idx[ cl.sub.idx ]
+        if ( verbose )
+          message(
+            paste( "Refine: clustering", problem.cell.n, "problem cells by spillover error pattern" )
+          )
 
-        # median correction pattern for this error cluster
-        median.ratio <- apply(
-          spill.ratios[ cl.sub.idx, , drop = FALSE ],
-          2,
-          stats::median
+        som.dim.error <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
+
+        colnames( spill.ratios ) <- colnames( spectra )
+        map.error <- get.som.codes(
+          data    = spill.ratios,
+          som.dim = som.dim.error,
+          dist    = dist,
+          seed    = asp$bird.seed,
+          threads = if ( parallel ) threads else 1L
         )
 
-        # which base AF spectra were assigned to cells in this cluster?
-        contributing.af.ids <- unique( af.assignments[ global.idx ] )
+        error.assign <- as.integer(
+          FNN::knnx.index( data = map.error$codes, query = spill.ratios, k = 1 )
+        )
 
-        # modulate each contributing base spectrum
-        new.specs <- lapply( contributing.af.ids, function( id ) {
-          base.spec <- af.spectra[ id, ]
-          updated   <- base.spec * ( 1 + median.ratio )
-          peak      <- max( abs( updated ) )
-          if ( peak > 1e-12 ) updated <- updated / peak
-          return( updated )
+        cluster.ids <- unique( error.assign )
+
+        modulated.list <- lapply( cluster.ids, function( cl ) {
+          cl.sub.idx <- which( error.assign == cl )
+          global.idx <- problem.idx[ cl.sub.idx ]
+
+          # median correction pattern for this error cluster
+          median.ratio <- apply(
+            spill.ratios[ cl.sub.idx, , drop = FALSE ],
+            2,
+            stats::median
+          )
+
+          # which base AF spectra were assigned to cells in this cluster?
+          contributing.af.ids <- unique( af.assignments[ global.idx ] )
+
+          # modulate each contributing base spectrum
+          new.specs <- lapply( contributing.af.ids, function( id ) {
+            base.spec <- af.spectra[ id, ]
+            updated   <- base.spec * ( 1 + median.ratio )
+            peak      <- max( abs( updated ) )
+            if ( peak > 1e-12 ) updated <- updated / peak
+            return( updated )
+          } )
+
+          return( do.call( rbind, new.specs ) )
         } )
 
-        return( do.call( rbind, new.specs ) )
-      } )
+        modulated.af.spectra <- do.call( rbind, modulated.list )
+        modulated.af.spectra <- as.matrix( stats::na.omit( modulated.af.spectra ) )
 
-      modulated.af.spectra <- do.call( rbind, modulated.list )
-      modulated.af.spectra <- as.matrix( stats::na.omit( modulated.af.spectra ) )
+        if ( nrow( modulated.af.spectra ) > 0 && deduplicate ) {
 
-      if ( nrow( modulated.af.spectra ) > 0 && deduplicate ) {
+          # Step 1: deduplicate modulated spectra against each other
+          n.mod.before         <- nrow( modulated.af.spectra )
+          modulated.af.spectra <- deduplicate.spectra(
+            modulated.af.spectra,
+            threshold = duplication.threshold
+          )
 
-        # Step 1: deduplicate modulated spectra against each other
-        n.mod.before         <- nrow( modulated.af.spectra )
-        modulated.af.spectra <- deduplicate.spectra(
-          modulated.af.spectra,
-          threshold = duplication.threshold
-        )
+          # Step 2: drop any modulated spectrum too similar to an already-kept
+          # base spectrum (cross-deduplication)
+          cross.sim  <- cosine.similarity.cross( modulated.af.spectra, af.spectra )
+          # cross.sim is (n_modulated x n_existing); keep rows where max sim < threshold
+          novel.mask <- apply( cross.sim, 1, max ) < duplication.threshold
+          modulated.af.spectra <- modulated.af.spectra[ novel.mask, , drop = FALSE ]
 
-        # Step 2: drop any modulated spectrum too similar to an already-kept
-        # base spectrum (cross-deduplication)
-        cross.sim  <- cosine.similarity.cross( modulated.af.spectra, af.spectra )
-        # cross.sim is (n_modulated x n_existing); keep rows where max sim < threshold
-        novel.mask <- apply( cross.sim, 1, max ) < duplication.threshold
-        modulated.af.spectra <- modulated.af.spectra[ novel.mask, , drop = FALSE ]
-
-        n.novel <- nrow( modulated.af.spectra )
-        if ( verbose )
-          message(
-            sprintf(
-              "Refine: %d novel modulated spectra retained after deduplication (dropped %d)",
-              n.novel, n.mod.before - n.novel
+          n.novel <- nrow( modulated.af.spectra )
+          if ( verbose )
+            message(
+              sprintf(
+                "Refine: %d novel modulated spectra retained after deduplication (dropped %d)",
+                n.novel, n.mod.before - n.novel
+              )
             )
-          )
-      }
-
-      if ( nrow( modulated.af.spectra ) > 0 ) {
-
-        af.spectra <- rbind( af.spectra, modulated.af.spectra )
-        af.spectra <- as.matrix( stats::na.omit( af.spectra ) )
-
-        # Contamination QC on the expanded set
-        af.spectra <- qc.af.spectra( af.spectra, spectra, plot.dir, remove.contaminants )
-
-        rownames( af.spectra ) <- paste0( "AF", seq_len( nrow( af.spectra ) ) )
-
-        if ( verbose )
-          message(
-            sprintf(
-              "Refine: %d total AF spectra after modulation and QC",
-              nrow( af.spectra )
-            )
-          )
-
-      } else {
-        if ( verbose )
-          message( "Refine: all modulated spectra were redundant with base spectra - nothing appended." )
-      }
-
-      # ---- Refine figures ---------------------------------------------------
-
-      if ( figures ) {
-        if ( verbose ) message( "Refine: identifying best-fitting AF - second pass" )
-
-        if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
-             "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
-          unmixed.second <- AutoSpectralRcpp::unmix.autospectral.rcpp(
-            raw.data   = unstained.exprs,
-            spectra    = spectra,
-            af.spectra = af.spectra,
-            verbose    = FALSE,
-            parallel   = TRUE,
-            threads    = threads
-          )
-        } else {
-          af.assignments.second <- assign.af.fluorophores(
-            raw.data   = unstained.exprs,
-            spectra    = spectra,
-            af.spectra = af.spectra
-          )
-
-          af.fit.second <- unmix.af.fwl(
-            raw.data   = unstained.exprs,
-            spectra    = spectra,
-            af.spectra = af.spectra,
-            af.index   = af.assignments.second
-          )
-
-          unmixed.second <- unmixed
-          unmixed.second[ , 1 ]         <- af.fit.second$af
-          unmixed.second[ , fluor.idx ] <- af.fit.second$fluorophores
         }
 
-        if ( ncol( unmixed.no.af ) > 1 ) {
-          if ( verbose ) message( "Refine: plotting impact of AF extraction" )
+        if ( nrow( modulated.af.spectra ) > 0 ) {
 
-          channel.sd    <- apply( unmixed.no.af, 2, stats::sd )
-          worst.channels <- colnames( unmixed.no.af )[ order( channel.sd, decreasing = TRUE )[ 1:2 ] ]
+          af.spectra <- rbind( af.spectra, modulated.af.spectra )
+          af.spectra <- as.matrix( stats::na.omit( af.spectra ) )
 
-          tryCatch(
-            expr = {
-              create.biplot(
-                unmixed.no.af,
-                x.dim      = worst.channels[ 1 ],
-                y.dim      = worst.channels[ 2 ],
-                asp        = asp,
-                title      = paste( file.name, "_", title, "_No_AF_Extraction" ),
-                output.dir = plot.dir
+          # Contamination QC on the expanded set
+          af.spectra <- qc.af.spectra( af.spectra, spectra, plot.dir, remove.contaminants,
+                                       sample.label = file.name )
+
+          rownames( af.spectra ) <- paste0( "AF", seq_len( nrow( af.spectra ) ) )
+
+          if ( verbose )
+            message(
+              sprintf(
+                "Refine: %d total AF spectra after modulation and QC",
+                nrow( af.spectra )
               )
-              create.biplot(
-                unmixed,
-                x.dim      = worst.channels[ 1 ],
-                y.dim      = worst.channels[ 2 ],
-                asp        = asp,
-                title      = paste0( file.name, "_", title, "_PerCell_AF_Extraction_First_Pass" ),
-                output.dir = plot.dir
-              )
+            )
+
+        } else {
+          if ( verbose )
+            message( "Refine: all modulated spectra were redundant with base spectra - nothing appended." )
+        }
+
+        # ---- Second-pass unmixing for the diagnostic plot -----------------
+
+        if ( plot.unmixed ) {
+          if ( verbose ) message( "Refine: identifying best-fitting AF - second pass" )
+
+          if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+               "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+            unmixed.second <- AutoSpectralRcpp::unmix.autospectral.rcpp(
+              raw.data   = unstained.exprs.pass,
+              spectra    = spectra,
+              af.spectra = af.spectra,
+              verbose    = FALSE,
+              parallel   = TRUE,
+              threads    = threads
+            )
+          } else {
+            af.assignments.second <- assign.af.fluorophores(
+              raw.data   = unstained.exprs.pass,
+              spectra    = spectra,
+              af.spectra = af.spectra
+            )
+
+            af.fit.second <- unmix.af.fwl(
+              raw.data   = unstained.exprs.pass,
+              spectra    = spectra,
+              af.spectra = af.spectra,
+              af.index   = af.assignments.second
+            )
+
+            unmixed.second <- unmixed
+            unmixed.second[ , 1 ]         <- af.fit.second$af
+            unmixed.second[ , fluor.idx ] <- af.fit.second$fluorophores
+          }
+        }
+
+      } else {
+        message( "Refine: insufficient problem cells found - skipping modulation." )
+      }
+
+    }   # end refine
+
+    # -------------------------------------------------------------------
+    # Before/after diagnostic plot
+    # -------------------------------------------------------------------
+    # Fires once, after the refinement loop (if any) has finished, so the
+    # plot always reflects the final AF spectra rather than an intermediate
+    # state. Falls back to two panels when refine found too few problem
+    # cells to produce a second pass.
+
+    if ( plot.unmixed && figures && ncol( unmixed.no.af.pass ) > 1 ) {
+
+      if ( verbose ) message( "Plotting impact of AF extraction" )
+
+      channel.sd     <- apply( unmixed.no.af.pass, 2, stats::sd )
+      worst.channels <- colnames( unmixed.no.af.pass )[ order( channel.sd, decreasing = TRUE )[ 1:2 ] ]
+
+      tryCatch(
+        expr = {
+          panel.list <- list(
+            create.biplot(
+              unmixed.no.af.pass,
+              x.dim      = worst.channels[ 1 ],
+              y.dim      = worst.channels[ 2 ],
+              asp        = asp,
+              title      = paste0( file.name, "_", title, "_No_AF_Extraction" ),
+              output.dir = plot.dir,
+              save       = FALSE
+            ) + ggplot2::ggtitle( "No AF extraction" ),
+            create.biplot(
+              unmixed,
+              x.dim      = worst.channels[ 1 ],
+              y.dim      = worst.channels[ 2 ],
+              asp        = asp,
+              title      = paste0( file.name, "_", title, "_PerCell_AF_Extraction_First_Pass" ),
+              output.dir = plot.dir,
+              save       = FALSE
+            ) + ggplot2::ggtitle( "First pass" )
+          )
+
+          if ( !is.null( unmixed.second ) ) {
+            panel.list <- c( panel.list, list(
               create.biplot(
                 unmixed.second,
                 x.dim      = worst.channels[ 1 ],
                 y.dim      = worst.channels[ 2 ],
                 asp        = asp,
                 title      = paste0( file.name, "_", title, "_PerCell_AF_Extraction_Second_Pass" ),
-                output.dir = plot.dir
-              )
-            },
-            error = function( e ) {
-              message( "Error in plotting AF extraction: ", e$message )
-              return( NULL )
-            }
-          )
-        }
-      }
+                output.dir = plot.dir,
+                save       = FALSE
+              ) + ggplot2::ggtitle( "Second pass" )
+            ) )
+          }
 
-    } else {
-      message( "Refine: insufficient problem cells found - skipping modulation." )
+          combined.plot <- cowplot::plot_grid( plotlist = panel.list, nrow = 1 )
+
+          ggplot2::ggsave(
+            filename  = file.path(
+              plot.dir,
+              paste0( file.name, "_", title, "_AF_Extraction_Comparison.jpg" )
+            ),
+            plot      = combined.plot,
+            device    = ragg::agg_jpeg,
+            width     = 5 * length( panel.list ),
+            height    = 5,
+            limitsize = FALSE
+          )
+        },
+        error = function( e ) {
+          message( "Error in plotting AF extraction: ", e$message )
+          return( NULL )
+        }
+      )
     }
 
-  }   # end refine
+  }   # end first pass / refine / plot.unmixed
 
   # ---------------------------------------------------------------------------
   # Save and final figures
   # ---------------------------------------------------------------------------
 
   if ( save ) {
-    af.file.name <- paste0( file.name, "_", title, ".csv" )
+    af.file.name <- paste0( file.name, " ", title, ".csv" )
     utils::write.csv( af.spectra, file = file.path( table.dir, af.file.name ) )
   }
 
@@ -756,7 +847,7 @@ get.af.spectra <- function(
         spectral.variant.plot(
           af.spectra.plot,
           mean.af,
-          title               = paste( title, "Autofluorescence variation" ),
+          title               = paste( file.name, "Autofluorescence variation" ),
           save                = TRUE,
           plot.dir            = plot.dir,
           variant.fill.color  = af.fill.color,
