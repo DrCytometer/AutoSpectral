@@ -164,6 +164,10 @@ check.control.file <- function(
 
   ## ---- send out warnings ----
   for ( rule in warning.rules ) {
+    # Only surface this when duplication was NOT explicitly permitted --
+    # once allow.duplicate.controls = TRUE, the instructions to set that
+    # flag are no longer relevant.
+    if ( rule == "duplicate_fluorophore" && allow.duplicate.controls ) next
     if ( !is.null( long.messages[[ rule ]] ) ) {
       warning( long.messages[[ rule ]]( issues[ issues$rule == rule, ] ),
                call. = FALSE )
