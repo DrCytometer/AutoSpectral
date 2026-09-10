@@ -37,7 +37,7 @@ by \code{compare.unmix.folders()} (or read back in from its \code{summary.csv}),
 a character path to that CSV.}
 
 \item{setup.files}{Optional named character vector, in the same form
-passed to \code{compare.unmix.folders()} (names matching the \code{folder} values
+passed to \code{\link[=compare.unmix.folders]{compare.unmix.folders()}} (names matching the \code{folder} values
 in \code{results}/\code{summary}, values ignored here). When supplied, the x-axis
 of every figure follows \code{names(setup.files)} in order rather than the
 default alphabetical ordering. Default \code{NULL}.}
@@ -98,19 +98,36 @@ legend color swatches; smaller values fit more entries per column.}
 (inches) added for each legend column beyond the first, so a wrapped
 legend never crowds the plot panel.}
 
-\item{verbose}{Logical, default \code{TRUE}.}
+\item{verbose}{Logical, default \code{TRUE}. Currently unused by
+\code{unmix.comparison.plot()} itself -- no progress messages are printed here.
+Accepted for interface compatibility with \code{\link[=compare.unmix.folders]{compare.unmix.folders()}},
+which forwards its own \code{verbose} argument through to this call.}
 }
 \value{
 Invisibly, the fluorophore color map (named character vector,
 fluorophore -> hex color) used for the figures.
 }
 \description{
-Produces (or reproduces) every figure \code{compare.unmix.folders()} writes,
+Produces (or reproduces) every figure \code{\link[=compare.unmix.folders]{compare.unmix.folders()}} writes,
 directly from its \code{results}/\code{summary} output, without re-scanning
 folders or re-unmixing anything. Useful for re-plotting with different
 cosmetics (colors, sizes, a log axis) or after editing the CSVs by hand,
 without paying the cost of the unmixing pipeline again.
 
-\code{compare.unmix.folders()} calls this internally for its own figures, so
+\code{\link[=compare.unmix.folders]{compare.unmix.folders()}} calls this internally for its own figures, so
 the two never drift out of sync.
+
+Two kinds of figure are produced. Always: an "Unstained robust SD (MAD)"
+boxplot (one box per folder) when the \code{Unstained.rSD} metric is present
+in \code{results}, and one summary boxplot per folder for each of \code{SSI},
+\code{Delta.MFI}, \code{Spillover.ratio}, \code{FPR}, and \code{Mahalanobis} (one point per
+fluorophore, coloured by fluorophore) from \code{summary}. When
+\code{plot.per.fluorophore = TRUE}: additionally, for each of \code{SSI},
+\code{Delta.MFI}, \code{Spillover.ratio}, and \code{FPR}, one boxplot per on-target
+fluorophore (one point per off-target channel, coloured by off-target
+fluorophore), plus one boxplot per on-target fluorophore for
+\code{Mahalanobis} (one point per folder).
+}
+\seealso{
+\code{\link[=compare.unmix.folders]{compare.unmix.folders()}}
 }

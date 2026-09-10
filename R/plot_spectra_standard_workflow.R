@@ -5,15 +5,23 @@
 # spectra.automated.steps.plot(). Depends on private helpers defined in
 # plot_spectra_automated_steps.R (.biexp.transform.legacy(), .theme.biplot(),
 # .biplot.scales(), .cosine.gradient.scale(), .cosine.sim.rows(),
-# .derive.spectral.channels(), .embed.or.placeholder()) -- both files must be
-# loaded into the package together (e.g. both in R/, or both source()'d).
+# .derive.spectral.channels(), .embed.or.placeholder(), .add.highlight.layer(),
+# .read.fcs.raw.singlet.flags()) -- both files must be loaded into the
+# package together (e.g. both in R/, or both source()'d).
 #
 # Panels produced per fluorophore:
 #   A. Octagon gate on FSC-A vs SSC-A (linear scale), pseudocolour density as
 #      in create.biplot(), positioned on the highest-density region (typically
-#      lymphocytes) via a 2D KDE peak search; red = the top n.highlight
-#      "clean positive" events by cosine similarity to the negative fraction
-#      (panel C)
+#      lymphocytes) via a 2D KDE peak search; red = the "true positive" events
+#      for this control, identified independently of the standard workflow's
+#      own gating/selection via `ground.truth.method` ("automated": replicates
+#      get.spectra.automated()'s candidate + cosine-to-AF filter; "legacy":
+#      the AF-removal gate.population.idx from clean.controls(); "none": the
+#      standard workflow's own top n.highlight cosine-similarity selection,
+#      kept only for reference since it is not an independent ground truth).
+#      Highlighted events are plotted at their true FSC/SSC coordinates even
+#      if they fall outside the octagon gate boundary -- that mismatch is
+#      itself diagnostic of a bad gate.
 #   B. Brightest/negative event selection: KDE-smoothed 1D histogram on the
 #      fluorophore's peak channel (within the octagon gate), with brackets
 #      marking the top n.bright.events "positive" events and the
@@ -121,6 +129,69 @@
     j <- i
   }
   inside
+}
+
+## Replicates get.spectra.automated()'s AF-reference resolution (external
+## unstained file if available, else the lower-25%-by-peak-channel internal
+## negative) and final event-selection step (top n.candidates events by
+## peak-channel brightness, then the n.spectral events with lowest cosine
+## similarity to that AF reference) on a singlet-/saturation-gated read of
+## fcs.path.i. Used as an independent "ground truth" positive population for
+## ground.truth.method = "automated" in spectra.standard.workflow.plot(), so
+## panel A's highlight does not depend on the standard workflow's own
+## selection. Returns a matrix (scatter + spectral columns) of the selected
+## events, or NULL if too few events survive singlet gating.
+.identify.true.positives.automated <- function(
+    fcs.path.i, spectral.channels, scatter.channels, sat.value, singlet.quantiles,
+    peak.channel, unstained.src.i, control.dir, n.candidates, n.spectral
+) {
+  raw <- .read.fcs.raw.singlet.flags(
+    fcs.path.i, spectral.channels, scatter.channels, sat.value, singlet.quantiles
+  )
+  stained.mat <- raw$mat[ raw$retained, , drop = FALSE ]
+  if ( nrow( stained.mat ) < 10L ) return( NULL )
+
+  af.median <- if ( unstained.src.i$type == "file" ) {
+    af.path <- file.path( control.dir, unstained.src.i$file )
+    if ( !file.exists( af.path ) ) {
+      NULL
+    } else {
+      af.raw  <- .read.fcs.raw.singlet.flags(
+        af.path, spectral.channels, scatter.channels, sat.value, singlet.quantiles
+      )
+      af.mat  <- af.raw$mat[ af.raw$retained, , drop = FALSE ]
+      af.spec <- intersect( spectral.channels, colnames( af.mat ) )
+      if ( nrow( af.mat ) < 2L || length( af.spec ) == 0L ) {
+        NULL
+      } else {
+        apply( af.mat[ , af.spec, drop = FALSE ], 2, stats::median )
+      }
+    }
+  } else {
+    NULL
+  }
+
+  if ( is.null( af.median ) ) {
+    # internal negative fallback, mirroring get.spectra.automated(): the
+    # lower 25% of events by peak-channel value
+    peak.vals.all <- if ( peak.channel %in% colnames( stained.mat ) )
+      stained.mat[ , peak.channel ] else rowMeans( stained.mat[ , spectral.channels, drop = FALSE ] )
+    n.neg          <- max( 2L, floor( nrow( stained.mat ) * 0.25 ) )
+    i.internal.neg <- order( peak.vals.all )[ seq_len( n.neg ) ]
+    af.median      <- apply(
+      stained.mat[ i.internal.neg, spectral.channels, drop = FALSE ], 2, stats::median
+    )
+  }
+
+  n.cand.actual <- min( n.candidates, nrow( stained.mat ) )
+  i.top   <- order( stained.mat[ , peak.channel ], decreasing = TRUE )[ seq_len( n.cand.actual ) ]
+  top.mat <- stained.mat[ i.top, spectral.channels, drop = FALSE ]
+  cs.vals <- .cosine.sim.rows( as.matrix( top.mat ), af.median )
+
+  n.spec.actual <- min( n.spectral, length( i.top ) )
+  i.spectral    <- i.top[ order( cs.vals )[ seq_len( n.spec.actual ) ] ]
+
+  stained.mat[ i.spectral, , drop = FALSE ]
 }
 
 ## Octagon-gated FSC-A vs SSC-A panel: linear scale, pseudocolour density
@@ -396,11 +467,40 @@
 #' @param event.point.size Numeric or `NULL` (default). Point size for the
 #'   positive-fraction events in panel C. If `NULL`, defaults to
 #'   `asp$figure.gate.point.size * 1.3`.
-#' @param n.highlight Integer, default `200`. Number of positive-fraction
-#'   events (smallest cosine similarity to the negative fraction, i.e. least
+#' @param ground.truth.method Character, one of `"automated"` (default),
+#'   `"legacy"`, or `"none"`. Determines how the "true positive" events
+#'   highlighted in red in panel A are identified. `"automated"` replicates
+#'   [get.spectra.automated()]'s own candidate + cosine-to-AF-reference filter
+#'   on this control file. `"legacy"` uses the actual AF-removal
+#'   `gate.population.idx` from `remove.af()`/[clean.controls()], which
+#'   requires running [define.flow.control()] and [clean.controls()] over the
+#'   whole control set (see `legacy.flow.control`/`legacy.diagnostics.env` to
+#'   avoid repeating this per fluorophore). `"none"` reverts to this
+#'   workflow's own top-`n.highlight` cosine-similarity selection, which is
+#'   not an independent ground truth and is kept only for reference.
+#' @param truth.n.candidates,truth.n.spectral Integers, defaults `1000` and
+#'   `200`. Only used when `ground.truth.method = "automated"`; mirror
+#'   `n.candidates`/`n.spectral` in [get.spectra.automated()].
+#' @param legacy.gating.system,legacy.af.remove,legacy.universal.negative,
+#'   legacy.downsample,legacy.scatter.match,legacy.k.neighbors,
+#'   legacy.negative.n,legacy.positive.n Only used when
+#'   `ground.truth.method = "legacy"` and `legacy.flow.control`/
+#'   `legacy.diagnostics.env` are not supplied; passed through to
+#'   [define.flow.control()] / [clean.controls()] exactly as in
+#'   [spectra.legacy.steps.plot()].
+#' @param legacy.flow.control,legacy.diagnostics.env Optional, default `NULL`.
+#'   Precomputed outputs of [define.flow.control()] + [clean.controls()]
+#'   (the latter called with a `diagnostics.env`). Supply both together to
+#'   skip re-running the legacy pipeline when illustrating multiple
+#'   fluorophores with `ground.truth.method = "legacy"` -- e.g. by calling
+#'   [spectra.legacy.steps.plot()] first and reusing its internal objects, or
+#'   running the two functions yourself as shown in `spectra.legacy.steps.plot()`.
+#' @param n.highlight Integer, default `200`. Only used when
+#'   `ground.truth.method = "none"`. Number of positive-fraction events
+#'   (smallest cosine similarity to the negative fraction, i.e. least
 #'   AF-like) highlighted in red in panel A.
-#' @param clean.positive.color Colour for the panel A highlight. Default
-#'   `"red"`.
+#' @param clean.positive.color Colour for the panel A ground-truth highlight.
+#'   Default `"red"`.
 #' @param clean.positive.point.size Numeric or `NULL` (default). Point size
 #'   for the panel A highlight. If `NULL`, defaults to
 #'   `asp$figure.gate.point.size * 1.5`.
@@ -423,9 +523,29 @@
 #'   `"png"`, or `"pdf"`.
 #' @param verbose Logical, default `TRUE`. Print progress messages.
 #'
-#' @return Invisibly, a named list (one entry per fluorophore) each
-#'   containing the individual panel ggplot objects, the assembled
-#'   `composite` cowplot object, and the peak / peak-AF channels used.
+#' @return Invisibly, a named list (one entry per fluorophore), each
+#'   containing:
+#'   \describe{
+#'     \item{`gate.panel`}{Panel A, the octagon gate on FSC-A vs SSC-A with
+#'       the ground-truth positive events highlighted.}
+#'     \item{`selection.panel`}{Panel B, the brightest/negative event
+#'       selection histogram.}
+#'     \item{`cosine.panel`}{Panel C, the negative/positive-fraction
+#'       cosine-similarity biplots.}
+#'     \item{`subtraction.plot`}{Panel D, the final spectral profile
+#'       comparison ([spectral.trace()] of Cells / Beads / AF).}
+#'     \item{`composite`}{The assembled four-panel cowplot object saved to
+#'       `output.dir` when `save = TRUE`.}
+#'     \item{`peak.channel`}{Character. The fluorophore's nominal peak
+#'       channel, looked up from `fluorophore_database.csv` for
+#'       `asp$cytometer`.}
+#'     \item{`y.channel.peak`}{Character. The non-colliding peak AF channel
+#'       used as the y-axis of panel C.}
+#'     \item{`reference.profile`}{Named numeric vector (over
+#'       `spectral.channels`) used as the "Beads" trace in panel D, or
+#'       `NULL` if neither a paired bead control nor the spectral reference
+#'       library had data for this fluorophore.}
+#'   }
 #'
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
 #' @importFrom ggplot2 scale_color_manual theme_bw theme geom_polygon
@@ -462,6 +582,19 @@ spectra.standard.workflow.plot <- function(
     positive.bracket.color   = "#E41A1C",
     negative.point.color     = "black",
     event.point.size         = NULL,
+    ground.truth.method       = c( "automated", "legacy", "none" ),
+    truth.n.candidates         = 1000L,
+    truth.n.spectral           = 200L,
+    legacy.gating.system        = c( "density", "landmarks" ),
+    legacy.af.remove             = TRUE,
+    legacy.universal.negative    = TRUE,
+    legacy.downsample             = TRUE,
+    legacy.scatter.match          = TRUE,
+    legacy.k.neighbors            = 3L,
+    legacy.negative.n              = asp$negative.n,
+    legacy.positive.n              = asp$positive.n,
+    legacy.flow.control            = NULL,
+    legacy.diagnostics.env         = NULL,
     n.highlight               = 200L,
     clean.positive.color      = "red",
     clean.positive.point.size = NULL,
@@ -503,6 +636,16 @@ spectra.standard.workflow.plot <- function(
     stop( "negative.quantile.min must be in [0, negative.quantile).", call. = FALSE )
   if ( x.min.quantile < 0 || x.min.quantile >= 1 )
     stop( "x.min.quantile must be in [0, 1).", call. = FALSE )
+
+  ground.truth.method  <- match.arg( ground.truth.method, c( "automated", "legacy", "none" ) )
+  legacy.gating.system <- match.arg( legacy.gating.system, c( "density", "landmarks" ) )
+
+  legacy.precomputed <- !is.null( legacy.flow.control ) || !is.null( legacy.diagnostics.env )
+  if ( legacy.precomputed && ( is.null( legacy.flow.control ) || is.null( legacy.diagnostics.env ) ) )
+    stop(
+      "legacy.flow.control and legacy.diagnostics.env must both be supplied together, or both left NULL.",
+      call. = FALSE
+    )
 
   # -- 1. Read control table (only fluorophore/filename are used)
   ctrl.path <- if ( file.exists( control.def.file ) ) {
@@ -556,6 +699,24 @@ spectra.standard.workflow.plot <- function(
   fluorophore.database[ fluorophore.database == "" ] <- NA
 
   db.col <- .cytometer.to.db.col( asp$cytometer )
+
+  if ( ground.truth.method == "legacy" && !legacy.precomputed ) {
+    if ( verbose )
+      message( "\033[34m-- Running legacy pipeline for ground-truth positives (define.flow.control() + clean.controls()) --\033[0m" )
+    legacy.diagnostics.env <- new.env( parent = emptyenv() )
+    legacy.flow.control <- define.flow.control(
+      control.dir = control.dir, control.def.file = control.def.file, asp = asp,
+      gate = TRUE, gating.system = legacy.gating.system, parallel = FALSE, verbose = verbose
+    )
+    legacy.flow.control <- clean.controls(
+      legacy.flow.control, asp,
+      af.remove = legacy.af.remove, universal.negative = legacy.universal.negative,
+      downsample = legacy.downsample, negative.n = legacy.negative.n, positive.n = legacy.positive.n,
+      scatter.match = legacy.scatter.match, k.neighbors = legacy.k.neighbors,
+      intermediate.figures = FALSE, main.figures = FALSE, parallel = FALSE,
+      verbose = verbose, diagnostics.env = legacy.diagnostics.env
+    )
+  }
 
   fsc.a <- scatter.channels[ 1L ]
   ssc.a <- scatter.channels[ 2L ]
@@ -646,6 +807,55 @@ spectra.standard.workflow.plot <- function(
       next
     }
 
+    # -- Ground-truth positive identification for panel A (see
+    # ground.truth.method): resolved independently of this workflow's own
+    # octagon gate / brightness / cosine-similarity selection, so the panel A
+    # highlight compares against (rather than reproduces) that selection.
+    truth.mat <- if ( ground.truth.method == "automated" ) {
+      tryCatch(
+        .identify.true.positives.automated(
+          fcs.path.i        = fcs.path.i,
+          spectral.channels = spectral.channels,
+          scatter.channels  = scatter.channels,
+          sat.value         = sat.value,
+          singlet.quantiles = singlet.quantiles,
+          peak.channel      = peak.channel,
+          unstained.src.i   = unstained.src.i,
+          control.dir       = control.dir,
+          n.candidates      = truth.n.candidates,
+          n.spectral        = truth.n.spectral
+        ),
+        error = function( e ) {
+          warning(
+            "Automated ground-truth selection failed for '", fluor, "': ", e$message,
+            call. = FALSE
+          )
+          NULL
+        }
+      )
+    } else if ( ground.truth.method == "legacy" ) {
+      samp.truth.i <- legacy.flow.control$sample[
+        which( legacy.flow.control$fluorophore == fluor )[ 1L ]
+      ]
+      diag.truth.i <- if ( !is.null( samp.truth.i ) )
+        legacy.diagnostics.env[[ samp.truth.i ]] else NULL
+
+      if ( is.null( diag.truth.i ) ) {
+        NULL
+      } else if ( is.null( diag.truth.i$scatter.data.pos ) ) {
+        warning(
+          "legacy.diagnostics.env for '", fluor, "' has no scatter.data.pos -- ",
+          "requires the updated remove.af() that stores scatter columns.",
+          call. = FALSE
+        )
+        NULL
+      } else {
+        diag.truth.i$scatter.data.pos[ diag.truth.i$gate.population.idx, , drop = FALSE ]
+      }
+    } else {
+      NULL
+    }
+
     # -- A. Octagon gate (position via simplified 2D KDE peak search)
     peak.pt <- .find.density.peak.2d( mat[ , fsc.a ], mat[ , ssc.a ] )
 
@@ -725,8 +935,28 @@ spectra.standard.workflow.plot <- function(
     highlight.idx <- positive.idx[ order( pos.cs.vals )[ seq_len( n.highlight.actual ) ] ]
     highlight.mat <- gated.mat[ highlight.idx, , drop = FALSE ]
 
+    # panel A's red highlight uses the independently-identified ground-truth
+    # positives (truth.mat, resolved above via ground.truth.method) rather
+    # than this workflow's own brightness + cosine-similarity selection --
+    # that selection is exactly what this figure is meant to critique, so
+    # using it to mark "true positives" would be circular. Falls back to the
+    # in-workflow selection only when ground.truth.method == "none" or the
+    # ground-truth lookup failed for this fluorophore.
+    highlight.source <- if ( !is.null( truth.mat ) &&
+                             all( c( fsc.a, ssc.a ) %in% colnames( truth.mat ) ) ) {
+      truth.mat
+    } else {
+      if ( ground.truth.method != "none" )
+        warning(
+          "No '", ground.truth.method, "' ground-truth positives available for '",
+          fluor, "'; falling back to the standard workflow's own selection for the panel A highlight.",
+          call. = FALSE
+        )
+      highlight.mat
+    }
+
     gate.panel <- .add.highlight.layer(
-      gate.panel, highlight.mat[ , fsc.a ], highlight.mat[ , ssc.a ],
+      gate.panel, highlight.source[ , fsc.a ], highlight.source[ , ssc.a ],
       color = clean.positive.color, pointsize = clean.positive.point.size.use
     )
 

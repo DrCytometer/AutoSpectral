@@ -559,10 +559,36 @@
 #'   `"png"`, or `"pdf"`.
 #' @param verbose Logical, default `TRUE`. Print progress messages.
 #'
-#' @return Invisibly, a named list (one entry per fluorophore) each
-#'   containing the individual panel ggplot objects, the assembled
-#'   `composite` cowplot object, and the empirical peak / AF-collision
-#'   channels used.
+#' @return Invisibly, a named list (one entry per fluorophore), each
+#'   containing:
+#'   \describe{
+#'     \item{`singlet.plot`}{The assembled panel A (-A vs -H singlet gate,
+#'       both scatter parameters side by side) as a single cowplot object.}
+#'     \item{`trace.plot`}{Panel B, the AF/pre/post-orthogonalization
+#'       peak-finding [spectral.trace()] plot.}
+#'     \item{`brightest.panel`}{Panel C, the brightest-event candidate
+#'       selection histogram.}
+#'     \item{`cosine.panel`}{Panel D, the cosine-similarity filter biplot.}
+#'     \item{`scatter.match.file`}{Character path to the saved panel E
+#'       kNN scatter-match JPEG (written by [scatter.match.plot()]), or
+#'       `NULL` if too few scatter channels were available to run that
+#'       step. Unlike the other list entries this is a file path, not a
+#'       ggplot/cowplot object -- panel E is embedded into `composite` by
+#'       reading this file back in via `magick`, not passed through
+#'       directly.}
+#'     \item{`subtraction.plot`}{Panel F, the final spectral profile
+#'       comparison ([spectral.trace()] of Cells / Beads / AF).}
+#'     \item{`composite`}{The assembled six-panel cowplot object saved to
+#'       `output.dir` when `save = TRUE`.}
+#'     \item{`empirical.peak`}{Character. The AF-orthogonalization peak
+#'       channel identified in panel B and annotated there.}
+#'     \item{`y.channel.peak`}{Character. The non-colliding AF peak channel
+#'       used as the y-axis of panel D.}
+#'     \item{`reference.profile`}{Named numeric vector (over
+#'       `spectral.channels`) used as the "Beads" trace in panel F, or
+#'       `NULL` if neither a paired bead control nor the spectral reference
+#'       library had data for this fluorophore.}
+#'   }
 #'
 #' @importFrom ggplot2 ggplot aes scale_x_continuous scale_y_continuous
 #' @importFrom ggplot2 scale_color_manual scale_alpha_manual theme_bw theme

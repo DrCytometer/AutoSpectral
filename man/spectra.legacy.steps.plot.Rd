@@ -10,6 +10,7 @@ spectra.legacy.steps.plot(
   asp,
   fluorophores = NULL,
   gating.system = c("density", "landmarks"),
+  gate.list = NULL,
   af.remove = TRUE,
   universal.negative = TRUE,
   downsample = TRUE,
@@ -17,6 +18,8 @@ spectra.legacy.steps.plot(
   k.neighbors = 3L,
   negative.n = asp$negative.n,
   positive.n = asp$positive.n,
+  singlet.quantiles = c(0.85, 0.975),
+  color.palette = NULL,
   gate.color = "darkgoldenrod1",
   density.palette = "rainbow",
   unstained.point.color = "black",
@@ -24,7 +27,11 @@ spectra.legacy.steps.plot(
   af.gate.color = "black",
   clean.positive.color = "red",
   clean.positive.point.size = NULL,
+  n.true.positive = 50L,
   rlm.line.color = "blue",
+  cells.trace.color = "#D95F02",
+  beads.trace.color = "#377EB8",
+  af.trace.color = "grey40",
   max.points = 50000,
   panel.width = 4,
   panel.height = 4,
@@ -33,7 +40,8 @@ spectra.legacy.steps.plot(
   output.dir = NULL,
   save = TRUE,
   file.type = "jpg",
-  verbose = TRUE
+  verbose = TRUE,
+  allow.duplicate.controls = TRUE
 )
 }
 \arguments{
@@ -55,12 +63,32 @@ paired universal negative.}
 \code{"landmarks"}, matching \code{\link[=define.flow.control]{define.flow.control()}}'s argument of the same
 name.}
 
+\item{gate.list}{Optional named list of gates. To use this, pre-define the
+gates using \code{define.gate.landmarks()} and/or \code{define.gate.density()}, ensure
+that the names of the gates correspond to the names in the \code{control.def.file},
+and ensure that the \code{gate.name} column has been filled in for the
+\code{control.def.file}. Default \code{NULL} will revert to creating new gates.
+Passed through to \code{\link[=define.flow.control]{define.flow.control()}} for the real pipeline run, and
+also reused directly for panel A's re-derived gate boundary (rather than
+recomputing it), so the figure shows the same gate the real run used.}
+
 \item{af.remove}{Logical, default \code{TRUE}. Passed to \code{\link[=clean.controls]{clean.controls()}}.
 Panels B and D require this to be \code{TRUE} and require the illustrated
 fluorophore to have a paired universal negative; otherwise those panels
 show a placeholder.}
 
 \item{universal.negative, downsample, scatter.match, k.neighbors, negative.n, positive.n}{Passed through to \code{\link[=clean.controls]{clean.controls()}}. See that function's documentation.}
+
+\item{singlet.quantiles}{Numeric, default \code{c(0.85, 0.975)}. Quantile
+thresholds for the two-stage FSC/SSC singlet discrimination used only when
+cleaning a paired bead control (see \code{control.def.file}), matching
+\code{\link[=get.spectra.automated]{get.spectra.automated()}}.}
+
+\item{color.palette}{Optional character string defining the viridis color
+palette to be used for the fluorophore traces. Use \code{rainbow}
+to be similar to FlowJo or SpectroFlo. Other options are the viridis color
+options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
+and \code{turbo}.}
 
 \item{gate.color}{Colour of the panel A gate boundary. Default
 \code{"darkgoldenrod1"} (matching \code{do.gate()}'s default).}
@@ -78,15 +106,29 @@ single-stained control events in panel B. If \code{NULL}, defaults to
 \item{af.gate.color}{Colour of the AF-exclusion gate boundary drawn on
 both panel B biplots. Default \code{"black"}.}
 
-\item{clean.positive.color}{Colour for the highlighted "clean" (AF-gate-
-excluded) events in panel D. Default \code{"red"}.}
+\item{clean.positive.color}{Colour for the highlighted "true positive"
+events in panels A and D. Default \code{"red"}.}
 
 \item{clean.positive.point.size}{Numeric or \code{NULL} (default). Point size
-for the panel D highlight. If \code{NULL}, defaults to
+for the panels A/D highlight. If \code{NULL}, defaults to
 \code{asp$figure.gate.point.size * 1.5}.}
+
+\item{n.true.positive}{Integer, default \code{50L}. Number of "true positive"
+events highlighted in red in panels A and D: the brightest
+\code{n.true.positive} events among the AF-gate-excluded population, ranked
+by projection onto the fitted RLM trend direction in (peak channel,
+intrusive-AF channel) space, rather than every AF-gate-excluded event
+(which is simply "not AF", not "positively stained").}
 
 \item{rlm.line.color}{Colour of the robust-linear-model fit line in panel
 D. Default \code{"blue"}.}
+
+\item{cells.trace.color, beads.trace.color, af.trace.color}{Colours for the
+three traces in panel E: the RLM-based per-channel signature ("Cells"),
+the reference profile ("Beads"), and the matched-negative AF trace.
+Defaults \code{"#D95F02"} / \code{"#377EB8"} / \code{"grey40"}, matching
+\code{\link[=spectra.automated.steps.plot]{spectra.automated.steps.plot()}}'s panel F and
+\code{\link[=spectra.standard.workflow.plot]{spectra.standard.workflow.plot()}}'s panel D.}
 
 \item{max.points}{Integer. Maximum events plotted per panel (randomly
 downsampled beyond this for speed). Default \code{5e4}.}
@@ -110,11 +152,53 @@ for each fluorophore to \code{output.dir}.}
 \item{verbose}{Logical, default \code{TRUE}. Print progress messages (also
 controls verbosity of the internal \code{define.flow.control()} /
 \code{clean.controls()} calls).}
+
+\item{allow.duplicate.controls}{Logical, default \code{TRUE}. Set \code{TRUE} to
+permit multiple single-stained controls for the same fluorophore
+(diagnostic/QC use only). Each is tracked internally under a unique
+\code{sample} identifier. The resulting spectral reference library still needs
+to be reduced to one row per fluorophore before unmixing --
+see \code{check.spectra.duplicates()}.}
 }
 \value{
-Invisibly, a named list (one entry per fluorophore) each
-containing the individual panel ggplot objects, the assembled
-\code{composite} cowplot object, and the resolved gate/channel names.
+Invisibly, a named list (one entry per fluorophore), each
+containing:
+\describe{
+\item{\code{gate.panel}}{Panel A, the automated scatter gate (or a
+placeholder if gate definition failed), with the \code{n.true.positive}
+brightest-along-the-RLM-trend events highlighted larger in red when
+AF-removal diagnostics were available.}
+\item{\code{af.panel}}{Panel B, the AF-exclusion cosine-similarity biplot
+(or a placeholder if \code{af.remove = FALSE} or no paired universal
+negative was available for this fluorophore).}
+\item{\code{scatter.match.panel}}{Panel C, the \code{\link[=clean.controls]{clean.controls()}}
+kNN scatter-match figure embedded from its saved JPEG.}
+\item{\code{rlm.panel}}{Panel D, the robust-linear-model diagnostic, fit
+to and displaying \code{flow.control$clean.expr} for this sample (the
+events as clean.controls() actually finalises them, not just
+\code{gate.population.idx}), or a placeholder alongside \code{af.panel} when
+AF-removal diagnostics were unavailable or too few clean.controls()
+events remained.}
+\item{\code{subtraction.plot}}{Panel E, the final spectral profile
+comparison (\code{\link[=spectral.trace]{spectral.trace()}} of Cells / Beads / AF), fit to the
+same \code{flow.control$clean.expr} population as \code{rlm.panel}, or a
+placeholder when AF-removal diagnostics were unavailable, too few
+clean.controls() events remained, or RLM extraction failed.}
+\item{\code{composite}}{The assembled five-panel cowplot object saved to
+\code{output.dir} when \code{save = TRUE}.}
+\item{\code{gate.name}}{Character. The \code{gate.name} resolved for this
+fluorophore's sample, or \code{NA} if none was assigned.}
+\item{\code{af.peak.channel}}{Character. The intrusive-AF channel used as
+panels B/D's y-axis, or \code{NA_character_} if AF-removal diagnostics
+were unavailable.}
+\item{\code{fluor.peak}}{Character. The fluorophore's peak channel used as
+panels B/D's x-axis, or \code{NA_character_} if AF-removal diagnostics
+were unavailable.}
+\item{\code{reference.profile}}{Named numeric vector (over the panel-wide
+spectral channels) used as the "Beads" trace in panel E, or \code{NULL}
+if neither a paired bead control nor the spectral reference library
+had data for this fluorophore.}
+}
 }
 \description{
 Builds a manuscript-ready, multi-panel figure illustrating the internal

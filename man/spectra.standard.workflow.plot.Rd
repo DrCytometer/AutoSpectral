@@ -23,6 +23,19 @@ spectra.standard.workflow.plot(
   positive.bracket.color = "#E41A1C",
   negative.point.color = "black",
   event.point.size = NULL,
+  ground.truth.method = c("automated", "legacy", "none"),
+  truth.n.candidates = 1000L,
+  truth.n.spectral = 200L,
+  legacy.gating.system = c("density", "landmarks"),
+  legacy.af.remove = TRUE,
+  legacy.universal.negative = TRUE,
+  legacy.downsample = TRUE,
+  legacy.scatter.match = TRUE,
+  legacy.k.neighbors = 3L,
+  legacy.negative.n = asp$negative.n,
+  legacy.positive.n = asp$positive.n,
+  legacy.flow.control = NULL,
+  legacy.diagnostics.env = NULL,
   n.highlight = 200L,
   clean.positive.color = "red",
   clean.positive.point.size = NULL,
@@ -114,12 +127,44 @@ positive-fraction events are coloured by cosine similarity.}
 positive-fraction events in panel C. If \code{NULL}, defaults to
 \code{asp$figure.gate.point.size * 1.3}.}
 
-\item{n.highlight}{Integer, default \code{200}. Number of positive-fraction
-events (smallest cosine similarity to the negative fraction, i.e. least
+\item{ground.truth.method}{Character, one of \code{"automated"} (default),
+\code{"legacy"}, or \code{"none"}. Determines how the "true positive" events
+highlighted in red in panel A are identified. \code{"automated"} replicates
+\code{\link[=get.spectra.automated]{get.spectra.automated()}}'s own candidate + cosine-to-AF-reference filter
+on this control file. \code{"legacy"} uses the actual AF-removal
+\code{gate.population.idx} from \code{remove.af()}/\code{\link[=clean.controls]{clean.controls()}}, which
+requires running \code{\link[=define.flow.control]{define.flow.control()}} and \code{\link[=clean.controls]{clean.controls()}} over the
+whole control set (see \code{legacy.flow.control}/\code{legacy.diagnostics.env} to
+avoid repeating this per fluorophore). \code{"none"} reverts to this
+workflow's own top-\code{n.highlight} cosine-similarity selection, which is
+not an independent ground truth and is kept only for reference.}
+
+\item{truth.n.candidates, truth.n.spectral}{Integers, defaults \code{1000} and
+\code{200}. Only used when \code{ground.truth.method = "automated"}; mirror
+\code{n.candidates}/\code{n.spectral} in \code{\link[=get.spectra.automated]{get.spectra.automated()}}.}
+
+\item{legacy.gating.system, legacy.af.remove, legacy.universal.negative, }{legacy.downsample,legacy.scatter.match,legacy.k.neighbors,
+legacy.negative.n,legacy.positive.n Only used when
+\code{ground.truth.method = "legacy"} and \code{legacy.flow.control}/
+\code{legacy.diagnostics.env} are not supplied; passed through to
+\code{\link[=define.flow.control]{define.flow.control()}} / \code{\link[=clean.controls]{clean.controls()}} exactly as in
+\code{\link[=spectra.legacy.steps.plot]{spectra.legacy.steps.plot()}}.}
+
+\item{legacy.flow.control, legacy.diagnostics.env}{Optional, default \code{NULL}.
+Precomputed outputs of \code{\link[=define.flow.control]{define.flow.control()}} + \code{\link[=clean.controls]{clean.controls()}}
+(the latter called with a \code{diagnostics.env}). Supply both together to
+skip re-running the legacy pipeline when illustrating multiple
+fluorophores with \code{ground.truth.method = "legacy"} -- e.g. by calling
+\code{\link[=spectra.legacy.steps.plot]{spectra.legacy.steps.plot()}} first and reusing its internal objects, or
+running the two functions yourself as shown in \code{spectra.legacy.steps.plot()}.}
+
+\item{n.highlight}{Integer, default \code{200}. Only used when
+\code{ground.truth.method = "none"}. Number of positive-fraction events
+(smallest cosine similarity to the negative fraction, i.e. least
 AF-like) highlighted in red in panel A.}
 
-\item{clean.positive.color}{Colour for the panel A highlight. Default
-\code{"red"}.}
+\item{clean.positive.color}{Colour for the panel A ground-truth highlight.
+Default \code{"red"}.}
 
 \item{clean.positive.point.size}{Numeric or \code{NULL} (default). Point size
 for the panel A highlight. If \code{NULL}, defaults to
@@ -152,9 +197,29 @@ for each fluorophore to \code{output.dir}.}
 \item{verbose}{Logical, default \code{TRUE}. Print progress messages.}
 }
 \value{
-Invisibly, a named list (one entry per fluorophore) each
-containing the individual panel ggplot objects, the assembled
-\code{composite} cowplot object, and the peak / peak-AF channels used.
+Invisibly, a named list (one entry per fluorophore), each
+containing:
+\describe{
+\item{\code{gate.panel}}{Panel A, the octagon gate on FSC-A vs SSC-A with
+the ground-truth positive events highlighted.}
+\item{\code{selection.panel}}{Panel B, the brightest/negative event
+selection histogram.}
+\item{\code{cosine.panel}}{Panel C, the negative/positive-fraction
+cosine-similarity biplots.}
+\item{\code{subtraction.plot}}{Panel D, the final spectral profile
+comparison (\code{\link[=spectral.trace]{spectral.trace()}} of Cells / Beads / AF).}
+\item{\code{composite}}{The assembled four-panel cowplot object saved to
+\code{output.dir} when \code{save = TRUE}.}
+\item{\code{peak.channel}}{Character. The fluorophore's nominal peak
+channel, looked up from \code{fluorophore_database.csv} for
+\code{asp$cytometer}.}
+\item{\code{y.channel.peak}}{Character. The non-colliding peak AF channel
+used as the y-axis of panel C.}
+\item{\code{reference.profile}}{Named numeric vector (over
+\code{spectral.channels}) used as the "Beads" trace in panel D, or
+\code{NULL} if neither a paired bead control nor the spectral reference
+library had data for this fluorophore.}
+}
 }
 \description{
 Builds a manuscript-ready, multi-panel figure illustrating a "standard"

@@ -1,4 +1,17 @@
 # plot_unmix_comparison.R
+#
+# Re-plotting helper for compare.unmix.folders(): reproduces every figure
+# that function writes directly from its `results`/`summary` output, without
+# re-scanning folders or re-unmixing anything (see compare_unmix_folders.R's
+# roxygen for the metric definitions each figure summarises).
+# compare.unmix.folders() calls this function internally for its own
+# figures, so the two never drift out of sync.
+#
+# Depends on private helpers defined elsewhere in the package:
+# .build.fluorophore.palette() and .plot.metric.boxplot() (both in
+# compare_unmix_folders.R), and .resolve.df() (in test_unmix_comparison.R --
+# despite the filename, this is a production dependency, not test-only
+# code). All three files must be loaded into the package namespace together.
 
 ## Internal helper. Loads the bundled fluorophore_database.csv when the
 ## caller did not supply one, matching the loading convention used
@@ -18,14 +31,25 @@
 #' @title Plot a Previously Run Unmixing Comparison
 #'
 #' @description
-#' Produces (or reproduces) every figure `compare.unmix.folders()` writes,
+#' Produces (or reproduces) every figure [compare.unmix.folders()] writes,
 #' directly from its `results`/`summary` output, without re-scanning
 #' folders or re-unmixing anything. Useful for re-plotting with different
 #' cosmetics (colors, sizes, a log axis) or after editing the CSVs by hand,
 #' without paying the cost of the unmixing pipeline again.
 #'
-#' `compare.unmix.folders()` calls this internally for its own figures, so
+#' [compare.unmix.folders()] calls this internally for its own figures, so
 #' the two never drift out of sync.
+#'
+#' Two kinds of figure are produced. Always: an "Unstained robust SD (MAD)"
+#' boxplot (one box per folder) when the `Unstained.rSD` metric is present
+#' in `results`, and one summary boxplot per folder for each of `SSI`,
+#' `Delta.MFI`, `Spillover.ratio`, `FPR`, and `Mahalanobis` (one point per
+#' fluorophore, coloured by fluorophore) from `summary`. When
+#' `plot.per.fluorophore = TRUE`: additionally, for each of `SSI`,
+#' `Delta.MFI`, `Spillover.ratio`, and `FPR`, one boxplot per on-target
+#' fluorophore (one point per off-target channel, coloured by off-target
+#' fluorophore), plus one boxplot per on-target fluorophore for
+#' `Mahalanobis` (one point per folder).
 #'
 #' @param results Either the long-format `results` data frame returned by
 #' `compare.unmix.folders()` (or read back in from its `output.csv`), or a
@@ -34,7 +58,7 @@
 #' by `compare.unmix.folders()` (or read back in from its `summary.csv`), or
 #' a character path to that CSV.
 #' @param setup.files Optional named character vector, in the same form
-#' passed to `compare.unmix.folders()` (names matching the `folder` values
+#' passed to [compare.unmix.folders()] (names matching the `folder` values
 #' in `results`/`summary`, values ignored here). When supplied, the x-axis
 #' of every figure follows `names(setup.files)` in order rather than the
 #' default alphabetical ordering. Default `NULL`.
@@ -79,12 +103,17 @@
 #' @param legend.width.per.col Numeric, default `1.1`. Extra figure width
 #' (inches) added for each legend column beyond the first, so a wrapped
 #' legend never crowds the plot panel.
-#' @param verbose Logical, default `TRUE`.
+#' @param verbose Logical, default `TRUE`. Currently unused by
+#' `unmix.comparison.plot()` itself -- no progress messages are printed here.
+#' Accepted for interface compatibility with [compare.unmix.folders()],
+#' which forwards its own `verbose` argument through to this call.
 #'
 #' @return Invisibly, the fluorophore color map (named character vector,
 #' fluorophore -> hex color) used for the figures.
 #'
 #' @importFrom utils read.csv
+#'
+#' @seealso [compare.unmix.folders()]
 #'
 #' @export
 

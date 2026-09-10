@@ -146,10 +146,36 @@ for each fluorophore to \code{output.dir}.}
 \item{verbose}{Logical, default \code{TRUE}. Print progress messages.}
 }
 \value{
-Invisibly, a named list (one entry per fluorophore) each
-containing the individual panel ggplot objects, the assembled
-\code{composite} cowplot object, and the empirical peak / AF-collision
-channels used.
+Invisibly, a named list (one entry per fluorophore), each
+containing:
+\describe{
+\item{\code{singlet.plot}}{The assembled panel A (-A vs -H singlet gate,
+both scatter parameters side by side) as a single cowplot object.}
+\item{\code{trace.plot}}{Panel B, the AF/pre/post-orthogonalization
+peak-finding \code{\link[=spectral.trace]{spectral.trace()}} plot.}
+\item{\code{brightest.panel}}{Panel C, the brightest-event candidate
+selection histogram.}
+\item{\code{cosine.panel}}{Panel D, the cosine-similarity filter biplot.}
+\item{\code{scatter.match.file}}{Character path to the saved panel E
+kNN scatter-match JPEG (written by \code{\link[=scatter.match.plot]{scatter.match.plot()}}), or
+\code{NULL} if too few scatter channels were available to run that
+step. Unlike the other list entries this is a file path, not a
+ggplot/cowplot object -- panel E is embedded into \code{composite} by
+reading this file back in via \code{magick}, not passed through
+directly.}
+\item{\code{subtraction.plot}}{Panel F, the final spectral profile
+comparison (\code{\link[=spectral.trace]{spectral.trace()}} of Cells / Beads / AF).}
+\item{\code{composite}}{The assembled six-panel cowplot object saved to
+\code{output.dir} when \code{save = TRUE}.}
+\item{\code{empirical.peak}}{Character. The AF-orthogonalization peak
+channel identified in panel B and annotated there.}
+\item{\code{y.channel.peak}}{Character. The non-colliding AF peak channel
+used as the y-axis of panel D.}
+\item{\code{reference.profile}}{Named numeric vector (over
+\code{spectral.channels}) used as the "Beads" trace in panel F, or
+\code{NULL} if neither a paired bead control nor the spectral reference
+library had data for this fluorophore.}
+}
 }
 \description{
 Builds a manuscript-ready, multi-panel figure illustrating the internal
