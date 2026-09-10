@@ -38,10 +38,12 @@
 #' `remove.af()` populates it (keyed by sample name) with the objects used to
 #' identify and exclude intrusive autofluorescence for each cell-based
 #' AF-removal sample: `af.peak.channel`, `fluor.peak`, `af.boundaries`,
-#' `expr.data.pos`/`expr.data.neg` (spectral channels only), and the
-#' resulting gate indices. Intended for diagnostic/manuscript figures (see
-#' `plot.spectra.legacy.steps()`); has no effect on the cleaning result.
-#' Capture is unreliable when `parallel = TRUE`.
+#' `expr.data.pos`/`expr.data.neg` (spectral channels only), `scatter.data.pos`
+#' (the scatter-parameter columns aligned to `expr.data.pos`, for plotting
+#' `gate.population.idx` events on an FSC/SSC panel), and the resulting gate
+#' indices. Intended for diagnostic/manuscript figures (see
+#' `plot.spectra.legacy.steps()`, `spectra.standard.workflow.plot()`); has no
+#' effect on the cleaning result. Capture is unreliable when `parallel = TRUE`.
 #'
 #' @return A matrix containing the expression data with autofluorescent events
 #' removed for the sample.
@@ -256,12 +258,14 @@ remove.af <- function(
   # -- kept lean (spectral channels only, not the full scatter+spectral
   # matrix) since this can be requested for many samples in one run
   if ( !is.null( diagnostics.env ) ) {
+    scatter.present.pos <- intersect( scatter.param, colnames( expr.data.pos ) )
     diagnostics.env[[ samp ]] <- list(
       af.peak.channel     = af.peak.channel,
       fluor.peak          = fluor.peak,
       af.boundaries       = af.boundaries,
       expr.data.pos       = expr.data.pos[ , spectral.channel, drop = FALSE ],
       expr.data.neg       = expr.data.neg[ , spectral.channel, drop = FALSE ],
+      scatter.data.pos    = expr.data.pos[ , scatter.present.pos, drop = FALSE ],
       gate.population.idx = gate.population.idx,
       gate.neg.idx        = gate.neg.idx,
       matching.negative   = matching.negative

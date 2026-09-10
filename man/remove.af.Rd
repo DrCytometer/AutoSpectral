@@ -66,10 +66,12 @@ exclusion from the unstained.}
 \code{remove.af()} populates it (keyed by sample name) with the objects used to
 identify and exclude intrusive autofluorescence for each cell-based
 AF-removal sample: \code{af.peak.channel}, \code{fluor.peak}, \code{af.boundaries},
-\code{expr.data.pos}/\code{expr.data.neg} (spectral channels only), and the
-resulting gate indices. Intended for diagnostic/manuscript figures (see
-\code{plot.spectra.legacy.steps()}); has no effect on the cleaning result.
-Capture is unreliable when \code{parallel = TRUE}.}
+\code{expr.data.pos}/\code{expr.data.neg} (spectral channels only), \code{scatter.data.pos}
+(the scatter-parameter columns aligned to \code{expr.data.pos}, for plotting
+\code{gate.population.idx} events on an FSC/SSC panel), and the resulting gate
+indices. Intended for diagnostic/manuscript figures (see
+\code{plot.spectra.legacy.steps()}, \code{spectra.standard.workflow.plot()}); has no
+effect on the cleaning result. Capture is unreliable when \code{parallel = TRUE}.}
 }
 \value{
 A matrix containing the expression data with autofluorescent events
