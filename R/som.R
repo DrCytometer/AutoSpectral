@@ -22,8 +22,7 @@
 #'   on the AutoSpectralRcpp path -- `FlowSOM::SOM()` manages its own radius
 #'   schedule internally.
 #' @param dist Integer 1:4, distance function (1 manhattan, 2 euclidean,
-#'   3 chebyshev, 4 cosine). Default `2`. Only used on the AutoSpectralRcpp
-#'   path.
+#'   3 chebyshev, 4 cosine). Default `4`.
 #' @param seed Integer, RNG seed for the initial codebook sample. Callers
 #'   should pass `asp$bird.seed`.
 #' @param threads Integer, OpenMP threads for the accelerated path. Default
@@ -42,7 +41,7 @@ get.som.codes <- function(
     som.dim,
     rlen    = 10L,
     radius  = NULL,
-    dist    = 2L,
+    dist    = 4L,
     seed    = 1337L,
     threads = 0L
 ) {
