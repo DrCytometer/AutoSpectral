@@ -13,6 +13,10 @@
 #' control shares that control.type. `universal.negative` is left blank when
 #' `control.type` could not be determined or when more than one unstained/negative
 #' control of that type exists (in which case you will need to set it manually).
+#' It will also assign the `large.gate` column based on the matched marker's
+#' entry in `marker_database.csv`. Bead controls are never assigned
+#' `large.gate = TRUE`, even if the matched marker is flagged as large.gate
+#' in the marker database.
 #' You will need to fill in any "No Match" results manually.
 #' You will need to add marker names manually.
 #'
@@ -273,15 +277,24 @@ create.control.file <- function(
 
   control.table$control.type <- sapply(
     control.table$filename, function( filename ) {
-    if ( grepl( "cells", filename, ignore.case = TRUE ) ){
-      type <- "cells"
-    } else if ( grepl( "beads", filename, ignore.case = TRUE ) ){
-      type <- "beads"
-    } else {
-      type <- ""
-    }
-    type
-  } )
+      if ( grepl( "cells", filename, ignore.case = TRUE ) ){
+        type <- "cells"
+      } else if ( grepl( "beads", filename, ignore.case = TRUE ) ){
+        type <- "beads"
+      } else {
+        type <- ""
+      }
+      type
+    } )
+
+  # assign large.gate from the matched marker's entry in marker.database.
+  # Bead controls never receive large.gate = TRUE, since large/small gating
+  # reflects differences in cell morphology that don't apply to beads.
+  marker.large.gate <- stats::setNames(
+    marker.database$large.gate, marker.database$marker
+  )
+  control.table$large.gate <- marker.large.gate[ control.table$marker ]
+  control.table$large.gate[ control.table$control.type == "beads" ] <- FALSE
 
   # reorder list by wavelength column in database file
   control.table.merged <- merge(

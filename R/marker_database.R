@@ -16,3 +16,7 @@
 #' - `synonym7`: Potential synonym 7
 #' - `synonym8`: Potential synonym 8
 #' - `synonym9`: Potential synonym 9
+#' - `large.gate`: Logical. `TRUE` if this marker is typically expressed on
+#' larger cells (e.g. granulocytes, macrophages) and should trigger a
+#' `large.gate` assignment in `create.control.file()`; `FALSE` or blank
+#' otherwise.

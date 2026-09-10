@@ -57,6 +57,10 @@ the matching \code{universal.negative} filename when exactly one unstained/negat
 control shares that control.type. \code{universal.negative} is left blank when
 \code{control.type} could not be determined or when more than one unstained/negative
 control of that type exists (in which case you will need to set it manually).
+It will also assign the \code{large.gate} column based on the matched marker's
+entry in \code{marker_database.csv}. Bead controls are never assigned
+\code{large.gate = TRUE}, even if the matched marker is flagged as large.gate
+in the marker database.
 You will need to fill in any "No Match" results manually.
 You will need to add marker names manually.
 }

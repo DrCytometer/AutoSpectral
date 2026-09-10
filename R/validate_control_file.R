@@ -349,12 +349,12 @@ validate.control.file <- function(
                     message = "No is.viability set for any sample" )
     }
 
-    if ( any( !is.na( lg ) & ct$control.type != "cells" & lg ) ) {
+    if ( any( !is.na( lg ) & ct$control.type == "beads" & lg ) ) {
       issues[[ length( issues ) + 1 ]] <-
         .new_issue( "error", "large_gate_non_cell",
-                    filename = ct$filename[ !is.na( lg ) & lg & ct$control.type != "cells" ],
+                    filename = ct$filename[ !is.na( lg ) & lg & ct$control.type == "beads" ],
                     column = "large.gate",
-                    message = "large.gate TRUE only allowed for cell controls" )
+                    message = "large.gate TRUE only allowed for cell or unknown-type controls, not beads" )
     }
 
     if ( any( !is.na( iv ) & ct$control.type != "cells" & iv ) ) {
