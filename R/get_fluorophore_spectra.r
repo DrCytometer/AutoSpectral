@@ -386,7 +386,7 @@ get.fluorophore.spectra <- function(
     warning(
       sprintf(
         paste(
-          "Mixing matrix condition number (%.2f) exceeds the number of",
+          "Mixing matrix (spectra) condition number (%.2f) exceeds the number of",
           "fluorophores (%d). This indicates a poorly conditioned spectral",
           "panel and may result in inaccurate unmixing. Check for high",
           "similarity/collinearity between fluorophore spectra."
