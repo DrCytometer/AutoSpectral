@@ -208,6 +208,20 @@ unmix.fcs <- function(
   }
 
   method <- match.arg( method )
+  pipeline.arg <- match.arg( pipeline )
+
+  if ( verbose ) {
+    message(
+      switch(
+        method,
+        "OLS"          = "Unmixing method: OLS (ordinary least squares).",
+        "WLS"          = "Unmixing method: WLS (weighted least squares).",
+        "Poisson"      = "Unmixing method: Poisson (IRLS).",
+        "FastPoisson"  = "Unmixing method: FastPoisson (IRLS, AutoSpectralRcpp).",
+        "AutoSpectral" = "Unmixing method: AutoSpectral."
+      )
+    )
+  }
 
   # include checks on inputs if AutoSpectral unmixing has been selected
   if ( method == "AutoSpectral" ) {
@@ -249,7 +263,7 @@ unmix.fcs <- function(
       # the joint pipeline requires a newer AutoSpectralRcpp than the base
       # 1.0.0 check above; older installs only export the legacy C++ pipeline
       # and will error (or silently mis-dispatch) if asked for `pipeline = "joint"`
-      if ( match.arg( pipeline ) == "joint" &&
+      if ( pipeline == "joint" &&
            utils::packageVersion( "AutoSpectralRcpp" ) < package_version( "1.1.0" ) ) {
         stop(
           "The joint AutoSpectral pipeline (`pipeline = \"joint\"`) requires ",
@@ -286,7 +300,7 @@ unmix.fcs <- function(
     warning(
       sprintf(
         paste(
-          "Mixing matrix condition number (%.2f) exceeds the number of",
+          "Mixing matrix (spectra) condition number (%.2f) exceeds the number of",
           "fluorophores (%d). This indicates a poorly conditioned spectral",
           "panel and may result in inaccurate unmixing. Check for high",
           "similarity/collinearity between fluorophore spectra."
@@ -458,7 +472,6 @@ unmix.fcs <- function(
       "OLS" = unmix.ols( chunk.spectral, spectra ),
       "WLS" = unmix.wls( chunk.spectral, spectra, weights ),
       "AutoSpectral" = {
-        pipeline.arg <- match.arg( pipeline )
 
         if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) ) {
           # AutoSpectralRcpp available: hand the pipeline switch off to
