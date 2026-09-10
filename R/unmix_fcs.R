@@ -263,7 +263,7 @@ unmix.fcs <- function(
       # the joint pipeline requires a newer AutoSpectralRcpp than the base
       # 1.0.0 check above; older installs only export the legacy C++ pipeline
       # and will error (or silently mis-dispatch) if asked for `pipeline = "joint"`
-      if ( pipeline == "joint" &&
+      if ( pipeline.arg == "joint" &&
            utils::packageVersion( "AutoSpectralRcpp" ) < package_version( "1.1.0" ) ) {
         stop(
           "The joint AutoSpectral pipeline (`pipeline = \"joint\"`) requires ",
