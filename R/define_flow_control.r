@@ -475,14 +475,49 @@ define.flow.control <- function(
       }
     }
 
-    # Guard: skip or warn if gating (still) returned zero events
+    # Guard: gating (still) returned zero events, even after any sample-
+    # specific fallback gate attempted above. Rather than dropping the
+    # sample entirely, fall back to ALL events for this sample, ungated
+    # (only the resolution-limit filter in get.gated.flow.expression.data()
+    # is applied). This keeps the sample in the pipeline with a loud
+    # warning instead of a silent drop or a downstream crash.
     if ( is.null( flow.sample.event.number ) || flow.sample.event.number == 0 ) {
+
       warning( paste0(
-        "Sample '", control.table$sample[ fs.idx ], "' (", flow.file.name[ fs.idx ],
-        ") returned 0 events after gating and will be skipped.",
-        "Check gate assignments and inspect plots in figure_gate."
-      ) )
-      next
+        "Sample '", samp.name, "' (", flow.file.name[ fs.idx ], ") returned 0 ",
+        "events after gating (including after any sample-specific fallback ",
+        "gate). Falling back to ALL events for this sample, UNGATED. This ",
+        "usually means the automatic gate doesn't fit this population (e.g. ",
+        "a bead or debris-adjacent population). Inspect the scatter plots ",
+        "in figure_gate, and consider defining a gate for this sample ",
+        "manually before calling define.flow.control(), using ",
+        "define.gate.landmarks() (peak-channel landmark gating) or ",
+        "define.gate.density() (density-based gating), then pass the ",
+        "resulting gate in via `gate.list`/`flow.gate` rather than relying ",
+        "on the automatic fallback."
+      ), call. = FALSE )
+
+      args.list.ungated <- args.list
+      args.list.ungated$apply.gate <- FALSE
+
+      flow.expr.data[[ fs.idx ]] <- do.call(
+        get.gated.flow.expression.data, c( list( samp.name ), args.list.ungated )
+      )
+
+      flow.sample.event.number <- nrow( flow.expr.data[[ fs.idx ]] )
+
+      if ( is.null( flow.sample.event.number ) || flow.sample.event.number == 0 ) {
+        warning( paste0(
+          "Sample '", samp.name, "' (", flow.file.name[ fs.idx ], ") has 0 ",
+          "events even ungated -- the FCS file appears to be empty (or every ",
+          "event failed the resolution-limit filter). This sample will be ",
+          "skipped. If the file is not actually empty, check the raw FCS in ",
+          "a viewer before re-running; a pre-defined gate from ",
+          "define.gate.landmarks() or define.gate.density() will not help ",
+          "if there is no usable data in the file."
+        ), call. = FALSE )
+        next
+      }
     }
 
     # warn if still few events even after the fallback attempt
@@ -508,11 +543,19 @@ define.flow.control <- function(
   # set rownames
   for ( fs.idx in 1 : flow.sample.n ) {
     flow.sample.event.number <- nrow( flow.expr.data[[ fs.idx ]]  )
+
+    # a sample skipped above (0 events, even ungated) leaves a NULL or
+    # 0-row entry here; `1 : 0` counts backwards (1, 0) instead of giving
+    # an empty sequence, which mismatches a 0-row matrix and throws
+    # "length of 'dimnames' [1] not equal to array extent". seq_len()
+    # avoids that, and skipping NULL/0-row entries avoids it entirely.
+    if ( is.null( flow.sample.event.number ) || flow.sample.event.number == 0 ) next
+
     flow.the.sample <- control.table$sample[ fs.idx ]
     flow.the.event <- sprintf(
       "%s.%0*d", flow.the.sample,
-      flow.event.number.width, 1 : flow.sample.event.number
-      )
+      flow.event.number.width, seq_len( flow.sample.event.number )
+    )
     rownames( flow.expr.data[[ fs.idx ]] ) <- flow.the.event
   }
 
