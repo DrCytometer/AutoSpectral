@@ -657,11 +657,6 @@ get.af.spectra <- function(
         # giving a dimensionless signature of how the current AF estimate is wrong
         spill.ratios <- error[ problem.idx, ] / af.abundance.problem
 
-        if ( verbose )
-          message(
-            paste( "Refine: clustering", problem.cell.n, "problem cells by spillover error pattern" )
-          )
-
         som.dim.error <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
 
         colnames( spill.ratios ) <- colnames( spectra )
@@ -715,16 +710,12 @@ get.af.spectra <- function(
 
           if ( max( cosine.similarity.cross( matrix( candidate, nrow = 1 ), af.spectra ) ) >=
                duplication.threshold ) {
-            if ( verbose )
-              message( sprintf( "Refine: cluster %s candidate duplicates an existing spectrum - skipped.", cl ) )
             next
           }
 
           if ( remove.contaminants &&
                max( cosine.similarity.cross( matrix( candidate, nrow = 1 ), spectra ) ) >=
                contaminant.threshold ) {
-            if ( verbose )
-              message( sprintf( "Refine: cluster %s candidate resembles a fluorophore - skipped.", cl ) )
             next
           }
 
@@ -745,11 +736,6 @@ get.af.spectra <- function(
           shifted <- which( trial.assignments == candidate.row )
 
           if ( length( shifted ) < refine.min.shift.n ) {
-            if ( verbose )
-              message( sprintf(
-                "Refine: cluster %s - only %d/%d seed cells preferred the candidate (need %d) - skipped.",
-                cl, length( shifted ), length( seed.idx ), refine.min.shift.n
-              ) )
             next
           }
 
@@ -779,11 +765,6 @@ get.af.spectra <- function(
           # worse-off quarter of shifted cells to still be non-negative, so a
           # handful of large gains cannot carry a flat or worse majority.
           if ( median.delta < refine.improvement.threshold || q25.delta <= 0 ) {
-            if ( verbose )
-              message( sprintf(
-                "Refine: cluster %s - shifted cells did not clear the improvement bar (median %.4f, 25th pct %.4f) - skipped.",
-                cl, median.delta, q25.delta
-              ) )
             next
           }
 
