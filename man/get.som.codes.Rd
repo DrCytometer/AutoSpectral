@@ -11,7 +11,8 @@ get.som.codes(
   radius = NULL,
   dist = 4L,
   seed = 1337L,
-  threads = 0L
+  threads = 0L,
+  unit.norm = FALSE
 )
 }
 \arguments{
@@ -37,6 +38,15 @@ should pass \code{asp$bird.seed}.}
 \item{threads}{Integer, OpenMP threads for the accelerated path. Default
 \code{0} (all available cores). Ignored on the \code{FlowSOM::SOM()} fallback
 path, which is single-threaded.}
+
+\item{unit.norm}{Logical, default \code{FALSE}. Scale every training row to unit
+L2 length before training. Appropriate with \code{dist = 4} (cosine), where the
+distortion-minimising code is the mean of unit event vectors rather than
+the mean of raw ones; without it, bright events dominate each node's code.
+Leaves cosine distances, and therefore node assignments, unchanged. Has no
+principled justification under \code{dist = 2} and is left off by default so
+existing callers are unaffected. Note that the returned codes are then on
+the unit-normalised scale.}
 }
 \value{
 A list with \code{codes} (matrix, SOM nodes x features), \code{grid}, and

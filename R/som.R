@@ -28,6 +28,14 @@
 #' @param threads Integer, OpenMP threads for the accelerated path. Default
 #'   `0` (all available cores). Ignored on the `FlowSOM::SOM()` fallback
 #'   path, which is single-threaded.
+#' @param unit.norm Logical, default `FALSE`. Scale every training row to unit
+#'   L2 length before training. Appropriate with `dist = 4` (cosine), where the
+#'   distortion-minimising code is the mean of unit event vectors rather than
+#'   the mean of raw ones; without it, bright events dominate each node's code.
+#'   Leaves cosine distances, and therefore node assignments, unchanged. Has no
+#'   principled justification under `dist = 2` and is left off by default so
+#'   existing callers are unaffected. Note that the returned codes are then on
+#'   the unit-normalised scale.
 #'
 #' @return A list with `codes` (matrix, SOM nodes x features), `grid`, and
 #'   `nNodes`, matching the subset of `FlowSOM::SOM()`'s return value
@@ -39,15 +47,32 @@
 get.som.codes <- function(
     data,
     som.dim,
-    rlen    = 10L,
-    radius  = NULL,
-    dist    = 4L,
-    seed    = 1337L,
-    threads = 0L
+    rlen      = 10L,
+    radius    = NULL,
+    dist      = 4L,
+    seed      = 1337L,
+    threads   = 0L,
+    unit.norm = FALSE
 ) {
 
   if ( is.null( colnames( data ) ) )
     stop( "`data` must have colnames.", call. = FALSE )
+
+  # Under cosine distance the code minimising within-node distortion is the
+  # direction of the sum of unit event vectors, not the arithmetic mean of the
+  # raw vectors. The batch trainer accumulates raw values, so scaling each row
+  # to unit length here makes the update consistent with the distance. Row
+  # scaling leaves cosine distances unchanged, so assignments are unaffected;
+  # only the relative influence of bright and dim events on each code changes.
+  if ( unit.norm ) {
+    row.norm <- sqrt( rowSums( data^2 ) )
+    keep     <- row.norm > 0
+    if ( !all( keep ) ) {
+      data     <- data[ keep, , drop = FALSE ]
+      row.norm <- row.norm[ keep ]
+    }
+    data <- data / row.norm
+  }
 
   grid   <- expand.grid( seq_len( som.dim ), seq_len( som.dim ) )
   ncodes <- nrow( grid )
