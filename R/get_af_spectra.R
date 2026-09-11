@@ -10,13 +10,13 @@
 #' Optionally deduplicates the resulting spectra by cosine similarity
 #' (`deduplicate = TRUE`, default) to remove near-identical profiles that cause
 #' spurious over-correction of near-zero events in fully stained samples. When
-#' `refine = TRUE`, a second round of targeted modulation is performed on cells
-#' that remain far from zero after the first-pass correction; modulated spectra
-#' are screened for redundancy against each other and against the base library
-#' before being appended.
+#' `refine = TRUE`, a second round of discovery targets cells that remain far
+#' from zero after the first-pass correction: candidate spectra are built from
+#' density-boosted neighbourhoods of these problem cells and accepted only when
+#' the real per-cell AF solver demonstrably prefers them.
 #'
 #' @importFrom parallelly availableCores
-#' @importFrom FNN knnx.index
+#' @importFrom FNN get.knnx knnx.index
 #' @importFrom cowplot plot_grid
 #' @importFrom ggplot2 ggsave ggtitle
 #' @importFrom ragg agg_jpeg
@@ -30,7 +30,7 @@
 #'   1, with fluorophores in rows and detectors in columns.
 #' @param som.dim Number of x and y dimensions for the SOM. Default is `10`.
 #' @param dist Integer 1:4, distance function (1 manhattan, 2 euclidean,
-#'   3 chebyshev, 4 cosine). Default `4`.
+#'   3 chebyshev, 4 cosine). Default `2`.
 #' @param figures Logical, whether to plot the spectral traces and heatmap for
 #'   the AF signatures. Default is `TRUE`.
 #' @param save Logical, whether to save the CSV file for the AF signatures.
@@ -42,6 +42,18 @@
 #' @param title Title for the output spectral plots and csv file. Default is
 #'   `"Autofluorescence spectra"`.
 #' @param verbose Logical, controls messaging. Default is `TRUE`.
+#' @param af.assign.method Character, one of `"l1"` (default) or `"l2"`.
+#'   Controls which per-cell AF assignment solver is used everywhere inside
+#'   this function: the first-pass assignment, the refinement loop's
+#'   candidate-preference check, and the second-pass diagnostic unmixing
+#'   (`plot.unmixed = TRUE`). Both options score the joint covariance-
+#'   weighted fluorophore error x raw-space residual error criterion,
+#'   differing only in whether the fluorophore term is L1 (abs, `"l1"`,
+#'   `assign.af.joint.cov`) or L2 (squared, `"l2"`, `assign.af.joint.cov.l2`).
+#'   Each prefers its compiled Rcpp fast path
+#'   (`AutoSpectralRcpp::assign.af.joint.cov.fast` /
+#'   `assign.af.joint.cov.l2.fast`) when available and falls back to pure R
+#'   otherwise.
 #' @param deduplicate Logical, default `FALSE`. Whether to deduplicate AF spectra
 #'   by cosine similarity after the base clustering stage and again after the
 #'   refinement stage. Deduplication removes near-identical spectral profiles
@@ -85,19 +97,45 @@
 #'   panel's span; that carries no collinearity risk here for the same
 #'   reason as above. Not affected by `use.unmixed`, since it does not use
 #'   the unmixing matrix at all. Default `NULL` disables it.
-#' @param refine Logical, default `FALSE`. Controls whether to perform a second
-#'   round of autofluorescence measurement on "problem cells": those with the
-#'   highest residual fluorophore signal after the first-pass per-cell AF
-#'   extraction, as defined by `problem.quantile`. When `FALSE`, behavior is
-#'   identical to versions of AutoSpectral prior to 1.0.0. If you are working
-#'   with samples containing complex autofluorescence, e.g. tissues or tumors,
-#'   using `refine = TRUE` will improve autofluorescence extraction at the cost
-#'   of an increase in unmixing time.
+#' @param refine Logical, default `FALSE`. Controls whether to perform a
+#'   second round of autofluorescence discovery targeting "problem cells":
+#'   those with the highest residual fluorophore signal after the first-pass
+#'   per-cell AF extraction, as defined by `problem.quantile`. Problem cells
+#'   are grouped by the systematic pattern of their error, and each group's
+#'   cells act as seeds for a nearest-neighbour expansion across the full
+#'   unstained population (`k.neighbors`), so a candidate spectrum is built
+#'   from a locally density-boosted set rather than the (typically sparse)
+#'   seeds alone. A candidate is appended only if, once added to the library,
+#'   the real per-cell AF solver reassigns a sufficient number of its own seed
+#'   cells onto it (`refine.min.shift.n`) and those cells show a genuine,
+#'   paired improvement in fit rather than one that only looks better because
+#'   a candidate was added (`refine.improvement.threshold`). When `FALSE`,
+#'   behavior is identical to versions of AutoSpectral prior to 1.0.0. If you
+#'   are working with samples containing complex autofluorescence, e.g.
+#'   tissues or tumors, using `refine = TRUE` will improve autofluorescence
+#'   extraction at the cost of an increase in unmixing time.
+#' @param k.neighbors Integer, default `15L`. Used only when `refine = TRUE`.
+#'   Each error cluster's problem cells act as seeds into a nearest-neighbour
+#'   search across the full unstained population, so a candidate spectrum is
+#'   built from a locally density-boosted set rather than from the (typically
+#'   too sparse) problem cells alone. Higher values recruit a larger, more
+#'   stable candidate at the cost of reaching further from the seeds and
+#'   risking dilution by unrelated bulk events.
+#' @param refine.improvement.threshold Numeric, default `0.02`. Minimum median
+#'   gain in cosine similarity (raw event to assigned AF spectrum), among the
+#'   seed cells that shift their assignment onto a candidate under the real
+#'   per-cell solver, before that candidate is accepted. The comparison is
+#'   paired per cell, so adding more candidates cannot inflate it. Also
+#'   requires the 25th percentile of that per-cell gain to be positive.
+#' @param refine.min.shift.n Integer, default `8L`. Minimum number of a
+#'   cluster's seed cells that must shift their AF assignment onto a candidate
+#'   spectrum before that candidate is evaluated at all. Below this, a median
+#'   gain is too volatile to trust.
 #' @param problem.quantile Numeric, default `0.99`. The quantile for determining
 #'   which cells are "problematic" after first-pass per-cell AF extraction. Cells
 #'   at or above this quantile with respect to the L2 norm of their unmixed
 #'   fluorophore channels (i.e. still furthest from zero) are selected for the
-#'   second-round modulation. A value of `0.99` means the top 1% of cells.
+#'   second-round refinement.
 #' @param plot.unmixed Logical, default `FALSE`. Whether to unmix the
 #'   unstained sample before and after AF extraction and plot the comparison
 #'   as a single side-by-side biplot (`unmixed.no.af`, `unmixed`, and, when
@@ -158,8 +196,8 @@
 #'
 #' @return A matrix of autofluorescence spectra (spectra in rows, detectors in
 #'   columns). Row 1 is the population mean of the base spectra; subsequent rows
-#'   are the deduplicated base spectra and, if `refine = TRUE`, modulated spectra
-#'   for problem cells.
+#'   are the deduplicated base spectra and, if `refine = TRUE`, any solver-
+#'   validated spectra discovered from under-represented problem cells.
 #'
 #' @export
 #'
@@ -175,20 +213,24 @@ get.af.spectra <- function(
     asp,
     spectra,
     som.dim              = 10,
-    dist                 = 4L,
+    dist                 = 2L,
     figures              = TRUE,
     save                 = TRUE,
     plot.dir             = NULL,
     table.dir            = NULL,
     title                = "Autofluorescence spectra",
     verbose              = TRUE,
+    af.assign.method     = c( "l1", "l2" ),
     deduplicate          = FALSE,
     duplication.threshold = 0.99,
     use.unmixed          = TRUE,
     af.basis.components  = NULL,
     raw.pca.components   = NULL,
-    refine               = FALSE,
-    problem.quantile     = 0.99,
+    refine                        = FALSE,
+    k.neighbors                   = 15L,
+    refine.improvement.threshold  = 0.02,
+    refine.min.shift.n            = 8L,
+    problem.quantile              = 0.99,
     plot.unmixed         = FALSE,
     plot.unmixed.n       = 30000,
     remove.contaminants  = TRUE,
@@ -218,6 +260,8 @@ get.af.spectra <- function(
 
   if ( is.null( threads ) ) threads <- asp$worker.process.n
   if ( parallel & threads == 0 ) threads <- parallelly::availableCores()
+
+  af.assign.method <- match.arg( af.assign.method )
 
   if ( !use.unmixed && refine ) {
     warning(
@@ -408,7 +452,8 @@ get.af.spectra <- function(
     som.dim = som.dim,
     dist    = dist,
     seed    = asp$bird.seed,
-    threads = if ( parallel ) threads else 1L
+    threads = if ( parallel ) threads else 1L,
+    unit.norm = ( dist == 4L )
   )
 
   # L-infinity normalise SOM node codes
@@ -526,21 +571,13 @@ get.af.spectra <- function(
     unmixed.no.af.pass   <- unmixed.no.af[ plot.idx, , drop = FALSE ]
 
     # Per-cell AF assignment on the unstained sample using the base spectra
-    if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
-         "assign.af.fluor.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
-      af.assignments <- AutoSpectralRcpp::assign.af.fluor.fast(
-        raw.data  = unstained.exprs.pass,
-        spectra   = spectra,
-        af.spectra = af.spectra,
-        threads   = asp$worker.process.n
-      )
-    } else {
-      af.assignments <- assign.af.fluorophores(
-        raw.data   = unstained.exprs.pass,
-        spectra    = spectra,
-        af.spectra = af.spectra
-      )
-    }
+    af.assignments <- .assign.af.by.method(
+      raw.data   = unstained.exprs.pass,
+      spectra    = spectra,
+      af.spectra = af.spectra,
+      method     = af.assign.method,
+      threads    = asp$worker.process.n
+    )
 
     # Unmix each cell with its assigned AF spectrum, tracking residuals and
     # projected fluorophore signal so we can compute a detector-space error
@@ -608,7 +645,7 @@ get.af.spectra <- function(
           )
         )
 
-      # ---- Modulate base spectra using error clusters --------------------
+      # ---- Discover candidate spectra from density-boosted error clusters --
 
       if ( problem.cell.n > 10 ) {
 
@@ -633,7 +670,8 @@ get.af.spectra <- function(
           som.dim = som.dim.error,
           dist    = dist,
           seed    = asp$bird.seed,
-          threads = if ( parallel ) threads else 1L
+          threads = if ( parallel ) threads else 1L,
+          unit.norm = ( dist == 4L )
         )
 
         error.assign <- as.integer(
@@ -642,83 +680,137 @@ get.af.spectra <- function(
 
         cluster.ids <- unique( error.assign )
 
-        modulated.list <- lapply( cluster.ids, function( cl ) {
+        # Each cluster's problem cells are too few and too sparse to build a
+        # stable spectrum directly - that sparsity is the reason the
+        # population went unrepresented in the first place. Instead they act
+        # as seeds into a nearest-neighbour search across the full unstained
+        # population, recruiting the many spectrally similar cells that
+        # individually sat just under the problem-cell threshold. A candidate
+        # built from that enriched set is appended only if, once added to the
+        # library, the real per-cell solver prefers it for enough of its own
+        # seed cells, and those cells' fit to their assigned spectrum
+        # genuinely improves - not merely improves because a candidate was
+        # added, which the solver's own arg-min would do for almost anything.
+
+        pool.unit  <- l2.normalize.spectra( unstained.exprs.pass )
+        accepted.n <- 0L
+
+        for ( cl in cluster.ids ) {
+
           cl.sub.idx <- which( error.assign == cl )
-          global.idx <- problem.idx[ cl.sub.idx ]
+          seed.idx   <- problem.idx[ cl.sub.idx ]
 
-          # median correction pattern for this error cluster
-          median.ratio <- apply(
-            spill.ratios[ cl.sub.idx, , drop = FALSE ],
-            2,
-            stats::median
+          # ---- density-boost: recruit each seed's nearest neighbours ------
+
+          seed.unit    <- pool.unit[ seed.idx, , drop = FALSE ]
+          nn           <- FNN::get.knnx( data = pool.unit, query = seed.unit, k = k.neighbors )
+          enriched.idx <- unique( c( seed.idx, as.integer( nn$nn.index ) ) )
+
+          candidate <- colMeans( pool.unit[ enriched.idx, , drop = FALSE ] )
+          peak      <- max( abs( candidate ) )
+          if ( peak <= 1e-12 ) next
+          candidate <- candidate / peak
+
+          # ---- cheap novelty and contamination filter before the solver check ----
+
+          if ( max( cosine.similarity.cross( matrix( candidate, nrow = 1 ), af.spectra ) ) >=
+               duplication.threshold ) {
+            if ( verbose )
+              message( sprintf( "Refine: cluster %s candidate duplicates an existing spectrum - skipped.", cl ) )
+            next
+          }
+
+          if ( remove.contaminants &&
+               max( cosine.similarity.cross( matrix( candidate, nrow = 1 ), spectra ) ) >=
+               contaminant.threshold ) {
+            if ( verbose )
+              message( sprintf( "Refine: cluster %s candidate resembles a fluorophore - skipped.", cl ) )
+            next
+          }
+
+          # ---- does the real solver prefer this candidate for its own seeds, ----
+          # ---- and does it help them? ----
+
+          trial.spectra <- rbind( af.spectra, candidate )
+          candidate.row <- nrow( trial.spectra )
+
+          trial.assignments <- .assign.af.by.method(
+            raw.data   = unstained.exprs.pass[ seed.idx, , drop = FALSE ],
+            spectra    = spectra,
+            af.spectra = trial.spectra,
+            method     = af.assign.method,
+            threads    = asp$worker.process.n
           )
 
-          # which base AF spectra were assigned to cells in this cluster?
-          contributing.af.ids <- unique( af.assignments[ global.idx ] )
+          shifted <- which( trial.assignments == candidate.row )
 
-          # modulate each contributing base spectrum
-          new.specs <- lapply( contributing.af.ids, function( id ) {
-            base.spec <- af.spectra[ id, ]
-            updated   <- base.spec * ( 1 + median.ratio )
-            peak      <- max( abs( updated ) )
-            if ( peak > 1e-12 ) updated <- updated / peak
-            return( updated )
-          } )
+          if ( length( shifted ) < refine.min.shift.n ) {
+            if ( verbose )
+              message( sprintf(
+                "Refine: cluster %s - only %d/%d seed cells preferred the candidate (need %d) - skipped.",
+                cl, length( shifted ), length( seed.idx ), refine.min.shift.n
+              ) )
+            next
+          }
 
-          return( do.call( rbind, new.specs ) )
-        } )
+          # Paired before/after cosine similarity (raw event to assigned AF
+          # spectrum) for the seed cells that actually switched: each cell's
+          # own first-pass assignment against the candidate, never a
+          # population-wide average.
+          shifted.global  <- seed.idx[ shifted ]
+          raw.shifted     <- unstained.exprs.pass[ shifted.global, , drop = FALSE ]
+          before.spectrum <- af.spectra[ af.assignments[ shifted.global ], , drop = FALSE ]
 
-        modulated.af.spectra <- do.call( rbind, modulated.list )
-        modulated.af.spectra <- as.matrix( stats::na.omit( modulated.af.spectra ) )
+          before.denom <- sqrt( rowSums( raw.shifted^2 ) ) * sqrt( rowSums( before.spectrum^2 ) )
+          before.cos   <- ifelse( before.denom > 0,
+                                  rowSums( raw.shifted * before.spectrum ) / before.denom,
+                                  NA_real_ )
 
-        if ( nrow( modulated.af.spectra ) > 0 && deduplicate ) {
+          after.denom <- sqrt( rowSums( raw.shifted^2 ) ) * sqrt( sum( candidate^2 ) )
+          after.cos   <- ifelse( after.denom > 0,
+                                 as.numeric( raw.shifted %*% candidate ) / after.denom,
+                                 NA_real_ )
 
-          # Step 1: deduplicate modulated spectra against each other
-          n.mod.before         <- nrow( modulated.af.spectra )
-          modulated.af.spectra <- deduplicate.spectra(
-            modulated.af.spectra,
-            threshold = duplication.threshold
-          )
+          delta        <- after.cos - before.cos
+          median.delta <- stats::median( delta, na.rm = TRUE )
+          q25.delta    <- stats::quantile( delta, 0.25, na.rm = TRUE )
 
-          # Step 2: drop any modulated spectrum too similar to an already-kept
-          # base spectrum (cross-deduplication)
-          cross.sim  <- cosine.similarity.cross( modulated.af.spectra, af.spectra )
-          # cross.sim is (n_modulated x n_existing); keep rows where max sim < threshold
-          novel.mask <- apply( cross.sim, 1, max ) < duplication.threshold
-          modulated.af.spectra <- modulated.af.spectra[ novel.mask, , drop = FALSE ]
+          # Require the typical shifted cell to clear the full margin, and the
+          # worse-off quarter of shifted cells to still be non-negative, so a
+          # handful of large gains cannot carry a flat or worse majority.
+          if ( median.delta < refine.improvement.threshold || q25.delta <= 0 ) {
+            if ( verbose )
+              message( sprintf(
+                "Refine: cluster %s - shifted cells did not clear the improvement bar (median %.4f, 25th pct %.4f) - skipped.",
+                cl, median.delta, q25.delta
+              ) )
+            next
+          }
 
-          n.novel <- nrow( modulated.af.spectra )
+          af.spectra <- rbind( af.spectra, candidate )
+          rownames( af.spectra ) <- paste0( "AF", seq_len( nrow( af.spectra ) ) )
+          accepted.n <- accepted.n + 1L
+
           if ( verbose )
-            message(
-              sprintf(
-                "Refine: %d novel modulated spectra retained after deduplication (dropped %d)",
-                n.novel, n.mod.before - n.novel
-              )
-            )
+            message( sprintf(
+              "Refine: cluster %s accepted - %d/%d seed cells shifted (n=%d enriched), median cosine gain %.4f.",
+              cl, length( shifted ), length( seed.idx ), length( enriched.idx ), median.delta
+            ) )
         }
 
-        if ( nrow( modulated.af.spectra ) > 0 ) {
+        if ( accepted.n > 0L ) {
 
-          af.spectra <- rbind( af.spectra, modulated.af.spectra )
-          af.spectra <- as.matrix( stats::na.omit( af.spectra ) )
-
-          # Contamination QC on the expanded set
           af.spectra <- qc.af.spectra( af.spectra, spectra, plot.dir, remove.contaminants,
                                        sample.label = file.name )
 
           rownames( af.spectra ) <- paste0( "AF", seq_len( nrow( af.spectra ) ) )
 
           if ( verbose )
-            message(
-              sprintf(
-                "Refine: %d total AF spectra after modulation and QC",
-                nrow( af.spectra )
-              )
-            )
+            message( sprintf( "Refine: %d total AF spectra after discovery and QC", nrow( af.spectra ) ) )
 
         } else {
           if ( verbose )
-            message( "Refine: all modulated spectra were redundant with base spectra - nothing appended." )
+            message( "Refine: no candidate spectra cleared validation - nothing appended." )
         }
 
         # ---- Second-pass unmixing for the diagnostic plot -----------------
@@ -726,7 +818,8 @@ get.af.spectra <- function(
         if ( plot.unmixed ) {
           if ( verbose ) message( "Refine: identifying best-fitting AF - second pass" )
 
-          if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+          if ( af.assign.method == "l1" &&
+               requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
                "unmix.autospectral.rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
             unmixed.second <- AutoSpectralRcpp::unmix.autospectral.rcpp(
               raw.data   = unstained.exprs.pass,
@@ -737,10 +830,12 @@ get.af.spectra <- function(
               threads    = threads
             )
           } else {
-            af.assignments.second <- assign.af.fluorophores(
+            af.assignments.second <- .assign.af.by.method(
               raw.data   = unstained.exprs.pass,
               spectra    = spectra,
-              af.spectra = af.spectra
+              af.spectra = af.spectra,
+              method     = af.assign.method,
+              threads    = threads
             )
 
             af.fit.second <- unmix.af.fwl(
@@ -1077,6 +1172,58 @@ deduplicate.spectra <- function( spectra, threshold = 0.99 ) {
     pooled.cov = pooled.cov,
     n.assigned = sum( usable ),
     detectors  = colnames( af.spectra )
+  )
+}
+
+# ---------------------------------------------------------------------------
+# Private helper: per-cell AF assignment, dispatching on method
+# ---------------------------------------------------------------------------
+# Both "l1" and "l2" score the joint fluorophore + raw-space-residual
+# criterion (assign.af.joint.cov / assign.af.joint.cov.l2), differing only
+# in whether the fluorophore term is L1 (abs) or L2 (squared). Each prefers
+# its compiled Rcpp fast path when available
+# (AutoSpectralRcpp::assign.af.joint.cov.fast / assign.af.joint.cov.l2.fast)
+# and falls back to the pure-R solver otherwise.
+
+.assign.af.by.method <- function( raw.data, spectra, af.spectra, method, threads ) {
+
+  if ( method == "l2" ) {
+    if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+         "assign.af.joint.cov.l2.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+      return(
+        AutoSpectralRcpp::assign.af.joint.cov.l2.fast(
+          raw.data   = raw.data,
+          spectra    = spectra,
+          af.spectra = af.spectra,
+          threads    = threads
+        )
+      )
+    }
+    return(
+      assign.af.joint.cov.l2(
+        raw.data   = raw.data,
+        spectra    = spectra,
+        af.spectra = af.spectra
+      )
+    )
+  }
+
+  if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+       "assign.af.joint.cov.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+    return(
+      AutoSpectralRcpp::assign.af.joint.cov.fast(
+        raw.data   = raw.data,
+        spectra    = spectra,
+        af.spectra = af.spectra,
+        threads    = threads
+      )
+    )
+  }
+
+  assign.af.joint.cov(
+    raw.data   = raw.data,
+    spectra    = spectra,
+    af.spectra = af.spectra
   )
 }
 

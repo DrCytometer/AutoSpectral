@@ -9,19 +9,23 @@ get.af.spectra(
   asp,
   spectra,
   som.dim = 10,
-  dist = 4L,
+  dist = 2L,
   figures = TRUE,
   save = TRUE,
   plot.dir = NULL,
   table.dir = NULL,
   title = "Autofluorescence spectra",
   verbose = TRUE,
+  af.assign.method = c("l1", "l2"),
   deduplicate = FALSE,
   duplication.threshold = 0.99,
   use.unmixed = TRUE,
   af.basis.components = NULL,
   raw.pca.components = NULL,
   refine = FALSE,
+  k.neighbors = 15L,
+  refine.improvement.threshold = 0.02,
+  refine.min.shift.n = 8L,
   problem.quantile = 0.99,
   plot.unmixed = FALSE,
   plot.unmixed.n = 30000,
@@ -54,7 +58,7 @@ stained samples to which the AF will be applied, ideally.}
 \item{som.dim}{Number of x and y dimensions for the SOM. Default is \code{10}.}
 
 \item{dist}{Integer 1:4, distance function (1 manhattan, 2 euclidean,
-3 chebyshev, 4 cosine). Default \code{4}.}
+3 chebyshev, 4 cosine). Default \code{2}.}
 
 \item{figures}{Logical, whether to plot the spectral traces and heatmap for
 the AF signatures. Default is \code{TRUE}.}
@@ -72,6 +76,19 @@ Default is \code{NULL}, which inherits from \code{asp$table.af.dir}.}
 \code{"Autofluorescence spectra"}.}
 
 \item{verbose}{Logical, controls messaging. Default is \code{TRUE}.}
+
+\item{af.assign.method}{Character, one of \code{"l1"} (default) or \code{"l2"}.
+Controls which per-cell AF assignment solver is used everywhere inside
+this function: the first-pass assignment, the refinement loop's
+candidate-preference check, and the second-pass diagnostic unmixing
+(\code{plot.unmixed = TRUE}). Both options score the joint covariance-
+weighted fluorophore error x raw-space residual error criterion,
+differing only in whether the fluorophore term is L1 (abs, \code{"l1"},
+\code{assign.af.joint.cov}) or L2 (squared, \code{"l2"}, \code{assign.af.joint.cov.l2}).
+Each prefers its compiled Rcpp fast path
+(\code{AutoSpectralRcpp::assign.af.joint.cov.fast} /
+\code{assign.af.joint.cov.l2.fast}) when available and falls back to pure R
+otherwise.}
 
 \item{deduplicate}{Logical, default \code{FALSE}. Whether to deduplicate AF spectra
 by cosine similarity after the base clustering stage and again after the
@@ -121,20 +138,49 @@ panel's span; that carries no collinearity risk here for the same
 reason as above. Not affected by \code{use.unmixed}, since it does not use
 the unmixing matrix at all. Default \code{NULL} disables it.}
 
-\item{refine}{Logical, default \code{FALSE}. Controls whether to perform a second
-round of autofluorescence measurement on "problem cells": those with the
-highest residual fluorophore signal after the first-pass per-cell AF
-extraction, as defined by \code{problem.quantile}. When \code{FALSE}, behavior is
-identical to versions of AutoSpectral prior to 1.0.0. If you are working
-with samples containing complex autofluorescence, e.g. tissues or tumors,
-using \code{refine = TRUE} will improve autofluorescence extraction at the cost
-of an increase in unmixing time.}
+\item{refine}{Logical, default \code{FALSE}. Controls whether to perform a
+second round of autofluorescence discovery targeting "problem cells":
+those with the highest residual fluorophore signal after the first-pass
+per-cell AF extraction, as defined by \code{problem.quantile}. Problem cells
+are grouped by the systematic pattern of their error, and each group's
+cells act as seeds for a nearest-neighbour expansion across the full
+unstained population (\code{k.neighbors}), so a candidate spectrum is built
+from a locally density-boosted set rather than the (typically sparse)
+seeds alone. A candidate is appended only if, once added to the library,
+the real per-cell AF solver reassigns a sufficient number of its own seed
+cells onto it (\code{refine.min.shift.n}) and those cells show a genuine,
+paired improvement in fit rather than one that only looks better because
+a candidate was added (\code{refine.improvement.threshold}). When \code{FALSE},
+behavior is identical to versions of AutoSpectral prior to 1.0.0. If you
+are working with samples containing complex autofluorescence, e.g.
+tissues or tumors, using \code{refine = TRUE} will improve autofluorescence
+extraction at the cost of an increase in unmixing time.}
+
+\item{k.neighbors}{Integer, default \code{15L}. Used only when \code{refine = TRUE}.
+Each error cluster's problem cells act as seeds into a nearest-neighbour
+search across the full unstained population, so a candidate spectrum is
+built from a locally density-boosted set rather than from the (typically
+too sparse) problem cells alone. Higher values recruit a larger, more
+stable candidate at the cost of reaching further from the seeds and
+risking dilution by unrelated bulk events.}
+
+\item{refine.improvement.threshold}{Numeric, default \code{0.02}. Minimum median
+gain in cosine similarity (raw event to assigned AF spectrum), among the
+seed cells that shift their assignment onto a candidate under the real
+per-cell solver, before that candidate is accepted. The comparison is
+paired per cell, so adding more candidates cannot inflate it. Also
+requires the 25th percentile of that per-cell gain to be positive.}
+
+\item{refine.min.shift.n}{Integer, default \code{8L}. Minimum number of a
+cluster's seed cells that must shift their AF assignment onto a candidate
+spectrum before that candidate is evaluated at all. Below this, a median
+gain is too volatile to trust.}
 
 \item{problem.quantile}{Numeric, default \code{0.99}. The quantile for determining
 which cells are "problematic" after first-pass per-cell AF extraction. Cells
 at or above this quantile with respect to the L2 norm of their unmixed
 fluorophore channels (i.e. still furthest from zero) are selected for the
-second-round modulation. A value of \code{0.99} means the top 1\% of cells.}
+second-round refinement.}
 
 \item{plot.unmixed}{Logical, default \code{FALSE}. Whether to unmix the
 unstained sample before and after AF extraction and plot the comparison
@@ -211,8 +257,8 @@ variant plot. Default is \code{"black"}.}
 \value{
 A matrix of autofluorescence spectra (spectra in rows, detectors in
 columns). Row 1 is the population mean of the base spectra; subsequent rows
-are the deduplicated base spectra and, if \code{refine = TRUE}, modulated spectra
-for problem cells.
+are the deduplicated base spectra and, if \code{refine = TRUE}, any solver-
+validated spectra discovered from under-represented problem cells.
 }
 \description{
 Extracts autofluorescence spectra from an unstained sample. Intended for use
@@ -222,10 +268,10 @@ cells with similar AF profiles.
 Optionally deduplicates the resulting spectra by cosine similarity
 (\code{deduplicate = TRUE}, default) to remove near-identical profiles that cause
 spurious over-correction of near-zero events in fully stained samples. When
-\code{refine = TRUE}, a second round of targeted modulation is performed on cells
-that remain far from zero after the first-pass correction; modulated spectra
-are screened for redundancy against each other and against the base library
-before being appended.
+\code{refine = TRUE}, a second round of discovery targets cells that remain far
+from zero after the first-pass correction: candidate spectra are built from
+density-boosted neighbourhoods of these problem cells and accepted only when
+the real per-cell AF solver demonstrably prefers them.
 }
 \references{
 Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
