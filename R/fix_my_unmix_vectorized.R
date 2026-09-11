@@ -206,8 +206,15 @@
           stats::median( x.source[ idx ] ), numeric( 1 ) )
         bin.n  <- lengths( idx.by.bin )
 
-        neg.n <- t( vapply( idx.by.bin, function( idx )
-          colSums( target.negative[ idx, , drop = FALSE ] ), numeric( m ) ) )
+        # vapply() drops the matrix dimension when m == 1 (a single target
+        # fluorophore), which would otherwise leave t() returning a 1 x B
+        # matrix instead of B x 1 and break every downstream B x m op against
+        # sd.bin/weight.* below (the "non-conformable arrays" failure mode).
+        # Setting dim() explicitly keeps the m x B shape regardless of m.
+        neg.n <- vapply( idx.by.bin, function( idx )
+          colSums( target.negative[ idx, , drop = FALSE ] ), numeric( m ) )
+        dim( neg.n ) <- c( m, length( bins ) )
+        neg.n <- t( neg.n )
 
         usable <- neg.n >= min.bin.negative
 
@@ -231,18 +238,22 @@
           matrix( bin.n, length( bins ), m ) /
             pmax( sd.bin^2, .Machine$double.eps ) )
 
-        envelope.value <- t( vapply( idx.by.bin, function( idx )
+        envelope.value <- vapply( idx.by.bin, function( idx )
           vapply( seq_len( m ), function( k ) {
             v <- X.target[ idx, k ][ target.negative[ idx, k ] ]
             if ( length( v ) < min.bin.negative ) return( NA_real_ )
             stats::quantile( v, probs = quantiles[ 1 ], names = FALSE )
-          }, numeric( 1 ) ), numeric( m ) ) )
+          }, numeric( 1 ) ), numeric( m ) )
+        dim( envelope.value ) <- c( m, length( bins ) )
+        envelope.value <- t( envelope.value )
 
-        median.value <- t( vapply( idx.by.bin, function( idx )
+        median.value <- vapply( idx.by.bin, function( idx )
           vapply( seq_len( m ), function( k )
             stats::quantile( X.target[ idx, k ], probs = quantiles[ 2 ],
                              names = FALSE ),
-            numeric( 1 ) ), numeric( m ) ) )
+            numeric( 1 ) ), numeric( m ) )
+        dim( median.value ) <- c( m, length( bins ) )
+        median.value <- t( median.value )
 
         fit.trace.batch <- function( value, weight ) {
 
