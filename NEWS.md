@@ -1,3 +1,58 @@
+# AutoSpectral 1.8.2 (2026-09-12)
+
+## New Features
+
+- A `scripts` folder has been added. At the moment this contains primarily items
+related to producing figures for the manuscript, but example workflows may go in
+later.
+- You can now pass `control.files` (a vector of files/file paths) to 
+`create.control.file()` in order to specify which files among all the control
+you wish to use, or where they are if they are not all in the same place.
+- The `large.gate` option will now be filled automatically when creating the
+control file. This is done by referring to the `marker_database.csv` in 
+inst/extdata, where markers have been tagged as `large.gate = TRUE` if they are
+expected to be expressed on larger (e.g., myeloid) cells.
+- A new `refine` loop has been added to `get.fluorophore.spectra()`. This works
+by unmixing each single-stained control and performing robust linear regression
+to check the accuracy of the spectrum used for the unmixing on all events in the
+control. The aim is to provide a check and correction if the pre-processing in
+`define.flow.control()`, `clean.controls()` and/or `get.spectra.automated()` has
+inadvertently excluded some of the key data. This has not been tested yet and is
+off by default.
+
+## Improvements
+
+- The Frisch-Waugh-Lovell theorem is now employed to speed up autofluorescence
+unmixing per cell in the R code.
+- Better messaging in a few places. When calling `unmix.fcs()`, for example, the
+active unmixing method is now printed to the console, whereas before this was
+only happening for the AutoSpectral methods.
+- A `gate.boundary` can now be passed to `unmixed.nxn.plot()` or `unmixed.mxn.plot()`
+to apply a scatter gate on the data prior to plotting. Use `define.gate.density()`
+or `define.gate.landmarks()` to construct the gate. Scatter coordinates must be
+passed as part of the input data matrix. For example:
+```r
+unmixed.nxn.plot(
+unmixed.data = cbind(my.unmixed.data, original.fsc.ssc.data),
+asp,
+channels = colnames(my.unmixed.data),
+gate.boundary = my.gate
+scatter.param = colnames(original.fsc.ssc.data)
+)
+```
+- You can compare two sets of pre-calculated unmixed data (e.g., OLS vs WLS) using
+`compare.unmixed.data()`. See also `compare.unmix()`.
+
+## Bug fixes
+
+- File names on the key output plots and CSV files from `get.fluorophore.spectra()`
+and `get.af.spectra()` will now be unique through the use of timestamping. In
+the case of `get.af.spectra()`, the FCS filename or `title` will be included.
+- If gating fails for any control in `define.flow.control()`, all events will be
+taken as a fallback.
+
+
+
 # AutoSpectral 1.8.1 (2026-09-03)
 
 ## New Features
