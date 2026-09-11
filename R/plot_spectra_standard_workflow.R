@@ -481,12 +481,10 @@
 #' @param truth.n.candidates,truth.n.spectral Integers, defaults `1000` and
 #'   `200`. Only used when `ground.truth.method = "automated"`; mirror
 #'   `n.candidates`/`n.spectral` in [get.spectra.automated()].
-#' @param legacy.gating.system,legacy.af.remove,legacy.universal.negative,
-#'   legacy.downsample,legacy.scatter.match,legacy.k.neighbors,
-#'   legacy.negative.n,legacy.positive.n Only used when
-#'   `ground.truth.method = "legacy"` and `legacy.flow.control`/
-#'   `legacy.diagnostics.env` are not supplied; passed through to
-#'   [define.flow.control()] / [clean.controls()] exactly as in
+#' @param legacy.gating.system,legacy.af.remove,legacy.universal.negative,legacy.downsample,legacy.scatter.match,legacy.k.neighbors,legacy.negative.n,legacy.positive.n
+#'   Only used when `ground.truth.method = "legacy"` and
+#'   `legacy.flow.control`/`legacy.diagnostics.env` are not supplied; passed
+#'   through to [define.flow.control()] / [clean.controls()] exactly as in
 #'   [spectra.legacy.steps.plot()].
 #' @param legacy.flow.control,legacy.diagnostics.env Optional, default `NULL`.
 #'   Precomputed outputs of [define.flow.control()] + [clean.controls()]

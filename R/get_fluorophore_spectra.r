@@ -229,7 +229,7 @@ get.fluorophore.spectra <- function(
 
     refine.result <- do.call(
       refine.fluorophore.spectra,
-      modifyList(
+      utils::modifyList(
         list(
           marker.spectra   = marker.spectra,
           control.dir      = control.dir,

@@ -143,11 +143,9 @@ not an independent ground truth and is kept only for reference.}
 \code{200}. Only used when \code{ground.truth.method = "automated"}; mirror
 \code{n.candidates}/\code{n.spectral} in \code{\link[=get.spectra.automated]{get.spectra.automated()}}.}
 
-\item{legacy.gating.system, legacy.af.remove, legacy.universal.negative, }{legacy.downsample,legacy.scatter.match,legacy.k.neighbors,
-legacy.negative.n,legacy.positive.n Only used when
-\code{ground.truth.method = "legacy"} and \code{legacy.flow.control}/
-\code{legacy.diagnostics.env} are not supplied; passed through to
-\code{\link[=define.flow.control]{define.flow.control()}} / \code{\link[=clean.controls]{clean.controls()}} exactly as in
+\item{legacy.gating.system, legacy.af.remove, legacy.universal.negative, legacy.downsample, legacy.scatter.match, legacy.k.neighbors, legacy.negative.n, legacy.positive.n}{Only used when \code{ground.truth.method = "legacy"} and
+\code{legacy.flow.control}/\code{legacy.diagnostics.env} are not supplied; passed
+through to \code{\link[=define.flow.control]{define.flow.control()}} / \code{\link[=clean.controls]{clean.controls()}} exactly as in
 \code{\link[=spectra.legacy.steps.plot]{spectra.legacy.steps.plot()}}.}
 
 \item{legacy.flow.control, legacy.diagnostics.env}{Optional, default \code{NULL}.
