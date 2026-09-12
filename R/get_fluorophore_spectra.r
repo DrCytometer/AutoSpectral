@@ -305,6 +305,21 @@ get.fluorophore.spectra <- function(
           figure.height = asp$figure.similarity.height
         )
 
+        utils::write.csv(
+          hotspot.matrix,
+          file = file.path(
+            asp$figure.similarity.heatmap.dir,
+            paste0( asp$hotspot.matrix.file.name, ".csv" )
+          )
+        )
+        utils::write.csv(
+          cosine.similarity( fluorophore.spectra.plot ),
+          file = file.path(
+            asp$figure.similarity.heatmap.dir,
+            paste0( asp$similarity.heatmap.file.name, ".csv" )
+          )
+        )
+
         # calculate OLS unmixing matrix using singular value decomposition
         sv <- svd( t( marker.spectra ) )
         unmixing.matrix <- sv$v %*% ( t( sv$u ) / sv$d )

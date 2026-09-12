@@ -1232,6 +1232,21 @@ get.spectra.automated <- function(
           figure.width  = asp$figure.similarity.width,
           figure.height = asp$figure.similarity.height
         )
+        utils::write.csv(
+          hotspot.matrix,
+          file = file.path(
+            asp$figure.similarity.heatmap.dir,
+            paste0( "Automated", asp$hotspot.matrix.file.name, ".csv" )
+          )
+        )
+        utils::write.csv(
+          cosine.similarity( marker.spectra ),
+          file = file.path(
+            asp$figure.similarity.heatmap.dir,
+            paste0( "Automated", asp$similarity.heatmap.file.name, ".csv" )
+          )
+        )
+
 
         # Identify which controls had legacy refinement run. `marker.spectra`
         # and `automated.spectra` are both keyed by `sample`, so the

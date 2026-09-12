@@ -230,6 +230,8 @@ get.autospectral.param.minimal <- function() {
       af.file.name = "autospectral_autofluorescence",
       spectra.file.name = "autospectral_spectra",
       similarity.heatmap.file.name = "autospectral_similarity_matrix",
+      spillover.spread.file.name = "autospectral_spillover_spread_matrix",
+      hotspot.matrix.file.name = "hotspot_matrix",
       fix.spillover.filename = "FixMyUnmix_spillover.csv",
       fix.compensation.filename = "FixMyUnmix_compensation.csv",
       fix.spectra.filename = "FixMyUnmix_spectra.csv",
