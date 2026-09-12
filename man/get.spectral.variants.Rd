@@ -22,6 +22,11 @@ get.spectral.variants(
   af.collinear.threshold = 0.95,
   noise.floor.tail.fraction = 0.2,
   noise.spillover.floor = 0.002,
+  spread.min.events = 50L,
+  spread.hotspot.fallback = TRUE,
+  spread.hotspot.min.pairs = 20,
+  huber.k = 1.345,
+  huber.max.iter = 100L,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
@@ -60,8 +65,7 @@ messages.}
 to \code{asp$worker.process.n}.}
 
 \item{n.cells}{Integer, default \code{10000}. Maximum positive events per
-fluorophore used for SOM clustering. Files with more events above threshold
-are randomly downsampled. Passed to \code{get.fluor.variants}.}
+fluorophore used for SOM clustering. Passed to \code{get.fluor.variants}.}
 
 \item{som.dim}{Integer, default \code{5}. Side length of the square SOM
 grid; up to \code{som.dim^2} candidate variants per fluorophore before
@@ -77,17 +81,13 @@ Passed to \code{get.fluor.variants}.}
 
 \item{sim.threshold.floor}{Numeric, default \code{0.90}. Lower bound for
 adaptive relaxation of \code{sim.threshold} when the initial cutoff
-retains fewer than 20 events. Relaxation is logged via \code{warning()}
-and the threshold actually used is returned as the
-\code{"cosine.threshold.used"} attribute.}
+retains fewer than 20 events.}
 
 \item{af.collinear.threshold}{Numeric, default \code{0.95}. Minimum
-cosine similarity between \code{fluor}'s reference spectrum and any of
-its paired unstained file's AF principal directions (\code{af.pcs}) at
-or above which the AF-component projection step is skipped, since a
-joint OLS fit against near-collinear AF and fluorophore directions can
-push real fluorophore signal into the AF term. Recorded as the
-\code{"af.collinear"} attribute.}
+cosine similarity between a fluorophore's reference spectrum and any of
+its paired unstained file's AF principal directions at or above which
+the AF-component projection step (and the low-rank fit feeding the
+Residual Model) is skipped.}
 
 \item{noise.floor.tail.fraction}{Numeric in (0, 1), default \code{0.20}.
 Fraction of each detector's raw values (lowest end) used to estimate the
@@ -98,13 +98,38 @@ detector is excluded from a control's contribution to the pooled
 noise-model regression when that control's own reference spectrum
 falls below this fraction of its own peak there, in addition to the
 upper exclusion already applied for detectors it dominates (see
-\code{get.fluor.variants(noise.mask.threshold)}). Below this floor a
-control's fitted contribution at that detector has negligible dynamic
-range and is mostly estimation noise -- pooling it in adds no signal
-and distorts the mean-variance relationship other controls establish
-there. What remains between the two thresholds is the useful
-spillover band: real loading, real dynamic range, not this control's
-own emission peak.}
+\code{get.fluor.variants(noise.mask.threshold)}).}
+
+\item{spread.min.events}{Integer, default \code{50}. Minimum number of
+events behind a source fluorophore's Residual Model regression
+(\code{"spillover.spread.n"}) before its Spillover Spreading Matrix row
+is trusted. A 2-parameter regression needs more support than the old
+MAD point estimate did; rows below this are left blank unless filled by
+the hotspot-matrix fallback.}
+
+\item{spread.hotspot.fallback}{Logical, default \code{TRUE}. When a
+source fluorophore's Spillover Spreading Matrix row fails the
+\code{spread.min.events} check (a weak or under-titrated control),
+fill that row from \code{calculate.hotspot.matrix(spectra)} instead of
+leaving it blank. The hotspot matrix is a purely geometric measure of
+pairwise spread susceptibility from the reference spectra alone;
+filling uses a single calibration constant (the median ratio of
+trusted \code{spillover.spread} entries to their hotspot-matrix
+counterparts), so it requires at least \code{spread.hotspot.min.pairs}
+trusted entries to calibrate against. Filled rows are tagged
+\code{"hotspot"} in the returned matrix's \code{"source"} attribute.}
+
+\item{spread.hotspot.min.pairs}{Integer, default \code{20}. Minimum
+number of trusted (source, target) entries required to calibrate the
+hotspot-matrix fallback. Below this, weak controls are left blank as
+before and a message explains why.}
+
+\item{huber.k}{Numeric, default \code{1.345}. Huber tuning constant
+passed to \code{get.fluor.variants()}'s spillover-spread
+regression.}
+
+\item{huber.max.iter}{Integer, default \code{100L}. Maximum IRLS
+iterations passed to the same regression.}
 
 \item{variant.fill.color}{Color for the shaded ribbon in variant plots.
 Default \code{"red"}.}
@@ -118,37 +143,24 @@ Default \code{"red"}.}
 \item{median.linewidth}{Width of the reference-spectrum line. Default
 \code{1}.}
 
-\item{use.unmixed}{Logical, default \code{TRUE}. Whether AF extraction
-(\code{get.af.spectra()}) and fluorophore variant assessment
-(\code{get.fluor.variants()}) may use full-spectra OLS unmixing as part
-of their SOM clustering input, positivity selection, and Spillover
+\item{use.unmixed}{Logical, default \code{TRUE}. Whether AF extraction and
+fluorophore variant assessment may use full-spectra OLS unmixing as
+part of their SOM clustering input, positivity selection, and Spillover
 Spreading Matrix construction. Set to \code{FALSE} when \code{spectra}
 contains several similar or collinear fluorophores (e.g. a bead-cell
-comparison panel), where a full-spectra unmix is itself unstable or
-unsolvable and would corrupt rather than inform those steps. When
-\code{FALSE}, clustering falls back to raw detector space only, the
-unstained-sample positivity thresholds used internally by
-\code{get.fluor.variants()} are not computed, and the returned
-\code{spillover.spread} is always \code{NULL}.}
+comparison panel). When \code{FALSE}, the returned \code{spillover.spread}
+is always \code{NULL}.}
 
 \item{unstained.sample}{Optional file path to a cell-based unstained FCS
 file, used as the autofluorescence reference when the control file has
-no \code{"AF"} row. Required in that case; ignored (with a message) if
-the control file does have an \code{"AF"} row, since the in-situ
-unstained paired with the single-stained controls is used instead.}
+no \code{"AF"} row.}
 
 \item{stained.sample}{Optional file path to a representative stained FCS
-file. When supplied, it is read and unmixed to obtain per-fluorophore
-median positive signal (MFI), which weights the optimization necessity
-scores by fluorophore brightness. Pass \code{NULL} (default) to use purely
-geometric scores.}
+file, weighting the optimization necessity scores by fluorophore
+brightness. Pass \code{NULL} (default) to use purely geometric scores.}
 
 \item{optimize.necessity.threshold}{Numeric in \verb{[0, 1]}, default \code{0.01}.
-Passed to \code{calculate.optimize.necessity()}. Fluorophores whose normalised
-leakage score falls below this value are flagged as not requiring per-cell
-spectral optimisation. The result is stored in
-\verb{$optimize.recommended} in the returned list and used automatically by
-\code{unmix.autospectral.rcpp()} to skip unnecessary optimisation passes.}
+Passed to \code{calculate.optimize.necessity()}.}
 
 \item{...}{Ignored. Catches and warns on previously used deprecated
 arguments: \code{af.spectra}, \code{refine}, \code{problem.quantile},
@@ -160,29 +172,34 @@ A named list with elements:
 \item{\code{thresholds}}{Named numeric vector of positivity thresholds in
 the unmixed space, one per fluorophore.}
 \item{\code{neg.thresholds}}{Named numeric vector, the 0.5th percentile of
-each fluorophore's unstained unmixed distribution -- the flat component
-of the negative positivity boundary, measured directly from the
-unstained population's own negative tail rather than mirrored from
-\code{thresholds} about zero. \code{NA} for every fluorophore when
-\code{use.unmixed = FALSE}.}
+each fluorophore's unstained unmixed distribution.}
 \item{\code{variants}}{Named list of variant-spectra matrices, one per
-fluorophore. Each matrix has variants in rows and detectors in columns.}
+fluorophore.}
 \item{\code{delta.list}}{Named list of delta matrices (variant minus
 reference spectrum), one per fluorophore.}
-\item{\code{delta.norms}}{Named list of Euclidean norms of the deltas,
-one numeric vector per fluorophore.}
+\item{\code{delta.norms}}{Named list of Euclidean norms of the deltas.}
 \item{\code{noise.floor}}{Named numeric vector, per-detector electronic
-noise floor in signal units (SD), pooled by minimum across controls.
-Matches the units of \code{noise.floor} elsewhere in the package
-(\code{unmix.fcs()}, the C++ pipeline). Square it before passing to
-\code{estimate.noise.model(read.var.floor = ...)}, which expects a
-variance.}
+noise floor in signal units (SD), pooled by minimum across controls.}
 \item{\code{spillover.spread}}{Matrix (source fluorophore x target
-channel), the Spillover Spreading Matrix: increase in unmixed
-variance a source fluorophore's positive population contributes to
-each other channel, per unit of its own on-channel signal. Diagonal
-entries are \code{NA}. \code{NULL} if no control supplied enough positive
-events. Saved as a heatmap when \code{figures = TRUE}.}
+channel), the Residual Model Spillover Spreading Matrix: the
+Huber-robust slope of each target's squared residual-projection
+against the source's own recovered abundance -- added unmixed
+variance per unit of the source's on-channel abundance. Diagonal
+entries are \code{NA}. Rows below \code{spread.min.events} are left \code{NA} across
+the row unless filled by the hotspot-matrix fallback. Carries
+\code{"n.events"} and \code{"source"} attributes (named integer/character
+vectors, one per source fluorophore): event count behind the
+regression, and whether the row came from the regression
+(\code{"residual"}) or the hotspot-matrix fallback (\code{"hotspot"}). \code{NULL}
+if no control supplied enough positive events. Saved as a heatmap
+when \code{figures = TRUE}.}
+\item{\code{spillover.spread.intercept}}{Matrix, same shape as
+\code{spillover.spread}: each source's regression intercept per
+target channel -- that source's own estimate of the target's
+baseline unmixed variance at zero abundance. Not filled by the
+hotspot fallback (the hotspot matrix has no calibrated intercept
+term); \code{NA} wherever \code{spillover.spread} came from that
+fallback or was left blank.}
 }
 The list is also saved as an .rds file in \code{output.dir}.
 }
@@ -208,4 +225,20 @@ one directly via \code{unstained.sample} instead.
 
 The output is saved as an .rds file and per-fluorophore variant plots are
 produced if requested.
+
+Uses the Spillover Spreading Matrix  built from \code{get.fluor.variants()}'s
+Residual Model regression rather than an empirical MAD ratio
+against a separately-unmixed unstained baseline. There is no
+\code{spread.denom.min.mad}/\code{"snr"} concept here: each control's own
+regression already separates its baseline (intercept) from its
+abundance-scaled spread (slope), estimated from its own dim-to-bright
+event range rather than compared against a different sample's estimate.
+A row is instead trusted once its regression used at least
+\code{spread.min.events} events; below that, the hotspot-matrix fallback
+(unchanged from \code{get.spectral.variants()}) fills the row when enough
+trusted rows exist to calibrate against.
+}
+\references{
+Cai X et al. (2026). Residual Model for unmixed spread prediction in
+spectral flow cytometry. \emph{bioRxiv} 2026.01.27.701929.
 }
