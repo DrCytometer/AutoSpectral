@@ -39,7 +39,7 @@
 ## Biexponential transform matching the package's "legacy" AF/gate plots
 ## (gate.af.sample.plot(), remove.af()), built from asp$default.transformation.param.
 .biexp.transform.legacy <- function( asp ) {
-  flowWorkspace::flowjo_biexp(
+  biexp.transform(
     channelRange = asp$default.transformation.param$length,
     maxValue     = asp$default.transformation.param$max.range,
     pos          = asp$default.transformation.param$pos,
@@ -597,7 +597,6 @@
 #' @importFrom ggplot2 annotate coord_cartesian scale_color_gradientn
 #' @importFrom scattermore geom_scattermore
 #' @importFrom cowplot plot_grid ggdraw draw_image draw_label get_legend
-#' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom ragg agg_jpeg agg_tiff agg_png
 #' @importFrom stats density
 #'

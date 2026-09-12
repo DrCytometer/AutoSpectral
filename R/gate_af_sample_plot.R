@@ -58,7 +58,7 @@ gate.af.sample.plot <- function(
   # 2. Biexp transform
   # ---------------------------------------------------------------------------
 
-  biexp.transform <- flowWorkspace::flowjo_biexp(
+  biexp.trans <- biexp.transform(
     channelRange = asp$default.transformation.param$length,
     maxValue     = asp$default.transformation.param$max.range,
     pos          = asp$default.transformation.param$pos,
@@ -72,7 +72,7 @@ gate.af.sample.plot <- function(
 
   # transform in a single vectorised call
   trans.mat <- matrix(
-    biexp.transform( as.vector( plot.data ) ),
+    biexp.trans( as.vector( plot.data ) ),
     nrow = nrow( plot.data ),
     ncol = 2L
   )
@@ -87,10 +87,10 @@ gate.af.sample.plot <- function(
     if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
   } )
 
-  x.lim.trans <- biexp.transform( limits )
-  y.lim.trans <- biexp.transform( limits )
-  x.brk.trans <- biexp.transform( breaks )
-  y.brk.trans <- biexp.transform( breaks )
+  x.lim.trans <- biexp.trans( limits )
+  y.lim.trans <- biexp.trans( limits )
+  x.brk.trans <- biexp.trans( breaks )
+  y.brk.trans <- biexp.trans( breaks )
 
   # ---------------------------------------------------------------------------
   # 4. Rasterised scatter layer
@@ -238,8 +238,8 @@ gate.af.sample.plot <- function(
 
   if ( !is.null( af.boundary.upper ) ) {
     af.boundary.upper.ggp <- data.frame(
-      x = biexp.transform( c( af.boundary.upper$x, af.boundary.upper$x[ 1 ] ) ),
-      y = biexp.transform( c( af.boundary.upper$y, af.boundary.upper$y[ 1 ] ) )
+      x = biexp.trans( c( af.boundary.upper$x, af.boundary.upper$x[ 1 ] ) ),
+      y = biexp.trans( c( af.boundary.upper$y, af.boundary.upper$y[ 1 ] ) )
     )
 
     gate.plot <- gate.plot +

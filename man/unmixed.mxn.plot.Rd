@@ -76,7 +76,7 @@ units). The actual minimum used is \code{min(auto, x.min)}. Default \code{-1000}
 units). Default \code{-1000}.}
 
 \item{x.width.basis}{Numeric. Width basis for the biexponential x-axis
-transform (passed to \code{\link[flowWorkspace:flowjo_biexp]{flowWorkspace::flowjo_biexp()}}). Default \code{-1000}.}
+transform (passed to \code{biexp.transform()}). Default \code{-1000}.}
 
 \item{y.width.basis}{Numeric. Width basis for the biexponential y-axis
 transform. Default \code{-1000}.}

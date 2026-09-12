@@ -91,7 +91,6 @@
 #' the active graphics device.
 #'
 #' @importFrom ggplot2 geom_hline labs ggsave
-#' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom sp point.in.polygon
 #' @importFrom cowplot plot_grid
 #' @importFrom ragg agg_jpeg
@@ -299,7 +298,7 @@ compare.unmix <- function(
     y.pos.log <- log10( asp$expr.data.max ) - 1
   }
 
-  biexp.transform.y <- flowWorkspace::flowjo_biexp(
+  biexp.trans.y <- biexp.transform(
     channelRange = asp$default.transformation.param$length,
     maxValue     = asp$expr.data.max,
     pos          = y.pos.log,
@@ -316,15 +315,15 @@ compare.unmix <- function(
 
   test.biplot <- test.biplot +
     ggplot2::geom_hline(
-      yintercept = biexp.transform.y( unstained.median.test ),
+      yintercept = biexp.trans.y( unstained.median.test ),
       color      = "black"
     ) +
     ggplot2::geom_hline(
-      yintercept = biexp.transform.y( unstained.median.test + unstained.rsd.test ),
+      yintercept = biexp.trans.y( unstained.median.test + unstained.rsd.test ),
       color      = "red"
     ) +
     ggplot2::geom_hline(
-      yintercept = biexp.transform.y( unstained.median.test - unstained.rsd.test ),
+      yintercept = biexp.trans.y( unstained.median.test - unstained.rsd.test ),
       color      = "red"
     ) +
     ggplot2::labs(
@@ -339,15 +338,15 @@ compare.unmix <- function(
 
   ref.biplot <- ref.biplot +
     ggplot2::geom_hline(
-      yintercept = biexp.transform.y( unstained.median.ref ),
+      yintercept = biexp.trans.y( unstained.median.ref ),
       color      = "black"
     ) +
     ggplot2::geom_hline(
-      yintercept = biexp.transform.y( unstained.median.ref + unstained.rsd.ref ),
+      yintercept = biexp.trans.y( unstained.median.ref + unstained.rsd.ref ),
       color      = "red"
     ) +
     ggplot2::geom_hline(
-      yintercept = biexp.transform.y( unstained.median.ref - unstained.rsd.ref ),
+      yintercept = biexp.trans.y( unstained.median.ref - unstained.rsd.ref ),
       color      = "red"
     ) +
     ggplot2::labs(

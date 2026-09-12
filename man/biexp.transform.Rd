@@ -10,7 +10,8 @@ biexp.transform(
   pos = 4.5,
   neg = 0,
   widthBasis = -10,
-  inverse = FALSE
+  inverse = FALSE,
+  newton.iter = 5L
 )
 }
 \arguments{
@@ -23,38 +24,61 @@ Default \code{262144}.}
 \item{pos}{numeric. Number of positive decades spanned by the transform
 (\code{M} in the logicle parameterisation). Default \code{4.5}.}
 
-\item{neg}{numeric. Additional negative decades brought on scale
-(\code{A} in the logicle parameterisation). Default \code{0}.}
+\item{neg}{numeric. Must be \code{0}; see Details.}
 
 \item{widthBasis}{numeric, negative. FlowJo-style width parameter; see
 Details for its relationship to the logicle \code{W}. Default \code{-10}.}
 
 \item{inverse}{logical. If \code{TRUE}, returns the inverse transform
 (display scale back to raw values) instead of the forward transform.}
+
+\item{newton.iter}{integer. Fixed number of vectorised Newton iterations
+used to solve the forward transform. Default \code{5} -- the smallest
+value that reaches double-precision round-trip error across the ranges
+swept in testing. Has no effect on the inverse direction, which is
+closed-form. If a different \code{pos}/\code{widthBasis} combination
+needs more, the built-in residual check will warn rather than silently
+under-converge.}
 }
 \value{
 A function mapping a numeric vector on the input scale to the
 transformed display scale (or the reverse, if \code{inverse = TRUE}).
 }
 \description{
-A drop-in replacement for \code{flowWorkspace::flowjo_biexp()} built
-directly on flowCore's compiled logicle transform (Moore & Parks,
-Cytometry A 2012), rather than flowWorkspace's spline-interpolated
-re-implementation of FlowJo's own (undocumented) display algorithm.
+A self-contained implementation of the logicle transform (Parks,
+Roederer & Moore, Cytometry A 2006), used as a replacement for
+\code{flowWorkspace::flowjo_biexp()} with the same
+\code{channelRange}/\code{maxValue}/\code{pos}/\code{neg}/\code{widthBasis}
+argument names, but with no hard-coded \code{-1000} floor on
+\code{widthBasis}. Uses only base R (\code{stats::uniroot()} for a
+one-time scalar solve).
 }
 \details{
 FlowJo's \code{widthBasis} is a legacy re-parameterisation of the
 logicle transform's width parameter \code{W} (in asymptotic decades):
 \deqn{W = \log_{10}(-\mathrm{widthBasis}) / 2}
-The logicle transform requires \eqn{0 \le W \le M/2} and
-\eqn{-W \le A \le M - 2W}, where \code{M} is \code{pos} and \code{A} is
-\code{neg}. FlowJo's UI, and \code{flowWorkspace::flowjo_biexp()}, impose
+The logicle transform requires \eqn{0 < W \le M/2}, where \code{M} is
+\code{pos}. FlowJo's UI, and \code{flowWorkspace::flowjo_biexp()}, impose
 a hard floor of \code{widthBasis = -1000} (\code{W = 1.5}) regardless of
-\code{pos}. This  function checks the real constraint against whatever
-\code{pos}/\code{neg} you supply and errors with the exact numbers if that's
-violated, rather than silently clipping or producing a degenerate curve.
+\code{pos} -- a historical GUI choice, not a mathematical one. This
+function checks the real constraint against whatever \code{pos} you
+supply and errors with the exact numbers if it's violated.
+
+Only \code{neg = 0} is supported (the value used by every cytometer
+profile in this package). Extending to \code{neg > 0} requires the
+shifted-origin form of the transform (GatingML 2.0's \code{A} parameter)
+and is deliberately left unimplemented until there's a concrete need for
+it and data to verify it against.
+
+The forward direction (raw intensity -> display decade) has no closed
+form and is solved by Newton-Raphson, applied to the whole input vector
+at once for a fixed number of iterations (not a per-point loop), starting
+from \code{asinh(x / (2 * a.scale))} -- correct in the large-\code{|x|}
+limit and reasonable near zero. The inverse direction (display decade ->
+raw intensity) is closed-form.
 }
-\seealso{
-\code{\link[flowCore]{logicleTransform}},
-\code{\link[flowCore]{inverseLogicleTransform}}
+\references{
+Parks DR, Roederer M, Moore WA (2006). A new "Logicle" display method
+avoids deceptive effects of logarithmic scaling for low signals and
+compensated data. Cytometry A, 69(6):541-551.
 }

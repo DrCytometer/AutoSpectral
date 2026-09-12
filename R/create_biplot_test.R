@@ -7,7 +7,6 @@
 #' @importFrom ggplot2 margin element_line element_text element_rect element_blank
 #' @importFrom ggplot2 scale_fill_viridis_c scale_fill_gradientn stat_density_2d
 #' @importFrom ggplot2 geom_line
-#' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom scattermore geom_scattermore
 #' @importFrom ragg agg_jpeg
 #'
@@ -157,7 +156,7 @@ create.biplot.test <- function(
   y.limits <- c( y.min, y.max )
 
   # set transforms (one for x, one for y)
-  biexp.transform.x <- biexp.transform(
+  biexp.trans.x <- biexp.fast(
     channelRange = asp$default.transformation.param$length,
     maxValue = x.max,
     pos = x.pos.log,
@@ -165,7 +164,7 @@ create.biplot.test <- function(
     widthBasis = x.width.basis,
     inverse = FALSE )
 
-  biexp.transform.y <- biexp.transform(
+  biexp.trans.y <- biexp.fast(
     channelRange = asp$default.transformation.param$length,
     maxValue = y.max,
     pos = y.pos.log,
@@ -232,7 +231,7 @@ create.biplot.test <- function(
       y.pos.raw <- pmin( pmax( y.pos.raw, y.min ), y.max )
 
       spread.curve.data$y.pos <- data.frame(
-        x = biexp.transform.x( x.seq ), y = biexp.transform.y( y.pos.raw ) )
+        x = biexp.trans.x( x.seq ), y = biexp.trans.y( y.pos.raw ) )
     }
 
     if ( length( flat.y.neg ) == 1 && is.finite( flat.y.neg ) ) {
@@ -241,7 +240,7 @@ create.biplot.test <- function(
       y.neg.raw <- pmin( pmax( y.neg.raw, y.min ), y.max )
 
       spread.curve.data$y.neg <- data.frame(
-        x = biexp.transform.x( x.seq ), y = biexp.transform.y( y.neg.raw ) )
+        x = biexp.trans.x( x.seq ), y = biexp.trans.y( y.neg.raw ) )
     }
 
     if ( length( flat.x ) == 1 && is.finite( flat.x ) ) {
@@ -250,7 +249,7 @@ create.biplot.test <- function(
       x.pos.raw <- pmin( pmax( x.pos.raw, x.min ), x.max )
 
       spread.curve.data$x.pos <- data.frame(
-        x = biexp.transform.x( x.pos.raw ), y = biexp.transform.y( y.seq ) )
+        x = biexp.trans.x( x.pos.raw ), y = biexp.trans.y( y.seq ) )
     }
 
     if ( length( flat.x.neg ) == 1 && is.finite( flat.x.neg ) ) {
@@ -259,7 +258,7 @@ create.biplot.test <- function(
       x.neg.raw <- pmin( pmax( x.neg.raw, x.min ), x.max )
 
       spread.curve.data$x.neg <- data.frame(
-        x = biexp.transform.x( x.neg.raw ), y = biexp.transform.y( y.seq ) )
+        x = biexp.trans.x( x.neg.raw ), y = biexp.trans.y( y.seq ) )
     }
   }
 
@@ -269,8 +268,8 @@ create.biplot.test <- function(
     y = plot.data[ , y.dim ] )
 
   # apply transformation
-  plot.data$x.trans <- biexp.transform.x( plot.data$x )
-  plot.data$y.trans <- biexp.transform.y( plot.data$y )
+  plot.data$x.trans <- biexp.trans.x( plot.data$x )
+  plot.data$y.trans <- biexp.trans.y( plot.data$y )
 
   # set up the plot
   biplot <- ggplot( plot.data, aes( x.trans, y.trans ) ) +
@@ -287,14 +286,14 @@ create.biplot.test <- function(
     ) +
     scale_x_continuous(
       name = x.lab,
-      breaks = biexp.transform.x( x.breaks ),
-      limits = biexp.transform.x( x.limits ),
+      breaks = biexp.trans.x( x.breaks ),
+      limits = biexp.trans.x( x.limits ),
       labels = x.axis.labels
     ) +
     scale_y_continuous(
       name = y.lab,
-      breaks = biexp.transform.y( y.breaks ),
-      limits = biexp.transform.y( y.limits ),
+      breaks = biexp.trans.y( y.breaks ),
+      limits = biexp.trans.y( y.limits ),
       labels = y.axis.labels
     ) +
     theme_bw() +

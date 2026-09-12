@@ -87,7 +87,6 @@
 #' @importFrom ggplot2 stat_density_2d after_stat theme_bw theme element_line
 #' @importFrom ggplot2 element_text element_rect element_blank margin labs ggsave
 #' @importFrom scattermore geom_scattermore
-#' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom cowplot plot_grid
 #' @importFrom ragg agg_jpeg agg_tiff agg_png
 #'

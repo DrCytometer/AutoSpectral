@@ -13,7 +13,6 @@
 #' @importFrom ggplot2 theme_minimal theme element_text element_blank
 #' @importFrom ggplot2 ggsave expansion
 #' @importFrom patchwork wrap_plots
-#' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom ragg agg_jpeg
 #' @importFrom viridis viridis
 #'
@@ -162,7 +161,7 @@ spectral.ribbon.plot <- function(
   # 3. Build biexp transform and axis parameters
   # ---------------------------------------------------------------------------
 
-  biexp.transform <- flowWorkspace::flowjo_biexp(
+  biexp.trans <- biexp.transform(
     channelRange = asp$default.transformation.param$length,
     maxValue     = asp$default.transformation.param$max.range,
     pos          = asp$default.transformation.param$pos,
@@ -179,8 +178,8 @@ spectral.ribbon.plot <- function(
 
   n_x    <- length( spectral.channel )
   n_y    <- asp$ribbon.bins
-  y_min  <- biexp.transform( ribbon.limits[1] )
-  y_max  <- biexp.transform( ribbon.limits[2] )
+  y_min  <- biexp.trans( ribbon.limits[1] )
+  y_max  <- biexp.trans( ribbon.limits[2] )
   y_breaks_r <- seq( y_min, y_max, length.out = n_y + 1 )
 
   # ---------------------------------------------------------------------------
@@ -206,7 +205,7 @@ spectral.ribbon.plot <- function(
   make.raster <- function( m ) {
     # apply biexp transform to the full matrix in one call
     trans <- matrix(
-      biexp.transform( as.vector( m ) ),
+      biexp.trans( as.vector( m ) ),
       nrow = nrow( m ),
       ncol = n_x
     )
@@ -300,7 +299,7 @@ spectral.ribbon.plot <- function(
       scale_y_continuous(
         name   = "Intensity",
         limits = c( y_min, y_max ),
-        breaks = biexp.transform( ribbon.breaks ),
+        breaks = biexp.trans( ribbon.breaks ),
         labels = ribbon.labels,
         expand = expansion( 0 )
       ) +

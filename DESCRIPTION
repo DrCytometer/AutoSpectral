@@ -33,7 +33,6 @@ LazyData: true
 Imports:
     FlowSOM,
     MASS,
-    flowWorkspace,
     ggplot2,
     scattermore,
     sp,

@@ -96,7 +96,7 @@
 
 # -----------------------------------------------------------------------------
 # .make.biexp.transforms
-#   Builds a pair of flowjo_biexp transform functions for x and y axes,
+#   Builds a pair of logicle transform functions for x and y axes,
 #   replicating the excess-width-basis workaround from create.biplot().
 # -----------------------------------------------------------------------------
 .make.biexp.transforms <- function(
@@ -121,7 +121,7 @@
     y.pos.log <- log10( y.max ) - 1
   }
 
-  tx <- flowWorkspace::flowjo_biexp(
+  tx <- biexp.transform(
     channelRange = asp$default.transformation.param$length,
     maxValue     = x.max,
     pos          = x.pos.log,
@@ -130,7 +130,7 @@
     inverse      = FALSE
   )
 
-  ty <- flowWorkspace::flowjo_biexp(
+  ty <- biexp.transform(
     channelRange = asp$default.transformation.param$length,
     maxValue     = y.max,
     pos          = y.pos.log,
@@ -384,7 +384,7 @@
 #' @param y.min Numeric. Floor for the auto-scaled y-axis minimum (data
 #' units). Default `-1000`.
 #' @param x.width.basis Numeric. Width basis for the biexponential x-axis
-#' transform (passed to [flowWorkspace::flowjo_biexp()]). Default `-1000`.
+#' transform (passed to `biexp.transform()`). Default `-1000`.
 #' @param y.width.basis Numeric. Width basis for the biexponential y-axis
 #' transform. Default `-1000`.
 #' @param use.hex Logical. When `TRUE` (default), panels are rendered with
@@ -418,7 +418,6 @@
 #' @importFrom ggplot2 stat_density_2d after_stat theme_bw theme element_line
 #' @importFrom ggplot2 element_text element_rect element_blank margin labs ggsave
 #' @importFrom scattermore geom_scattermore
-#' @importFrom flowWorkspace flowjo_biexp
 #' @importFrom cowplot plot_grid
 #' @importFrom ragg agg_jpeg agg_tiff agg_png
 #'

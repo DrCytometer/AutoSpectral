@@ -7,7 +7,6 @@
 #' the specified parameters and settings.
 #'
 #' @importFrom FNN knnx.index
-#' @importFrom flowWorkspace flowjo_biexp
 #'
 #' @param samp Sample identifier.
 #' @param clean.expr List containing cleaned expression data.
@@ -115,17 +114,17 @@ remove.af <- function(
   # unmix using first two components plus crude fluorophore spectrum
   unmixed.neg <- unmix.ols( expr.data.neg[ , spectral.channel ], af.components )
 
-  biexp.transform <- flowWorkspace::flowjo_biexp(
+  biexp.trans <- biexp.transform(
     channelRange = asp$default.transformation.param$length,
     maxValue = asp$default.transformation.param$max.range,
     pos = asp$default.transformation.param$pos,
     neg = asp$default.transformation.param$neg,
     widthBasis = asp$default.transformation.param$width,
     inverse = FALSE )
-  zero.point <- biexp.transform( 0 )
+  zero.point <- biexp.trans( 0 )
 
   # transform for easier visualization and faster gating
-  unmixed.neg <- apply( unmixed.neg, 2, biexp.transform )
+  unmixed.neg <- apply( unmixed.neg, 2, biexp.trans )
   unmixed.neg <- unmixed.neg - zero.point
 
   # determine which component has the most variation (intrusive AF)
