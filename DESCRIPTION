@@ -34,7 +34,6 @@ Imports:
     MASS,
     ggplot2,
     scattermore,
-    sp,
     tripack,
     xml2,
     lifecycle,
