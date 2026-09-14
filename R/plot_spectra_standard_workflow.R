@@ -115,22 +115,6 @@
   )
 }
 
-## Point-in-polygon test (standard PNPOLY ray-casting), vectorised over
-## query points against a single fixed polygon. Dependency-free.
-.point.in.polygon <- function( x, y, poly.x, poly.y ) {
-  n <- length( poly.x )
-  inside <- rep( FALSE, length( x ) )
-  j <- n
-  for ( i in seq_len( n ) ) {
-    cond <- ( ( poly.y[ i ] > y ) != ( poly.y[ j ] > y ) ) &
-      ( x < ( poly.x[ j ] - poly.x[ i ] ) * ( y - poly.y[ i ] ) /
-          ( poly.y[ j ] - poly.y[ i ] ) + poly.x[ i ] )
-    inside[ cond ] <- xor( inside[ cond ], TRUE )
-    j <- i
-  }
-  inside
-}
-
 ## Replicates get.spectra.automated()'s AF-reference resolution (external
 ## unstained file if available, else the lower-25%-by-peak-channel internal
 ## negative) and final event-selection step (top n.candidates events by

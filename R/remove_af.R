@@ -237,7 +237,7 @@ remove.af <- function(
   # find events in this bound in the stained sample
   gate.data.pos <- expr.data.pos[ , c( af.peak.channel, fluor.peak ) ]
 
-  gate.population.pip <- sp::point.in.polygon(
+  gate.population.pip <- .point.in.polygon(
     gate.data.pos[ , 1 ], gate.data.pos[ , 2 ],
     af.boundaries$upper$x, af.boundaries$upper$y )
 
@@ -246,7 +246,7 @@ remove.af <- function(
   # define negative clean-up for plotting and threshold
   gate.data.neg <- expr.data.neg[ , c( af.peak.channel, fluor.peak ) ]
 
-  gate.population.pip <- sp::point.in.polygon(
+  gate.population.pip <- .point.in.polygon(
     gate.data.neg[ , 1 ], gate.data.neg[ , 2 ],
     af.boundaries$upper$x, af.boundaries$upper$y )
 

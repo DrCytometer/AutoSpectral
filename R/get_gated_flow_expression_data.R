@@ -6,8 +6,6 @@
 #' Retrieves gated flow cytometry expression data for specified
 #' samples, removing out-of-range events and applying gating boundaries.
 #'
-#' @importFrom sp point.in.polygon
-#'
 #' @param samp The sample identifier.
 #' @param file.name A vector of file names for the samples.
 #' @param control.dir The directory containing the control files.
@@ -66,7 +64,7 @@ get.gated.flow.expression.data <- function(
     gate.population.boundary <- gate.list[[ gate.idx ]]
     gate.data <- expr.data[ , scatter.param ]
 
-    gate.population.pip <- sp::point.in.polygon(
+    gate.population.pip <- .point.in.polygon(
       gate.data[ , 1 ], gate.data[ , 2 ],
       gate.population.boundary$x, gate.population.boundary$y
     )
