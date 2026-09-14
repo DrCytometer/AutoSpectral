@@ -91,7 +91,6 @@
 #' the active graphics device.
 #'
 #' @importFrom ggplot2 geom_hline labs ggsave
-#' @importFrom sp point.in.polygon
 #' @importFrom cowplot plot_grid
 #' @importFrom ragg agg_jpeg
 #'
@@ -208,7 +207,7 @@ compare.unmix <- function(
 
   # gate single-stained events
   in.gate.ss <- which(
-    sp::point.in.polygon(
+    .point.in.polygon(
       gate.data[ , 1 ], gate.data[ , 2 ],
       gate.bound$x, gate.bound$y
     ) != 0
@@ -217,7 +216,7 @@ compare.unmix <- function(
 
   # gate unstained events using the same boundary
   in.gate.un <- which(
-    sp::point.in.polygon(
+    .point.in.polygon(
       un.expr.data[ , asp$default.scatter.parameter[ 1 ] ],
       un.expr.data[ , asp$default.scatter.parameter[ 2 ] ],
       gate.bound$x, gate.bound$y
