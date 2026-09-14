@@ -5,20 +5,28 @@
 \title{Correct Unmixing Signatures}
 \usage{
 correct.unmixing.signatures(
-  raw.data,
   spectra,
-  unmixed.thresholds,
+  unstained.sample = NULL,
+  fully.stained.sample = NULL,
+  flow.control = NULL,
   asp = NULL,
+  variants = NULL,
   af.name = "AF",
+  raw.data = NULL,
+  unmixed.thresholds = NULL,
   scatter = NULL,
-  gate.main = TRUE,
+  gate.main = FALSE,
   gate.level = 0.1,
   spillover.spread = NULL,
   spread.kappa = 2,
   bg.mode = c("global.mean", "scatter.knn", "none"),
   unstained = NULL,
   unstained.scatter = NULL,
-  k.neighbors = 20L,
+  k.neighbors = 3L,
+  unstained.threshold = 0.99,
+  unstained.margin = 1.3,
+  threshold.prior.weight = 0.3,
+  threshold.max.ratio = 3,
   n.levels = 10L,
   n.iter = 6L,
   min.events = 200L,
@@ -36,38 +44,72 @@ correct.unmixing.signatures(
   footprint.min.channels = 3L,
   background.n = 5000L,
   true.spectra = NULL,
+  min.deg.start = 0.1,
   verbose = TRUE
 )
 }
 \arguments{
-\item{raw.data}{Numeric matrix (events x detectors), raw detector-space
-data. Pooled or concatenated single-stained controls, or a fully
-stained sample with well-separated populations. Columns must match the
-columns of \code{spectra}.}
-
 \item{spectra}{Numeric matrix (fluorophores x detectors), the starting
 reference spectra to be corrected, L-infinity normalised.}
 
-\item{unmixed.thresholds}{Named numeric vector covering every fluorophore
-in \code{spectra} (the autofluorescence row may be omitted), giving the
-positivity threshold in unmixed space, typically the 99.5th percentile
-of an unstained control unmixed against \code{spectra}.}
+\item{unstained.sample}{File path and name for a raw unstained sample,
+used to derive \code{unmixed.thresholds} (any fluorophore not already
+covered by \code{variants$thresholds}) and, under \code{bg.mode = "scatter.knn"},
+as the scatter-matched background reference. Ignored when \code{raw.data}
+is supplied directly. Required, together with \code{fully.stained.sample}
+and \code{flow.control}, whenever \code{raw.data} is not.}
+
+\item{fully.stained.sample}{File path and name for a raw fully stained
+sample. Ignored when \code{raw.data} is supplied directly.}
+
+\item{flow.control}{The flow.control list, used to select the scatter
+and spectral channel columns when reading \code{unstained.sample} and
+\code{fully.stained.sample}. Ignored when \code{raw.data} is supplied directly.}
 
 \item{asp}{Optional AutoSpectral parameter list from
 \code{get.autospectral.param()}. Used only to seed the random number
 generator (\code{asp$bird.seed}) for reproducible subsampling. Default
 \code{NULL}.}
 
+\item{variants}{Optional variant list returned by
+\code{get.spectral.variants()}. Used as a shrinkage prior on top of the
+threshold this function derives from its own unmix (see
+\code{unmixed.thresholds}), not as the threshold itself:
+\code{get.spectral.variants()} measures \code{variants$thresholds} from a
+per-cell-optimised unmix at the 99.5th percentile, both of which make
+it systematically tighter than the bare-OLS, 99th-percentile estimate
+this function's own dominance assignment is judged against, especially
+for AF-collinear fluorophores. \code{variants$spillover.spread} supplies
+\code{spillover.spread} when that is not itself supplied. Default \code{NULL}.}
+
 \item{af.name}{Character, the name of the autofluorescence row in
 \code{spectra}, or \code{NULL} if there is none. The AF row is never treated as a
 panel fluorophore and is never corrected. Default \code{"AF"}.}
+
+\item{raw.data}{Optional numeric matrix (events x detectors), raw
+detector-space data. Pooled or concatenated single-stained controls, or
+a fully stained sample with well-separated populations. Columns must
+match the columns of \code{spectra}. Supply this directly to skip reading
+\code{fully.stained.sample} from disk -- the internal calling convention,
+used when the raw matrix is already in memory. Default \code{NULL}, which
+requires \code{unstained.sample}, \code{fully.stained.sample} and \code{flow.control}
+instead.}
+
+\item{unmixed.thresholds}{Optional named numeric vector covering every
+fluorophore in \code{spectra} (the autofluorescence row may be omitted),
+giving the positivity threshold in unmixed space. Default \code{NULL}, which
+computes the \code{unstained.margin}-scaled \code{unstained.threshold} percentile
+of \code{unstained}'s own bare unmix against \code{spectra} -- the same
+pre-background-subtraction convention \code{dominant} below is judged
+against -- then shrinks it toward \code{variants$thresholds} (see
+\code{threshold.prior.weight}, \code{threshold.max.ratio}).}
 
 \item{scatter}{Optional numeric matrix (events x scatter parameters),
 row-matched to \code{raw.data}. Required for \code{gate.main} and for
 \code{bg.mode = "scatter.knn"}. Default \code{NULL}.}
 
 \item{gate.main}{Logical, whether to gate events to the main scatter
-population before fitting. Requires \code{scatter}. Default \code{TRUE}.}
+population before fitting. Requires \code{scatter}. Default \code{FALSE}.}
 
 \item{gate.level}{Numeric in (0, 1). Events are kept when their 2D
 scatter density exceeds this fraction of the modal density. Default
@@ -77,8 +119,9 @@ scatter density exceeds this fraction of the modal density. Default
 \code{get.spectral.variants()$spillover.spread}. When supplied, co-activity
 is judged against per-event thresholds widened by the spillover spread
 each bright fluorophore contributes, so spillover from the dominant dye
-is not mistaken for a co-active fluorophore. Default \code{NULL} (flat
-thresholds).}
+is not mistaken for a co-active fluorophore. Default \code{NULL}, which
+falls back to \code{variants$spillover.spread} (flat thresholds if that is
+also unavailable).}
 
 \item{spread.kappa}{Numeric, how many spillover-spread standard
 deviations above the flat threshold still count as negative. Default
@@ -96,7 +139,31 @@ parameters), row-matched to \code{unstained}, required for
 control is gated with the same density rule.}
 
 \item{k.neighbors}{Integer, neighbours for scatter-matched background
-subtraction. Default \code{20}.}
+subtraction. Default \code{3}.}
+
+\item{unstained.threshold}{Numeric in (0, 1), the percentile of
+\code{unstained}'s own unmix defining positivity, used only when
+\code{unmixed.thresholds} is not supplied directly. Default \code{0.99} -- less
+extreme than \code{get.spectral.variants()}'s \code{0.995}, and therefore less
+sensitive to the handful of poorly AF-corrected events that dominate
+the very top of the tail for a collinear fluorophore.}
+
+\item{unstained.margin}{Numeric, multiplier applied to that threshold.
+Default \code{1.3}.}
+
+\item{threshold.prior.weight}{Numeric in \verb{[0, 1]}, the log-space weight
+given to \code{variants$thresholds} when shrinking the internally-computed
+\code{unmixed.thresholds} toward it. \code{0} uses the internal estimate
+unchanged; \code{1} uses \code{variants$thresholds} outright. Ignored for any
+fluorophore \code{variants$thresholds} does not cover, or when \code{variants}
+is \code{NULL}. Default \code{0.3}.}
+
+\item{threshold.max.ratio}{Numeric \verb{> 1}, the magnitude ratio (either
+direction) between the internal estimate and \code{variants$thresholds}
+beyond which the internal side is treated as unreliable -- most likely
+under-corrected autofluorescence -- rather than partially trusted, and
+the threshold reverts to \code{variants$thresholds} outright instead of
+blending. Default \code{3}.}
 
 \item{n.levels}{Integer, abundance bins per dominance population.
 Default \code{10}.}
@@ -176,6 +243,11 @@ independently-known ground truth with row names matching \code{spectra}.
 Purely diagnostic: when supplied, the returned \code{recovery} table reports
 the angular error before and after correction per fluorophore.}
 
+\item{min.deg.start}{Numeric, degrees. Below this starting angular error,
+\code{recovered} is reported as \code{0} instead of \code{(deg.start - deg.after) / deg.start}, since a fluorophore that started (near) exactly correct
+makes that ratio blow up or divide by zero for a change of a fraction
+of a degree. Default \code{0.1}.}
+
 \item{verbose}{Logical, controls messaging. Default \code{TRUE}.}
 }
 \value{
@@ -200,8 +272,12 @@ correction (\code{spectra} rows minus \code{af.name}).}
 \item{\code{gate.keep}}{Logical vector over the input rows of \code{raw.data},
 \code{TRUE} for events inside the main-population gate, or \code{NULL} if no
 gating was applied.}
-\item{\code{recovery}}{Data frame of angular errors against \code{true.spectra},
-or \code{NULL} if \code{true.spectra} was not supplied.}
+\item{\code{recovery}}{Data frame of angular errors against \code{true.spectra}.
+\code{recovered} is the fraction of the starting angular error removed,
+\code{(deg.start - deg.after) / deg.start} -- \code{1} is fully recovered, \code{0}
+is no change, negative is worse; see \code{min.deg.start} for the
+near-zero-\code{deg.start} case. \code{NULL} if \code{true.spectra} was not
+supplied.}
 }
 }
 \description{
@@ -210,6 +286,13 @@ from stained sample data, for the situation where the available reference
 spectra are subtly wrong for the sample being analysed - typically because
 bead-derived spectra are applied to cells, or spectra from another day,
 lot, or instrument state are in use.
+
+Takes either \code{unstained.sample} and \code{fully.stained.sample} file paths,
+reading and deriving \code{unmixed.thresholds}/\code{spillover.spread} itself (the
+direct-use convention shared with \code{fix.my.unmix()} and
+\code{correct.spectra.glasso()}), or \code{raw.data} supplied directly as an
+already-read matrix, the convention for a caller that already has it in
+memory. Supply one or the other, not both.
 
 Each event is assigned to the fluorophore it is most strongly positive
 for, as a fraction of that fluorophore's own dynamic range above its

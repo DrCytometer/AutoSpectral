@@ -9,6 +9,13 @@
 #' bead-derived spectra are applied to cells, or spectra from another day,
 #' lot, or instrument state are in use.
 #'
+#' Takes either `unstained.sample` and `fully.stained.sample` file paths,
+#' reading and deriving `unmixed.thresholds`/`spillover.spread` itself (the
+#' direct-use convention shared with `fix.my.unmix()` and
+#' `correct.spectra.glasso()`), or `raw.data` supplied directly as an
+#' already-read matrix, the convention for a caller that already has it in
+#' memory. Supply one or the other, not both.
+#'
 #' Each event is assigned to the fluorophore it is most strongly positive
 #' for, as a fraction of that fluorophore's own dynamic range above its
 #' positivity threshold. Within each such dominance population, the data are
@@ -53,28 +60,57 @@
 #' and most aggregates, whose distinct autofluorescence otherwise
 #' contaminates the dominance populations and the background estimate.
 #'
-#' @param raw.data Numeric matrix (events x detectors), raw detector-space
-#'   data. Pooled or concatenated single-stained controls, or a fully
-#'   stained sample with well-separated populations. Columns must match the
-#'   columns of `spectra`.
 #' @param spectra Numeric matrix (fluorophores x detectors), the starting
 #'   reference spectra to be corrected, L-infinity normalised.
-#' @param unmixed.thresholds Named numeric vector covering every fluorophore
-#'   in `spectra` (the autofluorescence row may be omitted), giving the
-#'   positivity threshold in unmixed space, typically the 99.5th percentile
-#'   of an unstained control unmixed against `spectra`.
+#' @param unstained.sample File path and name for a raw unstained sample,
+#'   used to derive `unmixed.thresholds` (any fluorophore not already
+#'   covered by `variants$thresholds`) and, under `bg.mode = "scatter.knn"`,
+#'   as the scatter-matched background reference. Ignored when `raw.data`
+#'   is supplied directly. Required, together with `fully.stained.sample`
+#'   and `flow.control`, whenever `raw.data` is not.
+#' @param fully.stained.sample File path and name for a raw fully stained
+#'   sample. Ignored when `raw.data` is supplied directly.
+#' @param flow.control The flow.control list, used to select the scatter
+#'   and spectral channel columns when reading `unstained.sample` and
+#'   `fully.stained.sample`. Ignored when `raw.data` is supplied directly.
 #' @param asp Optional AutoSpectral parameter list from
 #'   `get.autospectral.param()`. Used only to seed the random number
 #'   generator (`asp$bird.seed`) for reproducible subsampling. Default
 #'   `NULL`.
+#' @param variants Optional variant list returned by
+#'   `get.spectral.variants()`. Used as a shrinkage prior on top of the
+#'   threshold this function derives from its own unmix (see
+#'   `unmixed.thresholds`), not as the threshold itself:
+#'   `get.spectral.variants()` measures `variants$thresholds` from a
+#'   per-cell-optimised unmix at the 99.5th percentile, both of which make
+#'   it systematically tighter than the bare-OLS, 99th-percentile estimate
+#'   this function's own dominance assignment is judged against, especially
+#'   for AF-collinear fluorophores. `variants$spillover.spread` supplies
+#'   `spillover.spread` when that is not itself supplied. Default `NULL`.
 #' @param af.name Character, the name of the autofluorescence row in
 #'   `spectra`, or `NULL` if there is none. The AF row is never treated as a
 #'   panel fluorophore and is never corrected. Default `"AF"`.
+#' @param raw.data Optional numeric matrix (events x detectors), raw
+#'   detector-space data. Pooled or concatenated single-stained controls, or
+#'   a fully stained sample with well-separated populations. Columns must
+#'   match the columns of `spectra`. Supply this directly to skip reading
+#'   `fully.stained.sample` from disk -- the internal calling convention,
+#'   used when the raw matrix is already in memory. Default `NULL`, which
+#'   requires `unstained.sample`, `fully.stained.sample` and `flow.control`
+#'   instead.
+#' @param unmixed.thresholds Optional named numeric vector covering every
+#'   fluorophore in `spectra` (the autofluorescence row may be omitted),
+#'   giving the positivity threshold in unmixed space. Default `NULL`, which
+#'   computes the `unstained.margin`-scaled `unstained.threshold` percentile
+#'   of `unstained`'s own bare unmix against `spectra` -- the same
+#'   pre-background-subtraction convention `dominant` below is judged
+#'   against -- then shrinks it toward `variants$thresholds` (see
+#'   `threshold.prior.weight`, `threshold.max.ratio`).
 #' @param scatter Optional numeric matrix (events x scatter parameters),
 #'   row-matched to `raw.data`. Required for `gate.main` and for
 #'   `bg.mode = "scatter.knn"`. Default `NULL`.
 #' @param gate.main Logical, whether to gate events to the main scatter
-#'   population before fitting. Requires `scatter`. Default `TRUE`.
+#'   population before fitting. Requires `scatter`. Default `FALSE`.
 #' @param gate.level Numeric in (0, 1). Events are kept when their 2D
 #'   scatter density exceeds this fraction of the modal density. Default
 #'   `0.1`.
@@ -82,8 +118,9 @@
 #'   `get.spectral.variants()$spillover.spread`. When supplied, co-activity
 #'   is judged against per-event thresholds widened by the spillover spread
 #'   each bright fluorophore contributes, so spillover from the dominant dye
-#'   is not mistaken for a co-active fluorophore. Default `NULL` (flat
-#'   thresholds).
+#'   is not mistaken for a co-active fluorophore. Default `NULL`, which
+#'   falls back to `variants$spillover.spread` (flat thresholds if that is
+#'   also unavailable).
 #' @param spread.kappa Numeric, how many spillover-spread standard
 #'   deviations above the flat threshold still count as negative. Default
 #'   `2`.
@@ -96,7 +133,27 @@
 #'   `bg.mode = "scatter.knn"`. When `gate.main` is `TRUE` the unstained
 #'   control is gated with the same density rule.
 #' @param k.neighbors Integer, neighbours for scatter-matched background
-#'   subtraction. Default `20`.
+#'   subtraction. Default `3`.
+#' @param unstained.threshold Numeric in (0, 1), the percentile of
+#'   `unstained`'s own unmix defining positivity, used only when
+#'   `unmixed.thresholds` is not supplied directly. Default `0.99` -- less
+#'   extreme than `get.spectral.variants()`'s `0.995`, and therefore less
+#'   sensitive to the handful of poorly AF-corrected events that dominate
+#'   the very top of the tail for a collinear fluorophore.
+#' @param unstained.margin Numeric, multiplier applied to that threshold.
+#'   Default `1.3`.
+#' @param threshold.prior.weight Numeric in `[0, 1]`, the log-space weight
+#'   given to `variants$thresholds` when shrinking the internally-computed
+#'   `unmixed.thresholds` toward it. `0` uses the internal estimate
+#'   unchanged; `1` uses `variants$thresholds` outright. Ignored for any
+#'   fluorophore `variants$thresholds` does not cover, or when `variants`
+#'   is `NULL`. Default `0.3`.
+#' @param threshold.max.ratio Numeric `> 1`, the magnitude ratio (either
+#'   direction) between the internal estimate and `variants$thresholds`
+#'   beyond which the internal side is treated as unreliable -- most likely
+#'   under-corrected autofluorescence -- rather than partially trusted, and
+#'   the threshold reverts to `variants$thresholds` outright instead of
+#'   blending. Default `3`.
 #' @param n.levels Integer, abundance bins per dominance population.
 #'   Default `10`.
 #' @param n.iter Integer, maximum correction iterations. Iteration stops
@@ -158,6 +215,11 @@
 #'   independently-known ground truth with row names matching `spectra`.
 #'   Purely diagnostic: when supplied, the returned `recovery` table reports
 #'   the angular error before and after correction per fluorophore.
+#' @param min.deg.start Numeric, degrees. Below this starting angular error,
+#'   `recovered` is reported as `0` instead of `(deg.start - deg.after) /
+#'   deg.start`, since a fluorophore that started (near) exactly correct
+#'   makes that ratio blow up or divide by zero for a change of a fraction
+#'   of a degree. Default `0.1`.
 #' @param verbose Logical, controls messaging. Default `TRUE`.
 #'
 #' @return A named list:
@@ -181,8 +243,12 @@
 #'   \item{`gate.keep`}{Logical vector over the input rows of `raw.data`,
 #'     `TRUE` for events inside the main-population gate, or `NULL` if no
 #'     gating was applied.}
-#'   \item{`recovery`}{Data frame of angular errors against `true.spectra`,
-#'     or `NULL` if `true.spectra` was not supplied.}
+#'   \item{`recovery`}{Data frame of angular errors against `true.spectra`.
+#'     `recovered` is the fraction of the starting angular error removed,
+#'     `(deg.start - deg.after) / deg.start` -- `1` is fully recovered, `0`
+#'     is no change, negative is worse; see `min.deg.start` for the
+#'     near-zero-`deg.start` case. `NULL` if `true.spectra` was not
+#'     supplied.}
 #' }
 #'
 #' @importFrom MASS bandwidth.nrd ginv kde2d
@@ -191,53 +257,131 @@
 #' @export
 
 correct.unmixing.signatures <- function(
-    raw.data,
     spectra,
-    unmixed.thresholds,
-    asp                = NULL,
-    af.name            = "AF",
-    scatter            = NULL,
-    gate.main          = TRUE,
-    gate.level         = 0.1,
-    spillover.spread   = NULL,
-    spread.kappa       = 2,
-    bg.mode            = c( "global.mean", "scatter.knn", "none" ),
-    unstained          = NULL,
-    unstained.scatter  = NULL,
-    k.neighbors        = 20L,
-    n.levels           = 10L,
-    n.iter             = 6L,
-    min.events         = 200L,
-    min.span           = 5,
-    min.explained      = 0.5,
-    min.gain           = 0.002,
-    step.grid          = c( 0, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1 ),
-    n.split.trials     = 1L,
-    min.split.frac     = 0.6,
-    max.step           = 0.15,
-    max.span.drift     = 1.10,
-    max.bg.alignment   = -0.9,
-    nuisance.frac      = 0.5,
-    footprint.frac        = 0.02,
+    unstained.sample       = NULL,
+    fully.stained.sample   = NULL,
+    flow.control           = NULL,
+    asp                    = NULL,
+    variants               = NULL,
+    af.name                = "AF",
+    raw.data               = NULL,
+    unmixed.thresholds     = NULL,
+    scatter                = NULL,
+    gate.main              = FALSE,
+    gate.level             = 0.1,
+    spillover.spread       = NULL,
+    spread.kappa           = 2,
+    bg.mode                = c( "global.mean", "scatter.knn", "none" ),
+    unstained              = NULL,
+    unstained.scatter      = NULL,
+    k.neighbors            = 3L,
+    unstained.threshold     = 0.99,
+    unstained.margin        = 1.3,
+    threshold.prior.weight  = 0.3,
+    threshold.max.ratio     = 3,
+    n.levels                 = 10L,
+    n.iter                 = 6L,
+    min.events             = 200L,
+    min.span               = 5,
+    min.explained          = 0.5,
+    min.gain               = 0.002,
+    step.grid              = c( 0, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1 ),
+    n.split.trials         = 1L,
+    min.split.frac         = 0.6,
+    max.step               = 0.15,
+    max.span.drift         = 1.10,
+    max.bg.alignment       = -0.9,
+    nuisance.frac          = 0.5,
+    footprint.frac         = 0.02,
     footprint.min.channels = 3L,
-    background.n       = 5000L,
-    true.spectra       = NULL,
-    verbose            = TRUE
+    background.n           = 5000L,
+    true.spectra           = NULL,
+    min.deg.start           = 0.1,
+    verbose                = TRUE
 ) {
 
   bg.mode <- match.arg( bg.mode )
 
-  spectra  <- as.matrix( spectra )
-  raw.data <- as.matrix( raw.data )
+  spectra <- as.matrix( spectra )
 
   if ( is.null( rownames( spectra ) ) )
     stop( "`spectra` must have fluorophore row names.", call. = FALSE )
+
+  panel <- setdiff( rownames( spectra ), af.name )
+
+  # ---------------------------------------------------------------------------
+  # File-based entry point: read raw.data/scatter/unstained/unstained.scatter
+  # from disk when they were not supplied as matrices directly. This is the
+  # only difference from calling this function from inside another
+  # AutoSpectral function, which already has the matrices in memory and
+  # passes them in directly instead.
+  # ---------------------------------------------------------------------------
+
+  if ( is.null( raw.data ) ) {
+
+    if ( is.null( unstained.sample ) || is.null( fully.stained.sample ) ||
+         is.null( flow.control ) )
+      stop( paste0( "Supply either `raw.data` directly, or `unstained.sample`, ",
+                    "`fully.stained.sample` and `flow.control` to read it from ",
+                    "disk." ), call. = FALSE )
+
+    read.raw <- function( file.name, label ) {
+
+      if ( verbose )
+        message( sprintf( "\033[34mReading %s.\033[0m", label ) )
+
+      expr.data <- readFCS( file.name, columns = flow.control$scatter.and.channel.spectral )
+
+      list( data    = expr.data[ , flow.control$spectral.channel, drop = FALSE ],
+            scatter = expr.data[ , flow.control$scatter.parameter, drop = FALSE ] )
+    }
+
+    unstained.in <- read.raw( unstained.sample, "unstained raw" )
+    stained.in   <- read.raw( fully.stained.sample, "fully stained raw" )
+
+    raw.data          <- stained.in$data
+    scatter           <- stained.in$scatter
+    unstained         <- unstained.in$data
+    unstained.scatter <- unstained.in$scatter
+  }
+
+  raw.data <- as.matrix( raw.data )
 
   if ( ncol( raw.data ) != ncol( spectra ) )
     stop( "`raw.data` and `spectra` must have the same detector columns.",
           call. = FALSE )
 
-  panel <- setdiff( rownames( spectra ), af.name )
+  # ---------------------------------------------------------------------------
+  # unmixed.thresholds, when not supplied directly, is computed fresh from
+  # this function's own (pre-background-subtraction) unmix of the unstained
+  # data -- the same convention `dominant` below is judged against -- and
+  # then shrunk toward variants$thresholds as a prior, rather than the prior
+  # being used outright. get.spectral.variants() measures that prior from a
+  # per-cell-optimised unmix at the 99.5th percentile, both of which make it
+  # systematically tighter than this function's own estimate, especially for
+  # AF-collinear fluorophores; used directly it would misjudge dominance.
+  # ---------------------------------------------------------------------------
+
+  if ( is.null( spillover.spread ) ) spillover.spread <- variants$spillover.spread
+
+  if ( is.null( unmixed.thresholds ) ) {
+
+    if ( is.null( unstained ) )
+      stop( paste0( "`unmixed.thresholds` was not supplied; supply ",
+                    "`unstained.sample` (or `unstained` directly) so it can ",
+                    "be derived from the unstained data." ), call. = FALSE )
+
+    unstained.unmixed <- unmix.ols.fast( unstained, spectra )
+
+    unmixed.thresholds <- unstained.margin * apply(
+      unstained.unmixed[ , panel, drop = FALSE ], 2, stats::quantile,
+      probs = unstained.threshold, names = FALSE )
+    names( unmixed.thresholds ) <- panel
+
+    unmixed.thresholds <- .signature.shrink.threshold(
+      unmixed.thresholds, variants$thresholds,
+      prior.weight = threshold.prior.weight, max.ratio = threshold.max.ratio )
+  }
 
   if ( !all( panel %in% names( unmixed.thresholds ) ) )
     stop( "`unmixed.thresholds` must be named and cover every panel fluorophore.",
@@ -652,11 +796,14 @@ correct.unmixing.signatures <- function(
         spectra.new[ common, , drop = FALSE ],
         true.spectra[ common, colnames( spectra ), drop = FALSE ] )
 
+      recovered <- ifelse( deg.start < min.deg.start, 0,
+                           ( deg.start - deg.after ) / deg.start )
+
       recovery <- data.frame(
         fluorophore = common,
         deg.start   = deg.start,
         deg.after   = deg.after,
-        recovered   = ( deg.start - deg.after ) / deg.start,
+        recovered   = recovered,
         accepted    = accepted[ common ],
         row.names   = NULL
       )
@@ -692,6 +839,60 @@ correct.unmixing.signatures <- function(
   b  <- as.matrix( b )
   cs <- rowSums( a * b ) / ( sqrt( rowSums( a^2 ) ) * sqrt( rowSums( b^2 ) ) )
   180 / pi * acos( pmin( 1, pmax( -1, cs ) ) )
+}
+
+
+#' Shrink an internally-computed threshold toward an externally-supplied
+#' prior in log space, reverting outright wherever the two disagree by more
+#' than `max.ratio`. Both vectors are expected to carry the same sign
+#' convention for every shared name (positive thresholds positive, negative
+#' thresholds negative); the blend and the ratio test operate on magnitude,
+#' and `internal`'s own sign is kept. A name in `internal` that is missing
+#' from `prior`, sign-mismatched, non-finite, or zero in either vector is
+#' returned unchanged.
+#'
+#' @param internal Named numeric vector, the threshold computed from this
+#'   run's own unmix.
+#' @param prior Named numeric vector or `NULL`, the reference threshold
+#'   (e.g. `variants$thresholds` / `variants$neg.thresholds`). `NULL`
+#'   returns `internal` unchanged.
+#' @param prior.weight Numeric in `[0, 1]`, the log-space weight given to
+#'   `prior`. `0` reproduces `internal` exactly; `1` reproduces `prior`
+#'   exactly for every shared, sign-matched name.
+#' @param max.ratio Numeric `> 1`, the magnitude ratio (either direction)
+#'   beyond which `internal` is treated as unreliable rather than partially
+#'   trusted, and the entry reverts to `prior` outright.
+#'
+#' @return Numeric vector, same names as `internal`.
+#' @noRd
+.signature.shrink.threshold <- function( internal, prior,
+                                         prior.weight = 0.3,
+                                         max.ratio    = 3 ) {
+
+  if ( is.null( prior ) ) return( internal )
+
+  shared <- intersect( names( internal ), names( prior ) )
+  if ( length( shared ) == 0 ) return( internal )
+
+  i  <- internal[ shared ]
+  p  <- prior[ shared ]
+  ok <- is.finite( i ) & is.finite( p ) & i != 0 & p != 0 & sign( i ) == sign( p )
+
+  if ( !any( ok ) ) return( internal )
+
+  keep    <- shared[ ok ]
+  mag.i   <- abs( internal[ keep ] )
+  mag.p   <- abs( prior[ keep ] )
+  s       <- sign( internal[ keep ] )
+  ratio   <- mag.i / mag.p
+  extreme <- ratio > max.ratio | ratio < 1 / max.ratio
+
+  blended <- s * exp( ( 1 - prior.weight ) * log( mag.i ) + prior.weight * log( mag.p ) )
+  blended[ extreme ] <- ( s * mag.p )[ extreme ]
+
+  result         <- internal
+  result[ keep ] <- blended
+  result
 }
 
 
