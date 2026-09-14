@@ -10,8 +10,6 @@
 #' dependency) otherwise -- so a plain `AutoSpectral` install with no
 #' `AutoSpectralRcpp` still works, just without the OpenMP speedup.
 #'
-#' @importFrom FlowSOM SOM
-#'
 #' @param data Numeric matrix, training events x features. Must have colnames.
 #' @param som.dim Integer, side length of the square SOM grid.
 #' @param rlen Integer, number of epochs (full passes over the data).
