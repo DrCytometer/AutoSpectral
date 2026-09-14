@@ -12,9 +12,9 @@
 #' @importFrom ggplot2 annotation_raster annotate ggtitle xlab ylab
 #' @importFrom ggplot2 theme_minimal theme element_text element_blank
 #' @importFrom ggplot2 ggsave expansion
-#' @importFrom patchwork wrap_plots
+#' @importFrom cowplot plot_grid
 #' @importFrom ragg agg_jpeg
-#' @importFrom viridis viridis
+#' @importFrom viridisLite viridis
 #'
 #' @param pos.expr.data Internal argument for `clean.controls`. A matrix
 #' containing the positive expression data. Default is `NULL`.
@@ -191,7 +191,7 @@ spectral.ribbon.plot <- function(
     "cividis", "rocket", "mako", "turbo"
   )
   if ( color.palette %in% viridis.colors ) {
-    pal_fn <- function( n ) viridis::viridis( n, option = color.palette )
+    pal_fn <- function( n ) viridisLite::viridis( n, option = color.palette )
   } else {
     pal_fn <- grDevices::colorRampPalette( asp$density.palette.base.color )
   }
@@ -308,7 +308,7 @@ spectral.ribbon.plot <- function(
       theme( axis.text.x = x.text )
   } )
 
-  ribbon.plot <- patchwork::wrap_plots( panels, ncol = 1 )
+  ribbon.plot <- cowplot::plot_grid( plotlist = panels, ncol = 1, align = "v" )
 
   # ---------------------------------------------------------------------------
   # 8. Save or return
