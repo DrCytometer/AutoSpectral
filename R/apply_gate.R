@@ -10,8 +10,6 @@
 #' use and for testing other `AutoSpectral` functions against a gated subset
 #' of data without going through the full control-file/FCS-reading pipeline.
 #'
-#' @importFrom sp point.in.polygon
-#'
 #' @param flow.data A matrix or data frame of flow cytometry data (for
 #' example, unmixed or raw expression data) with named columns, including the
 #' two scatter parameters named in `scatter.param`.
@@ -49,7 +47,7 @@ apply.gate <- function(
     asp = NULL,
     min.fraction = 0.01
 ) {
-  
+
   # flow.data must be present and have named columns
   if ( missing( flow.data ) || is.null( flow.data ) ) {
     stop( "flow.data must be supplied.", call. = FALSE )
@@ -60,7 +58,7 @@ apply.gate <- function(
   if ( is.null( colnames( flow.data ) ) ) {
     stop( "flow.data must have named columns.", call. = FALSE )
   }
-  
+
   # scatter.param must resolve to exactly two names
   if ( is.null( scatter.param ) ) {
     stop(
@@ -72,7 +70,7 @@ apply.gate <- function(
   if ( !is.character( scatter.param ) || length( scatter.param ) != 2 ) {
     stop( "scatter.param must be a character vector of length 2.", call. = FALSE )
   }
-  
+
   # scatter.param columns must exist in flow.data
   missing.param <- setdiff( scatter.param, colnames( flow.data ) )
   if ( length( missing.param ) > 0 ) {
@@ -84,7 +82,7 @@ apply.gate <- function(
       call. = FALSE
     )
   }
-  
+
   # gate.boundary must be a well-formed polygon
   if ( !is.list( gate.boundary ) || !all( c( "x", "y" ) %in% names( gate.boundary ) ) ) {
     stop( "gate.boundary must be a list containing x and y components.", call. = FALSE )
@@ -98,21 +96,21 @@ apply.gate <- function(
   if ( length( gate.boundary$x ) < 3 ) {
     stop( "gate.boundary must contain at least 3 vertices to describe a polygon.", call. = FALSE )
   }
-  
+
   n.events <- nrow( flow.data )
   if ( n.events == 0 ) {
     stop( "flow.data contains no events.", call. = FALSE )
   }
-  
+
   gate.data <- flow.data[ , scatter.param ]
-  
-  flow.population.pip <- sp::point.in.polygon(
+
+  flow.population.pip <- .point.in.polygon(
     gate.data[ , 1 ], gate.data[ , 2 ],
     gate.boundary$x, gate.boundary$y
   )
-  
+
   gate.population.idx <- which( flow.population.pip != 0 )
-  
+
   # don't allow a gate that excludes every event to pass silently
   if ( length( gate.population.idx ) == 0 ) {
     stop(
@@ -125,7 +123,7 @@ apply.gate <- function(
       call. = FALSE
     )
   }
-  
+
   # warn (but don't stop) if the retained fraction looks suspiciously small
   retained.fraction <- length( gate.population.idx ) / n.events
   if ( min.fraction > 0 && retained.fraction < min.fraction ) {
@@ -138,6 +136,6 @@ apply.gate <- function(
       call. = FALSE
     )
   }
-  
+
   return( flow.data[ gate.population.idx, ] )
 }
