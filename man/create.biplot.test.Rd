@@ -6,21 +6,34 @@
 \usage{
 create.biplot.test(
   plot.data,
-  x.dim,
-  y.dim,
-  asp,
+  x.dim = NULL,
+  y.dim = NULL,
+  asp = NULL,
   variants = NULL,
   spread.kappa = 2,
   x.lab = NULL,
   y.lab = NULL,
-  x.min = -5000,
-  x.max = asp$expr.data.max,
-  y.min = -5000,
-  y.max = asp$expr.data.max,
-  x.width.basis = -1000,
-  y.width.basis = -1000,
+  x.min = "auto",
+  x.max = NULL,
+  y.min = "auto",
+  y.max = NULL,
+  x.width.basis = "auto",
+  y.width.basis = "auto",
+  pos = NULL,
+  channel.range = NULL,
+  neg = NULL,
+  logicle.q = 0.05,
+  logicle.w.min = 0.5,
   max.points = 5e+05,
   color.palette = "rainbow",
+  bird.seed = NULL,
+  ribbon.breaks = NULL,
+  figure.gate.point.size = NULL,
+  figure.margin = NULL,
+  figure.panel.line.size = NULL,
+  figure.axis.text.size = NULL,
+  figure.axis.title.size = NULL,
+  density.palette.base.color = NULL,
   save = TRUE,
   title = NULL,
   output.dir = NULL,
@@ -31,15 +44,23 @@ create.biplot.test(
 \arguments{
 \item{plot.data}{A matrix or dataframe containing the flow cytometry data to
 be plotted. Column names should match the dimensions specified by \code{x.dim} and
-\code{y.dim}.}
+\code{y.dim}. Must have at least two columns.}
 
 \item{x.dim}{String specifying the column of \code{plot.data} for the x-axis of
-the plot.}
+the plot. Default \code{NULL}, in which case the first column of \code{plot.data}
+is used.}
 
 \item{y.dim}{String specifying the column of \code{plot.data} for the y-axis of
-the plot.}
+the plot. Default \code{NULL}, in which case the second column of \code{plot.data}
+is used.}
 
-\item{asp}{The AutoSpectral parameter list.}
+\item{asp}{Optional AutoSpectral parameter list. When supplied, its
+fields are used for any of \code{x.max}, \code{y.max}, \code{pos}, \code{channel.range},
+\code{neg}, \code{bird.seed}, \code{ribbon.breaks}, \code{figure.gate.point.size},
+\code{figure.margin}, \code{figure.panel.line.size}, \code{figure.axis.text.size},
+\code{figure.axis.title.size} and \code{density.palette.base.color} that were not
+passed explicitly. Default \code{NULL} -- see Details for the literal
+(Aurora-profile) fallback used for each.}
 
 \item{variants}{The variant list returned by \code{get.spectral.variants()}.
 When supplied, red curves are drawn for whichever of \code{x.dim}/\code{y.dim}
@@ -67,30 +88,86 @@ Default \code{2}.}
 \item{y.lab}{An optional label for the y-axis. If none is given (default
 \code{NULL}), the column name specified by \code{y.dim} will be used.}
 
-\item{x.min}{Minimum value for the x-axis. Default is \code{-5000}.}
+\item{x.min}{Minimum value for the x-axis, or \code{"auto"} (default) to
+calculate it from the data -- see Details.}
 
-\item{x.max}{Maximum value for the x-axis. Default is the value specified by
-asp$expr.data.max, which will be the maximum for the cytometer.}
+\item{x.max}{Maximum value for the x-axis. Default \code{NULL}, falling back
+to \code{asp$expr.data.max}, then to \code{4194304} (Aurora).}
 
-\item{y.min}{Minimum value for the y-axis. Default is \code{-5000}.}
+\item{y.min}{Minimum value for the y-axis, or \code{"auto"} (default) to
+calculate it from the data -- see Details.}
 
-\item{y.max}{Maximum value for the y-axis. Default is the value specified by
-asp$expr.data.max, which will be the maximum for the cytometer.}
+\item{y.max}{Maximum value for the y-axis. Default \code{NULL}, falling back
+to \code{asp$expr.data.max}, then to \code{4194304} (Aurora).}
 
 \item{x.width.basis}{Width basis for the biexponential transform for the
-x-axis. Default is \code{-1000}.}
+x-axis, or \code{"auto"} (default) to calculate it from the data -- see
+Details.}
 
 \item{y.width.basis}{Width basis for the biexponential transform for the
-x-axis. Default is \code{-1000}.}
+y-axis, or \code{"auto"} (default) to calculate it from the data -- see
+Details.}
+
+\item{pos}{Number of positive decades (\code{M}) spanned by the
+biexponential transform, applied to both axes. Default \code{NULL},
+falling back to \code{asp$default.transformation.param$pos} (the
+canonical, package-wide value), then to \code{log10(x.max) - 1} only when
+\code{asp} itself is not supplied.}
+
+\item{channel.range}{Display channel range (\code{channelRange}) passed to
+\code{biexp.transform()}. Default \code{NULL}, falling back to
+\code{asp$default.transformation.param$length}, then to \code{256}.}
+
+\item{neg}{Must be \code{0} -- see \code{biexp.transform()}. Default \code{NULL},
+falling back to \code{asp$default.transformation.param$neg}, then to \code{0}.}
+
+\item{logicle.q}{Quantile of each channel's raw data used as \code{r} (the
+most negative value to bring into the display) in the \code{"auto"}
+width-basis calculation -- see Details. Default \code{0.05}, matching
+Parks, Roederer & Moore (2006) / \code{flowCore::estimateLogicle()}.}
+
+\item{logicle.w.min}{Floor, in logicle decades, on the \code{"auto"}-computed
+width when a channel has no visible negative population -- see Details.
+Default \code{0.5}.}
 
 \item{max.points}{Number of points to plot (speeds up plotting). Default is
-\code{5e6}.}
+\code{5e5}.}
 
 \item{color.palette}{Optional character string defining the viridis color
 palette to be used for the fluorophore traces. Default is \code{rainbow}, which will
 be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
 options: \code{magma}, \code{inferno}, \code{plasma}, \code{viridis}, \code{cividis}, \code{rocket}, \code{mako}
 and \code{turbo}.}
+
+\item{bird.seed}{Integer random seed used when downsampling to
+\code{max.points}. Default \code{NULL}, falling back to \code{asp$bird.seed}, then to
+the package's usual seed.}
+
+\item{ribbon.breaks}{Numeric vector of raw-scale axis break positions.
+Default \code{NULL}, falling back to \code{asp$ribbon.breaks}, then to
+\code{c( -1e3, 0, 1e3, 1e4, 1e5, 1e6 )} (Aurora).}
+
+\item{figure.gate.point.size}{Point size for the scattermore layer.
+Default \code{NULL}, falling back to \code{asp$figure.gate.point.size}, then to
+\code{0.8}.}
+
+\item{figure.margin}{Plot margin (all four sides). Default \code{NULL},
+falling back to \code{asp$figure.margin}, then to \code{4.0}.}
+
+\item{figure.panel.line.size}{Line width for axis ticks and the panel
+border. Default \code{NULL}, falling back to \code{asp$figure.panel.line.size},
+then to \code{0.5}.}
+
+\item{figure.axis.text.size}{Axis text size. Default \code{NULL}, falling
+back to \code{asp$figure.axis.text.size}, then to \code{12.0}.}
+
+\item{figure.axis.title.size}{Axis title size. Default \code{NULL}, falling
+back to \code{asp$figure.axis.title.size}, then to \code{12.0}.}
+
+\item{density.palette.base.color}{Fallback fill gradient colors used
+when \code{color.palette} is not one of the viridis options. Default \code{NULL},
+falling back to \code{asp$density.palette.base.color}, then to
+\code{c( "blue", "cyan", "green", "yellow", "red" )}.}
 
 \item{save}{Logical, if \code{TRUE}, saves a JPEG file to the \code{output.dir}.
 Otherwise, the plot will simply be created in the Viewer.}
@@ -109,5 +186,48 @@ the current working directory will be used.}
 Creates a biplot in the Viewer and optionally saves it as a JPEG file.
 }
 \description{
-Create Biplot
+Creates a biexponential-transformed 2D density biplot for two channels
+of flow cytometry data. Every argument beyond \code{plot.data} is optional:
+if \code{x.dim}/\code{y.dim} are omitted, the first two columns of \code{plot.data} are
+used; if \code{asp} is omitted, every cytometer-specific setting it would
+otherwise supply falls back to a literal default matching the Aurora
+cytometer profile (\code{get.autospectral.param.aurora()}). This means
+\code{create.biplot( plot.data = flow.data[ , c( 3, 6 ) ] )} works standalone.
+}
+\details{
+For every argument documented below as "falls back to \code{asp$...}", the
+precedence is: the explicit argument (if supplied) beats \code{asp}'s value
+(if \code{asp} is supplied) beats the literal default. \code{asp}, when supplied,
+is therefore a convenience for setting several of these at once for a
+non-Aurora cytometer -- it does not override an explicitly-passed
+argument.
+
+\code{x.min}/\code{y.min} and \code{x.width.basis}/\code{y.width.basis} each accept the
+string \code{"auto"} (the default) in place of a number. In auto mode, the
+width basis is calculated per-channel from the plotted data itself,
+following the data-driven approach of Parks, Roederer & Moore (2006):
+\deqn{w = \frac{M - \log_{10}(T / |r|)}{2}}
+where \code{M} is \code{pos}, \code{T} is \code{x.max}/\code{y.max},
+and \code{r} is the \code{logicle.q}-th quantile (default the 5th
+percentile) of that channel's own \emph{negative-valued} raw data only --
+"the most negative value to be included in the display" in the
+terminology of the paper. Restricting the quantile to values below
+zero (rather than the whole channel) is deliberate: a channel where
+fewer than \code{logicle.q} of events are negative would otherwise return
+a positive \code{r}, which the formula does not define sensibly. This \code{w}
+is converted back to this package's \code{widthBasis} convention via
+\verb{widthBasis = -10^(2w)} (see \code{biexp.transform()}). In lay terms: the
+transform looks at how far the negative tail of this specific channel
+actually extends and picks just enough curvature near zero to show
+it, rather than using one fixed guess for every channel. \code{x.min} and
+\code{x.width.basis} resolve to the \emph{same} value when either is \code{"auto"} --
+auto mode does not give the axis floor separate headroom beyond the
+width basis. \code{logicle.w.min} (default \code{0.5}, matching
+\code{biexp.transform()}'s own default \code{widthBasis = -10}) is the floor
+applied when a channel has no visible negative population to measure.
+}
+\references{
+Parks DR, Roederer M, Moore WA (2006). A new "Logicle" display method
+avoids deceptive effects of logarithmic scaling for low signals and
+compensated data. Cytometry A, 69(6):541-551.
 }

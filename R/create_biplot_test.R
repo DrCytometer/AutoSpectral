@@ -2,6 +2,47 @@
 
 #' @title Create Biplot
 #'
+#' @description
+#' Creates a biexponential-transformed 2D density biplot for two channels
+#' of flow cytometry data. Every argument beyond `plot.data` is optional:
+#' if `x.dim`/`y.dim` are omitted, the first two columns of `plot.data` are
+#' used; if `asp` is omitted, every cytometer-specific setting it would
+#' otherwise supply falls back to a literal default matching the Aurora
+#' cytometer profile (`get.autospectral.param.aurora()`). This means
+#' `create.biplot( plot.data = flow.data[ , c( 3, 6 ) ] )` works standalone.
+#'
+#' @details
+#' For every argument documented below as "falls back to `asp$...`", the
+#' precedence is: the explicit argument (if supplied) beats `asp`'s value
+#' (if `asp` is supplied) beats the literal default. `asp`, when supplied,
+#' is therefore a convenience for setting several of these at once for a
+#' non-Aurora cytometer -- it does not override an explicitly-passed
+#' argument.
+#'
+#' `x.min`/`y.min` and `x.width.basis`/`y.width.basis` each accept the
+#' string `"auto"` (the default) in place of a number. In auto mode, the
+#' width basis is calculated per-channel from the plotted data itself,
+#' following the data-driven approach of Parks, Roederer & Moore (2006):
+#' \deqn{w = \frac{M - \log_{10}(T / |r|)}{2}}
+#' where \code{M} is \code{pos}, \code{T} is \code{x.max}/\code{y.max},
+#' and \code{r} is the \code{logicle.q}-th quantile (default the 5th
+#' percentile) of that channel's own *negative-valued* raw data only --
+#' "the most negative value to be included in the display" in the
+#' terminology of the paper. Restricting the quantile to values below
+#' zero (rather than the whole channel) is deliberate: a channel where
+#' fewer than `logicle.q` of events are negative would otherwise return
+#' a positive `r`, which the formula does not define sensibly. This `w`
+#' is converted back to this package's `widthBasis` convention via
+#' `widthBasis = -10^(2w)` (see `biexp.transform()`). In lay terms: the
+#' transform looks at how far the negative tail of this specific channel
+#' actually extends and picks just enough curvature near zero to show
+#' it, rather than using one fixed guess for every channel. `x.min` and
+#' `x.width.basis` resolve to the *same* value when either is `"auto"` --
+#' auto mode does not give the axis floor separate headroom beyond the
+#' width basis. `logicle.w.min` (default `0.5`, matching
+#' `biexp.transform()`'s own default `widthBasis = -10`) is the floor
+#' applied when a channel has no visible negative population to measure.
+#'
 #' @importFrom ggplot2 ggplot aes ggsave after_stat
 #' @importFrom ggplot2 scale_x_continuous scale_y_continuous theme_bw theme
 #' @importFrom ggplot2 margin element_line element_text element_rect element_blank
@@ -12,12 +53,20 @@
 #'
 #' @param plot.data A matrix or dataframe containing the flow cytometry data to
 #' be plotted. Column names should match the dimensions specified by `x.dim` and
-#' `y.dim`.
+#' `y.dim`. Must have at least two columns.
 #' @param x.dim String specifying the column of `plot.data` for the x-axis of
-#' the plot.
+#' the plot. Default `NULL`, in which case the first column of `plot.data`
+#' is used.
 #' @param y.dim String specifying the column of `plot.data` for the y-axis of
-#' the plot.
-#' @param asp The AutoSpectral parameter list.
+#' the plot. Default `NULL`, in which case the second column of `plot.data`
+#' is used.
+#' @param asp Optional AutoSpectral parameter list. When supplied, its
+#' fields are used for any of `x.max`, `y.max`, `pos`, `channel.range`,
+#' `neg`, `bird.seed`, `ribbon.breaks`, `figure.gate.point.size`,
+#' `figure.margin`, `figure.panel.line.size`, `figure.axis.text.size`,
+#' `figure.axis.title.size` and `density.palette.base.color` that were not
+#' passed explicitly. Default `NULL` -- see Details for the literal
+#' (Aurora-profile) fallback used for each.
 #' @param variants The variant list returned by `get.spectral.variants()`.
 #'   When supplied, red curves are drawn for whichever of `x.dim`/`y.dim`
 #'   `variants$thresholds` covers: each channel's flat threshold
@@ -40,23 +89,66 @@
 #' `NULL`), the column name specified by `x.dim` will be used.
 #' @param y.lab An optional label for the y-axis. If none is given (default
 #' `NULL`), the column name specified by `y.dim` will be used.
-#' @param x.min Minimum value for the x-axis. Default is `-5000`.
-#' @param x.max Maximum value for the x-axis. Default is the value specified by
-#' asp$expr.data.max, which will be the maximum for the cytometer.
-#' @param y.min Minimum value for the y-axis. Default is `-5000`.
-#' @param y.max Maximum value for the y-axis. Default is the value specified by
-#' asp$expr.data.max, which will be the maximum for the cytometer.
+#' @param x.min Minimum value for the x-axis, or `"auto"` (default) to
+#' calculate it from the data -- see Details.
+#' @param x.max Maximum value for the x-axis. Default `NULL`, falling back
+#' to `asp$expr.data.max`, then to `4194304` (Aurora).
+#' @param y.min Minimum value for the y-axis, or `"auto"` (default) to
+#' calculate it from the data -- see Details.
+#' @param y.max Maximum value for the y-axis. Default `NULL`, falling back
+#' to `asp$expr.data.max`, then to `4194304` (Aurora).
 #' @param x.width.basis Width basis for the biexponential transform for the
-#' x-axis. Default is `-1000`.
+#' x-axis, or `"auto"` (default) to calculate it from the data -- see
+#' Details.
 #' @param y.width.basis Width basis for the biexponential transform for the
-#' x-axis. Default is `-1000`.
+#' y-axis, or `"auto"` (default) to calculate it from the data -- see
+#' Details.
+#' @param pos Number of positive decades (`M`) spanned by the
+#' biexponential transform, applied to both axes. Default `NULL`,
+#' falling back to `asp$default.transformation.param$pos` (the
+#' canonical, package-wide value), then to `log10(x.max) - 1` only when
+#' `asp` itself is not supplied.
+#' @param channel.range Display channel range (`channelRange`) passed to
+#' `biexp.transform()`. Default `NULL`, falling back to
+#' `asp$default.transformation.param$length`, then to `256`.
+#' @param neg Must be `0` -- see `biexp.transform()`. Default `NULL`,
+#' falling back to `asp$default.transformation.param$neg`, then to `0`.
+#' @param logicle.q Quantile of each channel's raw data used as `r` (the
+#' most negative value to bring into the display) in the `"auto"`
+#' width-basis calculation -- see Details. Default `0.05`, matching
+#' Parks, Roederer & Moore (2006) / `flowCore::estimateLogicle()`.
+#' @param logicle.w.min Floor, in logicle decades, on the `"auto"`-computed
+#' width when a channel has no visible negative population -- see Details.
+#' Default `0.5`.
 #' @param max.points Number of points to plot (speeds up plotting). Default is
-#' `5e6`.
+#' `5e5`.
 #' @param color.palette Optional character string defining the viridis color
 #' palette to be used for the fluorophore traces. Default is `rainbow`, which will
 #' be similar to FlowJo or SpectroFlo. Other pptions are the viridis color
 #' options: `magma`, `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako`
 #' and `turbo`.
+#' @param bird.seed Integer random seed used when downsampling to
+#' `max.points`. Default `NULL`, falling back to `asp$bird.seed`, then to
+#' the package's usual seed.
+#' @param ribbon.breaks Numeric vector of raw-scale axis break positions.
+#' Default `NULL`, falling back to `asp$ribbon.breaks`, then to
+#' `c( -1e3, 0, 1e3, 1e4, 1e5, 1e6 )` (Aurora).
+#' @param figure.gate.point.size Point size for the scattermore layer.
+#' Default `NULL`, falling back to `asp$figure.gate.point.size`, then to
+#' `0.8`.
+#' @param figure.margin Plot margin (all four sides). Default `NULL`,
+#' falling back to `asp$figure.margin`, then to `4.0`.
+#' @param figure.panel.line.size Line width for axis ticks and the panel
+#' border. Default `NULL`, falling back to `asp$figure.panel.line.size`,
+#' then to `0.5`.
+#' @param figure.axis.text.size Axis text size. Default `NULL`, falling
+#' back to `asp$figure.axis.text.size`, then to `12.0`.
+#' @param figure.axis.title.size Axis title size. Default `NULL`, falling
+#' back to `asp$figure.axis.title.size`, then to `12.0`.
+#' @param density.palette.base.color Fallback fill gradient colors used
+#' when `color.palette` is not one of the viridis options. Default `NULL`,
+#' falling back to `asp$density.palette.base.color`, then to
+#' `c( "blue", "cyan", "green", "yellow", "red" )`.
 #' @param save Logical, if `TRUE`, saves a JPEG file to the `output.dir`.
 #' Otherwise, the plot will simply be created in the Viewer.
 #' @param title Optional title for the plot filename. If `NULL`, defaults to
@@ -68,31 +160,59 @@
 #'
 #' @return Creates a biplot in the Viewer and optionally saves it as a JPEG file.
 #'
+#' @references
+#' Parks DR, Roederer M, Moore WA (2006). A new "Logicle" display method
+#' avoids deceptive effects of logarithmic scaling for low signals and
+#' compensated data. Cytometry A, 69(6):541-551.
+#'
 #' @export
 
 create.biplot.test <- function(
     plot.data,
-    x.dim,
-    y.dim,
-    asp,
+    x.dim = NULL,
+    y.dim = NULL,
+    asp = NULL,
     variants = NULL,
     spread.kappa = 2,
     x.lab = NULL,
     y.lab = NULL,
-    x.min = -5000,
-    x.max = asp$expr.data.max,
-    y.min = -5000,
-    y.max = asp$expr.data.max,
-    x.width.basis = -1000,
-    y.width.basis = -1000,
+    x.min = "auto",
+    x.max = NULL,
+    y.min = "auto",
+    y.max = NULL,
+    x.width.basis = "auto",
+    y.width.basis = "auto",
+    pos = NULL,
+    channel.range = NULL,
+    neg = NULL,
+    logicle.q = 0.05,
+    logicle.w.min = 0.5,
     max.points = 5e5,
     color.palette = "rainbow",
+    bird.seed = NULL,
+    ribbon.breaks = NULL,
+    figure.gate.point.size = NULL,
+    figure.margin = NULL,
+    figure.panel.line.size = NULL,
+    figure.axis.text.size = NULL,
+    figure.axis.title.size = NULL,
+    density.palette.base.color = NULL,
     save = TRUE,
     title = NULL,
     output.dir = NULL,
     width = 5,
     height = 5
-  ) {
+) {
+
+  # fall back to the first two columns of plot.data when x.dim/y.dim are
+  # not supplied, so create.biplot( plot.data ) works on its own
+  if ( is.null( x.dim ) || is.null( y.dim ) ) {
+    if ( ncol( plot.data ) < 2 ) {
+      stop( "`plot.data` must have at least two columns when `x.dim`/`y.dim` are not supplied." )
+    }
+    if ( is.null( x.dim ) ) x.dim <- colnames( plot.data )[ 1 ]
+    if ( is.null( y.dim ) ) y.dim <- colnames( plot.data )[ 2 ]
+  }
 
   # check for x.dim, y.dim in colnames
   if ( !( x.dim %in% colnames( plot.data ) & y.dim %in% colnames( plot.data ) ) ) {
@@ -100,22 +220,64 @@ create.biplot.test <- function(
     stop( "Either `xdim` or `y.dim` is not present in the data. See printed channels." )
   }
 
-  # check inputs
-  args <- list(
-    x.min, x.max, y.min, y.max,
-    x.width.basis, y.width.basis,
-    max.points, width, height
+  # explicit argument > asp field (if asp supplied) > literal Aurora-profile
+  # default, so create.biplot() works with no `asp` at all while `asp`
+  # still overrides the literal defaults for other cytometers
+  resolve.param <- function( val, asp.val, default ) {
+    if ( !is.null( val ) ) return( val )
+    if ( !is.null( asp.val ) ) return( asp.val )
+    default
+  }
+
+  x.max <- resolve.param( x.max, asp$expr.data.max, 4194304 )
+  y.max <- resolve.param( y.max, asp$expr.data.max, 4194304 )
+  pos <- resolve.param( pos, asp$default.transformation.param$pos, log10( x.max ) )
+  channel.range <- resolve.param( channel.range, asp$default.transformation.param$length, 256 )
+  neg <- resolve.param( neg, asp$default.transformation.param$neg, 0 )
+  bird.seed <- resolve.param(
+    bird.seed, asp$bird.seed,
+    as.integer( prod( which( letters %in% strsplit( "hummingbird", "" )[[ 1 ]] ) ) )
+  )
+  ribbon.breaks <- resolve.param( ribbon.breaks, asp$ribbon.breaks, c( -1e3, 0, 1e3, 1e4, 1e5, 1e6 ) )
+  figure.gate.point.size <- resolve.param( figure.gate.point.size, asp$figure.gate.point.size, 0.8 )
+  figure.margin <- resolve.param( figure.margin, asp$figure.margin, 4.0 )
+  figure.panel.line.size <- resolve.param( figure.panel.line.size, asp$figure.panel.line.size, 0.5 )
+  figure.axis.text.size <- resolve.param( figure.axis.text.size, asp$figure.axis.text.size, 12.0 )
+  figure.axis.title.size <- resolve.param( figure.axis.title.size, asp$figure.axis.title.size, 12.0 )
+  density.palette.base.color <- resolve.param(
+    density.palette.base.color, asp$density.palette.base.color,
+    c( "blue", "cyan", "green", "yellow", "red" )
   )
 
-  arg.names <- c(
-    "x.min", "x.max", "y.min", "y.max",
-    "x.width.basis", "y.width.basis",
-    "max.points", "width", "height"
+  # check inputs that must be plain numbers
+  numeric.args <- list(
+    x.max = x.max, y.max = y.max,
+    pos = pos, channel.range = channel.range, neg = neg,
+    bird.seed = bird.seed, ribbon.breaks = ribbon.breaks,
+    figure.gate.point.size = figure.gate.point.size,
+    figure.margin = figure.margin,
+    figure.panel.line.size = figure.panel.line.size,
+    figure.axis.text.size = figure.axis.text.size,
+    figure.axis.title.size = figure.axis.title.size,
+    max.points = max.points, width = width, height = height
   )
 
-  for ( i in seq_along( args ) ) {
-    if ( !is.numeric( args[[ i ]] ) ) {
-      stop( paste( "Argument", arg.names[ i ], "must be numeric." ) )
+  for ( nm in names( numeric.args ) ) {
+    if ( !is.numeric( numeric.args[[ nm ]] ) ) {
+      stop( paste( "Argument", nm, "must be numeric." ) )
+    }
+  }
+
+  # x.min/y.min/x.width.basis/y.width.basis may additionally be "auto"
+  auto.args <- list(
+    x.min = x.min, y.min = y.min,
+    x.width.basis = x.width.basis, y.width.basis = y.width.basis
+  )
+
+  for ( nm in names( auto.args ) ) {
+    val <- auto.args[[ nm ]]
+    if ( !( is.numeric( val ) || identical( val, "auto" ) ) ) {
+      stop( paste( "Argument", nm, "must be numeric or \"auto\"." ) )
     }
   }
 
@@ -127,25 +289,72 @@ create.biplot.test <- function(
   # downsample (faster plotting)
   if ( nrow( plot.data ) > max.points ) {
     # random sampling
-    set.seed( asp$bird.seed )
+    set.seed( bird.seed )
     plot.data <- plot.data[ sample( seq_len( nrow( plot.data ) ), max.points ), ]
   }
 
-  # Number of positive log decades derived from the data range, matching
-  # the convention used throughout AutoSpectral's biplot code.
-  x.pos.log <- log10( x.max ) - 1
-  y.pos.log <- log10( y.max ) - 1
+  # Data-driven width basis (Parks, Roederer & Moore 2006)
+  get.auto.width.basis <- function( x, pos, max.value, q, w.min ) {
+
+    x.neg <- x[ is.finite( x ) & x < 0 ]
+    if ( length( x.neg ) == 0 ) {
+      return( list( r = -1, width.basis = -10 ^ ( 2 * w.min ) ) )
+    }
+
+    r <- stats::quantile( x.neg, probs = q, names = FALSE, na.rm = TRUE )
+    r <- max( min( r, -1 ), -max.value )
+
+    w <- ( pos - log10( max.value / abs( r ) ) ) / 2
+    w <- min( max( w, w.min ), pos / 2 )
+
+    list( r = r, width.basis = -10 ^ ( 2 * w ) )
+  }
+
+  if ( identical( x.width.basis, "auto" ) || identical( x.min, "auto" ) ) {
+    x.auto <- get.auto.width.basis(
+      x = plot.data[ , x.dim ], pos = pos, max.value = x.max,
+      q = logicle.q, w.min = logicle.w.min
+    )
+    if ( identical( x.width.basis, "auto" ) ) x.width.basis <- x.auto$width.basis
+    if ( identical( x.min, "auto" ) ) x.min <- x.width.basis * 2
+  }
+
+  if ( identical( y.width.basis, "auto" ) || identical( y.min, "auto" ) ) {
+    y.auto <- get.auto.width.basis(
+      x = plot.data[ , y.dim ], pos = pos, max.value = y.max,
+      q = logicle.q, w.min = logicle.w.min
+    )
+    if ( identical( y.width.basis, "auto" ) ) y.width.basis <- y.auto$width.basis
+    if ( identical( y.min, "auto" ) ) y.min <- y.width.basis * 2
+  }
 
   # set defaults
-  if ( is.null( title ) )
-    title <- paste( x.lab, "vs", y.lab )
+  if ( is.null( title ) ) title <- paste( x.lab, "vs", y.lab )
 
-  if ( is.null( output.dir ) )
-    output.dir <- getwd()
+  if ( is.null( output.dir ) ) output.dir <- getwd()
+
+  # add more negative axes ticks if needed
+  extend.negative.breaks <- function( breaks, min.value ) {
+
+    if ( !is.finite( min.value ) || min.value >= 0 ) return( breaks )
+
+    neg.breaks <- breaks[ breaks < 0 ]
+    max.decade.present <- if ( length( neg.breaks ) == 0 ) 0 else
+      floor( log10( max( abs( neg.breaks ) ) ) )
+
+    needed.decade <- floor( log10( abs( min.value ) ) )
+
+    if ( needed.decade <= max.decade.present ) return( breaks )
+
+    new.decades <- seq( max.decade.present + 1, needed.decade )
+    sort( c( breaks, -( 10 ^ new.decades ) ) )
+  }
 
   # set plot limits
-  x.breaks <- asp$ribbon.breaks[ asp$ribbon.breaks < x.max ]
-  y.breaks <- asp$ribbon.breaks[ asp$ribbon.breaks < y.max ]
+  x.breaks <- extend.negative.breaks( ribbon.breaks, x.min )
+  y.breaks <- extend.negative.breaks( ribbon.breaks, y.min )
+  x.breaks <- x.breaks[ x.breaks < x.max ]
+  y.breaks <- y.breaks[ y.breaks < y.max ]
   x.axis.labels <- sapply( x.breaks, function( x ) {
     if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
   } )
@@ -156,19 +365,19 @@ create.biplot.test <- function(
   y.limits <- c( y.min, y.max )
 
   # set transforms (one for x, one for y)
-  biexp.trans.x <- biexp.fast(
-    channelRange = asp$default.transformation.param$length,
+  biexp.trans.x <- biexp.transform(
+    channelRange = channel.range,
     maxValue = x.max,
-    pos = x.pos.log,
-    neg = asp$default.transformation.param$neg,
+    pos = pos - 1,
+    neg = neg,
     widthBasis = x.width.basis,
     inverse = FALSE )
 
-  biexp.trans.y <- biexp.fast(
-    channelRange = asp$default.transformation.param$length,
+  biexp.trans.y <- biexp.transform(
+    channelRange = channel.range,
     maxValue = y.max,
-    pos = y.pos.log,
-    neg = asp$default.transformation.param$neg,
+    pos = pos - 1,
+    neg = neg,
     widthBasis = y.width.basis,
     inverse = FALSE )
 
@@ -274,7 +483,7 @@ create.biplot.test <- function(
   # set up the plot
   biplot <- ggplot( plot.data, aes( x.trans, y.trans ) ) +
     geom_scattermore(
-      pointsize = asp$figure.gate.point.size,
+      pointsize = figure.gate.point.size,
       color = "black",
       alpha = 1,
       na.rm = TRUE
@@ -299,13 +508,13 @@ create.biplot.test <- function(
     theme_bw() +
     theme(
       plot.margin = margin(
-        asp$figure.margin, asp$figure.margin, asp$figure.margin, asp$figure.margin
+        figure.margin, figure.margin, figure.margin, figure.margin
       ),
       legend.position = "none",
-      axis.ticks = element_line( linewidth = asp$figure.panel.line.size ),
-      axis.text = element_text( size = asp$figure.axis.text.size ),
-      axis.title = element_text( size = asp$figure.axis.title.size ),
-      panel.border = element_rect( fill = NA, linewidth = asp$figure.panel.line.size ),
+      axis.ticks = element_line( linewidth = figure.panel.line.size ),
+      axis.text = element_text( size = figure.axis.text.size ),
+      axis.title = element_text( size = figure.axis.title.size ),
+      panel.border = element_rect( fill = NA, linewidth = figure.panel.line.size ),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank()
     )
@@ -340,7 +549,7 @@ create.biplot.test <- function(
     biplot <- biplot + scale_fill_viridis_c( option = color.palette )
   } else {
     biplot <- biplot +
-      scale_fill_gradientn( colors = asp$density.palette.base.color )
+      scale_fill_gradientn( colors = density.palette.base.color )
   }
 
   # save or return the plot
@@ -358,5 +567,3 @@ create.biplot.test <- function(
 
   print( biplot )
 }
-
-
