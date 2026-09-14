@@ -8,6 +8,7 @@ get.af.spectra(
   unstained.sample,
   asp,
   spectra,
+  unstained.exprs = NULL,
   som.dim = 10,
   dist = 2L,
   figures = TRUE,
@@ -54,6 +55,9 @@ stained samples to which the AF will be applied, ideally.}
 
 \item{spectra}{Spectral signatures of fluorophores, normalized between 0 and
 1, with fluorophores in rows and detectors in columns.}
+
+\item{unstained.exprs}{Optional matrix of data from the unstained sample. The
+columns must match \code{spectra}. Default is \code{NULL}.}
 
 \item{som.dim}{Number of x and y dimensions for the SOM. Default is \code{10}.}
 

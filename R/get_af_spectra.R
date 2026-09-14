@@ -28,6 +28,8 @@
 #'   `get.autospectral.param`.
 #' @param spectra Spectral signatures of fluorophores, normalized between 0 and
 #'   1, with fluorophores in rows and detectors in columns.
+#' @param unstained.exprs Optional matrix of data from the unstained sample. The
+#' columns must match `spectra`. Default is `NULL`.
 #' @param som.dim Number of x and y dimensions for the SOM. Default is `10`.
 #' @param dist Integer 1:4, distance function (1 manhattan, 2 euclidean,
 #'   3 chebyshev, 4 cosine). Default `2`.
@@ -212,6 +214,7 @@ get.af.spectra <- function(
     unstained.sample,
     asp,
     spectra,
+    unstained.exprs      = NULL,
     som.dim              = 10,
     dist                 = 2L,
     figures              = TRUE,
@@ -313,8 +316,15 @@ get.af.spectra <- function(
   # Import and prepare unstained sample
   # ---------------------------------------------------------------------------
 
-  unstained.ff   <- readFCS( unstained.sample, return.keywords = TRUE )
-  file.name      <- resolve.file.name( unstained.sample, unstained.ff$keywords[[ "$FIL" ]], verbose = verbose )
+  if ( is.null( unstained.exprs ) ) {
+    unstained.ff   <- readFCS( unstained.sample, return.keywords = TRUE )
+    file.name      <- resolve.file.name(
+      unstained.sample, unstained.ff$keywords[[ "$FIL" ]], verbose = verbose
+    )
+  } else {
+    unstained.ff   <- list( data = unstained.exprs, keywords = list() )
+    file.name      <- unstained.sample
+  }
 
   # Shared timestamp for this run's final spectral-profile outputs (CSV,
   # trace, heatmap, variant plots), so repeated calls against the same
