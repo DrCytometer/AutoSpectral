@@ -74,6 +74,8 @@ fix.my.unmix(
   n.threads = 1L,
   figures = TRUE,
   save = TRUE,
+  true.spectra = NULL,
+  min.deg.start = 0.1,
   verbose = TRUE,
   keep.history = FALSE
 )
@@ -412,6 +414,17 @@ cores. Default \code{1L}.}
 
 \item{save}{Logical, whether to write the csv outputs. Default \code{TRUE}.}
 
+\item{true.spectra}{Optional numeric matrix (fluorophores x detectors),
+independently-known ground truth with row names matching \code{spectra}.
+Purely diagnostic: when supplied, the returned \code{recovery} table reports
+the angular error against it before and after this run, whether or not
+the run's own gates accepted the row.}
+
+\item{min.deg.start}{Numeric, degrees. Below this starting angular error,
+\code{recovered} is reported as \code{0} instead of \code{(deg.start - deg.after) / deg.start}, since a fluorophore that started (near) exactly correct
+makes that ratio blow up or divide by zero for a change of a fraction
+of a degree. Default \code{0.1}.}
+
 \item{verbose}{Logical, controls messaging. Default \code{TRUE}.}
 
 \item{keep.history}{Logical, whether to retain a per-iteration snapshot of
@@ -470,6 +483,12 @@ coupling to the panel, and the fluorophores frozen because of it.}
 \item{\code{af.assignment}}{\code{NULL} unless \code{bg.mode = "per.cell"}, in which case
 a table of how often each \code{af.spectra} row was assigned and its mean
 fitted abundance, over the (possibly downsampled) events actually used.}
+\item{\code{recovery}}{Data frame of angular errors against \code{true.spectra}.
+\code{recovered} is the fraction of the starting angular error removed,
+\code{(deg.start - deg.after) / deg.start} -- \code{1} is fully recovered, \code{0}
+is no change, negative is worse; see \code{min.deg.start} for the
+near-zero-\code{deg.start} case. \code{NULL} if \code{true.spectra} was not
+supplied.}
 }
 }
 \description{

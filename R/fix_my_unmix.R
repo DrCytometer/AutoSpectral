@@ -59,7 +59,6 @@
 #' Every row update must pass an acceptance stack; a fluorophore that fails any
 #' gate keeps its starting spectrum.
 #'
-#' @importFrom sp point.in.polygon
 #' @importFrom stats mad median qnorm quantile sd setNames lm.wfit
 #'
 #' @param spectra The spectral matrix, fluorophores x detectors, L-infinity
@@ -326,6 +325,16 @@
 #' @param figures Logical, whether to write the spillover heatmap. Default
 #'   `TRUE`.
 #' @param save Logical, whether to write the csv outputs. Default `TRUE`.
+#' @param true.spectra Optional numeric matrix (fluorophores x detectors),
+#'   independently-known ground truth with row names matching `spectra`.
+#'   Purely diagnostic: when supplied, the returned `recovery` table reports
+#'   the angular error against it before and after this run, whether or not
+#'   the run's own gates accepted the row.
+#' @param min.deg.start Numeric, degrees. Below this starting angular error,
+#'   `recovered` is reported as `0` instead of `(deg.start - deg.after) /
+#'   deg.start`, since a fluorophore that started (near) exactly correct
+#'   makes that ratio blow up or divide by zero for a change of a fraction
+#'   of a degree. Default `0.1`.
 #' @param verbose Logical, controls messaging. Default `TRUE`.
 #' @param keep.history Logical, whether to retain a per-iteration snapshot of
 #'   `marker.spillover`, `trust`, the post-decay `spillover.next`, and that
@@ -382,6 +391,12 @@
 #'   \item{`af.assignment`}{`NULL` unless `bg.mode = "per.cell"`, in which case
 #'     a table of how often each `af.spectra` row was assigned and its mean
 #'     fitted abundance, over the (possibly downsampled) events actually used.}
+#'   \item{`recovery`}{Data frame of angular errors against `true.spectra`.
+#'     `recovered` is the fraction of the starting angular error removed,
+#'     `(deg.start - deg.after) / deg.start` -- `1` is fully recovered, `0`
+#'     is no change, negative is worse; see `min.deg.start` for the
+#'     near-zero-`deg.start` case. `NULL` if `true.spectra` was not
+#'     supplied.}
 #' }
 #'
 #' @export
@@ -456,6 +471,8 @@ fix.my.unmix <- function(
     n.threads              = 1L,
     figures                = TRUE,
     save                   = TRUE,
+    true.spectra           = NULL,
+    min.deg.start           = 0.1,
     verbose                = TRUE,
     keep.history           = FALSE
 ) {
@@ -552,7 +569,7 @@ fix.my.unmix <- function(
         landmark.threshold <- apply(
           gate.data, 2, stats::quantile, probs = landmark.quantile, names = FALSE )
 
-      in.polygon <- sp::point.in.polygon(
+      in.polygon <- .point.in.polygon(
         gate.data[ , 1 ], gate.data[ , 2 ], gate.polygon$x, gate.polygon$y ) != 0
 
       # A scatter-only rescue, not a fluorescence one, so it applies
@@ -1408,6 +1425,43 @@ fix.my.unmix <- function(
   }
 
   # ---------------------------------------------------------------------------
+  # Optional recovery diagnostics against ground truth
+  # ---------------------------------------------------------------------------
+
+  accepted <- stats::setNames( rep( FALSE, fluorophore.n ), fluorophores )
+  if ( !is.null( signature.log ) )
+    accepted[ signature.log$fluorophore ] <- signature.log$accepted
+
+  recovery <- NULL
+
+  if ( !is.null( true.spectra ) ) {
+
+    common <- intersect( fluorophores, rownames( true.spectra ) )
+
+    if ( length( common ) > 0 ) {
+
+      deg.start <- .signature.row.angle(
+        spectra[ common, , drop = FALSE ],
+        true.spectra[ common, colnames( spectra ), drop = FALSE ] )
+      deg.after <- .signature.row.angle(
+        spectra.new[ common, , drop = FALSE ],
+        true.spectra[ common, colnames( spectra ), drop = FALSE ] )
+
+      recovered <- ifelse( deg.start < min.deg.start, 0,
+                           ( deg.start - deg.after ) / deg.start )
+
+      recovery <- data.frame(
+        fluorophore = common,
+        deg.start   = deg.start,
+        deg.after   = deg.after,
+        recovered   = recovered,
+        accepted    = accepted[ common ],
+        row.names   = NULL
+      )
+    }
+  }
+
+  # ---------------------------------------------------------------------------
   # Outputs
   # ---------------------------------------------------------------------------
 
@@ -1495,7 +1549,8 @@ fix.my.unmix <- function(
     af.hotspot                = af.hotspot,
     af.frozen                 = af.frozen,
     af.assignment             = af.assignment,
-    leakage.prior             = prior
+    leakage.prior             = prior,
+    recovery                   = recovery
   )
 }
 
