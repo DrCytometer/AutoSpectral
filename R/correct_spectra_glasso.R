@@ -38,11 +38,14 @@
 #' The matrix is used only to refine which events count as negative for each
 #' target; the spectra themselves are re-measured directly from background
 #' subtracted raw data by `extract.raw.signature()`, exactly as
-#' `fix.my.unmix()`'s second phase does, with one difference: the
-#' co-fluorophores carried into that fit (`active`) are the ones this
-#' function's lasso selected for that target, not the whole panel run through
-#' a ridge penalty. A pair the lasso found no evidence of coupling for is left
-#' out of the signature fit entirely, rather than being included and shrunk.
+#' `fix.my.unmix()`'s second phase does, with one difference: by default
+#' (`nuisance.set = "selected"`) the co-fluorophores carried into that fit
+#' (`active`) are the ones this function's lasso selected for that target,
+#' not the whole panel run through a ridge penalty. A pair the lasso found no
+#' evidence of coupling for is left out of the signature fit entirely, rather
+#' than being included and shrunk. `nuisance.set` controls this choice
+#' directly; see its own documentation for the other two settings and when
+#' each is the right one.
 #'
 #' A coefficient's sign carries the identification, and it is not symmetric
 #' in target and source. A marker-negative population cannot read below zero
@@ -236,6 +239,20 @@
 #'   `extract.raw.signature()`. Default `50`.
 #' @param multivariate Logical, passed to `extract.raw.signature()`. Default
 #'   `TRUE`.
+#' @param nuisance.set Character, which other fluorophores are removed
+#'   alongside `target` when its signature is re-measured. `"selected"`
+#'   (default) uses `active.set[[target]]`, phase one's own finding of which
+#'   fluorophores are actually coupled to this one, and preserves this
+#'   function's original behaviour. `"panel"` always removes the whole
+#'   panel, `fix.my.unmix()`'s convention, trading that specificity for
+#'   protection against real coupling the lasso missed. `"target.only"`
+#'   removes nothing, the ordinary single-stain-control assumption that
+#'   every other channel reads true zero in this population; use it for a best
+#'   possible output (unrealistic) when `fully.stained.sample` is actually a
+#'   concatenated single-stained control set rather than a fully stained sample,
+#'   since there every other luorophore's apparent abundance in a given tube is
+#'   compensation artefact, not co-expression a ridge fit should partial out.
+#'   Default `"selected"`.
 #' @param ridge Numeric, ridge penalty for that joint fit. Default `1e-6`.
 #' @param output.suffix Character, appended to the csv and figure filenames
 #'   so a run of this function does not overwrite `fix.my.unmix()`'s output
@@ -243,6 +260,16 @@
 #' @param figures Logical, whether to write the spillover heatmap. Default
 #'   `TRUE`.
 #' @param save Logical, whether to write the csv outputs. Default `TRUE`.
+#' @param true.spectra Optional numeric matrix (fluorophores x detectors),
+#'   independently-known ground truth with row names matching `spectra`.
+#'   Purely diagnostic: when supplied, the returned `recovery` table reports
+#'   the angular error against it before and after this run, whether or not
+#'   the run's own gates accepted the row.
+#' @param min.deg.start Numeric, degrees. Below this starting angular error,
+#'   `recovered` is reported as `0` instead of `(deg.start - deg.after) /
+#'   deg.start`, since a fluorophore that started (near) exactly correct
+#'   makes that ratio blow up or divide by zero for a change of a fraction
+#'   of a degree. Default `0.1`.
 #' @param verbose Logical, controls messaging. Default `TRUE`.
 #'
 #' @return A named list:
@@ -267,7 +294,11 @@
 #'     events used, candidate sources, sources selected, and the chosen
 #'     `lambda`.}
 #'   \item{`signature.log`}{Per-fluorophore signature statistics and gate
-#'     outcomes, from `extract.raw.signature()`.}
+#'     outcomes, from `extract.raw.signature()`. `n.active.selected` is
+#'     phase one's own active-set finding regardless of `nuisance.set`;
+#'     `n.active` is how many fluorophores were actually removed in that
+#'     row's fit, which only differs from `n.active.selected` when
+#'     `nuisance.set != "selected"`.}
 #'   \item{`convergence.log`}{Per-iteration delta history.}
 #'   \item{`active.set`}{Named list, the fluorophores carried into each
 #'     target's signature fit: itself, whichever sources its own row
@@ -283,9 +314,14 @@
 #'     coefficient candidate source.}
 #'   \item{`af.basis`, `af.hotspot`, `af.frozen`}{The autofluorescence basis,
 #'     its coupling to the panel, and the fluorophores frozen because of it.}
+#'   \item{`recovery`}{Data frame of angular errors against `true.spectra`.
+#'     `recovered` is the fraction of the starting angular error removed,
+#'     `(deg.start - deg.after) / deg.start` -- `1` is fully recovered, `0`
+#'     is no change, negative is worse; see `min.deg.start` for the
+#'     near-zero-`deg.start` case. `NULL` if `true.spectra` was not
+#'     supplied.}
 #' }
 #'
-#' @importFrom sp point.in.polygon
 #' @importFrom stats approx mad median quantile sd setNames
 #'
 #' @export
@@ -345,14 +381,18 @@ correct.spectra.glasso <- function(
     n.levels                       = 60L,
     min.bin.events                 = 50L,
     multivariate                   = TRUE,
+    nuisance.set                   = c( "selected", "panel", "target.only" ),
     ridge                          = 1e-6,
     output.suffix                  = "_glasso",
     figures                        = TRUE,
     save                           = TRUE,
+    true.spectra                   = NULL,
+    min.deg.start                   = 0.1,
     verbose                        = TRUE
 ) {
 
-  bg.mode <- match.arg( bg.mode )
+  bg.mode      <- match.arg( bg.mode )
+  nuisance.set <- match.arg( nuisance.set )
 
   # Set once for the whole run, matching fix.my.unmix(): the lasso path's
   # own subsampling and the downsample below both draw on it.
@@ -409,8 +449,8 @@ correct.spectra.glasso <- function(
         scatter.and.channel.label = flow.control$scatter.and.channel.label,
         control.type = "cells", asp )
 
-    keep <- which( sp::point.in.polygon( gate.data[ , 1 ], gate.data[ , 2 ],
-                                         gate.polygon$x, gate.polygon$y ) != 0 )
+    keep <- which( .point.in.polygon( gate.data[ , 1 ], gate.data[ , 2 ],
+                                      gate.polygon$x, gate.polygon$y ) != 0 )
 
     list( data = expr.data[ keep, flow.control$spectral.channel, drop = FALSE ],
           gate = gate.polygon )
@@ -804,6 +844,23 @@ correct.spectra.glasso <- function(
     unique( c( own.set[[ j ]], reversed.donors[[ j ]] ) ) )
   names( active.set ) <- fluorophores
 
+  # `active.set` above is phase one's own finding and is always returned as
+  # such, regardless of `nuisance.set`. What actually gets removed alongside
+  # `target` in phase two is a separate choice, since the right one depends
+  # on what `fully.stained.sample` actually is: a fully stained sample,
+  # where a fluorophore the lasso missed is still real co-expression a ridge
+  # fit should partial out, or a concatenated single-stained control set,
+  # where every other fluorophore's apparent abundance in a given tube is
+  # compensation artefact and belongs out of the fit regardless of what
+  # phase one found.
+  signature.active <- switch(
+    nuisance.set,
+    selected    = active.set,
+    panel       = stats::setNames(
+      rep( list( fluorophores ), fluorophore.n ), fluorophores ),
+    target.only = stats::setNames( as.list( fluorophores ), fluorophores )
+  )
+
   # ---------------------------------------------------------------------------
   # Phase two: signatures re-measured in raw space
   # ---------------------------------------------------------------------------
@@ -862,7 +919,7 @@ correct.spectra.glasso <- function(
           spectra        = spectra.new[ fluorophores, , drop = FALSE ],
           abundance      = unmixed.comp[ idx, , drop = FALSE ],
           target         = j,
-          active         = active.set[[ j ]],
+          active         = signature.active[[ j ]],
           intercept      = intercept,
           multivariate   = multivariate,
           ridge          = ridge,
@@ -998,9 +1055,9 @@ correct.spectra.glasso <- function(
       }
 
       log.rows[[ length( log.rows ) + 1L ]] <- data.frame(
-        fluorophore = j,
-        n.events    = length( idx ),
-        n.active    = length( active.set[[ j ]] ),
+        fluorophore       = j,
+        n.events          = length( idx ),
+        n.active.selected = length( active.set[[ j ]] ),
         stats.block,
         resid.rel.full  = resid.rel.full,
         leak.before     = leak.before,
@@ -1022,6 +1079,43 @@ correct.spectra.glasso <- function(
         if ( any( signature.log$accepted ) ) paste0(
           ": ", paste( signature.log$fluorophore[ signature.log$accepted ],
                        collapse = ", " ) ) else "" ) )
+  }
+
+  accepted <- stats::setNames( rep( FALSE, fluorophore.n ), fluorophores )
+  if ( !is.null( signature.log ) )
+    accepted[ signature.log$fluorophore ] <- signature.log$accepted
+
+  # ---------------------------------------------------------------------------
+  # Optional recovery diagnostics against ground truth
+  # ---------------------------------------------------------------------------
+
+  recovery <- NULL
+
+  if ( !is.null( true.spectra ) ) {
+
+    common <- intersect( fluorophores, rownames( true.spectra ) )
+
+    if ( length( common ) > 0 ) {
+
+      deg.start <- .signature.row.angle(
+        spectra[ common, , drop = FALSE ],
+        true.spectra[ common, colnames( spectra ), drop = FALSE ] )
+      deg.after <- .signature.row.angle(
+        spectra.new[ common, , drop = FALSE ],
+        true.spectra[ common, colnames( spectra ), drop = FALSE ] )
+
+      recovered <- ifelse( deg.start < min.deg.start, 0,
+                           ( deg.start - deg.after ) / deg.start )
+
+      recovery <- data.frame(
+        fluorophore = common,
+        deg.start   = deg.start,
+        deg.after   = deg.after,
+        recovered   = recovered,
+        accepted    = accepted[ common ],
+        row.names   = NULL
+      )
+    }
   }
 
   # ---------------------------------------------------------------------------
@@ -1067,7 +1161,8 @@ correct.spectra.glasso <- function(
     reversed.donors    = reversed.donors,
     af.basis           = background.basis,
     af.hotspot         = af.hotspot,
-    af.frozen          = af.frozen
+    af.frozen          = af.frozen,
+    recovery           = recovery
   )
 }
 

@@ -59,10 +59,13 @@ correct.spectra.glasso(
   n.levels = 60L,
   min.bin.events = 50L,
   multivariate = TRUE,
+  nuisance.set = c("selected", "panel", "target.only"),
   ridge = 1e-06,
   output.suffix = "_glasso",
   figures = TRUE,
   save = TRUE,
+  true.spectra = NULL,
+  min.deg.start = 0.1,
   verbose = TRUE
 )
 }
@@ -255,6 +258,21 @@ passed to \code{extract.raw.signature()}. Default \code{60}.}
 \item{multivariate}{Logical, passed to \code{extract.raw.signature()}. Default
 \code{TRUE}.}
 
+\item{nuisance.set}{Character, which other fluorophores are removed
+alongside \code{target} when its signature is re-measured. \code{"selected"}
+(default) uses \code{active.set[[target]]}, phase one's own finding of which
+fluorophores are actually coupled to this one, and preserves this
+function's original behaviour. \code{"panel"} always removes the whole
+panel, \code{fix.my.unmix()}'s convention, trading that specificity for
+protection against real coupling the lasso missed. \code{"target.only"}
+removes nothing, the ordinary single-stain-control assumption that
+every other channel reads true zero in this population; use it for a best
+possible output (unrealistic) when \code{fully.stained.sample} is actually a
+concatenated single-stained control set rather than a fully stained sample,
+since there every other luorophore's apparent abundance in a given tube is
+compensation artefact, not co-expression a ridge fit should partial out.
+Default \code{"selected"}.}
+
 \item{ridge}{Numeric, ridge penalty for that joint fit. Default \code{1e-6}.}
 
 \item{output.suffix}{Character, appended to the csv and figure filenames
@@ -265,6 +283,17 @@ in the same directory. Default \code{"_glasso"}.}
 \code{TRUE}.}
 
 \item{save}{Logical, whether to write the csv outputs. Default \code{TRUE}.}
+
+\item{true.spectra}{Optional numeric matrix (fluorophores x detectors),
+independently-known ground truth with row names matching \code{spectra}.
+Purely diagnostic: when supplied, the returned \code{recovery} table reports
+the angular error against it before and after this run, whether or not
+the run's own gates accepted the row.}
+
+\item{min.deg.start}{Numeric, degrees. Below this starting angular error,
+\code{recovered} is reported as \code{0} instead of \code{(deg.start - deg.after) / deg.start}, since a fluorophore that started (near) exactly correct
+makes that ratio blow up or divide by zero for a change of a fraction
+of a degree. Default \code{0.1}.}
 
 \item{verbose}{Logical, controls messaging. Default \code{TRUE}.}
 }
@@ -291,7 +320,11 @@ implicated, not the target - see \code{active.set}.}
 events used, candidate sources, sources selected, and the chosen
 \code{lambda}.}
 \item{\code{signature.log}}{Per-fluorophore signature statistics and gate
-outcomes, from \code{extract.raw.signature()}.}
+outcomes, from \code{extract.raw.signature()}. \code{n.active.selected} is
+phase one's own active-set finding regardless of \code{nuisance.set};
+\code{n.active} is how many fluorophores were actually removed in that
+row's fit, which only differs from \code{n.active.selected} when
+\code{nuisance.set != "selected"}.}
 \item{\code{convergence.log}}{Per-iteration delta history.}
 \item{\code{active.set}}{Named list, the fluorophores carried into each
 target's signature fit: itself, whichever sources its own row
@@ -307,6 +340,12 @@ fluorophore whose own row-fit found this one as a negative-
 coefficient candidate source.}
 \item{\code{af.basis}, \code{af.hotspot}, \code{af.frozen}}{The autofluorescence basis,
 its coupling to the panel, and the fluorophores frozen because of it.}
+\item{\code{recovery}}{Data frame of angular errors against \code{true.spectra}.
+\code{recovered} is the fraction of the starting angular error removed,
+\code{(deg.start - deg.after) / deg.start} -- \code{1} is fully recovered, \code{0}
+is no change, negative is worse; see \code{min.deg.start} for the
+near-zero-\code{deg.start} case. \code{NULL} if \code{true.spectra} was not
+supplied.}
 }
 }
 \description{
@@ -345,11 +384,14 @@ As in \code{fix.my.unmix()}, nothing is back-solved out of the spillover matrix.
 The matrix is used only to refine which events count as negative for each
 target; the spectra themselves are re-measured directly from background
 subtracted raw data by \code{extract.raw.signature()}, exactly as
-\code{fix.my.unmix()}'s second phase does, with one difference: the
-co-fluorophores carried into that fit (\code{active}) are the ones this
-function's lasso selected for that target, not the whole panel run through
-a ridge penalty. A pair the lasso found no evidence of coupling for is left
-out of the signature fit entirely, rather than being included and shrunk.
+\code{fix.my.unmix()}'s second phase does, with one difference: by default
+(\code{nuisance.set = "selected"}) the co-fluorophores carried into that fit
+(\code{active}) are the ones this function's lasso selected for that target,
+not the whole panel run through a ridge penalty. A pair the lasso found no
+evidence of coupling for is left out of the signature fit entirely, rather
+than being included and shrunk. \code{nuisance.set} controls this choice
+directly; see its own documentation for the other two settings and when
+each is the right one.
 
 A coefficient's sign carries the identification, and it is not symmetric
 in target and source. A marker-negative population cannot read below zero
