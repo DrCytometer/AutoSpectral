@@ -132,6 +132,14 @@
 #'   background.
 #' @param large.gate Logical, whether to use a large scatter gate. Default
 #'   `TRUE`.
+#' @param scatter.gate Logical, whether to gate on scatter at all before
+#'   fitting. `FALSE` keeps every event in both `unstained.sample` and
+#'   `fully.stained.sample`, ignoring `large.gate` entirely. As in
+#'   `fix.my.unmix()`, turn off when a population the correction needs -- a
+#'   large, highly autofluorescent cell type such as alveolar macrophages,
+#'   say -- sits far enough outside the main scatter population that no
+#'   single gate shape can be expected to enclose everyone the correction
+#'   needs. Default `FALSE`.
 #' @param downsample Logical or numeric. `FALSE` disables downsampling; a
 #'   numeric gives the number of events to use, stratified by dominant
 #'   fluorophore under the starting spectra. Default `20000`.
@@ -338,6 +346,7 @@ correct.spectra.glasso <- function(
     af.n.pc                     = "auto",
     bg.mode                     = c( "af.deconv", "af.row", "global.mean", "none" ),
     large.gate                  = TRUE,
+    scatter.gate                = FALSE,
     downsample                  = 20000,
     downsample.background.frac  = 0.3,
     downsample.min.stratum      = 2000L,
@@ -442,15 +451,23 @@ correct.spectra.glasso <- function(
     expr.data <- readFCS( file.name, columns = flow.control$scatter.and.channel.spectral )
     gate.data <- expr.data[ , flow.control$scatter.parameter ]
 
-    if ( is.null( gate.polygon ) )
-      gate.polygon <- do.gate(
-        gate.data, viability.gate = FALSE, large.gate = large.gate,
-        samp = label,
-        scatter.and.channel.label = flow.control$scatter.and.channel.label,
-        control.type = "cells", asp )
+    if ( !scatter.gate ) {
 
-    keep <- which( .point.in.polygon( gate.data[ , 1 ], gate.data[ , 2 ],
-                                      gate.polygon$x, gate.polygon$y ) != 0 )
+      keep         <- seq_len( nrow( expr.data ) )
+      gate.polygon <- NULL
+
+    } else {
+
+      if ( is.null( gate.polygon ) )
+        gate.polygon <- do.gate(
+          gate.data, viability.gate = FALSE, large.gate = large.gate,
+          samp = label,
+          scatter.and.channel.label = flow.control$scatter.and.channel.label,
+          control.type = "cells", asp )
+
+      keep <- which( .point.in.polygon( gate.data[ , 1 ], gate.data[ , 2 ],
+                                        gate.polygon$x, gate.polygon$y ) != 0 )
+    }
 
     list( data = expr.data[ keep, flow.control$spectral.channel, drop = FALSE ],
           gate = gate.polygon )
@@ -1321,12 +1338,16 @@ correct.spectra.glasso <- function(
 #' are weighted-centred and predictors weighted-standardised so a single
 #' `lambda` path is comparable across sources in different abundance units;
 #' the intercept is recovered afterward in closed form rather than treated
-#' as a penalised coordinate. Coordinates are updated by the standard
-#' running-residual trick (add a coordinate's own contribution back into the
-#' residual before its update, remove the new contribution after), which
-#' keeps a full sweep at O(events x sources) rather than O(events x
-#' sources^2); this is the part a future Rcpp port, following the pattern
-#' already set by `fix_huber_slope_rcpp()`, would target first.
+#' as a penalised coordinate. Coordinates are updated by covariance updates:
+#' the predictors' weighted Gram matrix and the response's weighted gradient
+#' are formed once per call, and each coordinate step then adjusts a
+#' length-`sources` gradient vector rather than re-touching every event, so a
+#' full sweep costs O(sources^2) once the O(events x sources^2) Gram matrix
+#' is built, instead of O(events x sources) on every single sweep. This
+#' trades an O(events) cost paid once per call for removing it from what was
+#' previously the innermost loop, and is the standard glmnet-style
+#' optimisation for the events-much-greater-than-sources regime this
+#' function always runs in.
 #'
 #' @param X Numeric matrix (events x predictors).
 #' @param y Numeric vector, length `nrow(X)`.
@@ -1369,6 +1390,11 @@ correct.spectra.glasso <- function(
   wz2 <- colSums( wz * Z ) / w.sum
   wz2[ wz2 <= 0 ] <- 1
 
+  # Weighted Gram matrix, sources x sources. Built once so every coordinate
+  # update below can work off it (O(sources)) instead of the full event
+  # vectors (O(events)); its diagonal reproduces `wz2`.
+  G <- crossprod( Z, wz ) / w.sum
+
   grad0      <- as.numeric( crossprod( Z, weights * yc ) ) / w.sum
   lambda.max <- max( abs( grad0 ) )
 
@@ -1388,7 +1414,7 @@ correct.spectra.glasso <- function(
 
   beta.path <- matrix( 0, p, n.lambda, dimnames = list( fluor.names, NULL ) )
   beta.curr <- rep( 0, p )
-  resid     <- yc
+  grad.curr <- grad0
 
   for ( li in seq_len( n.lambda ) ) {
 
@@ -1402,13 +1428,13 @@ correct.spectra.glasso <- function(
 
         beta.old.k <- beta.curr[ k ]
 
-        r.k <- resid + Z[ , k ] * beta.old.k
-        z.k <- sum( wz[ , k ] * r.k ) / w.sum
+        z.k <- grad.curr[ k ] + wz2[ k ] * beta.old.k
 
         beta.new.k <- sign( z.k ) * max( abs( z.k ) - lam, 0 ) / wz2[ k ]
 
         if ( beta.new.k != beta.old.k ) {
-          resid          <- resid - Z[ , k ] * ( beta.new.k - beta.old.k )
+          delta          <- beta.new.k - beta.old.k
+          grad.curr      <- grad.curr - G[ , k ] * delta
           beta.curr[ k ] <- beta.new.k
         }
 

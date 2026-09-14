@@ -16,6 +16,7 @@ correct.spectra.glasso(
   af.n.pc = "auto",
   bg.mode = c("af.deconv", "af.row", "global.mean", "none"),
   large.gate = TRUE,
+  scatter.gate = FALSE,
   downsample = 20000,
   downsample.background.frac = 0.3,
   downsample.min.stratum = 2000L,
@@ -107,6 +108,15 @@ background.}
 
 \item{large.gate}{Logical, whether to use a large scatter gate. Default
 \code{TRUE}.}
+
+\item{scatter.gate}{Logical, whether to gate on scatter at all before
+fitting. \code{FALSE} keeps every event in both \code{unstained.sample} and
+\code{fully.stained.sample}, ignoring \code{large.gate} entirely. As in
+\code{fix.my.unmix()}, turn off when a population the correction needs -- a
+large, highly autofluorescent cell type such as alveolar macrophages,
+say -- sits far enough outside the main scatter population that no
+single gate shape can be expected to enclose everyone the correction
+needs. Default \code{FALSE}.}
 
 \item{downsample}{Logical or numeric. \code{FALSE} disables downsampling; a
 numeric gives the number of events to use, stratified by dominant
