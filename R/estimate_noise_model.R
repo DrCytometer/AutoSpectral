@@ -31,7 +31,7 @@
 #' @param min.bin.n Integer, minimum events per bin. Default `50`.
 #' @param trim.quantile Numeric, upper quantile of each detector discarded
 #'   before binning, to exclude saturation. Default `0.999`.
-#' @param verbose Logical. Default `TRUE`.
+#' @param verbose Logical. Default `FALSE`.
 #' @param af.pc.n Integer, number of principal components to use to describe
 #' `af.spectra`. Default is `5`.
 #' @param af.raw.data Optional numeric matrix, or a path to an FCS file, of
@@ -113,7 +113,7 @@ estimate.noise.model <- function(
     n.bins        = 40L,
     min.bin.n     = 50L,
     trim.quantile = 0.999,
-    verbose       = TRUE,
+    verbose       = FALSE,
     af.pc.n       = 5L,
     af.raw.data      = NULL,
     af.basis.n.cells = 20000L,
@@ -266,7 +266,7 @@ estimate.noise.model <- function(
     n.tranche      = 10L,
     dof.correction = NULL,
     file.id        = NULL,
-    verbose        = TRUE
+    verbose        = FALSE
 ) {
 
   det.n <- length( det.names )
@@ -497,9 +497,10 @@ estimate.noise.model <- function(
       stop( "Mean-variance regression failed at every detector. Check that ",
             "`raw.data` spans a range of intensities and that `spectra` ",
             "matches the file.", call. = FALSE )
-    warning( "Non-positive variance slope at ", sum( bad.kappa ), " detector(s): ",
-             paste( det.names[ bad.kappa ], collapse = ", " ),
-             "; filled from the pooled median.", call. = FALSE )
+    if ( verbose )
+      warning( "Non-positive variance slope at ", sum( bad.kappa ), " detector(s): ",
+               paste( det.names[ bad.kappa ], collapse = ", " ),
+               "; filled from the pooled median.", call. = FALSE )
     kappa.source[ bad.kappa ] <- "pooled.median"
     kappa[ bad.kappa ] <- stats::median( kappa[ !bad.kappa ] )
   }

@@ -11,7 +11,7 @@ estimate.noise.model(
   n.bins = 40L,
   min.bin.n = 50L,
   trim.quantile = 0.999,
-  verbose = TRUE,
+  verbose = FALSE,
   af.pc.n = 5L,
   af.raw.data = NULL,
   af.basis.n.cells = 20000L,
@@ -38,7 +38,7 @@ returned by \code{get.af.spectra()}. Strongly recommended for cell controls.}
 \item{trim.quantile}{Numeric, upper quantile of each detector discarded
 before binning, to exclude saturation. Default \code{0.999}.}
 
-\item{verbose}{Logical. Default \code{TRUE}.}
+\item{verbose}{Logical. Default \code{FALSE}.}
 
 \item{af.pc.n}{Integer, number of principal components to use to describe
 \code{af.spectra}. Default is \code{5}.}
