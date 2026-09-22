@@ -389,28 +389,21 @@ unmix.fcs <- function(
 
   # extract spectral data
   spectral.channel <- colnames( spectra )
-  other.channels <- setdiff( original.param, spectral.channel )
 
-  # remove height and width if present (also covers CytoStellar spectra
-  # built on -H rather than -A: strip whichever suffix is present, drop the
-  # other two)
-  for ( ch in spectral.channel[ grepl( "-A$|-H$", spectral.channel ) ] ) {
-    base <- sub( "-A$|-H$", "", ch )
-    other.channels <- setdiff( other.channels, paste0( base, c( "-A", "-H", "-W" ) ) )
-  }
-  # retain raw spectral data if desired
-  if ( include.raw ) other.channels <- c( other.channels, spectral.channel )
-
-  # discard imaging unless otherwise specified
-  if ( grepl( "Discover", asp$cytometer ) && !include.imaging ) {
-    other.channels <- intersect( other.channels, asp$time.and.scatter )
-  }
-
-  # discard FL channels from Xenith unless specified
-  if ( grepl( "Xenith", asp$cytometer ) && !include.raw ) {
-    keep.regex <- paste( asp$time.and.scatter, collapse = "|" )
-    other.channels <- other.channels[ grepl( keep.regex, other.channels, ignore.case = TRUE ) ]
-  }
+  # select the parameters to carry through unchanged: time, scatter and
+  # (optionally) imaging and raw detector data. Any parameter that is
+  # neither one of these nor a detector used in unmixing -- most notably
+  # the instrument's own unmixed fluorophore parameters, which some
+  # cytometers (e.g. the BD FACSDiscover family, FACSymphony A5 SE) write
+  # into the same "raw" FCS file -- is dropped rather than carried through.
+  other.channels <- .select.retained.channels(
+    original.param   = original.param,
+    spectral.channel = spectral.channel,
+    asp              = asp,
+    include.raw      = include.raw,
+    include.imaging  = include.imaging,
+    verbose          = verbose
+  )
 
   # set multithreading
   if ( is.null( threads ) ) threads <- asp$worker.process.n
