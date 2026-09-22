@@ -117,6 +117,12 @@
 #' @param refine.af.quantile Numeric, default `0.5`. Fraction of cells taken
 #'   forward for additional AF passes (see `n.af.passes`). Only used when
 #'   `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+#' @param estimate.time,estimate.sample.events Passed through unchanged to
+#'   `unmix.fcs()` for each file; see `?unmix.fcs`. Default `FALSE` here
+#'   (unlike `unmix.fcs()`, where it defaults `TRUE`): across a folder of
+#'   files the per-file probe overhead adds up, and it is usually more
+#'   useful to call `estimate.unmix.time()` once against a representative
+#'   file before starting the batch than to re-probe every file in it.
 #' @param ... Ignored. Previously used for deprecated arguments such as
 #' `calculate.error`.
 #'
@@ -157,6 +163,8 @@ unmix.folder <- function(
     collinear.threshold    = 0.5,
     joint.pair.resolution  = TRUE,
     refine.af.quantile     = 0.5,
+    estimate.time           = FALSE,
+    estimate.sample.events  = 5000,
     ...
 ) {
 
@@ -330,7 +338,9 @@ unmix.folder <- function(
     alpha                 = alpha,
     collinear.threshold   = collinear.threshold,
     joint.pair.resolution = joint.pair.resolution,
-    refine.af.quantile    = refine.af.quantile
+    refine.af.quantile    = refine.af.quantile,
+    estimate.time          = estimate.time,
+    estimate.sample.events = estimate.sample.events
   )
 
   # set up parallel processing

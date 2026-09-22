@@ -37,6 +37,8 @@ unmix.folder(
   collinear.threshold = 0.5,
   joint.pair.resolution = TRUE,
   refine.af.quantile = 0.5,
+  estimate.time = FALSE,
+  estimate.sample.events = 5000,
   ...
 )
 }
@@ -180,6 +182,13 @@ conflict-resolution for collinear fluorophore pairs. Only used when
 \item{refine.af.quantile}{Numeric, default \code{0.5}. Fraction of cells taken
 forward for additional AF passes (see \code{n.af.passes}). Only used when
 \code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}.}
+
+\item{estimate.time, estimate.sample.events}{Passed through unchanged to
+\code{unmix.fcs()} for each file; see \code{?unmix.fcs}. Default \code{FALSE} here
+(unlike \code{unmix.fcs()}, where it defaults \code{TRUE}): across a folder of
+files the per-file probe overhead adds up, and it is usually more
+useful to call \code{estimate.unmix.time()} once against a representative
+file before starting the batch than to re-probe every file in it.}
 
 \item{...}{Ignored. Previously used for deprecated arguments such as
 \code{calculate.error}.}
