@@ -289,8 +289,14 @@ unmix.folder <- function(
 
   files.to.unmix <- list.files( fcs.dir, pattern = ".fcs", full.names = TRUE )
 
-  # unmix.fcs() only reads flow.control$voltages
-  flow.control.slim <- list( voltages = flow.control$voltages )
+  # unmix.fcs() and define.keywords() need flow.control's per-sample
+  # metadata (voltages, sample, antigen, channel, etc.), but not the raw
+  # or cleaned single-stained control event data, which dominate its size.
+  # Drop just those two before this object is copied into args.list and
+  # passed to every file in the folder (and to every parallel worker).
+  flow.control.slim <- flow.control
+  flow.control.slim$expr.data <- NULL
+  flow.control.slim$clean.expr <- NULL
 
   # construct list of arguments
   args.list <- list(
