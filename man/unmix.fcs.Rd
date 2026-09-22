@@ -37,6 +37,8 @@ unmix.fcs(
   collinear.threshold = 0.5,
   joint.pair.resolution = TRUE,
   refine.af.quantile = 0.5,
+  estimate.time = TRUE,
+  estimate.sample.events = 5000,
   ...
 )
 }
@@ -181,6 +183,19 @@ conflict-resolution for collinear fluorophore pairs. Only used when
 \item{refine.af.quantile}{Numeric, default \code{0.5}. Fraction of cells taken
 forward for additional AF passes (see \code{n.af.passes}). Only used when
 \code{pipeline = "joint"}. Passed to \code{unmix.autospectral.rcpp()}.}
+
+\item{estimate.time}{Logical, default \code{TRUE}. Before unmixing the first
+chunk, times a small probe drawn from that chunk's already-loaded data
+and messages a rough total-time estimate. Only runs for methods slow
+enough to warrant it (\code{Poisson}, \code{FastPoisson}, or \code{AutoSpectral} with
+\code{spectra.variants} supplied), and only when the file is bigger than
+\code{estimate.sample.events}; a no-op otherwise. Requires \code{verbose = TRUE}
+to have any effect, since the estimate is only printed. See
+\code{?estimate.unmix.time} for the same check usable standalone, ahead of
+a run.}
+
+\item{estimate.sample.events}{Numeric, default \code{5000}. Number of events
+used for the \code{estimate.time} probe. Only relevant when \code{estimate.time = TRUE} and the method qualifies; see \code{estimate.time}.}
 
 \item{...}{Ignored. Used to catch deprecated arguments.}
 }

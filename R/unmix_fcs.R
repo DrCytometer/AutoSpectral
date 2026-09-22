@@ -117,6 +117,18 @@
 #' @param refine.af.quantile Numeric, default `0.5`. Fraction of cells taken
 #'   forward for additional AF passes (see `n.af.passes`). Only used when
 #'   `pipeline = "joint"`. Passed to `unmix.autospectral.rcpp()`.
+#' @param estimate.time Logical, default `TRUE`. Before unmixing the first
+#'   chunk, times a small probe drawn from that chunk's already-loaded data
+#'   and messages a rough total-time estimate. Only runs for methods slow
+#'   enough to warrant it (`Poisson`, `FastPoisson`, or `AutoSpectral` with
+#'   `spectra.variants` supplied), and only when the file is bigger than
+#'   `estimate.sample.events`; a no-op otherwise. Requires `verbose = TRUE`
+#'   to have any effect, since the estimate is only printed. See
+#'   `?estimate.unmix.time` for the same check usable standalone, ahead of
+#'   a run.
+#' @param estimate.sample.events Numeric, default `5000`. Number of events
+#'   used for the `estimate.time` probe. Only relevant when `estimate.time
+#'   = TRUE` and the method qualifies; see `estimate.time`.
 #' @param ... Ignored. Used to catch deprecated arguments.
 #'
 #' @return None. The function writes the unmixed FCS data to a file.
@@ -156,6 +168,8 @@ unmix.fcs <- function(
     collinear.threshold    = 0.5,
     joint.pair.resolution  = TRUE,
     refine.af.quantile     = 0.5,
+    estimate.time           = TRUE,
+    estimate.sample.events  = 5000,
     ...
 ) {
 
@@ -447,8 +461,7 @@ unmix.fcs <- function(
       message( sprintf( "Processing chunk %d/%d (Events %d to %d)", i, chunk.n, s.row, e.row ) )
 
     # read in only events from this chunk, and only the columns this run
-    # actually needs -- avoids decoding/materializing unused parameters on
-    # wide panels (Discover)
+    # actually needs
     chunk.data <- readFCS(
       fcs.file,
       return.keywords = FALSE,
@@ -459,169 +472,75 @@ unmix.fcs <- function(
     chunk.spectral <- chunk.data[ , spectral.channel, drop = FALSE ]
     chunk.other <- chunk.data[ , other.channels, drop = FALSE ]
 
+    # on the first chunk, give a quick time estimate for slow methods before
+    # committing to the full run. Skipped for files too small to make
+    # a separate probe worthwhile.
+    if ( i == 1 && estimate.time && verbose &&
+         total.events > estimate.sample.events &&
+         .unmix.method.is.slow( method, spectra.variants ) ) {
+
+      probe <- .probe.unmix.rate(
+        chunk.spectral         = chunk.spectral,
+        spectra                = spectra,
+        method                 = method,
+        sample.n               = estimate.sample.events,
+        af.spectra             = af.spectra,
+        spectra.variants       = spectra.variants,
+        use.dist0              = use.dist0,
+        speed                  = speed,
+        parallel               = parallel,
+        threads                = threads,
+        n.variants             = n.variants,
+        pipeline.arg           = pipeline.arg,
+        n.af.passes            = n.af.passes,
+        n.passes               = n.passes,
+        cell.weight            = cell.weight,
+        noise.floor            = noise.floor,
+        alpha                  = alpha,
+        collinear.threshold    = collinear.threshold,
+        joint.pair.resolution  = joint.pair.resolution,
+        refine.af.quantile     = refine.af.quantile,
+        asp                    = asp,
+        weights                = weights,
+        divergence.threshold   = divergence.threshold,
+        divergence.handling    = divergence.handling,
+        balance.weight         = balance.weight
+      )
+
+      message( sprintf(
+        "Estimated unmixing time: %s for %d events across %d chunk(s), based on a %d-event probe (%.0f events/sec). Treat as accurate to within roughly 4-5x.",
+        .format.duration( total.events / probe$events.per.second ),
+        total.events, chunk.n, probe$sample.n, probe$events.per.second
+      ) )
+    }
+
     # unmix this chunk of data with the selected unmixing method
-    unmixed.chunk <- switch(
-      method,
-      "OLS" = unmix.ols( chunk.spectral, spectra ),
-      "WLS" = unmix.wls( chunk.spectral, spectra, weights ),
-      "AutoSpectral" = {
-
-        if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) ) {
-          # AutoSpectralRcpp available: hand the pipeline switch off to
-          # unmix.autospectral.rcpp(), which routes to the correct C++ function
-          # and falls back to the appropriate pure-R function internally.
-          tryCatch(
-            AutoSpectralRcpp::unmix.autospectral.rcpp(
-              raw.data         = chunk.spectral,
-              spectra          = spectra,
-              af.spectra       = af.spectra,
-              spectra.variants = spectra.variants,
-              use.dist0        = use.dist0,
-              verbose          = verbose,
-              speed            = speed,
-              parallel         = parallel,
-              threads          = threads,
-              n.variants       = n.variants,
-              pipeline         = pipeline.arg,
-              n.af.passes      = n.af.passes,
-              n.passes         = n.passes,
-              cell.weight      = cell.weight,
-              noise.floor      = noise.floor,
-              alpha            = alpha,
-              collinear.threshold   = collinear.threshold,
-              joint.pair.resolution = joint.pair.resolution,
-              refine.af.quantile    = refine.af.quantile
-            ),
-            error = function( e ) {
-              warning(
-                "AutoSpectralRcpp unmixing failed, falling back to pure-R ",
-                pipeline.arg, " pipeline: ", e$message,
-                call. = FALSE
-              )
-              if ( pipeline.arg == "joint" ) {
-                unmix.autospectral.joint(
-                  raw.data         = chunk.spectral,
-                  spectra          = spectra,
-                  af.spectra       = af.spectra,
-                  asp              = asp,
-                  spectra.variants = spectra.variants,
-                  n.passes         = n.passes,
-                  parallel         = parallel,
-                  threads          = threads,
-                  cell.weight      = cell.weight,
-                  noise.floor      = noise.floor,
-                  alpha            = alpha,
-                  collinear.thresh = collinear.threshold,
-                  n.af.passes      = n.af.passes,
-                  refine.af.quantile = refine.af.quantile,
-                  verbose          = verbose
-                )
-              } else {
-                unmix.autospectral(
-                  raw.data         = chunk.spectral,
-                  spectra          = spectra,
-                  af.spectra       = af.spectra,
-                  asp              = asp,
-                  spectra.variants = spectra.variants,
-                  use.dist0        = use.dist0,
-                  verbose          = verbose,
-                  speed            = speed,
-                  parallel         = parallel,
-                  threads          = threads,
-                  n.variants       = n.variants
-                )
-              }
-            }
-          )
-
-        } else {
-          # No AutoSpectralRcpp: dispatch to the correct pure-R function
-          if ( pipeline.arg == "joint" ) {
-            if ( verbose )
-              message( "AutoSpectralRcpp not available; using pure-R joint pipeline." )
-            unmix.autospectral.joint(
-              raw.data         = chunk.spectral,
-              spectra          = spectra,
-              af.spectra       = af.spectra,
-              asp              = asp,
-              spectra.variants = spectra.variants,
-              n.passes         = n.passes,
-              parallel         = parallel,
-              threads          = threads,
-              cell.weight      = cell.weight,
-              noise.floor      = noise.floor,
-              alpha            = alpha,
-              collinear.thresh = collinear.threshold,
-              n.af.passes      = n.af.passes,
-              refine.af.quantile = refine.af.quantile,
-              verbose          = verbose
-            )
-          } else {
-            if ( verbose )
-              message( "AutoSpectralRcpp not available; using pure-R legacy pipeline." )
-            unmix.autospectral(
-              raw.data         = chunk.spectral,
-              spectra          = spectra,
-              af.spectra       = af.spectra,
-              asp              = asp,
-              spectra.variants = spectra.variants,
-              use.dist0        = use.dist0,
-              verbose          = verbose,
-              speed            = speed,
-              parallel         = parallel,
-              threads          = threads,
-              n.variants       = n.variants
-            )
-          }
-        }
-      },
-      "Poisson" = unmix.poisson( chunk.spectral, spectra, asp, weights ),
-      "FastPoisson" = {
-        if ( requireNamespace("AutoSpectralRcpp", quietly = TRUE ) &&
-             "unmix.poisson.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
-          tryCatch(
-            AutoSpectralRcpp::unmix.poisson.fast(
-              raw.data = chunk.spectral,
-              spectra = spectra,
-              weights = weights,
-              maxit = asp$rlm.iter.max,
-              tol = 1e-6,
-              n_threads = threads,
-              divergence.threshold = divergence.threshold,
-              divergence.handling = divergence.handling,
-              balance.weight = balance.weight,
-              noise.floor = noise.floor
-            ),
-            error = function( e ) {
-              warning(
-                "FastPoisson failed, falling back to standard Poisson: ",
-                e$message,
-                call. = FALSE
-              )
-              unmix.poisson(
-                raw.data = chunk.spectral,
-                spectra = spectra,
-                asp = asp,
-                initial.weights = weights,
-                parallel = parallel,
-                threads = threads
-              )
-            }
-          )
-        } else {
-          warning( "AutoSpectralRcpp not available, falling back to standard Poisson.",
-                   call. = FALSE )
-          unmix.poisson(
-            raw.data = chunk.spectral,
-            spectra = spectra,
-            asp = asp,
-            initial.weights = weights,
-            parallel = parallel,
-            threads = threads
-          )
-        }
-      },
-      stop( "Unknown method" )
+    unmixed.chunk <- .dispatch.unmix.chunk(
+      chunk.spectral         = chunk.spectral,
+      spectra                = spectra,
+      method                 = method,
+      af.spectra             = af.spectra,
+      spectra.variants       = spectra.variants,
+      use.dist0              = use.dist0,
+      speed                  = speed,
+      parallel               = parallel,
+      threads                = threads,
+      n.variants             = n.variants,
+      pipeline.arg           = pipeline.arg,
+      n.af.passes            = n.af.passes,
+      n.passes               = n.passes,
+      cell.weight            = cell.weight,
+      noise.floor            = noise.floor,
+      alpha                  = alpha,
+      collinear.threshold    = collinear.threshold,
+      joint.pair.resolution  = joint.pair.resolution,
+      refine.af.quantile     = refine.af.quantile,
+      asp                    = asp,
+      weights                = weights,
+      divergence.threshold   = divergence.threshold,
+      divergence.handling    = divergence.handling,
+      balance.weight         = balance.weight,
+      verbose                = verbose
     )
 
     if ( !colnames.set ) {
@@ -667,3 +586,205 @@ unmix.fcs <- function(
   if ( verbose ) message( paste( "Writing:", file.name ) )
   writeFCS( final.matrix, new.keywords, file.name, output.dir )
 }
+
+
+# ---------------------------------------------------------------------------
+# Internal: single-chunk unmixing dispatch, shared by unmix.fcs() and
+# estimate.unmix.time()
+# ---------------------------------------------------------------------------
+
+.dispatch.unmix.chunk <- function(
+    chunk.spectral,
+    spectra,
+    method,
+    af.spectra             = NULL,
+    spectra.variants       = NULL,
+    use.dist0              = TRUE,
+    speed                  = c( "fast", "medium", "slow" ),
+    parallel               = TRUE,
+    threads                = 1,
+    n.variants             = NULL,
+    pipeline.arg           = c( "joint", "legacy" ),
+    n.af.passes            = 1L,
+    n.passes               = 1L,
+    cell.weight            = FALSE,
+    noise.floor            = 125,
+    alpha                  = 0.5,
+    collinear.threshold    = 0.5,
+    joint.pair.resolution  = TRUE,
+    refine.af.quantile     = 0.5,
+    asp,
+    weights                = NULL,
+    divergence.threshold   = 1e4,
+    divergence.handling    = "Balance",
+    balance.weight         = 0.5,
+    verbose                = TRUE
+) {
+  switch(
+    method,
+    "OLS" = unmix.ols( chunk.spectral, spectra ),
+    "WLS" = unmix.wls( chunk.spectral, spectra, weights ),
+    "AutoSpectral" = {
+
+      if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) ) {
+        # AutoSpectralRcpp available: hand the pipeline switch off to
+        # unmix.autospectral.rcpp(), which routes to the correct C++ function
+        # and falls back to the appropriate pure-R function internally.
+        tryCatch(
+          AutoSpectralRcpp::unmix.autospectral.rcpp(
+            raw.data         = chunk.spectral,
+            spectra          = spectra,
+            af.spectra       = af.spectra,
+            spectra.variants = spectra.variants,
+            use.dist0        = use.dist0,
+            verbose          = verbose,
+            speed            = speed,
+            parallel         = parallel,
+            threads          = threads,
+            n.variants       = n.variants,
+            pipeline         = pipeline.arg,
+            n.af.passes      = n.af.passes,
+            n.passes         = n.passes,
+            cell.weight      = cell.weight,
+            noise.floor      = noise.floor,
+            alpha            = alpha,
+            collinear.threshold   = collinear.threshold,
+            joint.pair.resolution = joint.pair.resolution,
+            refine.af.quantile    = refine.af.quantile
+          ),
+          error = function( e ) {
+            warning(
+              "AutoSpectralRcpp unmixing failed, falling back to pure-R ",
+              pipeline.arg, " pipeline: ", e$message,
+              call. = FALSE
+            )
+            if ( pipeline.arg == "joint" ) {
+              unmix.autospectral.joint(
+                raw.data         = chunk.spectral,
+                spectra          = spectra,
+                af.spectra       = af.spectra,
+                asp              = asp,
+                spectra.variants = spectra.variants,
+                n.passes         = n.passes,
+                parallel         = parallel,
+                threads          = threads,
+                cell.weight      = cell.weight,
+                noise.floor      = noise.floor,
+                alpha            = alpha,
+                collinear.thresh = collinear.threshold,
+                n.af.passes      = n.af.passes,
+                refine.af.quantile = refine.af.quantile,
+                verbose          = verbose
+              )
+            } else {
+              unmix.autospectral(
+                raw.data         = chunk.spectral,
+                spectra          = spectra,
+                af.spectra       = af.spectra,
+                asp              = asp,
+                spectra.variants = spectra.variants,
+                use.dist0        = use.dist0,
+                verbose          = verbose,
+                speed            = speed,
+                parallel         = parallel,
+                threads          = threads,
+                n.variants       = n.variants
+              )
+            }
+          }
+        )
+
+      } else {
+        # No AutoSpectralRcpp: dispatch to the correct pure-R function
+        if ( pipeline.arg == "joint" ) {
+          if ( verbose )
+            message( "AutoSpectralRcpp not available; using pure-R joint pipeline." )
+          unmix.autospectral.joint(
+            raw.data         = chunk.spectral,
+            spectra          = spectra,
+            af.spectra       = af.spectra,
+            asp              = asp,
+            spectra.variants = spectra.variants,
+            n.passes         = n.passes,
+            parallel         = parallel,
+            threads          = threads,
+            cell.weight      = cell.weight,
+            noise.floor      = noise.floor,
+            alpha            = alpha,
+            collinear.thresh = collinear.threshold,
+            n.af.passes      = n.af.passes,
+            refine.af.quantile = refine.af.quantile,
+            verbose          = verbose
+          )
+        } else {
+          if ( verbose )
+            message( "AutoSpectralRcpp not available; using pure-R legacy pipeline." )
+          unmix.autospectral(
+            raw.data         = chunk.spectral,
+            spectra          = spectra,
+            af.spectra       = af.spectra,
+            asp              = asp,
+            spectra.variants = spectra.variants,
+            use.dist0        = use.dist0,
+            verbose          = verbose,
+            speed            = speed,
+            parallel         = parallel,
+            threads          = threads,
+            n.variants       = n.variants
+          )
+        }
+      }
+    },
+    "Poisson" = unmix.poisson( chunk.spectral, spectra, asp, weights ),
+    "FastPoisson" = {
+      if ( requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
+           "unmix.poisson.fast" %in% ls( getNamespace( "AutoSpectralRcpp" ) ) ) {
+        tryCatch(
+          AutoSpectralRcpp::unmix.poisson.fast(
+            raw.data = chunk.spectral,
+            spectra = spectra,
+            weights = weights,
+            maxit = asp$rlm.iter.max,
+            tol = 1e-6,
+            n_threads = threads,
+            divergence.threshold = divergence.threshold,
+            divergence.handling = divergence.handling,
+            balance.weight = balance.weight,
+            noise.floor = noise.floor
+          ),
+          error = function( e ) {
+            warning(
+              "FastPoisson failed, falling back to standard Poisson: ",
+              e$message,
+              call. = FALSE
+            )
+            unmix.poisson(
+              raw.data = chunk.spectral,
+              spectra = spectra,
+              asp = asp,
+              initial.weights = weights,
+              parallel = parallel,
+              threads = threads
+            )
+          }
+        )
+      } else {
+        warning( "AutoSpectralRcpp not available, falling back to standard Poisson.",
+                 call. = FALSE )
+        unmix.poisson(
+          raw.data = chunk.spectral,
+          spectra = spectra,
+          asp = asp,
+          initial.weights = weights,
+          parallel = parallel,
+          threads = threads
+        )
+      }
+    },
+    stop( "Unknown method" )
+  )
+}
+
+
+
+
