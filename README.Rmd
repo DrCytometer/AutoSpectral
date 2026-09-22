@@ -83,7 +83,7 @@ What AutoSpectral cannot do:
 
 ### Latest Stable Release
 
-**Version 1.8.1**
+**Version 1.8.3**
 
 Version 1.6+ provides a new automated approach to extracting spectral profiles. Most of the development here has been by Nathan Laniewksi. This is fast, highly reproducible, clean and avoids all the issues with gating. Try it out with `get.spectra.automated()`.
 
@@ -93,17 +93,18 @@ This has been tested on Windows 11 and on macOS Sequoia 15.2 (Apple Silicon).
 
 Version 1.0+ is intended to greatly speed up the process of unmixing. This is done by pre-screening the variation in autofluorescence and fluorophores for each cell, identifying likely "best" candidates rather than using a brute force approach. If you are using [AutoSpectralRcpp](https://github.com/DrCytometer/AutoSpectralRcpp), you will need to update that for compatibility.
 
-To install the latest, hopefully stable version, install using `devtools` or `remotes`. You will need to install the Bioconductor packages separately. As of version 0.9.1, AutoSpectral relies primarily on `FlowSOM` rather than `EmbedSOM`, so you will need to install `FlowSOM` via Bioconductor. That said, if you install `EmbedSOM`, Autospectral will automatically detect and use it for faster processing.
+To install the latest, hopefully stable version, install using `pak` or `remotes`. As of version 1.7.0, AutoSpectral relies primarily on SOM via an in-house port of the batched parallel SOM from `EmbedSOM` via `AutoSpectralRcpp`. If you do not install `AutoSpectralRcpp`, you will need to install `FlowSOM` via Bioconductor or using `pak`.
 
 ``` {r, eval = FALSE}
-# Install Bioconductor packages
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-BiocManager::install(c("flowWorkspace", "FlowSOM"))
-
 # You'll need pak or remotes to install from GitHub.
 install.packages("pak")
 pak::pak("DrCytometer/AutoSpectral")
+
+# recommended
+pak::pak("DrCytometer/AutoSpectralRcpp")
+
+# required if you don't install AutoSpectralRcpp
+pak:pak("FlowSOM")
 ```
 
 Installation should take less than 5 minutes.
