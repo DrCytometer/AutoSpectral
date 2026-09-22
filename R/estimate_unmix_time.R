@@ -192,7 +192,7 @@ estimate.unmix.time <- function(
       sample.n, probe$elapsed.seconds, events.per.second, read.elapsed
     ) )
     message( sprintf(
-      "Estimated total: %s for %d events across %d chunk(s) (unmix ~%s, read ~%s). Treat as accurate to within roughly 4-5x.",
+      "Estimated total: %s for %d events across %d chunk(s) (unmix ~%s, read ~%s). Treat as accurate to within roughly 2x.",
       .format.duration( estimated.total.seconds ),
       total.events,
       chunk.n,
