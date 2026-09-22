@@ -35,6 +35,7 @@ get.spectral.variants(
   unstained.sample = NULL,
   stained.sample = NULL,
   optimize.necessity.threshold = 0.01,
+  diagnostics = FALSE,
   ...
 )
 }
@@ -161,6 +162,9 @@ brightness. Pass \code{NULL} (default) to use purely geometric scores.}
 
 \item{optimize.necessity.threshold}{Numeric in \verb{[0, 1]}, default \code{0.01}.
 Passed to \code{calculate.optimize.necessity()}.}
+
+\item{diagnostics}{Logical, default \code{FALSE}. When \code{TRUE}, prints
+additional messages on model characteristics to the console.}
 
 \item{...}{Ignored. Catches and warns on previously used deprecated
 arguments: \code{af.spectra}, \code{refine}, \code{problem.quantile},

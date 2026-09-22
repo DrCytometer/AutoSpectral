@@ -132,6 +132,8 @@
 #'   brightness. Pass `NULL` (default) to use purely geometric scores.
 #' @param optimize.necessity.threshold Numeric in `[0, 1]`, default `0.01`.
 #'   Passed to `calculate.optimize.necessity()`.
+#' @param diagnostics Logical, default \code{FALSE}. When \code{TRUE}, prints
+#'   additional messages on model characteristics to the console.
 #' @param ... Ignored. Catches and warns on previously used deprecated
 #'   arguments: \code{af.spectra}, \code{refine}, \code{problem.quantile},
 #'   \code{pos.quantile}.
@@ -209,6 +211,7 @@ get.spectral.variants <- function(
     unstained.sample             = NULL,
     stained.sample               = NULL,
     optimize.necessity.threshold = 0.01,
+    diagnostics                  = FALSE,
     ...
 ) {
 
@@ -735,11 +738,11 @@ get.spectral.variants <- function(
       if ( length( v ) == 0 ) NA_real_ else min( v )
     } )
 
-    if ( anyNA( noise.floor ) )
+    if ( anyNA( noise.floor ) & diagnostics )
       warning( "Noise floor could not be estimated at ",
                sum( is.na( noise.floor ) ), " detector(s).", call. = FALSE )
 
-    if ( verbose )
+    if ( diagnostics )
       message( sprintf(
         "Noise floor from %d control(s): median SD %.1f (range %.1f - %.1f)",
         nrow( floor.mat ),
@@ -803,14 +806,14 @@ get.spectral.variants <- function(
       }
     )
 
-    if ( verbose && !is.null( noise.model ) )
+    if ( verbose && !is.null( noise.model ) & diagnostics )
       message( sprintf(
         "Noise model from %d control(s): median read SD %.1f, median counts.per.unit %.3g",
         length( noise.fluors ),
         stats::median( sqrt( noise.model$read.var ) ),
         stats::median( noise.model$counts.per.unit ) ) )
 
-  } else if ( verbose ) {
+  } else if ( verbose & diagnostics ) {
     message( "Fewer than 2 controls carried noise-model events; ",
              "skipping pooled noise-model estimation." )
   }
@@ -924,6 +927,9 @@ get.spectral.variants <- function(
     # use the unit-normalized spillover spread for visualization
     ssm <- l2.normalize.spectra( spillover.spread )
     # save the data as CSV
+    if ( !dir.exists( asp$figure.similarity.heatmap.dir ) )
+      dir.create( asp$figure.similarity.heatmap.dir )
+
     utils::write.csv(
       ssm,
       file = file.path(
