@@ -103,6 +103,49 @@
 #' @param legend.width.per.col Numeric, default `1.1`. Extra figure width
 #' (inches) added for each legend column beyond the first, so a wrapped
 #' legend never crowds the plot panel.
+#' @param stats.detail Optional `detail` data frame from
+#' `test.unmix.comparison()` (columns `folder`, `metric`, `p.adjusted`,
+#' among others). When supplied, the `Unstained.rSD` and each summary-figure
+#' metric's rows are passed through to `.plot.metric.boxplot()`, which adds
+#' a significance bracket (via `ggpubr::stat_pvalue_manual()`) for every
+#' folder whose adjusted p-value against `reference.folder` is below
+#' `stats.alpha`. Default `NULL` draws no brackets. Requires the `ggpubr`
+#' package; a missing installation triggers a warning and is otherwise
+#' silently skipped.
+#' @param reference.folder Character, default `"AutoSpectral"`. The folder
+#' every bracket in `stats.detail` is drawn against. Only used when
+#' `stats.detail` is supplied.
+#' @param stats.alpha Numeric, default `0.05`. Adjusted p-value threshold
+#' below which a significance bracket is drawn. Only used when
+#' `stats.detail` is supplied.
+#' @param stats.text.size Numeric, default `NULL`. Font size (points) for
+#' the significance annotation labels drawn when `stats.detail` is
+#' supplied. `NULL` scales it from `base.font.size` (matching
+#' `legend.font.size`'s own default derivation).
+#' @param stats.step.increase Numeric, default `0.12`. Only used when
+#' `stats.label.style = "pvalue"`. Vertical spacing between stacked
+#' significance brackets, as a fraction of the data's own max value -
+#' multiplicatively on a log-scale plot (`log.scale = TRUE`), additively
+#' otherwise. Increase this (or `stats.text.size`, or switch
+#' `stats.label.style` to `"stars"`) if bracket labels overlap the bracket
+#' above them.
+#' @param stats.digits Numeric, default `3`. Number of significant figures
+#' shown in each bracket's p-value label. Only used when
+#' `stats.label.style = "pvalue"`.
+#' @param stats.label.style Character, one of `"pvalue"` (default) or
+#' `"stars"`. `"pvalue"` draws a full bracket from `reference.folder` to
+#' each significant folder, labeled with its adjusted p-value.  `"stars"`
+#' instead draws a single significance marker directly above each
+#' significant folder's own box (see `stats.star.breaks`/
+#' `stats.star.symbols`), with no bracket and no vertical stacking between
+#' folders - a more compact alternative when many simultaneous comparisons
+#' make stacked `"pvalue"` brackets overlap or run out of headroom.
+#' @param stats.star.breaks Numeric vector, default `c(0.05, 0.01, 0.001)`.
+#' Adjusted p-value thresholds for `stats.label.style = "stars"`, ordered
+#' loosest-first and matched one-to-one against `stats.star.symbols`.
+#' @param stats.star.symbols Character vector, default `c("*", "**",
+#' "***")`. Marker text for each threshold in `stats.star.breaks`, in the
+#' same order. Only used when `stats.label.style = "stars"`.
 #' @param verbose Logical, default `TRUE`. Currently unused by
 #' `unmix.comparison.plot()` itself -- no progress messages are printed here.
 #' Accepted for interface compatibility with [compare.unmix.folders()],
@@ -137,7 +180,16 @@ unmix.comparison.plot <- function(
     legend.font.size      = NULL,
     legend.key.size       = 0.8,
     legend.width.per.col  = 1.1,
-    verbose               = TRUE
+    stats.detail          = NULL,
+    reference.folder       = "AutoSpectral",
+    stats.alpha            = 0.05,
+    stats.text.size        = NULL,
+    stats.step.increase     = 0.12,
+    stats.digits             = 3,
+    stats.label.style        = c( "pvalue", "stars" ),
+    stats.star.breaks         = c( 0.05, 0.01, 0.001 ),
+    stats.star.symbols        = c( "*", "**", "***" ),
+    verbose                = TRUE
 ) {
 
   results.df <- .resolve.df( results, "results" )
@@ -179,17 +231,27 @@ unmix.comparison.plot <- function(
   if ( nrow( mad.df ) > 0 ) {
     .plot.metric.boxplot(
       mad.df,
-      title          = "Unstained robust SD (MAD)",
-      y.label        = "rSD (MAD), unmixed fluorescence channels",
-      file.path.out  = file.path( plot.dir, "Unstained_rSD.jpg" ),
-      log.scale      = log.scale,
-      plot.width     = plot.width,
-      plot.height    = plot.height,
-      base.font.size = base.font.size,
-      title.size     = title.size,
-      point.size     = point.size,
-      point.alpha    = point.alpha,
-      text.angle     = text.angle
+      title            = "Unstained robust SD (MAD)",
+      y.label          = "rSD (MAD), unmixed fluorescence channels",
+      file.path.out    = file.path( plot.dir, "Unstained_rSD.jpg" ),
+      log.scale        = log.scale,
+      plot.width       = plot.width,
+      plot.height      = plot.height,
+      base.font.size   = base.font.size,
+      title.size       = title.size,
+      point.size       = point.size,
+      point.alpha      = point.alpha,
+      text.angle       = text.angle,
+      stats.df            = if ( !is.null( stats.detail ) )
+        stats.detail[ stats.detail$metric == "Unstained.rSD", ] else NULL,
+      reference.folder    = reference.folder,
+      stats.alpha         = stats.alpha,
+      stats.text.size     = stats.text.size,
+      stats.step.increase = stats.step.increase,
+      stats.digits        = stats.digits,
+      stats.label.style   = stats.label.style,
+      stats.star.breaks   = stats.star.breaks,
+      stats.star.symbols  = stats.star.symbols
     )
   }
 
@@ -225,7 +287,17 @@ unmix.comparison.plot <- function(
       legend.ncol          = legend.ncol,
       legend.font.size     = legend.font.size,
       legend.key.size      = legend.key.size,
-      legend.width.per.col = legend.width.per.col
+      legend.width.per.col = legend.width.per.col,
+      stats.df             = if ( !is.null( stats.detail ) )
+        stats.detail[ stats.detail$metric == m, ] else NULL,
+      reference.folder     = reference.folder,
+      stats.alpha          = stats.alpha,
+      stats.text.size      = stats.text.size,
+      stats.step.increase  = stats.step.increase,
+      stats.digits         = stats.digits,
+      stats.label.style    = stats.label.style,
+      stats.star.breaks    = stats.star.breaks,
+      stats.star.symbols   = stats.star.symbols
     )
   }
 
