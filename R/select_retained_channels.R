@@ -81,7 +81,7 @@
     shown <- utils::head( excluded, 10 )
     message(
       sprintf(
-        "Not carried through to the unmixed file (%d): %s%s",
+        "Original parameters not carried through to the unmixed file (%d): %s%s",
         length( excluded ),
         paste( shown, collapse = ", " ),
         if ( length( excluded ) > length( shown ) )
