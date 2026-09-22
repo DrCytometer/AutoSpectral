@@ -47,6 +47,8 @@ Imports:
     isoband
 Suggests: 
     AutoSpectralRcpp (>= 1.3.0),
+    CompensAID,
+    flowCore,
     FlowSOM,
     magick
 Remotes:
