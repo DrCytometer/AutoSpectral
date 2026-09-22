@@ -57,6 +57,8 @@ get.spectra.automated(
   plot.cosine.filter = TRUE,
   plot.scatter.match = TRUE,
   allow.duplicate.controls = FALSE,
+  refine = FALSE,
+  refine.args = list(),
   verbose = TRUE
 )
 ```
@@ -166,6 +168,23 @@ get.spectra.automated(
   matching and for
   [`check.spectra.duplicates()`](https://drcytometer.github.io/AutoSpectral/reference/check.spectra.duplicates.md).
 
+- refine:
+
+  Logical, default `FALSE`. Whether to re-measure each row directly on
+  its own single-color control after assembly, via
+  [`refine.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/refine.fluorophore.spectra.md).
+  Re-reads the controls fresh, one file at a time, from
+  `control.dir`/`control.def.file` (already required above) rather than
+  reusing the cosine-filtered events this function selected – checking a
+  spectrum against the same selection it was fit from cannot surface
+  bias that selection introduced.
+
+- refine.args:
+
+  Named list of further arguments passed to
+  [`refine.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/refine.fluorophore.spectra.md)
+  when `refine = TRUE`.
+
 - verbose:
 
   Logical, default `TRUE`. Print progress messages.
@@ -174,7 +193,9 @@ get.spectra.automated(
 
 A numeric matrix with fluorophores in rows and spectral detector
 channels in columns, values normalised to `[0, 1]` (L-infinity norm,
-peak = 1). Compatible with all downstream AutoSpectral functions.
+peak = 1). Compatible with all downstream AutoSpectral functions. When
+`refine = TRUE`, also carries `attr(., "refine.log")` and
+`attr(., "refine.crosstalk")` with the per-iteration diagnostics.
 
 ## See also
 

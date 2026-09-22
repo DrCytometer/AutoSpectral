@@ -28,6 +28,10 @@ unmix.gls(
   spectra,
   noise.model,
   variant.basis = NULL,
+  spectra.variants = NULL,
+  spread.kappa = 2,
+  n.select.sweeps = 2L,
+  n.variants = Inf,
   af.spectra = NULL,
   af.index = NULL,
   af.basis = NULL,
@@ -64,6 +68,45 @@ unmix.gls(
 
   Optional list from
   [`build.variant.basis()`](https://drcytometer.github.io/AutoSpectral/reference/build.variant.basis.md).
+  Build it with the `spectra` argument supplied so that the basis is
+  panel-oblique: an unprojected basis carries in-span directions that
+  are collinear with the fluorophore columns and inflates the variance
+  of the abundance estimates along the spillover directions.
+
+- spectra.variants:
+
+  Optional list, the full output of
+  [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md).
+  When supplied, enables per-cell discrete variant commitment:
+  fluorophores above their spread-scaled positivity boundary have their
+  reference row replaced by the best-fitting variant, selected on a
+  restricted design by Poisson-weighted, non-negative-clamped residual.
+  This moves spectral variation out of the covariance and into the
+  design, which is what suppresses spillover spread; the covariance form
+  alone cannot, since adding spectral uncertainty to `Sigma` can only
+  widen the abundance estimates. Also switches the active set for the
+  low-rank `Sigma` terms from the relative `active.threshold` rule to
+  the spread-scaled boundary built from `$thresholds` and
+  `$spillover.spread`.
+
+- spread.kappa:
+
+  Numeric, number of spillover-spread standard deviations added to the
+  flat positivity threshold when `spectra.variants` is supplied,
+  matching
+  [`fix.my.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/fix.my.unmix.md).
+  Default `2`.
+
+- n.select.sweeps:
+
+  Integer, coordinate sweeps of per-fluorophore variant selection on the
+  restricted design. Default `2`.
+
+- n.variants:
+
+  Numeric, maximum number of variant candidates scored per fluorophore
+  per cell (evenly subsampled when the library is larger). `Inf` scores
+  all. Default `Inf`.
 
 - af.spectra:
 

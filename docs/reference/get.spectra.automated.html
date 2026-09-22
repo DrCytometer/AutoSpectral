@@ -69,7 +69,7 @@ get.fluorophore.spectra) remains available and is unchanged."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -163,6 +163,8 @@ refined using the legacy gating and cleaning approach.</p></li>
 <span>  plot.cosine.filter <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot.scatter.match <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  allow.duplicate.controls <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  refine <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  refine.args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -272,6 +274,21 @@ the true fluorophore identity is preserved as a <code>"fluorophore"</code> attri
 for reference-library matching and for <code><a href="check.spectra.duplicates.html">check.spectra.duplicates()</a></code>.</p></dd>
 
 
+<dt id="arg-refine">refine<a class="anchor" aria-label="anchor" href="#arg-refine"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. Whether to re-measure each row
+directly on its own single-color control after assembly, via
+<code><a href="refine.fluorophore.spectra.html">refine.fluorophore.spectra()</a></code>. Re-reads the controls fresh, one file at a
+time, from <code>control.dir</code>/<code>control.def.file</code> (already required above)
+rather than reusing the cosine-filtered events this function selected –
+checking a spectrum against the same selection it was fit from cannot
+surface bias that selection introduced.</p></dd>
+
+
+<dt id="arg-refine-args">refine.args<a class="anchor" aria-label="anchor" href="#arg-refine-args"></a></dt>
+<dd><p>Named list of further arguments passed to
+<code><a href="refine.fluorophore.spectra.html">refine.fluorophore.spectra()</a></code> when <code>refine = TRUE</code>.</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical, default <code>TRUE</code>. Print progress messages.</p></dd>
 
@@ -280,7 +297,9 @@ for reference-library matching and for <code><a href="check.spectra.duplicates.h
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A numeric matrix with fluorophores in rows and spectral detector
 channels in columns, values normalised to <code>[0, 1]</code> (L-infinity norm,
-peak = 1). Compatible with all downstream AutoSpectral functions.</p>
+peak = 1). Compatible with all downstream AutoSpectral functions. When
+<code>refine = TRUE</code>, also carries <code>attr(., "refine.log")</code> and
+<code>attr(., "refine.crosstalk")</code> with the per-iteration diagnostics.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

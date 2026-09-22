@@ -30,7 +30,7 @@ estimate.noise.model(
   n.bins = 40L,
   min.bin.n = 50L,
   trim.quantile = 0.999,
-  verbose = TRUE,
+  verbose = FALSE,
   af.pc.n = 5L,
   af.raw.data = NULL,
   af.basis.n.cells = 20000L,
@@ -74,7 +74,7 @@ estimate.noise.model(
 
 - verbose:
 
-  Logical. Default `TRUE`.
+  Logical. Default `FALSE`.
 
 - af.pc.n:
 

@@ -47,6 +47,7 @@ unmix.autospectral.joint(
   joint.pair.resolution = TRUE,
   n.af.passes = 1L,
   refine.af.quantile = 0.5,
+  exact.variant.scan = FALSE,
   verbose = TRUE
 )
 ```
@@ -150,6 +151,20 @@ unmix.autospectral.joint(
   first-pass AF abundance used to select which cells are eligible for AF
   refinement passes.
 
+- exact.variant.scan:
+
+  Logical, default `FALSE`. When `TRUE`, scores candidate variant swaps
+  with the exact Frisch-Waugh-Lovell closed form against the fixed
+  pass-1 base panel instead of the incremental residual scan.
+  `try.commit()` still re-solves and verifies every candidate against
+  the true RSS regardless of this setting, so a less accurate score can
+  only cost time, never correctness. Automatically falls back to the
+  incremental scan when `cell.weight = TRUE`, since the exact form is
+  derived in the unweighted inner product. Exact only against the fixed
+  base panel of the first pass; from `n.passes > 1` onward the projector
+  for an already-swapped endmember is stale, so later passes are a
+  better approximation than the incremental scan but no longer exact.
+
 - verbose:
 
   Logical, default `TRUE`.
@@ -164,6 +179,5 @@ selected AF spectrum).
 ## See also
 
 [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md),
-[`unmix.autospectral.rcpp()`](https://rdrr.io/pkg/AutoSpectralRcpp/man/unmix.autospectral.rcpp.html),
 [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md),
 [`create.parallel.lapply()`](https://drcytometer.github.io/AutoSpectral/reference/create.parallel.lapply.md)

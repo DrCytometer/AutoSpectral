@@ -13,7 +13,11 @@ get.fluorophore.spectra(
   use.clean.expr = TRUE,
   af.spectra = NULL,
   title = NULL,
-  figures = TRUE
+  figures = TRUE,
+  refine = FALSE,
+  control.dir = NULL,
+  control.def.file = NULL,
+  refine.args = list()
 )
 ```
 
@@ -48,6 +52,33 @@ get.fluorophore.spectra(
   Logical, default is `TRUE`. Whether to produce plots of the
   fluorophore spectra and cosine similarity.
 
+- refine:
+
+  Logical, default `FALSE`. Whether to re-measure each row directly on
+  its own single-color control after the first pass, via
+  [`refine.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/refine.fluorophore.spectra.md).
+  Unlike the first pass, this re-reads the controls fresh from
+  `control.dir`/`control.def.file`, one file at a time, rather than
+  using `flow.control`'s already-gated and possibly downsampled data –
+  checking a spectrum against the same selection it was fit from cannot
+  surface bias that selection introduced. Requires `control.dir` and
+  `control.def.file`.
+
+- control.dir, control.def.file:
+
+  As in
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md).
+  Ignored unless `refine = TRUE`, in which case both are required and
+  should normally be the same files `flow.control` was built from.
+
+- refine.args:
+
+  Named list of further arguments passed to
+  [`refine.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/refine.fluorophore.spectra.md)
+  when `refine = TRUE`.
+
 ## Value
 
-A matrix with the fluorophore spectra.
+A matrix with the fluorophore spectra. When `refine = TRUE`, also
+carries `attr(., "refine.log")` and `attr(., "refine.crosstalk")` with
+the per-iteration diagnostics.

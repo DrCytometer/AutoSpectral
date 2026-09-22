@@ -1,5 +1,131 @@
 # Changelog
 
+## AutoSpectral 1.8.3 (2026-09-22)
+
+### New Features
+
+- Unmixing calculation time is now estimated on a small sample of events
+  when calling the slower unmixing methods (`AutoSpectral` with
+  `spectral.variants` or the Poisson functions). This takes a small
+  amount of time, so set `estimate.time` to `FALSE` if you want the
+  fastest output.
+- CSV files are now saved for similarity, hotspot and spillover spread
+  matrices.
+- Functions to replicate the workflow and figures in the manuscript have
+  been added to `inst/scripts`. These may be generally useful for people
+  wishing to perform comparisons between unmixing methods. See
+  `compare_compensaid_folders.R`, `compare_unmix_folders.R`,
+  `run_compensaid_comparison_example.R`,
+  `run_unmix_comparison_specSymp.R` and `run_bead_cell_comparison.R`.
+
+### Improvements
+
+- The
+  [`flowWorkspace::flowjo_biexp()`](https://rdrr.io/pkg/flowWorkspace/man/flowjo_biexp.html)
+  has been replaced with an in-house logicle (biexponential) transform.
+  This is essentially identical to
+  [`flowCore::logicleTransform()`](https://rdrr.io/pkg/flowCore/man/logicleTransform.html)
+  and allows a wider range of width basis values to be used, more
+  fitting for spectral flow data.
+- The Residual Model by [Cai et
+  al.](https://doi.org/10.64898/2026.01.27.701929) is now used to
+  calculate spillover spread robustly.
+- FlowSOM is now moved to `Suggests` to eliminate heavy dependencies.
+  Users who do not install `AutoSpectralRcpp` will need `FlowSOM` in
+  order to assess `af.spectra` and `spectral.variants`.
+- The `patchwork` has been replaced by `cowplot`.
+- The
+  [`sp::point.in.polygon()`](https://edzer.github.io/sp/reference/point.in.polygon.html)
+  dependency has been replaced by an in-house version of the function.
+
+### Bug fixes
+
+- A previous change to reduce memory usage when calling
+  [`unmix.folder()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.folder.md)
+  left the FCS writing without access to the marker (antigen) labels.
+  This is now fixed.
+- FCS files that come with unmixed channels already present
+  (FACSDiscover, A5SE, Xenith) should now have the original unmixed data
+  channels removed properly, and imaging, scatter and time channels
+  should be retained properly. Sorry, this took a while.
+
+## AutoSpectral 1.8.2 (2026-09-12)
+
+### New Features
+
+- A `scripts` folder has been added. At the moment this contains
+  primarily items related to producing figures for the manuscript, but
+  example workflows may go in later.
+- You can now pass `control.files` (a vector of files/file paths) to
+  [`create.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/create.control.file.md)
+  in order to specify which files among all the control you wish to use,
+  or where they are if they are not all in the same place.
+- The `large.gate` option will now be filled automatically when creating
+  the control file. This is done by referring to the
+  `marker_database.csv` in inst/extdata, where markers have been tagged
+  as `large.gate = TRUE` if they are expected to be expressed on larger
+  (e.g., myeloid) cells.
+- A new `refine` loop has been added to
+  [`get.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluorophore.spectra.md).
+  This works by unmixing each single-stained control and performing
+  robust linear regression to check the accuracy of the spectrum used
+  for the unmixing on all events in the control. The aim is to provide a
+  check and correction if the pre-processing in
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md),
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+  and/or
+  [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md)
+  has inadvertently excluded some of the key data. This has not been
+  tested yet and is off by default.
+
+### Improvements
+
+- The Frisch-Waugh-Lovell theorem is now employed to speed up
+  autofluorescence unmixing per cell in the R code.
+- Better messaging in a few places. When calling
+  [`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md),
+  for example, the active unmixing method is now printed to the console,
+  whereas before this was only happening for the AutoSpectral methods.
+- A `gate.boundary` can now be passed to
+  [`unmixed.nxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.nxn.plot.md)
+  or
+  [`unmixed.mxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.mxn.plot.md)
+  to apply a scatter gate on the data prior to plotting. Use
+  [`define.gate.density()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.density.md)
+  or
+  [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md)
+  to construct the gate. Scatter coordinates must be passed as part of
+  the input data matrix. For example:
+
+``` r
+unmixed.nxn.plot(
+unmixed.data = cbind(my.unmixed.data, original.fsc.ssc.data),
+asp,
+channels = colnames(my.unmixed.data),
+gate.boundary = my.gate
+scatter.param = colnames(original.fsc.ssc.data)
+)
+```
+
+- You can compare two sets of pre-calculated unmixed data (e.g., OLS vs
+  WLS) using
+  [`compare.unmixed.data()`](https://drcytometer.github.io/AutoSpectral/reference/compare.unmixed.data.md).
+  See also
+  [`compare.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/compare.unmix.md).
+
+### Bug fixes
+
+- File names on the key output plots and CSV files from
+  [`get.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluorophore.spectra.md)
+  and
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
+  will now be unique through the use of timestamping. In the case of
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md),
+  the FCS filename or `title` will be included.
+- If gating fails for any control in
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md),
+  all events will be taken as a fallback.
+
 ## AutoSpectral 1.8.1 (2026-09-03)
 
 ### New Features

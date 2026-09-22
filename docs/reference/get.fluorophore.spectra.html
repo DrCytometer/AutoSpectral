@@ -23,7 +23,7 @@ controls."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,11 @@ controls.</p>
 <span>  use.clean.expr <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  af.spectra <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  title <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  figures <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  refine <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  control.dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  control.def.file <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  refine.args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -121,10 +125,34 @@ is <code>TRUE</code>.</p></dd>
 <dd><p>Logical, default is <code>TRUE</code>. Whether to produce plots of the
 fluorophore spectra and cosine similarity.</p></dd>
 
+
+<dt id="arg-refine">refine<a class="anchor" aria-label="anchor" href="#arg-refine"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. Whether to re-measure each row
+directly on its own single-color control after the first pass, via
+<code><a href="refine.fluorophore.spectra.html">refine.fluorophore.spectra()</a></code>. Unlike the first pass, this re-reads the
+controls fresh from <code>control.dir</code>/<code>control.def.file</code>, one file at a time,
+rather than using <code>flow.control</code>'s already-gated and possibly downsampled
+data – checking a spectrum against the same selection it was fit from
+cannot surface bias that selection introduced. Requires <code>control.dir</code> and
+<code>control.def.file</code>.</p></dd>
+
+
+<dt id="arg-control-dir-control-def-file">control.dir, control.def.file<a class="anchor" aria-label="anchor" href="#arg-control-dir-control-def-file"></a></dt>
+<dd><p>As in <code><a href="define.flow.control.html">define.flow.control()</a></code>. Ignored
+unless <code>refine = TRUE</code>, in which case both are required and should
+normally be the same files <code>flow.control</code> was built from.</p></dd>
+
+
+<dt id="arg-refine-args">refine.args<a class="anchor" aria-label="anchor" href="#arg-refine-args"></a></dt>
+<dd><p>Named list of further arguments passed to
+<code><a href="refine.fluorophore.spectra.html">refine.fluorophore.spectra()</a></code> when <code>refine = TRUE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A matrix with the fluorophore spectra.</p>
+    <p>A matrix with the fluorophore spectra. When <code>refine = TRUE</code>, also
+carries <code>attr(., "refine.log")</code> and <code>attr(., "refine.crosstalk")</code> with the
+per-iteration diagnostics.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

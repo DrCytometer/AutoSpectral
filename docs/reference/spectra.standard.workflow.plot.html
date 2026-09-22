@@ -43,7 +43,7 @@ namespace (several private helpers are shared)."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -128,6 +128,19 @@ namespace (several private helpers are shared).</p>
 <span>  positive.bracket.color <span class="op">=</span> <span class="st">"#E41A1C"</span>,</span>
 <span>  negative.point.color <span class="op">=</span> <span class="st">"black"</span>,</span>
 <span>  event.point.size <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ground.truth.method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"automated"</span>, <span class="st">"legacy"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  truth.n.candidates <span class="op">=</span> <span class="fl">1000L</span>,</span>
+<span>  truth.n.spectral <span class="op">=</span> <span class="fl">200L</span>,</span>
+<span>  legacy.gating.system <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"density"</span>, <span class="st">"landmarks"</span><span class="op">)</span>,</span>
+<span>  legacy.af.remove <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  legacy.universal.negative <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  legacy.downsample <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  legacy.scatter.match <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  legacy.k.neighbors <span class="op">=</span> <span class="fl">3L</span>,</span>
+<span>  legacy.negative.n <span class="op">=</span> <span class="va">asp</span><span class="op">$</span><span class="va">negative.n</span>,</span>
+<span>  legacy.positive.n <span class="op">=</span> <span class="va">asp</span><span class="op">$</span><span class="va">positive.n</span>,</span>
+<span>  legacy.flow.control <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  legacy.diagnostics.env <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n.highlight <span class="op">=</span> <span class="fl">200L</span>,</span>
 <span>  clean.positive.color <span class="op">=</span> <span class="st">"red"</span>,</span>
 <span>  clean.positive.point.size <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -255,15 +268,53 @@ positive-fraction events in panel C. If <code>NULL</code>, defaults to
 <code>asp$figure.gate.point.size * 1.3</code>.</p></dd>
 
 
+<dt id="arg-ground-truth-method">ground.truth.method<a class="anchor" aria-label="anchor" href="#arg-ground-truth-method"></a></dt>
+<dd><p>Character, one of <code>"automated"</code> (default),
+<code>"legacy"</code>, or <code>"none"</code>. Determines how the "true positive" events
+highlighted in red in panel A are identified. <code>"automated"</code> replicates
+<code><a href="get.spectra.automated.html">get.spectra.automated()</a></code>'s own candidate + cosine-to-AF-reference filter
+on this control file. <code>"legacy"</code> uses the actual AF-removal
+<code>gate.population.idx</code> from <code><a href="remove.af.html">remove.af()</a></code>/<code><a href="clean.controls.html">clean.controls()</a></code>, which
+requires running <code><a href="define.flow.control.html">define.flow.control()</a></code> and <code><a href="clean.controls.html">clean.controls()</a></code> over the
+whole control set (see <code>legacy.flow.control</code>/<code>legacy.diagnostics.env</code> to
+avoid repeating this per fluorophore). <code>"none"</code> reverts to this
+workflow's own top-<code>n.highlight</code> cosine-similarity selection, which is
+not an independent ground truth and is kept only for reference.</p></dd>
+
+
+<dt id="arg-truth-n-candidates-truth-n-spectral">truth.n.candidates, truth.n.spectral<a class="anchor" aria-label="anchor" href="#arg-truth-n-candidates-truth-n-spectral"></a></dt>
+<dd><p>Integers, defaults <code>1000</code> and
+<code>200</code>. Only used when <code>ground.truth.method = "automated"</code>; mirror
+<code>n.candidates</code>/<code>n.spectral</code> in <code><a href="get.spectra.automated.html">get.spectra.automated()</a></code>.</p></dd>
+
+
+<dt id="arg-legacy-gating-system-legacy-af-remove-legacy-universal-negative-legacy-downsample-legacy-scatter-match-legacy-k-neighbors-legacy-negative-n-legacy-positive-n">legacy.gating.system, legacy.af.remove, legacy.universal.negative, legacy.downsample, legacy.scatter.match, legacy.k.neighbors, legacy.negative.n, legacy.positive.n<a class="anchor" aria-label="anchor" href="#arg-legacy-gating-system-legacy-af-remove-legacy-universal-negative-legacy-downsample-legacy-scatter-match-legacy-k-neighbors-legacy-negative-n-legacy-positive-n"></a></dt>
+<dd><p>Only used when <code>ground.truth.method = "legacy"</code> and
+<code>legacy.flow.control</code>/<code>legacy.diagnostics.env</code> are not supplied; passed
+through to <code><a href="define.flow.control.html">define.flow.control()</a></code> / <code><a href="clean.controls.html">clean.controls()</a></code> exactly as in
+<code><a href="spectra.legacy.steps.plot.html">spectra.legacy.steps.plot()</a></code>.</p></dd>
+
+
+<dt id="arg-legacy-flow-control-legacy-diagnostics-env">legacy.flow.control, legacy.diagnostics.env<a class="anchor" aria-label="anchor" href="#arg-legacy-flow-control-legacy-diagnostics-env"></a></dt>
+<dd><p>Optional, default <code>NULL</code>.
+Precomputed outputs of <code><a href="define.flow.control.html">define.flow.control()</a></code> + <code><a href="clean.controls.html">clean.controls()</a></code>
+(the latter called with a <code>diagnostics.env</code>). Supply both together to
+skip re-running the legacy pipeline when illustrating multiple
+fluorophores with <code>ground.truth.method = "legacy"</code> – e.g. by calling
+<code><a href="spectra.legacy.steps.plot.html">spectra.legacy.steps.plot()</a></code> first and reusing its internal objects, or
+running the two functions yourself as shown in <code><a href="spectra.legacy.steps.plot.html">spectra.legacy.steps.plot()</a></code>.</p></dd>
+
+
 <dt id="arg-n-highlight">n.highlight<a class="anchor" aria-label="anchor" href="#arg-n-highlight"></a></dt>
-<dd><p>Integer, default <code>200</code>. Number of positive-fraction
-events (smallest cosine similarity to the negative fraction, i.e. least
+<dd><p>Integer, default <code>200</code>. Only used when
+<code>ground.truth.method = "none"</code>. Number of positive-fraction events
+(smallest cosine similarity to the negative fraction, i.e. least
 AF-like) highlighted in red in panel A.</p></dd>
 
 
 <dt id="arg-clean-positive-color">clean.positive.color<a class="anchor" aria-label="anchor" href="#arg-clean-positive-color"></a></dt>
-<dd><p>Colour for the panel A highlight. Default
-<code>"red"</code>.</p></dd>
+<dd><p>Colour for the panel A ground-truth highlight.
+Default <code>"red"</code>.</p></dd>
 
 
 <dt id="arg-clean-positive-point-size">clean.positive.point.size<a class="anchor" aria-label="anchor" href="#arg-clean-positive-point-size"></a></dt>
@@ -316,10 +367,44 @@ for each fluorophore to <code>output.dir</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Invisibly, a named list (one entry per fluorophore) each
-containing the individual panel ggplot objects, the assembled
-<code>composite</code> cowplot object, and the peak / peak-AF channels used.</p>
-    </div>
+    <p>Invisibly, a named list (one entry per fluorophore), each
+containing:</p><dl><dt><code>gate.panel</code></dt>
+<dd><p>Panel A, the octagon gate on FSC-A vs SSC-A with
+the ground-truth positive events highlighted.</p></dd>
+
+<dt><code>selection.panel</code></dt>
+<dd><p>Panel B, the brightest/negative event
+selection histogram.</p></dd>
+
+<dt><code>cosine.panel</code></dt>
+<dd><p>Panel C, the negative/positive-fraction
+cosine-similarity biplots.</p></dd>
+
+<dt><code>subtraction.plot</code></dt>
+<dd><p>Panel D, the final spectral profile
+comparison (<code><a href="spectral.trace.html">spectral.trace()</a></code> of Cells / Beads / AF).</p></dd>
+
+<dt><code>composite</code></dt>
+<dd><p>The assembled four-panel cowplot object saved to
+<code>output.dir</code> when <code>save = TRUE</code>.</p></dd>
+
+<dt><code>peak.channel</code></dt>
+<dd><p>Character. The fluorophore's nominal peak
+channel, looked up from <code>fluorophore_database.csv</code> for
+<code>asp$cytometer</code>.</p></dd>
+
+<dt><code>y.channel.peak</code></dt>
+<dd><p>Character. The non-colliding peak AF channel
+used as the y-axis of panel C.</p></dd>
+
+<dt><code>reference.profile</code></dt>
+<dd><p>Named numeric vector (over
+<code>spectral.channels</code>) used as the "Beads" trace in panel D, or
+<code>NULL</code> if neither a paired bead control nor the spectral reference
+library had data for this fluorophore.</p></dd>
+
+
+</dl></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="spectra.automated.steps.plot.html">spectra.automated.steps.plot()</a></code>, <code><a href="do.gate.html">do.gate()</a></code>, <code><a href="create.biplot.html">create.biplot()</a></code>,

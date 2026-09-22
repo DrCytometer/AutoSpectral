@@ -6,7 +6,7 @@ database, including synonyms, and returns the matched markers
 ## Usage
 
 ``` r
-match.markers(control.filenames, marker.database)
+match.markers(control.filenames, marker.database, verbose = TRUE)
 ```
 
 ## Arguments
@@ -18,6 +18,10 @@ match.markers(control.filenames, marker.database)
 - marker.database:
 
   Data frame containing marker information.
+
+- verbose:
+
+  Logical. Whether to print progress messages. Default `TRUE`.
 
 ## Value
 

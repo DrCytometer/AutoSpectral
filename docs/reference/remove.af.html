@@ -19,7 +19,7 @@ the specified parameters and settings."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -168,10 +168,12 @@ exclusion from the unstained.</p></dd>
 <code>remove.af()</code> populates it (keyed by sample name) with the objects used to
 identify and exclude intrusive autofluorescence for each cell-based
 AF-removal sample: <code>af.peak.channel</code>, <code>fluor.peak</code>, <code>af.boundaries</code>,
-<code>expr.data.pos</code>/<code>expr.data.neg</code> (spectral channels only), and the
-resulting gate indices. Intended for diagnostic/manuscript figures (see
-<code>plot.spectra.legacy.steps()</code>); has no effect on the cleaning result.
-Capture is unreliable when <code>parallel = TRUE</code>.</p></dd>
+<code>expr.data.pos</code>/<code>expr.data.neg</code> (spectral channels only), <code>scatter.data.pos</code>
+(the scatter-parameter columns aligned to <code>expr.data.pos</code>, for plotting
+<code>gate.population.idx</code> events on an FSC/SSC panel), and the resulting gate
+indices. Intended for diagnostic/manuscript figures (see
+<code>plot.spectra.legacy.steps()</code>, <code><a href="spectra.standard.workflow.plot.html">spectra.standard.workflow.plot()</a></code>); has no
+effect on the cleaning result. Capture is unreliable when <code>parallel = TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

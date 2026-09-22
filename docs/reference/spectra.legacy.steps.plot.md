@@ -43,6 +43,7 @@ spectra.legacy.steps.plot(
   asp,
   fluorophores = NULL,
   gating.system = c("density", "landmarks"),
+  gate.list = NULL,
   af.remove = TRUE,
   universal.negative = TRUE,
   downsample = TRUE,
@@ -50,6 +51,8 @@ spectra.legacy.steps.plot(
   k.neighbors = 3L,
   negative.n = asp$negative.n,
   positive.n = asp$positive.n,
+  singlet.quantiles = c(0.85, 0.975),
+  color.palette = NULL,
   gate.color = "darkgoldenrod1",
   density.palette = "rainbow",
   unstained.point.color = "black",
@@ -57,7 +60,11 @@ spectra.legacy.steps.plot(
   af.gate.color = "black",
   clean.positive.color = "red",
   clean.positive.point.size = NULL,
+  n.true.positive = 50L,
   rlm.line.color = "blue",
+  cells.trace.color = "#D95F02",
+  beads.trace.color = "#377EB8",
+  af.trace.color = "grey40",
   max.points = 50000,
   panel.width = 4,
   panel.height = 4,
@@ -66,7 +73,8 @@ spectra.legacy.steps.plot(
   output.dir = NULL,
   save = TRUE,
   file.type = "jpg",
-  verbose = TRUE
+  verbose = TRUE,
+  allow.duplicate.controls = TRUE
 )
 ```
 
@@ -102,6 +110,21 @@ spectra.legacy.steps.plot(
   [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)'s
   argument of the same name.
 
+- gate.list:
+
+  Optional named list of gates. To use this, pre-define the gates using
+  [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md)
+  and/or
+  [`define.gate.density()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.density.md),
+  ensure that the names of the gates correspond to the names in the
+  `control.def.file`, and ensure that the `gate.name` column has been
+  filled in for the `control.def.file`. Default `NULL` will revert to
+  creating new gates. Passed through to
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
+  for the real pipeline run, and also reused directly for panel A's
+  re-derived gate boundary (rather than recomputing it), so the figure
+  shows the same gate the real run used.
+
 - af.remove:
 
   Logical, default `TRUE`. Passed to
@@ -116,6 +139,21 @@ spectra.legacy.steps.plot(
   Passed through to
   [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md).
   See that function's documentation.
+
+- singlet.quantiles:
+
+  Numeric, default `c(0.85, 0.975)`. Quantile thresholds for the
+  two-stage FSC/SSC singlet discrimination used only when cleaning a
+  paired bead control (see `control.def.file`), matching
+  [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md).
+
+- color.palette:
+
+  Optional character string defining the viridis color palette to be
+  used for the fluorophore traces. Use `rainbow` to be similar to FlowJo
+  or SpectroFlo. Other options are the viridis color options: `magma`,
+  `inferno`, `plasma`, `viridis`, `cividis`, `rocket`, `mako` and
+  `turbo`.
 
 - gate.color:
 
@@ -146,18 +184,38 @@ spectra.legacy.steps.plot(
 
 - clean.positive.color:
 
-  Colour for the highlighted "clean" (AF-gate- excluded) events in
-  panel D. Default `"red"`.
+  Colour for the highlighted "true positive" events in panels A and D.
+  Default `"red"`.
 
 - clean.positive.point.size:
 
-  Numeric or `NULL` (default). Point size for the panel D highlight. If
-  `NULL`, defaults to `asp$figure.gate.point.size * 1.5`.
+  Numeric or `NULL` (default). Point size for the panels A/D highlight.
+  If `NULL`, defaults to `asp$figure.gate.point.size * 1.5`.
+
+- n.true.positive:
+
+  Integer, default `50L`. Number of "true positive" events highlighted
+  in red in panels A and D: the brightest `n.true.positive` events among
+  the AF-gate-excluded population, ranked by projection onto the fitted
+  RLM trend direction in (peak channel, intrusive-AF channel) space,
+  rather than every AF-gate-excluded event (which is simply "not AF",
+  not "positively stained").
 
 - rlm.line.color:
 
   Colour of the robust-linear-model fit line in panel D. Default
   `"blue"`.
+
+- cells.trace.color, beads.trace.color, af.trace.color:
+
+  Colours for the three traces in panel E: the RLM-based per-channel
+  signature ("Cells"), the reference profile ("Beads"), and the
+  matched-negative AF trace. Defaults `"#D95F02"` / `"#377EB8"` /
+  `"grey40"`, matching
+  [`spectra.automated.steps.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectra.automated.steps.plot.md)'s
+  panel F and
+  [`spectra.standard.workflow.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectra.standard.workflow.plot.md)'s
+  panel D.
 
 - max.points:
 
@@ -199,11 +257,82 @@ spectra.legacy.steps.plot(
   [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
   calls).
 
+- allow.duplicate.controls:
+
+  Logical, default `TRUE`. Set `TRUE` to permit multiple single-stained
+  controls for the same fluorophore (diagnostic/QC use only). Each is
+  tracked internally under a unique `sample` identifier. The resulting
+  spectral reference library still needs to be reduced to one row per
+  fluorophore before unmixing – see
+  [`check.spectra.duplicates()`](https://drcytometer.github.io/AutoSpectral/reference/check.spectra.duplicates.md).
+
 ## Value
 
-Invisibly, a named list (one entry per fluorophore) each containing the
-individual panel ggplot objects, the assembled `composite` cowplot
-object, and the resolved gate/channel names.
+Invisibly, a named list (one entry per fluorophore), each containing:
+
+- `gate.panel`:
+
+  Panel A, the automated scatter gate (or a placeholder if gate
+  definition failed), with the `n.true.positive`
+  brightest-along-the-RLM-trend events highlighted larger in red when
+  AF-removal diagnostics were available.
+
+- `af.panel`:
+
+  Panel B, the AF-exclusion cosine-similarity biplot (or a placeholder
+  if `af.remove = FALSE` or no paired universal negative was available
+  for this fluorophore).
+
+- `scatter.match.panel`:
+
+  Panel C, the
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+  kNN scatter-match figure embedded from its saved JPEG.
+
+- `rlm.panel`:
+
+  Panel D, the robust-linear-model diagnostic, fit to and displaying
+  `flow.control$clean.expr` for this sample (the events as
+  clean.controls() actually finalises them, not just
+  `gate.population.idx`), or a placeholder alongside `af.panel` when
+  AF-removal diagnostics were unavailable or too few clean.controls()
+  events remained.
+
+- `subtraction.plot`:
+
+  Panel E, the final spectral profile comparison
+  ([`spectral.trace()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.trace.md)
+  of Cells / Beads / AF), fit to the same `flow.control$clean.expr`
+  population as `rlm.panel`, or a placeholder when AF-removal
+  diagnostics were unavailable, too few clean.controls() events
+  remained, or RLM extraction failed.
+
+- `composite`:
+
+  The assembled five-panel cowplot object saved to `output.dir` when
+  `save = TRUE`.
+
+- `gate.name`:
+
+  Character. The `gate.name` resolved for this fluorophore's sample, or
+  `NA` if none was assigned.
+
+- `af.peak.channel`:
+
+  Character. The intrusive-AF channel used as panels B/D's y-axis, or
+  `NA_character_` if AF-removal diagnostics were unavailable.
+
+- `fluor.peak`:
+
+  Character. The fluorophore's peak channel used as panels B/D's x-axis,
+  or `NA_character_` if AF-removal diagnostics were unavailable.
+
+- `reference.profile`:
+
+  Named numeric vector (over the panel-wide spectral channels) used as
+  the "Beads" trace in panel E, or `NULL` if neither a paired bead
+  control nor the spectral reference library had data for this
+  fluorophore.
 
 ## See also
 

@@ -76,10 +76,10 @@ fix.my.unmix(
   af.spectra = NULL,
   bg.mode = c("af.deconv", "af.row", "global.mean", "none", "per.cell"),
   large.gate = TRUE,
-  scatter.gate = TRUE,
+  scatter.gate = FALSE,
   landmark.quantile = NULL,
   max.iter = 20L,
-  downsample = 20000,
+  downsample = FALSE,
   downsample.background.frac = 0.3,
   downsample.min.stratum = 2000L,
   unstained.threshold = 0.99,
@@ -133,6 +133,8 @@ fix.my.unmix(
   n.threads = 1L,
   figures = TRUE,
   save = TRUE,
+  true.spectra = NULL,
+  min.deg.start = 0.1,
   verbose = TRUE,
   keep.history = FALSE
 )
@@ -231,7 +233,7 @@ fix.my.unmix(
   cell type such as alveolar macrophages, say – sits far enough outside
   the main scatter population that even `large.gate`'s stretch does not
   reach it, and no single gate shape can be expected to enclose everyone
-  the correction needs. Default `TRUE`.
+  the correction needs. Default `FALSE`.
 
 - landmark.quantile:
 
@@ -255,7 +257,7 @@ fix.my.unmix(
   number of events to use. Values above the event count are reduced to
   it by a stratified sample over each event's dominant fluorophore under
   the starting spectra, so a dim or rare dye's own positive population
-  is not thinned at the same rate as the background bulk. Default
+  is not thinned at the same rate as the background bulk. Tested number:
   `20000`.
 
 - downsample.background.frac:
@@ -612,6 +614,22 @@ fix.my.unmix(
 
   Logical, whether to write the csv outputs. Default `TRUE`.
 
+- true.spectra:
+
+  Optional numeric matrix (fluorophores x detectors),
+  independently-known ground truth with row names matching `spectra`.
+  Purely diagnostic: when supplied, the returned `recovery` table
+  reports the angular error against it before and after this run,
+  whether or not the run's own gates accepted the row.
+
+- min.deg.start:
+
+  Numeric, degrees. Below this starting angular error, `recovered` is
+  reported as `0` instead of `(deg.start - deg.after) / deg.start`,
+  since a fluorophore that started (near) exactly correct makes that
+  ratio blow up or divide by zero for a change of a fraction of a
+  degree. Default `0.1`.
+
 - verbose:
 
   Logical, controls messaging. Default `TRUE`.
@@ -712,3 +730,11 @@ A named list:
   `NULL` unless `bg.mode = "per.cell"`, in which case a table of how
   often each `af.spectra` row was assigned and its mean fitted
   abundance, over the (possibly downsampled) events actually used.
+
+- `recovery`:
+
+  Data frame of angular errors against `true.spectra`. `recovered` is
+  the fraction of the starting angular error removed,
+  `(deg.start - deg.after) / deg.start` – `1` is fully recovered, `0` is
+  no change, negative is worse; see `min.deg.start` for the
+  near-zero-`deg.start` case. `NULL` if `true.spectra` was not supplied.

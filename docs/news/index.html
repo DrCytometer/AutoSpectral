@@ -17,7 +17,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,6 +63,57 @@
       <small>Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.8.3" id="autospectral-183-2026-09-22">AutoSpectral 1.8.3 (2026-09-22)<a class="anchor" aria-label="anchor" href="#autospectral-183-2026-09-22"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-8-3">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-8-3"></a></h3>
+<ul><li>Unmixing calculation time is now estimated on a small sample of events when calling the slower unmixing methods (<code>AutoSpectral</code> with <code>spectral.variants</code> or the Poisson functions). This takes a small amount of time, so set <code>estimate.time</code> to <code>FALSE</code> if you want the fastest output.</li>
+<li>CSV files are now saved for similarity, hotspot and spillover spread matrices.</li>
+<li>Functions to replicate the workflow and figures in the manuscript have been added to <code>inst/scripts</code>. These may be generally useful for people wishing to perform comparisons between unmixing methods. See <code>compare_compensaid_folders.R</code>, <code>compare_unmix_folders.R</code>, <code>run_compensaid_comparison_example.R</code>, <code>run_unmix_comparison_specSymp.R</code> and <code>run_bead_cell_comparison.R</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="improvements-1-8-3">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-8-3"></a></h3>
+<ul><li>The <code><a href="https://rdrr.io/pkg/flowWorkspace/man/flowjo_biexp.html" class="external-link">flowWorkspace::flowjo_biexp()</a></code> has been replaced with an in-house logicle (biexponential) transform. This is essentially identical to <code><a href="https://rdrr.io/pkg/flowCore/man/logicleTransform.html" class="external-link">flowCore::logicleTransform()</a></code> and allows a wider range of width basis values to be used, more fitting for spectral flow data.</li>
+<li>The Residual Model by <a href="https://doi.org/10.64898/2026.01.27.701929" class="external-link">Cai et al.</a> is now used to calculate spillover spread robustly.</li>
+<li>FlowSOM is now moved to <code>Suggests</code> to eliminate heavy dependencies. Users who do not install <code>AutoSpectralRcpp</code> will need <code>FlowSOM</code> in order to assess <code>af.spectra</code> and <code>spectral.variants</code>.</li>
+<li>The <code>patchwork</code> has been replaced by <code>cowplot</code>.</li>
+<li>The <code><a href="https://edzer.github.io/sp/reference/point.in.polygon.html" class="external-link">sp::point.in.polygon()</a></code> dependency has been replaced by an in-house version of the function.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-8-3">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-8-3"></a></h3>
+<ul><li>A previous change to reduce memory usage when calling <code><a href="../reference/unmix.folder.html">unmix.folder()</a></code> left the FCS writing without access to the marker (antigen) labels. This is now fixed.</li>
+<li>FCS files that come with unmixed channels already present (FACSDiscover, A5SE, Xenith) should now have the original unmixed data channels removed properly, and imaging, scatter and time channels should be retained properly. Sorry, this took a while.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.8.2" id="autospectral-182-2026-09-12">AutoSpectral 1.8.2 (2026-09-12)<a class="anchor" aria-label="anchor" href="#autospectral-182-2026-09-12"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-8-2">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-8-2"></a></h3>
+<ul><li>A <code>scripts</code> folder has been added. At the moment this contains primarily items related to producing figures for the manuscript, but example workflows may go in later.</li>
+<li>You can now pass <code>control.files</code> (a vector of files/file paths) to <code><a href="../reference/create.control.file.html">create.control.file()</a></code> in order to specify which files among all the control you wish to use, or where they are if they are not all in the same place.</li>
+<li>The <code>large.gate</code> option will now be filled automatically when creating the control file. This is done by referring to the <code>marker_database.csv</code> in inst/extdata, where markers have been tagged as <code>large.gate = TRUE</code> if they are expected to be expressed on larger (e.g., myeloid) cells.</li>
+<li>A new <code>refine</code> loop has been added to <code><a href="../reference/get.fluorophore.spectra.html">get.fluorophore.spectra()</a></code>. This works by unmixing each single-stained control and performing robust linear regression to check the accuracy of the spectrum used for the unmixing on all events in the control. The aim is to provide a check and correction if the pre-processing in <code><a href="../reference/define.flow.control.html">define.flow.control()</a></code>, <code><a href="../reference/clean.controls.html">clean.controls()</a></code> and/or <code><a href="../reference/get.spectra.automated.html">get.spectra.automated()</a></code> has inadvertently excluded some of the key data. This has not been tested yet and is off by default.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="improvements-1-8-2">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-8-2"></a></h3>
+<ul><li>The Frisch-Waugh-Lovell theorem is now employed to speed up autofluorescence unmixing per cell in the R code.</li>
+<li>Better messaging in a few places. When calling <code><a href="../reference/unmix.fcs.html">unmix.fcs()</a></code>, for example, the active unmixing method is now printed to the console, whereas before this was only happening for the AutoSpectral methods.</li>
+<li>A <code>gate.boundary</code> can now be passed to <code><a href="../reference/unmixed.nxn.plot.html">unmixed.nxn.plot()</a></code> or <code><a href="../reference/unmixed.mxn.plot.html">unmixed.mxn.plot()</a></code> to apply a scatter gate on the data prior to plotting. Use <code><a href="../reference/define.gate.density.html">define.gate.density()</a></code> or <code><a href="../reference/define.gate.landmarks.html">define.gate.landmarks()</a></code> to construct the gate. Scatter coordinates must be passed as part of the input data matrix. For example:</li>
+</ul><div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">unmixed.nxn.plot</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="at">unmixed.data =</span> <span class="fu">cbind</span>(my.unmixed.data, original.fsc.ssc.data),</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>asp,</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="at">channels =</span> <span class="fu">colnames</span>(my.unmixed.data),</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="at">gate.boundary =</span> my.gate</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="at">scatter.param =</span> <span class="fu">colnames</span>(original.fsc.ssc.data)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>)</span></code></pre></div>
+<ul><li>You can compare two sets of pre-calculated unmixed data (e.g., OLS vs WLS) using <code><a href="../reference/compare.unmixed.data.html">compare.unmixed.data()</a></code>. See also <code><a href="../reference/compare.unmix.html">compare.unmix()</a></code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-8-2">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-8-2"></a></h3>
+<ul><li>File names on the key output plots and CSV files from <code><a href="../reference/get.fluorophore.spectra.html">get.fluorophore.spectra()</a></code> and <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> will now be unique through the use of timestamping. In the case of <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code>, the FCS filename or <code>title</code> will be included.</li>
+<li>If gating fails for any control in <code><a href="../reference/define.flow.control.html">define.flow.control()</a></code>, all events will be taken as a fallback.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.8.1" id="autospectral-181-2026-09-03">AutoSpectral 1.8.1 (2026-09-03)<a class="anchor" aria-label="anchor" href="#autospectral-181-2026-09-03"></a></h2>
 <div class="section level3">

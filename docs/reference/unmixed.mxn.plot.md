@@ -23,6 +23,8 @@ unmixed.mxn.plot(
   fluorophore,
   asp,
   channels = NULL,
+  gate.boundary = NULL,
+  scatter.param = asp$default.scatter.parameter,
   max.points = 50000,
   title = "mxn_biplot",
   biplot.size = 3,
@@ -66,6 +68,26 @@ unmixed.mxn.plot(
   columns. When `NULL` (default) all columns except those in
   `fluorophore` are used. Must be present in the data if supplied.
 
+- gate.boundary:
+
+  Optional gate boundary, as returned by
+  [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md),
+  [`define.gate.density()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.density.md),
+  or
+  [`do.gate()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.md)
+  — a list containing at least numeric `x` and `y` components describing
+  the polygon vertices. When supplied and `scatter.param` columns are
+  present in the data, events are gated with
+  [`apply.gate()`](https://drcytometer.github.io/AutoSpectral/reference/apply.gate.md)
+  before downsampling to `max.points`. When `scatter.param` columns are
+  absent, gating is skipped with a warning. Default `NULL` (no gating).
+
+- scatter.param:
+
+  Character vector of length 2 giving the names of the two scatter
+  columns to gate on when `gate.boundary` is supplied. Default
+  `asp$default.scatter.parameter`. Ignored if `gate.boundary` is `NULL`.
+
 - max.points:
 
   Integer. Total number of events to retain after a single random
@@ -99,7 +121,7 @@ unmixed.mxn.plot(
 - x.width.basis:
 
   Numeric. Width basis for the biexponential x-axis transform (passed to
-  [`flowWorkspace::flowjo_biexp()`](https://rdrr.io/pkg/flowWorkspace/man/flowjo_biexp.html)).
+  [`biexp.transform()`](https://drcytometer.github.io/AutoSpectral/reference/biexp.transform.md)).
   Default `-1000`.
 
 - y.width.basis:

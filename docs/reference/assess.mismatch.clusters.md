@@ -40,8 +40,7 @@ assess.mismatch.clusters(
 
   Numeric matrix of signed per-detector differences (fluorophore x
   detector), e.g. `comparison[[b]]$Distance` from
-  [`run.bead.cell.comparison()`](https://drcytometer.github.io/AutoSpectral/reference/run.bead.cell.comparison.md)
-  or the output of
+  `run.bead.cell.comparison()` or the output of
   [`bead.cell.dist()`](https://drcytometer.github.io/AutoSpectral/reference/bead.cell.dist.md).
   Column order is assumed to be true spectral/detector order (as in the
   package's per-cytometer reference libraries); contiguity for

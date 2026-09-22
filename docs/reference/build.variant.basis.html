@@ -12,14 +12,30 @@ contribution to the detector-space covariance is
 The mean delta is returned separately rather than folded into the
 covariance: a systematic offset from the reference spectrum is a
 correction to spectra, not a source of variance, and treating it as
-variance both inflates the noise model and leaves the bias uncorrected."><meta property="og:description" content="Converts the per-fluorophore variant deltas from get.spectral.variants()
+variance both inflates the noise model and leaves the bias uncorrected.
+When spectra is supplied, the centred deltas are projected onto the
+orthogonal complement of the panel span before the SVD. Only the
+panel-oblique component of spectral variation is visible to unmixing;
+the in-span component is collinear with the fluorophore columns, and
+carrying it in the covariance inflates the variance of the abundance
+estimates along exactly the spillover directions. Supplying spectra
+is strongly recommended whenever the basis will be used by
+unmix.gls()."><meta property="og:description" content="Converts the per-fluorophore variant deltas from get.spectral.variants()
 into a low-rank covariance basis for unmix.gls(). Each fluorophore's
 contribution to the detector-space covariance is
 \(x_f^2 \sum_j \lambda_{fj} b_{fj} b_{fj}^\top\).
 The mean delta is returned separately rather than folded into the
 covariance: a systematic offset from the reference spectrum is a
 correction to spectra, not a source of variance, and treating it as
-variance both inflates the noise model and leaves the bias uncorrected."><script>
+variance both inflates the noise model and leaves the bias uncorrected.
+When spectra is supplied, the centred deltas are projected onto the
+orthogonal complement of the panel span before the SVD. Only the
+panel-oblique component of spectral variation is visible to unmixing;
+the in-span component is collinear with the fluorophore columns, and
+carrying it in the covariance inflates the variance of the abundance
+estimates along exactly the spillover directions. Supplying spectra
+is strongly recommended whenever the basis will be used by
+unmix.gls()."><script>
   window.MathJax = {
     tex: { packages: {'[+]': ['boldsymbol']} }
   };
@@ -31,7 +47,7 @@ variance both inflates the noise model and leaves the bias uncorrected."><script
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,12 +103,21 @@ contribution to the detector-space covariance is
 covariance: a systematic offset from the reference spectrum is a
 correction to <code>spectra</code>, not a source of variance, and treating it as
 variance both inflates the noise model and leaves the bias uncorrected.</p>
+<p>When <code>spectra</code> is supplied, the centred deltas are projected onto the
+orthogonal complement of the panel span before the SVD. Only the
+panel-oblique component of spectral variation is visible to unmixing;
+the in-span component is collinear with the fluorophore columns, and
+carrying it in the covariance inflates the variance of the abundance
+estimates along exactly the spillover directions. Supplying <code>spectra</code>
+is strongly recommended whenever the basis will be used by
+<code><a href="unmix.gls.html">unmix.gls()</a></code>.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">build.variant.basis</span><span class="op">(</span></span>
 <span>  <span class="va">spectra.variants</span>,</span>
+<span>  spectra <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  rank <span class="op">=</span> <span class="fl">6L</span>,</span>
 <span>  var.explained <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  min.lambda <span class="op">=</span> <span class="fl">1e-04</span>,</span>
@@ -111,9 +136,16 @@ variance both inflates the noise model and leaves the bias uncorrected.</p>
 delta matrices (variants x detectors).</p></dd>
 
 
+<dt id="arg-spectra">spectra<a class="anchor" aria-label="anchor" href="#arg-spectra"></a></dt>
+<dd><p>Optional numeric matrix (fluorophores x detectors), the
+panel reference spectra. When supplied, variant deltas are projected
+onto the orthogonal complement of the panel span before fitting, so
+the basis captures only panel-oblique variation. Default <code>NULL</code>.</p></dd>
+
+
 <dt id="arg-rank">rank<a class="anchor" aria-label="anchor" href="#arg-rank"></a></dt>
 <dd><p>Integer, maximum number of components retained per
-fluorophore. Default <code>2</code>.</p></dd>
+fluorophore. Default <code>6</code>.</p></dd>
 
 
 <dt id="arg-var-explained">var.explained<a class="anchor" aria-label="anchor" href="#arg-var-explained"></a></dt>

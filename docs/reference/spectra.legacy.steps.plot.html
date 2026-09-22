@@ -55,7 +55,7 @@ clean.controls()."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -133,6 +133,7 @@ namespace (several private helpers are shared), and requires the
 <span>  <span class="va">asp</span>,</span>
 <span>  fluorophores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  gating.system <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"density"</span>, <span class="st">"landmarks"</span><span class="op">)</span>,</span>
+<span>  gate.list <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  af.remove <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  universal.negative <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  downsample <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -140,6 +141,8 @@ namespace (several private helpers are shared), and requires the
 <span>  k.neighbors <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>  negative.n <span class="op">=</span> <span class="va">asp</span><span class="op">$</span><span class="va">negative.n</span>,</span>
 <span>  positive.n <span class="op">=</span> <span class="va">asp</span><span class="op">$</span><span class="va">positive.n</span>,</span>
+<span>  singlet.quantiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.85</span>, <span class="fl">0.975</span><span class="op">)</span>,</span>
+<span>  color.palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  gate.color <span class="op">=</span> <span class="st">"darkgoldenrod1"</span>,</span>
 <span>  density.palette <span class="op">=</span> <span class="st">"rainbow"</span>,</span>
 <span>  unstained.point.color <span class="op">=</span> <span class="st">"black"</span>,</span>
@@ -147,7 +150,11 @@ namespace (several private helpers are shared), and requires the
 <span>  af.gate.color <span class="op">=</span> <span class="st">"black"</span>,</span>
 <span>  clean.positive.color <span class="op">=</span> <span class="st">"red"</span>,</span>
 <span>  clean.positive.point.size <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n.true.positive <span class="op">=</span> <span class="fl">50L</span>,</span>
 <span>  rlm.line.color <span class="op">=</span> <span class="st">"blue"</span>,</span>
+<span>  cells.trace.color <span class="op">=</span> <span class="st">"#D95F02"</span>,</span>
+<span>  beads.trace.color <span class="op">=</span> <span class="st">"#377EB8"</span>,</span>
+<span>  af.trace.color <span class="op">=</span> <span class="st">"grey40"</span>,</span>
 <span>  max.points <span class="op">=</span> <span class="fl">50000</span>,</span>
 <span>  panel.width <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  panel.height <span class="op">=</span> <span class="fl">4</span>,</span>
@@ -156,7 +163,8 @@ namespace (several private helpers are shared), and requires the
 <span>  output.dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  save <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  file.type <span class="op">=</span> <span class="st">"jpg"</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  allow.duplicate.controls <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -192,6 +200,17 @@ paired universal negative.</p></dd>
 name.</p></dd>
 
 
+<dt id="arg-gate-list">gate.list<a class="anchor" aria-label="anchor" href="#arg-gate-list"></a></dt>
+<dd><p>Optional named list of gates. To use this, pre-define the
+gates using <code><a href="define.gate.landmarks.html">define.gate.landmarks()</a></code> and/or <code><a href="define.gate.density.html">define.gate.density()</a></code>, ensure
+that the names of the gates correspond to the names in the <code>control.def.file</code>,
+and ensure that the <code>gate.name</code> column has been filled in for the
+<code>control.def.file</code>. Default <code>NULL</code> will revert to creating new gates.
+Passed through to <code><a href="define.flow.control.html">define.flow.control()</a></code> for the real pipeline run, and
+also reused directly for panel A's re-derived gate boundary (rather than
+recomputing it), so the figure shows the same gate the real run used.</p></dd>
+
+
 <dt id="arg-af-remove">af.remove<a class="anchor" aria-label="anchor" href="#arg-af-remove"></a></dt>
 <dd><p>Logical, default <code>TRUE</code>. Passed to <code><a href="clean.controls.html">clean.controls()</a></code>.
 Panels B and D require this to be <code>TRUE</code> and require the illustrated
@@ -201,6 +220,21 @@ show a placeholder.</p></dd>
 
 <dt id="arg-universal-negative-downsample-scatter-match-k-neighbors-negative-n-positive-n">universal.negative, downsample, scatter.match, k.neighbors, negative.n, positive.n<a class="anchor" aria-label="anchor" href="#arg-universal-negative-downsample-scatter-match-k-neighbors-negative-n-positive-n"></a></dt>
 <dd><p>Passed through to <code><a href="clean.controls.html">clean.controls()</a></code>. See that function's documentation.</p></dd>
+
+
+<dt id="arg-singlet-quantiles">singlet.quantiles<a class="anchor" aria-label="anchor" href="#arg-singlet-quantiles"></a></dt>
+<dd><p>Numeric, default <code>c(0.85, 0.975)</code>. Quantile
+thresholds for the two-stage FSC/SSC singlet discrimination used only when
+cleaning a paired bead control (see <code>control.def.file</code>), matching
+<code><a href="get.spectra.automated.html">get.spectra.automated()</a></code>.</p></dd>
+
+
+<dt id="arg-color-palette">color.palette<a class="anchor" aria-label="anchor" href="#arg-color-palette"></a></dt>
+<dd><p>Optional character string defining the viridis color
+palette to be used for the fluorophore traces. Use <code>rainbow</code>
+to be similar to FlowJo or SpectroFlo. Other options are the viridis color
+options: <code>magma</code>, <code>inferno</code>, <code>plasma</code>, <code>viridis</code>, <code>cividis</code>, <code>rocket</code>, <code>mako</code>
+and <code>turbo</code>.</p></dd>
 
 
 <dt id="arg-gate-color">gate.color<a class="anchor" aria-label="anchor" href="#arg-gate-color"></a></dt>
@@ -230,19 +264,37 @@ both panel B biplots. Default <code>"black"</code>.</p></dd>
 
 
 <dt id="arg-clean-positive-color">clean.positive.color<a class="anchor" aria-label="anchor" href="#arg-clean-positive-color"></a></dt>
-<dd><p>Colour for the highlighted "clean" (AF-gate-
-excluded) events in panel D. Default <code>"red"</code>.</p></dd>
+<dd><p>Colour for the highlighted "true positive"
+events in panels A and D. Default <code>"red"</code>.</p></dd>
 
 
 <dt id="arg-clean-positive-point-size">clean.positive.point.size<a class="anchor" aria-label="anchor" href="#arg-clean-positive-point-size"></a></dt>
 <dd><p>Numeric or <code>NULL</code> (default). Point size
-for the panel D highlight. If <code>NULL</code>, defaults to
+for the panels A/D highlight. If <code>NULL</code>, defaults to
 <code>asp$figure.gate.point.size * 1.5</code>.</p></dd>
+
+
+<dt id="arg-n-true-positive">n.true.positive<a class="anchor" aria-label="anchor" href="#arg-n-true-positive"></a></dt>
+<dd><p>Integer, default <code>50L</code>. Number of "true positive"
+events highlighted in red in panels A and D: the brightest
+<code>n.true.positive</code> events among the AF-gate-excluded population, ranked
+by projection onto the fitted RLM trend direction in (peak channel,
+intrusive-AF channel) space, rather than every AF-gate-excluded event
+(which is simply "not AF", not "positively stained").</p></dd>
 
 
 <dt id="arg-rlm-line-color">rlm.line.color<a class="anchor" aria-label="anchor" href="#arg-rlm-line-color"></a></dt>
 <dd><p>Colour of the robust-linear-model fit line in panel
 D. Default <code>"blue"</code>.</p></dd>
+
+
+<dt id="arg-cells-trace-color-beads-trace-color-af-trace-color">cells.trace.color, beads.trace.color, af.trace.color<a class="anchor" aria-label="anchor" href="#arg-cells-trace-color-beads-trace-color-af-trace-color"></a></dt>
+<dd><p>Colours for the
+three traces in panel E: the RLM-based per-channel signature ("Cells"),
+the reference profile ("Beads"), and the matched-negative AF trace.
+Defaults <code>"#D95F02"</code> / <code>"#377EB8"</code> / <code>"grey40"</code>, matching
+<code><a href="spectra.automated.steps.plot.html">spectra.automated.steps.plot()</a></code>'s panel F and
+<code><a href="spectra.standard.workflow.plot.html">spectra.standard.workflow.plot()</a></code>'s panel D.</p></dd>
 
 
 <dt id="arg-max-points">max.points<a class="anchor" aria-label="anchor" href="#arg-max-points"></a></dt>
@@ -281,13 +333,75 @@ for each fluorophore to <code>output.dir</code>.</p></dd>
 controls verbosity of the internal <code><a href="define.flow.control.html">define.flow.control()</a></code> /
 <code><a href="clean.controls.html">clean.controls()</a></code> calls).</p></dd>
 
+
+<dt id="arg-allow-duplicate-controls">allow.duplicate.controls<a class="anchor" aria-label="anchor" href="#arg-allow-duplicate-controls"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Set <code>TRUE</code> to
+permit multiple single-stained controls for the same fluorophore
+(diagnostic/QC use only). Each is tracked internally under a unique
+<code>sample</code> identifier. The resulting spectral reference library still needs
+to be reduced to one row per fluorophore before unmixing –
+see <code><a href="check.spectra.duplicates.html">check.spectra.duplicates()</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Invisibly, a named list (one entry per fluorophore) each
-containing the individual panel ggplot objects, the assembled
-<code>composite</code> cowplot object, and the resolved gate/channel names.</p>
-    </div>
+    <p>Invisibly, a named list (one entry per fluorophore), each
+containing:</p><dl><dt><code>gate.panel</code></dt>
+<dd><p>Panel A, the automated scatter gate (or a
+placeholder if gate definition failed), with the <code>n.true.positive</code>
+brightest-along-the-RLM-trend events highlighted larger in red when
+AF-removal diagnostics were available.</p></dd>
+
+<dt><code>af.panel</code></dt>
+<dd><p>Panel B, the AF-exclusion cosine-similarity biplot
+(or a placeholder if <code>af.remove = FALSE</code> or no paired universal
+negative was available for this fluorophore).</p></dd>
+
+<dt><code>scatter.match.panel</code></dt>
+<dd><p>Panel C, the <code><a href="clean.controls.html">clean.controls()</a></code>
+kNN scatter-match figure embedded from its saved JPEG.</p></dd>
+
+<dt><code>rlm.panel</code></dt>
+<dd><p>Panel D, the robust-linear-model diagnostic, fit
+to and displaying <code>flow.control$clean.expr</code> for this sample (the
+events as clean.controls() actually finalises them, not just
+<code>gate.population.idx</code>), or a placeholder alongside <code>af.panel</code> when
+AF-removal diagnostics were unavailable or too few clean.controls()
+events remained.</p></dd>
+
+<dt><code>subtraction.plot</code></dt>
+<dd><p>Panel E, the final spectral profile
+comparison (<code><a href="spectral.trace.html">spectral.trace()</a></code> of Cells / Beads / AF), fit to the
+same <code>flow.control$clean.expr</code> population as <code>rlm.panel</code>, or a
+placeholder when AF-removal diagnostics were unavailable, too few
+clean.controls() events remained, or RLM extraction failed.</p></dd>
+
+<dt><code>composite</code></dt>
+<dd><p>The assembled five-panel cowplot object saved to
+<code>output.dir</code> when <code>save = TRUE</code>.</p></dd>
+
+<dt><code>gate.name</code></dt>
+<dd><p>Character. The <code>gate.name</code> resolved for this
+fluorophore's sample, or <code>NA</code> if none was assigned.</p></dd>
+
+<dt><code>af.peak.channel</code></dt>
+<dd><p>Character. The intrusive-AF channel used as
+panels B/D's y-axis, or <code>NA_character_</code> if AF-removal diagnostics
+were unavailable.</p></dd>
+
+<dt><code>fluor.peak</code></dt>
+<dd><p>Character. The fluorophore's peak channel used as
+panels B/D's x-axis, or <code>NA_character_</code> if AF-removal diagnostics
+were unavailable.</p></dd>
+
+<dt><code>reference.profile</code></dt>
+<dd><p>Named numeric vector (over the panel-wide
+spectral channels) used as the "Beads" trace in panel E, or <code>NULL</code>
+if neither a paired bead control nor the spectral reference library
+had data for this fluorophore.</p></dd>
+
+
+</dl></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="define.flow.control.html">define.flow.control()</a></code>, <code><a href="clean.controls.html">clean.controls()</a></code>,

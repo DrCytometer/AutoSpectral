@@ -99,10 +99,14 @@ remove.af(
   populates it (keyed by sample name) with the objects used to identify
   and exclude intrusive autofluorescence for each cell-based AF-removal
   sample: `af.peak.channel`, `fluor.peak`, `af.boundaries`,
-  `expr.data.pos`/`expr.data.neg` (spectral channels only), and the
-  resulting gate indices. Intended for diagnostic/manuscript figures
-  (see `plot.spectra.legacy.steps()`); has no effect on the cleaning
-  result. Capture is unreliable when `parallel = TRUE`.
+  `expr.data.pos`/`expr.data.neg` (spectral channels only),
+  `scatter.data.pos` (the scatter-parameter columns aligned to
+  `expr.data.pos`, for plotting `gate.population.idx` events on an
+  FSC/SSC panel), and the resulting gate indices. Intended for
+  diagnostic/manuscript figures (see `plot.spectra.legacy.steps()`,
+  [`spectra.standard.workflow.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectra.standard.workflow.plot.md));
+  has no effect on the cleaning result. Capture is unreliable when
+  `parallel = TRUE`.
 
 ## Value
 

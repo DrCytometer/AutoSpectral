@@ -47,7 +47,7 @@ from a source measured free of spillover (e.g. BDSPECTRAL QSPE)."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,6 +120,10 @@ from a source measured free of spillover (e.g. <code>BDSPECTRAL QSPE</code>).</p
 <span>  <span class="va">spectra</span>,</span>
 <span>  <span class="va">noise.model</span>,</span>
 <span>  variant.basis <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  spectra.variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  spread.kappa <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  n.select.sweeps <span class="op">=</span> <span class="fl">2L</span>,</span>
+<span>  n.variants <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  af.spectra <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  af.index <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  af.basis <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -154,7 +158,43 @@ from a source measured free of spillover (e.g. <code>BDSPECTRAL QSPE</code>).</p
 
 
 <dt id="arg-variant-basis">variant.basis<a class="anchor" aria-label="anchor" href="#arg-variant-basis"></a></dt>
-<dd><p>Optional list from <code><a href="build.variant.basis.html">build.variant.basis()</a></code>.</p></dd>
+<dd><p>Optional list from <code><a href="build.variant.basis.html">build.variant.basis()</a></code>. Build it
+with the <code>spectra</code> argument supplied so that the basis is
+panel-oblique: an unprojected basis carries in-span directions that
+are collinear with the fluorophore columns and inflates the variance
+of the abundance estimates along the spillover directions.</p></dd>
+
+
+<dt id="arg-spectra-variants">spectra.variants<a class="anchor" aria-label="anchor" href="#arg-spectra-variants"></a></dt>
+<dd><p>Optional list, the full output of
+<code><a href="get.spectral.variants.html">get.spectral.variants()</a></code>. When supplied, enables per-cell discrete
+variant commitment: fluorophores above their spread-scaled positivity
+boundary have their reference row replaced by the best-fitting
+variant, selected on a restricted design by Poisson-weighted,
+non-negative-clamped residual. This moves spectral variation out of
+the covariance and into the design, which is what suppresses
+spillover spread; the covariance form alone cannot, since adding
+spectral uncertainty to <code>Sigma</code> can only widen the abundance
+estimates. Also switches the active set for the low-rank <code>Sigma</code>
+terms from the relative <code>active.threshold</code> rule to the spread-scaled
+boundary built from <code>$thresholds</code> and <code>$spillover.spread</code>.</p></dd>
+
+
+<dt id="arg-spread-kappa">spread.kappa<a class="anchor" aria-label="anchor" href="#arg-spread-kappa"></a></dt>
+<dd><p>Numeric, number of spillover-spread standard
+deviations added to the flat positivity threshold when
+<code>spectra.variants</code> is supplied, matching <code><a href="fix.my.unmix.html">fix.my.unmix()</a></code>. Default <code>2</code>.</p></dd>
+
+
+<dt id="arg-n-select-sweeps">n.select.sweeps<a class="anchor" aria-label="anchor" href="#arg-n-select-sweeps"></a></dt>
+<dd><p>Integer, coordinate sweeps of per-fluorophore
+variant selection on the restricted design. Default <code>2</code>.</p></dd>
+
+
+<dt id="arg-n-variants">n.variants<a class="anchor" aria-label="anchor" href="#arg-n-variants"></a></dt>
+<dd><p>Numeric, maximum number of variant candidates scored
+per fluorophore per cell (evenly subsampled when the library is
+larger). <code>Inf</code> scores all. Default <code>Inf</code>.</p></dd>
 
 
 <dt id="arg-af-spectra">af.spectra<a class="anchor" aria-label="anchor" href="#arg-af-spectra"></a></dt>

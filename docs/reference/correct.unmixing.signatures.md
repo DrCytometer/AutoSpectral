@@ -6,6 +6,16 @@ reference spectra are subtly wrong for the sample being analysed -
 typically because bead-derived spectra are applied to cells, or spectra
 from another day, lot, or instrument state are in use.
 
+Takes either `unstained.sample` and `fully.stained.sample` file paths,
+reading and deriving `unmixed.thresholds`/`spillover.spread` itself (the
+direct-use convention shared with
+[`fix.my.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/fix.my.unmix.md)
+and
+[`correct.spectra.glasso()`](https://drcytometer.github.io/AutoSpectral/reference/correct.spectra.glasso.md)),
+or `raw.data` supplied directly as an already-read matrix, the
+convention for a caller that already has it in memory. Supply one or the
+other, not both.
+
 Each event is assigned to the fluorophore it is most strongly positive
 for, as a fraction of that fluorophore's own dynamic range above its
 positivity threshold. Within each such dominance population, the data
@@ -58,20 +68,28 @@ contaminates the dominance populations and the background estimate.
 
 ``` r
 correct.unmixing.signatures(
-  raw.data,
   spectra,
-  unmixed.thresholds,
+  unstained.sample = NULL,
+  fully.stained.sample = NULL,
+  flow.control = NULL,
   asp = NULL,
+  variants = NULL,
   af.name = "AF",
+  raw.data = NULL,
+  unmixed.thresholds = NULL,
   scatter = NULL,
-  gate.main = TRUE,
+  gate.main = FALSE,
   gate.level = 0.1,
   spillover.spread = NULL,
   spread.kappa = 2,
   bg.mode = c("global.mean", "scatter.knn", "none"),
   unstained = NULL,
   unstained.scatter = NULL,
-  k.neighbors = 20L,
+  k.neighbors = 3L,
+  unstained.threshold = 0.99,
+  unstained.margin = 1.3,
+  threshold.prior.weight = 0.3,
+  threshold.max.ratio = 3,
   n.levels = 10L,
   n.iter = 6L,
   min.events = 200L,
@@ -89,30 +107,37 @@ correct.unmixing.signatures(
   footprint.min.channels = 3L,
   background.n = 5000L,
   true.spectra = NULL,
+  min.deg.start = 0.1,
   verbose = TRUE
 )
 ```
 
 ## Arguments
 
-- raw.data:
-
-  Numeric matrix (events x detectors), raw detector-space data. Pooled
-  or concatenated single-stained controls, or a fully stained sample
-  with well-separated populations. Columns must match the columns of
-  `spectra`.
-
 - spectra:
 
   Numeric matrix (fluorophores x detectors), the starting reference
   spectra to be corrected, L-infinity normalised.
 
-- unmixed.thresholds:
+- unstained.sample:
 
-  Named numeric vector covering every fluorophore in `spectra` (the
-  autofluorescence row may be omitted), giving the positivity threshold
-  in unmixed space, typically the 99.5th percentile of an unstained
-  control unmixed against `spectra`.
+  File path and name for a raw unstained sample, used to derive
+  `unmixed.thresholds` (any fluorophore not already covered by
+  `variants$thresholds`) and, under `bg.mode = "scatter.knn"`, as the
+  scatter-matched background reference. Ignored when `raw.data` is
+  supplied directly. Required, together with `fully.stained.sample` and
+  `flow.control`, whenever `raw.data` is not.
+
+- fully.stained.sample:
+
+  File path and name for a raw fully stained sample. Ignored when
+  `raw.data` is supplied directly.
+
+- flow.control:
+
+  The flow.control list, used to select the scatter and spectral channel
+  columns when reading `unstained.sample` and `fully.stained.sample`.
+  Ignored when `raw.data` is supplied directly.
 
 - asp:
 
@@ -121,11 +146,48 @@ correct.unmixing.signatures(
   Used only to seed the random number generator (`asp$bird.seed`) for
   reproducible subsampling. Default `NULL`.
 
+- variants:
+
+  Optional variant list returned by
+  [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md).
+  Used as a shrinkage prior on top of the threshold this function
+  derives from its own unmix (see `unmixed.thresholds`), not as the
+  threshold itself:
+  [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)
+  measures `variants$thresholds` from a per-cell-optimised unmix at the
+  99.5th percentile, both of which make it systematically tighter than
+  the bare-OLS, 99th-percentile estimate this function's own dominance
+  assignment is judged against, especially for AF-collinear
+  fluorophores. `variants$spillover.spread` supplies `spillover.spread`
+  when that is not itself supplied. Default `NULL`.
+
 - af.name:
 
   Character, the name of the autofluorescence row in `spectra`, or
   `NULL` if there is none. The AF row is never treated as a panel
   fluorophore and is never corrected. Default `"AF"`.
+
+- raw.data:
+
+  Optional numeric matrix (events x detectors), raw detector-space data.
+  Pooled or concatenated single-stained controls, or a fully stained
+  sample with well-separated populations. Columns must match the columns
+  of `spectra`. Supply this directly to skip reading
+  `fully.stained.sample` from disk – the internal calling convention,
+  used when the raw matrix is already in memory. Default `NULL`, which
+  requires `unstained.sample`, `fully.stained.sample` and `flow.control`
+  instead.
+
+- unmixed.thresholds:
+
+  Optional named numeric vector covering every fluorophore in `spectra`
+  (the autofluorescence row may be omitted), giving the positivity
+  threshold in unmixed space. Default `NULL`, which computes the
+  `unstained.margin`-scaled `unstained.threshold` percentile of
+  `unstained`'s own bare unmix against `spectra` – the same
+  pre-background-subtraction convention `dominant` below is judged
+  against – then shrinks it toward `variants$thresholds` (see
+  `threshold.prior.weight`, `threshold.max.ratio`).
 
 - scatter:
 
@@ -136,7 +198,7 @@ correct.unmixing.signatures(
 - gate.main:
 
   Logical, whether to gate events to the main scatter population before
-  fitting. Requires `scatter`. Default `TRUE`.
+  fitting. Requires `scatter`. Default `FALSE`.
 
 - gate.level:
 
@@ -149,7 +211,9 @@ correct.unmixing.signatures(
   supplied, co-activity is judged against per-event thresholds widened
   by the spillover spread each bright fluorophore contributes, so
   spillover from the dominant dye is not mistaken for a co-active
-  fluorophore. Default `NULL` (flat thresholds).
+  fluorophore. Default `NULL`, which falls back to
+  `variants$spillover.spread` (flat thresholds if that is also
+  unavailable).
 
 - spread.kappa:
 
@@ -175,7 +239,39 @@ correct.unmixing.signatures(
 - k.neighbors:
 
   Integer, neighbours for scatter-matched background subtraction.
-  Default `20`.
+  Default `3`.
+
+- unstained.threshold:
+
+  Numeric in (0, 1), the percentile of `unstained`'s own unmix defining
+  positivity, used only when `unmixed.thresholds` is not supplied
+  directly. Default `0.99` – less extreme than
+  [`get.spectral.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectral.variants.md)'s
+  `0.995`, and therefore less sensitive to the handful of poorly
+  AF-corrected events that dominate the very top of the tail for a
+  collinear fluorophore.
+
+- unstained.margin:
+
+  Numeric, multiplier applied to that threshold. Default `1.3`.
+
+- threshold.prior.weight:
+
+  Numeric in `[0, 1]`, the log-space weight given to
+  `variants$thresholds` when shrinking the internally-computed
+  `unmixed.thresholds` toward it. `0` uses the internal estimate
+  unchanged; `1` uses `variants$thresholds` outright. Ignored for any
+  fluorophore `variants$thresholds` does not cover, or when `variants`
+  is `NULL`. Default `0.3`.
+
+- threshold.max.ratio:
+
+  Numeric `> 1`, the magnitude ratio (either direction) between the
+  internal estimate and `variants$thresholds` beyond which the internal
+  side is treated as unreliable – most likely under-corrected
+  autofluorescence – rather than partially trusted, and the threshold
+  reverts to `variants$thresholds` outright instead of blending. Default
+  `3`.
 
 - n.levels:
 
@@ -285,6 +381,14 @@ correct.unmixing.signatures(
   Purely diagnostic: when supplied, the returned `recovery` table
   reports the angular error before and after correction per fluorophore.
 
+- min.deg.start:
+
+  Numeric, degrees. Below this starting angular error, `recovered` is
+  reported as `0` instead of `(deg.start - deg.after) / deg.start`,
+  since a fluorophore that started (near) exactly correct makes that
+  ratio blow up or divide by zero for a change of a fraction of a
+  degree. Default `0.1`.
+
 - verbose:
 
   Logical, controls messaging. Default `TRUE`.
@@ -332,5 +436,8 @@ A named list:
 
 - `recovery`:
 
-  Data frame of angular errors against `true.spectra`, or `NULL` if
-  `true.spectra` was not supplied.
+  Data frame of angular errors against `true.spectra`. `recovered` is
+  the fraction of the starting angular error removed,
+  `(deg.start - deg.after) / deg.start` – `1` is fully recovered, `0` is
+  no change, negative is worse; see `min.deg.start` for the
+  near-zero-`deg.start` case. `NULL` if `true.spectra` was not supplied.

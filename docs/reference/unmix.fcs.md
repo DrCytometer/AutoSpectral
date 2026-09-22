@@ -39,6 +39,8 @@ unmix.fcs(
   collinear.threshold = 0.5,
   joint.pair.resolution = TRUE,
   refine.af.quantile = 0.5,
+  estimate.time = TRUE,
+  estimate.sample.events = 5000,
   ...
 )
 ```
@@ -253,6 +255,24 @@ unmix.fcs(
   Numeric, default `0.5`. Fraction of cells taken forward for additional
   AF passes (see `n.af.passes`). Only used when `pipeline = "joint"`.
   Passed to `unmix.autospectral.rcpp()`.
+
+- estimate.time:
+
+  Logical, default `TRUE`. Before unmixing the first chunk, times a
+  small probe drawn from that chunk's already-loaded data and messages a
+  rough total-time estimate. Only runs for methods slow enough to
+  warrant it (`Poisson`, `FastPoisson`, or `AutoSpectral` with
+  `spectra.variants` supplied), and only when the file is bigger than
+  `estimate.sample.events`; a no-op otherwise. Requires `verbose = TRUE`
+  to have any effect, since the estimate is only printed. See
+  [`?estimate.unmix.time`](https://drcytometer.github.io/AutoSpectral/reference/estimate.unmix.time.md)
+  for the same check usable standalone, ahead of a run.
+
+- estimate.sample.events:
+
+  Numeric, default `5000`. Number of events used for the `estimate.time`
+  probe. Only relevant when `estimate.time = TRUE` and the method
+  qualifies; see `estimate.time`.
 
 - ...:
 

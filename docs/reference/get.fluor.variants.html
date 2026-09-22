@@ -22,7 +22,41 @@ estimate, which is then subtracted. SOM clustering on the resulting
 background-corrected matrix recovers the population-level distribution of
 spectral shapes. A cosine-similarity QC step retains only SOM centroids
 sufficiently similar to the reference spectrum, followed by off-peak
-smoothing."><meta property="og:description" content="Assesses variation in the spectral signature of a single-stained flow
+smoothing.
+The Spillover Spreading Matrix inputs are now computed differently: instead of
+re-unmixing this control's positive population against the full panel and
+taking an empirical MAD, this fits a well-conditioned, low-rank model
+(autofluorescence components plus this fluorophore's own reference row –
+or this fluorophore alone for beads, or a cell control too collinear with
+AF to separate safely) and derives spread from the residual of that fit.
+The low-rank fit is exactly the AF-projection step get.fluor.variants()
+already performs; the difference is that its residual and this control's
+own recovered abundance are kept rather than discarded. Because the
+residual is, by construction, orthogonal to every column of this small
+design, its magnitude is not amplified by collinearity elsewhere in the
+panel the way a full n-parameter OLS solve of the raw positive
+population is. Projecting that residual through the full-panel
+pseudoinverse (unmix.ols()) and robustly regressing its squared
+value against this control's own recovered abundance – via
+.fix.huber.slope() (falling back to fit.robust.linear.model()
+if AutoSpectralRcpp is unavailable) – gives, for every target
+fluorophore at once, the same intercept-plus-slope relationship the
+Residual Model of Cai et al. (bioRxiv 2026, USERM) derives analytically:
+Var(unmixed_k) = intercept_k + slope_k * b_h, where b_h is
+this control's own on-channel abundance. slope_k is exactly
+SS(fluor, k) in the units used throughout this package (added
+variance per unit of on-channel abundance), with no separate
+unstained-population baseline required – the regression's own intercept
+already is that baseline, estimated across this control's own dim-to-
+bright range rather than from a different sample and a different
+estimator entirely.
+This uses every event that clears the raw peak-channel threshold
+(pos.idx), not just the narrower keep.idx/cosine-QC'd subset
+used for SOM clustering, so the regression sees the widest available
+range of on-channel brightness and does not depend on cosine QC
+succeeding – a control that fails cosine QC (and would otherwise fall
+back to a cruder spread estimate) gets the identical Residual Model
+treatment here."><meta property="og:description" content="Assesses variation in the spectral signature of a single-stained flow
 cytometry control sample using SOM clustering on scatter-matched,
 background-corrected positive events.
 Autofluorescence is characterised in situ from the paired
@@ -39,7 +73,41 @@ estimate, which is then subtracted. SOM clustering on the resulting
 background-corrected matrix recovers the population-level distribution of
 spectral shapes. A cosine-similarity QC step retains only SOM centroids
 sufficiently similar to the reference spectrum, followed by off-peak
-smoothing."><script>
+smoothing.
+The Spillover Spreading Matrix inputs are now computed differently: instead of
+re-unmixing this control's positive population against the full panel and
+taking an empirical MAD, this fits a well-conditioned, low-rank model
+(autofluorescence components plus this fluorophore's own reference row –
+or this fluorophore alone for beads, or a cell control too collinear with
+AF to separate safely) and derives spread from the residual of that fit.
+The low-rank fit is exactly the AF-projection step get.fluor.variants()
+already performs; the difference is that its residual and this control's
+own recovered abundance are kept rather than discarded. Because the
+residual is, by construction, orthogonal to every column of this small
+design, its magnitude is not amplified by collinearity elsewhere in the
+panel the way a full n-parameter OLS solve of the raw positive
+population is. Projecting that residual through the full-panel
+pseudoinverse (unmix.ols()) and robustly regressing its squared
+value against this control's own recovered abundance – via
+.fix.huber.slope() (falling back to fit.robust.linear.model()
+if AutoSpectralRcpp is unavailable) – gives, for every target
+fluorophore at once, the same intercept-plus-slope relationship the
+Residual Model of Cai et al. (bioRxiv 2026, USERM) derives analytically:
+Var(unmixed_k) = intercept_k + slope_k * b_h, where b_h is
+this control's own on-channel abundance. slope_k is exactly
+SS(fluor, k) in the units used throughout this package (added
+variance per unit of on-channel abundance), with no separate
+unstained-population baseline required – the regression's own intercept
+already is that baseline, estimated across this control's own dim-to-
+bright range rather than from a different sample and a different
+estimator entirely.
+This uses every event that clears the raw peak-channel threshold
+(pos.idx), not just the narrower keep.idx/cosine-QC'd subset
+used for SOM clustering, so the regression sees the widest available
+range of on-channel brightness and does not depend on cosine QC
+succeeding – a control that fails cosine QC (and would otherwise fall
+back to a cruder spread estimate) gets the identical Residual Model
+treatment here."><script>
   window.MathJax = {
     tex: { packages: {'[+]': ['boldsymbol']} }
   };
@@ -51,7 +119,7 @@ smoothing."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -117,6 +185,40 @@ background-corrected matrix recovers the population-level distribution of
 spectral shapes. A cosine-similarity QC step retains only SOM centroids
 sufficiently similar to the reference spectrum, followed by off-peak
 smoothing.</p>
+<p>The Spillover Spreading Matrix inputs are now computed differently: instead of
+re-unmixing this control's positive population against the full panel and
+taking an empirical MAD, this fits a well-conditioned, low-rank model
+(autofluorescence components plus this fluorophore's own reference row –
+or this fluorophore alone for beads, or a cell control too collinear with
+AF to separate safely) and derives spread from the residual of that fit.</p>
+<p>The low-rank fit is exactly the AF-projection step <code>get.fluor.variants()</code>
+already performs; the difference is that its residual and this control's
+own recovered abundance are kept rather than discarded. Because the
+residual is, by construction, orthogonal to every column of this small
+design, its magnitude is not amplified by collinearity elsewhere in the
+panel the way a full <code>n</code>-parameter OLS solve of the raw positive
+population is. Projecting that residual through the full-panel
+pseudoinverse (<code><a href="unmix.ols.html">unmix.ols()</a></code>) and robustly regressing its squared
+value against this control's own recovered abundance – via
+<code>.fix.huber.slope()</code> (falling back to <code><a href="fit.robust.linear.model.html">fit.robust.linear.model()</a></code>
+if <code>AutoSpectralRcpp</code> is unavailable) – gives, for every target
+fluorophore at once, the same intercept-plus-slope relationship the
+Residual Model of Cai et al. (bioRxiv 2026, USERM) derives analytically:
+<code>Var(unmixed_k) = intercept_k + slope_k * b_h</code>, where <code>b_h</code> is
+this control's own on-channel abundance. <code>slope_k</code> is exactly
+<code>SS(fluor, k)</code> in the units used throughout this package (added
+variance per unit of on-channel abundance), with no separate
+unstained-population baseline required – the regression's own intercept
+already is that baseline, estimated across this control's own dim-to-
+bright range rather than from a different sample and a different
+estimator entirely.</p>
+<p>This uses every event that clears the raw peak-channel threshold
+(<code>pos.idx</code>), not just the narrower <code>keep.idx</code>/cosine-QC'd subset
+used for SOM clustering, so the regression sees the widest available
+range of on-channel brightness and does not depend on cosine QC
+succeeding – a control that fails cosine QC (and would otherwise fall
+back to a cruder spread estimate) gets the identical Residual Model
+treatment here.</p>
     </div>
 
     <div class="section level2">
@@ -147,6 +249,10 @@ smoothing.</p>
 <span>  sim.threshold.floor <span class="op">=</span> <span class="fl">0.9</span>,</span>
 <span>  af.collinear.threshold <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  noise.floor.tail.fraction <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>  noise.mask.threshold <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  noise.n.cells <span class="op">=</span> <span class="fl">2000L</span>,</span>
+<span>  huber.k <span class="op">=</span> <span class="fl">1.345</span>,</span>
+<span>  huber.max.iter <span class="op">=</span> <span class="fl">100L</span>,</span>
 <span>  variant.fill.color <span class="op">=</span> <span class="st">"red"</span>,</span>
 <span>  variant.fill.alpha <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  median.line.color <span class="op">=</span> <span class="st">"black"</span>,</span>
@@ -252,21 +358,21 @@ reading <code>universal.negative[fluor]</code> directly.</p></dd>
 <dt id="arg-use-unmixed">use.unmixed<a class="anchor" aria-label="anchor" href="#arg-use-unmixed"></a></dt>
 <dd><p>Logical, default <code>TRUE</code>. Whether to unmix
 background-corrected positive events against the full <code>spectra</code>
-matrix and use that unmixed-space projection for positivity selection,
-the Spillover Spreading Matrix inputs, and as additional SOM clustering
-features. Set to <code>FALSE</code> when <code>spectra</code> contains several
-similar or collinear fluorophores (e.g. a bead-cell comparison panel),
-where the full-spectra unmix is itself unstable or unsolvable. When
-<code>FALSE</code>, positivity selection falls back to the raw-threshold
-events already identified via <code>raw.thresholds</code>, SOM clustering uses
-raw detector space only, and the <code>"spillover.spread"</code> /
-<code>"on.channel.mfi"</code> attributes are not computed (see Value).</p></dd>
+matrix for positivity selection and SOM clustering features, and whether
+the Residual Model's residual-projection step runs at all. Set to
+<code>FALSE</code> when <code>spectra</code> contains several similar or collinear
+fluorophores (e.g. a bead-cell comparison panel), where the full-spectra
+unmix is itself unstable or unsolvable. When <code>FALSE</code>, clustering
+falls back to raw detector space only, and the <code>"spillover.spread"</code>
+family of attributes is not computed (see Value).</p></dd>
 
 
 <dt id="arg-n-cells">n.cells<a class="anchor" aria-label="anchor" href="#arg-n-cells"></a></dt>
 <dd><p>Integer, default <code>10000</code>. Maximum number of positive
 events used for SOM clustering. Files with more events above threshold
-are randomly downsampled to this number.</p></dd>
+are randomly downsampled to this number. Does not limit the event set
+used for the Residual Model regression, which uses every event in
+<code>pos.idx</code>.</p></dd>
 
 
 <dt id="arg-som-dim">som.dim<a class="anchor" aria-label="anchor" href="#arg-som-dim"></a></dt>
@@ -299,10 +405,11 @@ and the threshold actually used is returned as the
 <dd><p>Numeric, default <code>0.95</code>. Minimum
 cosine similarity between <code>fluor</code>'s reference spectrum and any of
 its paired unstained file's AF principal directions (<code>af.pcs</code>) at
-or above which the AF-component projection step is skipped, since a
-joint OLS fit against near-collinear AF and fluorophore directions can
-push real fluorophore signal into the AF term. Recorded as the
-<code>"af.collinear"</code> attribute.</p></dd>
+or above which the AF-component projection step – and the low-rank
+fit feeding the Residual Model – drops the AF-PC terms and uses this
+fluorophore's reference row alone, since a joint OLS fit against
+near-collinear AF and fluorophore directions can push real fluorophore
+signal into the AF term. Recorded as the <code>"af.collinear"</code> attribute.</p></dd>
 
 
 <dt id="arg-noise-floor-tail-fraction">noise.floor.tail.fraction<a class="anchor" aria-label="anchor" href="#arg-noise-floor-tail-fraction"></a></dt>
@@ -312,6 +419,36 @@ variance) of the lowest fraction of raw values in that detector's
 column, using every event in the control file. Lower values isolate a
 purer background tail but with fewer events to estimate from; higher
 values are more stable but risk pulling in dim positive events.</p></dd>
+
+
+<dt id="arg-noise-mask-threshold">noise.mask.threshold<a class="anchor" aria-label="anchor" href="#arg-noise-mask-threshold"></a></dt>
+<dd><p>Numeric in (0, 1), default <code>0.05</code>. A
+detector is excluded from this control's contribution to the pooled
+noise-model regression (see <code>"noise.mask"</code> below) when this
+fluorophore's own reference spectrum exceeds this fraction of its own
+peak there – the channels where unmodelled spectral-variant wobble,
+not photon noise, would otherwise dominate the residual.</p></dd>
+
+
+<dt id="arg-noise-n-cells">noise.n.cells<a class="anchor" aria-label="anchor" href="#arg-noise-n-cells"></a></dt>
+<dd><p>Integer, default <code>2000L</code>. Maximum events used
+for the noise-model residual (see <code>"noise.resid"</code> below), sampled
+from <code>keep.idx</code> – the same unambiguously-positive events already
+selected for SOM input. The negative/dim majority of a single-stained
+control carries no information the unstained sample doesn't already
+supply, and pools to a very large, AF-dominated mass across many
+controls; restricting to the positive gate avoids re-fitting that
+problem at high cost.</p></dd>
+
+
+<dt id="arg-huber-k">huber.k<a class="anchor" aria-label="anchor" href="#arg-huber-k"></a></dt>
+<dd><p>Numeric, default <code>1.345</code>. Huber tuning constant passed
+to <code>.fix.huber.slope()</code> for the spillover-spread regression.</p></dd>
+
+
+<dt id="arg-huber-max-iter">huber.max.iter<a class="anchor" aria-label="anchor" href="#arg-huber-max-iter"></a></dt>
+<dd><p>Integer, default <code>100L</code>. Maximum IRLS
+iterations passed to <code>.fix.huber.slope()</code>.</p></dd>
 
 
 <dt id="arg-variant-fill-color">variant.fill.color<a class="anchor" aria-label="anchor" href="#arg-variant-fill-color"></a></dt>
@@ -351,18 +488,35 @@ normalised to \([0, 1]\). Row 1 is always the library reference
 spectrum for <code>fluor</code>; subsequent rows are SOM-derived variants that
 passed cosine QC. When too few positive events are available, or no
 centroids survive cosine QC, the single reference spectrum is returned
-(one row). Carries three attributes: <code>"noise.floor"</code> (per-detector
-background SD, described above), <code>"spillover.spread"</code> (named
-numeric vector, per-detector MAD of this control's unmixed positive
-population, or <code>NULL</code> if fewer than 20 positive events were found or
-if <code>use.unmixed = FALSE</code>), and <code>"on.channel.mfi"</code> (this
-control's own median unmixed abundance, <code>NA</code> if
-<code>use.unmixed = FALSE</code>).</p>
+(one row), still carrying the full set of attributes below. Carries:
+<code>"noise.floor"</code> (per-detector background SD, described above),
+<code>"noise.events"</code> (up to <code>noise.n.cells</code> events x detectors
+matrix, sampled from <code>keep.idx</code>, background-corrected – and
+AF-corrected where the projection above ran – but not otherwise fit;
+pooled and fit jointly against the full panel in
+<code><a href="get.spectral.variants.html">get.spectral.variants()</a></code>), <code>"noise.mask"</code> (logical vector,
+length <code>ncol(spectra)</code>, <code>TRUE</code> at detectors this fluorophore's
+own spectrum dominates), <code>"spillover.spread"</code> (named numeric vector,
+one Huber-robust slope per target fluorophore – <code>SS(fluor, .)</code> –
+or <code>NULL</code> if fewer than 20 events were available or
+<code>use.unmixed = FALSE</code>), <code>"spillover.spread.intercept"</code> (named
+numeric vector, the matching intercept – this control's own estimate of
+each channel's baseline unmixed variance at zero abundance), <code>"on.channel.mfi"</code>
+(this control's own median recovered abundance from the low-rank fit,
+<code>NA</code> under the same conditions as <code>"spillover.spread"</code>),
+<code>"spillover.spread.n"</code> (integer, the number of events behind the
+regression), <code>"spillover.spread.range"</code> (numeric, the range of this
+control's own recovered abundance used in the regression – a control
+whose events barely vary in brightness gives the slope little to fit
+against, regardless of event count), and <code>"spillover.spread.source"</code>
+(character, <code>"residual"</code> when computed, <code>NA</code> otherwise).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Van Gassen S et al. (2015). FlowSOM. <em>Cytometry Part A</em>, 87(7),
 636-645. <a href="https://doi.org/10.1002/cyto.a.22625" class="external-link">doi:10.1002/cyto.a.22625</a></p>
+<p>Cai X et al. (2026). Residual Model for unmixed spread prediction in
+spectral flow cytometry. <em>bioRxiv</em> 2026.01.27.701929.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

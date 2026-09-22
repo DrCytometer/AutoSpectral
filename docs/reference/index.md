@@ -25,6 +25,8 @@
   : Assign AF Spectrum By Fluorophore Projection
 - [`assign.af.joint.cov()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.joint.cov.md)
   : Assign AF Spectrum By Joint Covariance-Weighted Error
+- [`assign.af.joint.cov.l2()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.joint.cov.l2.md)
+  : Assign AF Spectrum By Joint Covariance-Weighted Squared Error
 - [`assign.af.residuals()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.residuals.md)
   : Assign AF Spectrum By Residual Alignment
 - [`assign.af.scatter.match()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.scatter.match.md)
@@ -41,6 +43,8 @@
   : Benchmark Scatter-Match Against Existing AF Assignment Methods
 - [`benchmark.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/benchmark.af.spectra.md)
   : Benchmark AF Assignment Accuracy Against Spectral Panel Size
+- [`biexp.transform()`](https://drcytometer.github.io/AutoSpectral/reference/biexp.transform.md)
+  : Fast, uncapped biexponential (logicle) transform
 - [`build.variant.basis()`](https://drcytometer.github.io/AutoSpectral/reference/build.variant.basis.md)
   : Build Variant Covariance Basis
 - [`calculate.condition.number()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.condition.number.md)
@@ -65,12 +69,12 @@
   : Check Spectra for Duplicate Fluorophores
 - [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
   : Clean Controls
-- [`cluster.unmixed.events()`](https://drcytometer.github.io/AutoSpectral/reference/cluster.unmixed.events.md)
-  : Cluster Unmixed Events into Micro-Clusters
 - [`compare.af()`](https://drcytometer.github.io/AutoSpectral/reference/compare.af.md)
   : Compare Autofluorescence Spectra Sets
 - [`compare.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/compare.unmix.md)
   : Compare Unmixing Quality Across Two Spectral References
+- [`compare.unmixed.data()`](https://drcytometer.github.io/AutoSpectral/reference/compare.unmixed.data.md)
+  : Compare Two or More Sets of Already-Unmixed Data
 - [`concatenateFCS()`](https://drcytometer.github.io/AutoSpectral/reference/concatenateFCS.md)
   : Concatenate Multiple FCS Files
 - [`correct.spectra.glasso()`](https://drcytometer.github.io/AutoSpectral/reference/correct.spectra.glasso.md)
@@ -123,6 +127,10 @@
   : Downsample Control Data
 - [`estimate.noise.model()`](https://drcytometer.github.io/AutoSpectral/reference/estimate.noise.model.md)
   : Estimate Detector Noise Model
+- [`estimate.residual.spillover()`](https://drcytometer.github.io/AutoSpectral/reference/estimate.residual.spillover.md)
+  : Estimate Residual Spillover From a Known-Negative Mask
+- [`estimate.unmix.time()`](https://drcytometer.github.io/AutoSpectral/reference/estimate.unmix.time.md)
+  : Estimate Unmixing Time
 - [`extract.raw.signature()`](https://drcytometer.github.io/AutoSpectral/reference/extract.raw.signature.md)
   : Extract Raw Signature
 - [`fit.af.spline()`](https://drcytometer.github.io/AutoSpectral/reference/fit.af.spline.md)
@@ -131,6 +139,8 @@
   : Fit Robust Linear Model
 - [`fix.my.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/fix.my.unmix.md)
   : Fix My Unmix
+- [`fix.my.unmix.test()`](https://drcytometer.github.io/AutoSpectral/reference/fix.my.unmix.test.md)
+  : Fix My Unmix (Test Version)
 - [`gate.af.identify.plot()`](https://drcytometer.github.io/AutoSpectral/reference/gate.af.identify.plot.md)
   : Plot Autofluorescence Identification Gate
 - [`gate.af.sample.plot()`](https://drcytometer.github.io/AutoSpectral/reference/gate.af.sample.plot.md)
@@ -143,6 +153,10 @@
   : Gate Matching Scatter
 - [`get.af.basis()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.basis.md)
   : Get Autofluorescence Basis
+- [`get.af.basis.empirical()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.basis.empirical.md)
+  : Build A Continuous Autofluorescence Basis From Raw Events
+- [`get.af.basis.library()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.basis.library.md)
+  : Build A Continuous Autofluorescence Basis From The Discrete Library
 - [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
   : Get Autofluorescence Spectra
 - [`get.autospectral.param()`](https://drcytometer.github.io/AutoSpectral/reference/get.autospectral.param.md)
@@ -222,14 +236,14 @@
   : Read FCS File
 - [`readFCSheader()`](https://drcytometer.github.io/AutoSpectral/reference/readFCSheader.md)
   : Read FCS Header
+- [`refine.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/refine.fluorophore.spectra.md)
+  : Refine Fluorophore Spectra
 - [`reload.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/reload.flow.control.md)
   : Reload Flow Control Information
 - [`remove.af()`](https://drcytometer.github.io/AutoSpectral/reference/remove.af.md)
   : Remove Autofluorescence Contamination
 - [`run.af.removal()`](https://drcytometer.github.io/AutoSpectral/reference/run.af.removal.md)
   : Run Autofluorescence Removal
-- [`run.bead.cell.comparison()`](https://drcytometer.github.io/AutoSpectral/reference/run.bead.cell.comparison.md)
-  : Compare single-color control spectra across particle types
 - [`run.downsample()`](https://drcytometer.github.io/AutoSpectral/reference/run.downsample.md)
   : Run Downsample
 - [`run.universal.negative()`](https://drcytometer.github.io/AutoSpectral/reference/run.universal.negative.md)
@@ -268,6 +282,10 @@
   : Test Autofluorescence Assignment Accuracy
 - [`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md)
   : Tune Landmark Gate
+- [`unmix.af.basis()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.af.basis.md)
+  : Unmix With A Continuous Autofluorescence Basis
+- [`unmix.af.fwl()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.af.fwl.md)
+  : Unmix With Per-Cell Autofluorescence By Frisch-Waugh
 - [`unmix.af.gls()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.af.gls.md)
   : Unmix Autofluorescence by GLS with Per-Node Covariance
 - [`unmix.autospectral()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.autospectral.md)

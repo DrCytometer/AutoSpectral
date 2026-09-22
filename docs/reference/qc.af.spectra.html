@@ -29,7 +29,7 @@ cosine similarity."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,8 @@ cosine similarity.</p>
 <span>  <span class="va">spectra</span>,</span>
 <span>  output.dir <span class="op">=</span> <span class="st">"./figure_autofluorescence"</span>,</span>
 <span>  remove <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  pass <span class="op">=</span> <span class="fl">1</span></span>
+<span>  pass <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  sample.label <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -127,6 +128,14 @@ fluorophore spectrum.</p></dd>
 <dt id="arg-pass">pass<a class="anchor" aria-label="anchor" href="#arg-pass"></a></dt>
 <dd><p>Numeric, default <code>1</code>. Counter to separate multiple passes of AF
 extraction, such as occur when <code>refine=TRUE</code> in <code><a href="get.af.spectra.html">get.af.spectra()</a></code>.</p></dd>
+
+
+<dt id="arg-sample-label">sample.label<a class="anchor" aria-label="anchor" href="#arg-sample-label"></a></dt>
+<dd><p>Optional character string identifying the sample (e.g.
+the unstained FCS file name), prepended to the QC table and report
+filenames. Prevents different samples writing to the same <code>output.dir</code>
+from overwriting each other's QC output. Default <code>NULL</code>, which omits the
+prefix.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -115,7 +115,7 @@ gate keeps its starting spectrum."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -230,10 +230,10 @@ gate keeps its starting spectrum.</p>
 <span>  af.spectra <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  bg.mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"af.deconv"</span>, <span class="st">"af.row"</span>, <span class="st">"global.mean"</span>, <span class="st">"none"</span>, <span class="st">"per.cell"</span><span class="op">)</span>,</span>
 <span>  large.gate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  scatter.gate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  scatter.gate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  landmark.quantile <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max.iter <span class="op">=</span> <span class="fl">20L</span>,</span>
-<span>  downsample <span class="op">=</span> <span class="fl">20000</span>,</span>
+<span>  downsample <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  downsample.background.frac <span class="op">=</span> <span class="fl">0.3</span>,</span>
 <span>  downsample.min.stratum <span class="op">=</span> <span class="fl">2000L</span>,</span>
 <span>  unstained.threshold <span class="op">=</span> <span class="fl">0.99</span>,</span>
@@ -287,6 +287,8 @@ gate keeps its starting spectrum.</p>
 <span>  n.threads <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  save <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  true.spectra <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  min.deg.start <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  keep.history <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -383,7 +385,7 @@ population the correction needs – a large, highly autofluorescent cell
 type such as alveolar macrophages, say – sits far enough outside the
 main scatter population that even <code>large.gate</code>'s stretch does not reach
 it, and no single gate shape can be expected to enclose everyone the
-correction needs. Default <code>TRUE</code>.</p></dd>
+correction needs. Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-landmark-quantile">landmark.quantile<a class="anchor" aria-label="anchor" href="#arg-landmark-quantile"></a></dt>
@@ -408,7 +410,7 @@ numeric gives the number of events to use. Values above the event count
 are reduced to it by a stratified sample over each event's dominant
 fluorophore under the starting spectra, so a dim or rare dye's own
 positive population is not thinned at the same rate as the background
-bulk. Default <code>20000</code>.</p></dd>
+bulk. Tested number: <code>20000</code>.</p></dd>
 
 
 <dt id="arg-downsample-background-frac">downsample.background.frac<a class="anchor" aria-label="anchor" href="#arg-downsample-background-frac"></a></dt>
@@ -767,6 +769,21 @@ cores. Default <code>1L</code>.</p></dd>
 <dd><p>Logical, whether to write the csv outputs. Default <code>TRUE</code>.</p></dd>
 
 
+<dt id="arg-true-spectra">true.spectra<a class="anchor" aria-label="anchor" href="#arg-true-spectra"></a></dt>
+<dd><p>Optional numeric matrix (fluorophores x detectors),
+independently-known ground truth with row names matching <code>spectra</code>.
+Purely diagnostic: when supplied, the returned <code>recovery</code> table reports
+the angular error against it before and after this run, whether or not
+the run's own gates accepted the row.</p></dd>
+
+
+<dt id="arg-min-deg-start">min.deg.start<a class="anchor" aria-label="anchor" href="#arg-min-deg-start"></a></dt>
+<dd><p>Numeric, degrees. Below this starting angular error,
+<code>recovered</code> is reported as <code>0</code> instead of <code>(deg.start - deg.after) / deg.start</code>, since a fluorophore that started (near) exactly correct
+makes that ratio blow up or divide by zero for a change of a fraction
+of a degree. Default <code>0.1</code>.</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical, controls messaging. Default <code>TRUE</code>.</p></dd>
 
@@ -855,6 +872,14 @@ coupling to the panel, and the fluorophores frozen because of it.</p></dd>
 <dd><p><code>NULL</code> unless <code>bg.mode = "per.cell"</code>, in which case
 a table of how often each <code>af.spectra</code> row was assigned and its mean
 fitted abundance, over the (possibly downsampled) events actually used.</p></dd>
+
+<dt><code>recovery</code></dt>
+<dd><p>Data frame of angular errors against <code>true.spectra</code>.
+<code>recovered</code> is the fraction of the starting angular error removed,
+<code>(deg.start - deg.after) / deg.start</code> – <code>1</code> is fully recovered, <code>0</code>
+is no change, negative is worse; see <code>min.deg.start</code> for the
+near-zero-<code>deg.start</code> case. <code>NULL</code> if <code>true.spectra</code> was not
+supplied.</p></dd>
 
 
 </dl></div>

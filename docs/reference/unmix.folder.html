@@ -21,7 +21,7 @@ directory of the user's choice."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,6 +109,8 @@ directory of the user's choice.</p>
 <span>  collinear.threshold <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  joint.pair.resolution <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  refine.af.quantile <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  estimate.time <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  estimate.sample.events <span class="op">=</span> <span class="fl">5000</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -319,6 +321,15 @@ conflict-resolution for collinear fluorophore pairs. Only used when
 <dd><p>Numeric, default <code>0.5</code>. Fraction of cells taken
 forward for additional AF passes (see <code>n.af.passes</code>). Only used when
 <code>pipeline = "joint"</code>. Passed to <code>unmix.autospectral.rcpp()</code>.</p></dd>
+
+
+<dt id="arg-estimate-time-estimate-sample-events">estimate.time, estimate.sample.events<a class="anchor" aria-label="anchor" href="#arg-estimate-time-estimate-sample-events"></a></dt>
+<dd><p>Passed through unchanged to
+<code><a href="unmix.fcs.html">unmix.fcs()</a></code> for each file; see <code><a href="unmix.fcs.html">?unmix.fcs</a></code>. Default <code>FALSE</code> here
+(unlike <code><a href="unmix.fcs.html">unmix.fcs()</a></code>, where it defaults <code>TRUE</code>): across a folder of
+files the per-file probe overhead adds up, and it is usually more
+useful to call <code><a href="estimate.unmix.time.html">estimate.unmix.time()</a></code> once against a representative
+file before starting the batch than to re-probe every file in it.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

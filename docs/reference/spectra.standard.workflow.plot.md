@@ -41,6 +41,19 @@ spectra.standard.workflow.plot(
   positive.bracket.color = "#E41A1C",
   negative.point.color = "black",
   event.point.size = NULL,
+  ground.truth.method = c("automated", "legacy", "none"),
+  truth.n.candidates = 1000L,
+  truth.n.spectral = 200L,
+  legacy.gating.system = c("density", "landmarks"),
+  legacy.af.remove = TRUE,
+  legacy.universal.negative = TRUE,
+  legacy.downsample = TRUE,
+  legacy.scatter.match = TRUE,
+  legacy.k.neighbors = 3L,
+  legacy.negative.n = asp$negative.n,
+  legacy.positive.n = asp$positive.n,
+  legacy.flow.control = NULL,
+  legacy.diagnostics.env = NULL,
   n.highlight = 200L,
   clean.positive.color = "red",
   clean.positive.point.size = NULL,
@@ -173,15 +186,67 @@ spectra.standard.workflow.plot(
   events in panel C. If `NULL`, defaults to
   `asp$figure.gate.point.size * 1.3`.
 
+- ground.truth.method:
+
+  Character, one of `"automated"` (default), `"legacy"`, or `"none"`.
+  Determines how the "true positive" events highlighted in red in panel
+  A are identified. `"automated"` replicates
+  [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md)'s
+  own candidate + cosine-to-AF-reference filter on this control file.
+  `"legacy"` uses the actual AF-removal `gate.population.idx` from
+  [`remove.af()`](https://drcytometer.github.io/AutoSpectral/reference/remove.af.md)/[`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md),
+  which requires running
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
+  and
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+  over the whole control set (see
+  `legacy.flow.control`/`legacy.diagnostics.env` to avoid repeating this
+  per fluorophore). `"none"` reverts to this workflow's own
+  top-`n.highlight` cosine-similarity selection, which is not an
+  independent ground truth and is kept only for reference.
+
+- truth.n.candidates, truth.n.spectral:
+
+  Integers, defaults `1000` and `200`. Only used when
+  `ground.truth.method = "automated"`; mirror
+  `n.candidates`/`n.spectral` in
+  [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md).
+
+- legacy.gating.system, legacy.af.remove, legacy.universal.negative,
+  legacy.downsample, legacy.scatter.match, legacy.k.neighbors,
+  legacy.negative.n, legacy.positive.n:
+
+  Only used when `ground.truth.method = "legacy"` and
+  `legacy.flow.control`/`legacy.diagnostics.env` are not supplied;
+  passed through to
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md)
+  /
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+  exactly as in
+  [`spectra.legacy.steps.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectra.legacy.steps.plot.md).
+
+- legacy.flow.control, legacy.diagnostics.env:
+
+  Optional, default `NULL`. Precomputed outputs of
+  [`define.flow.control()`](https://drcytometer.github.io/AutoSpectral/reference/define.flow.control.md) +
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+  (the latter called with a `diagnostics.env`). Supply both together to
+  skip re-running the legacy pipeline when illustrating multiple
+  fluorophores with `ground.truth.method = "legacy"` – e.g. by calling
+  [`spectra.legacy.steps.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectra.legacy.steps.plot.md)
+  first and reusing its internal objects, or running the two functions
+  yourself as shown in
+  [`spectra.legacy.steps.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectra.legacy.steps.plot.md).
+
 - n.highlight:
 
-  Integer, default `200`. Number of positive-fraction events (smallest
-  cosine similarity to the negative fraction, i.e. least AF-like)
-  highlighted in red in panel A.
+  Integer, default `200`. Only used when `ground.truth.method = "none"`.
+  Number of positive-fraction events (smallest cosine similarity to the
+  negative fraction, i.e. least AF-like) highlighted in red in panel A.
 
 - clean.positive.color:
 
-  Colour for the panel A highlight. Default `"red"`.
+  Colour for the panel A ground-truth highlight. Default `"red"`.
 
 - clean.positive.point.size:
 
@@ -232,9 +297,47 @@ spectra.standard.workflow.plot(
 
 ## Value
 
-Invisibly, a named list (one entry per fluorophore) each containing the
-individual panel ggplot objects, the assembled `composite` cowplot
-object, and the peak / peak-AF channels used.
+Invisibly, a named list (one entry per fluorophore), each containing:
+
+- `gate.panel`:
+
+  Panel A, the octagon gate on FSC-A vs SSC-A with the ground-truth
+  positive events highlighted.
+
+- `selection.panel`:
+
+  Panel B, the brightest/negative event selection histogram.
+
+- `cosine.panel`:
+
+  Panel C, the negative/positive-fraction cosine-similarity biplots.
+
+- `subtraction.plot`:
+
+  Panel D, the final spectral profile comparison
+  ([`spectral.trace()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.trace.md)
+  of Cells / Beads / AF).
+
+- `composite`:
+
+  The assembled four-panel cowplot object saved to `output.dir` when
+  `save = TRUE`.
+
+- `peak.channel`:
+
+  Character. The fluorophore's nominal peak channel, looked up from
+  `fluorophore_database.csv` for `asp$cytometer`.
+
+- `y.channel.peak`:
+
+  Character. The non-colliding peak AF channel used as the y-axis of
+  panel C.
+
+- `reference.profile`:
+
+  Named numeric vector (over `spectral.channels`) used as the "Beads"
+  trace in panel D, or `NULL` if neither a paired bead control nor the
+  spectral reference library had data for this fluorophore.
 
 ## See also
 

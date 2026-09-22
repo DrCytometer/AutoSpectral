@@ -21,7 +21,7 @@ AutoSpectral."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,7 +84,8 @@ AutoSpectral.</p>
 <span>  min.event.warning <span class="op">=</span> <span class="fl">5000</span>,</span>
 <span>  min.event.error <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  legacy <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  allow.duplicate.controls <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  allow.duplicate.controls <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -133,6 +134,11 @@ extraction pipeline using <code><a href="get.spectra.automated.html">get.spectra
 <dd><p>Logical, default <code>FALSE</code>. Passed through to
 <code><a href="validate.control.file.html">validate.control.file()</a></code>. Set <code>TRUE</code> to permit multiple controls for the
 same fluorophore (diagnostic/QC use only).</p></dd>
+
+
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
+<dd><p>Logical. Whether to print progress messages. Default
+<code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

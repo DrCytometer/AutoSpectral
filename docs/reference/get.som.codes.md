@@ -20,9 +20,10 @@ get.som.codes(
   som.dim,
   rlen = 10L,
   radius = NULL,
-  dist = 2L,
+  dist = 4L,
   seed = 1337L,
-  threads = 0L
+  threads = 0L,
+  unit.norm = FALSE
 )
 ```
 
@@ -52,7 +53,7 @@ get.som.codes(
 - dist:
 
   Integer 1:4, distance function (1 manhattan, 2 euclidean, 3 chebyshev,
-  4 cosine). Default `2`. Only used on the AutoSpectralRcpp path.
+  4 cosine). Default `4`.
 
 - seed:
 
@@ -65,6 +66,17 @@ get.som.codes(
   available cores). Ignored on the
   [`FlowSOM::SOM()`](https://rdrr.io/pkg/FlowSOM/man/SOM.html) fallback
   path, which is single-threaded.
+
+- unit.norm:
+
+  Logical, default `FALSE`. Scale every training row to unit L2 length
+  before training. Appropriate with `dist = 4` (cosine), where the
+  distortion-minimising code is the mean of unit event vectors rather
+  than the mean of raw ones; without it, bright events dominate each
+  node's code. Leaves cosine distances, and therefore node assignments,
+  unchanged. Has no principled justification under `dist = 2` and is
+  left off by default so existing callers are unaffected. Note that the
+  returned codes are then on the unit-normalised scale.
 
 ## Value
 

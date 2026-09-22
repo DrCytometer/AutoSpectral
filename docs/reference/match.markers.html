@@ -19,7 +19,7 @@ including synonyms, and returns the matched markers"><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +73,7 @@ including synonyms, and returns the matched markers</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">match.markers</span><span class="op">(</span><span class="va">control.filenames</span>, <span class="va">marker.database</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">match.markers</span><span class="op">(</span><span class="va">control.filenames</span>, <span class="va">marker.database</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -86,6 +86,11 @@ including synonyms, and returns the matched markers</p>
 
 <dt id="arg-marker-database">marker.database<a class="anchor" aria-label="anchor" href="#arg-marker-database"></a></dt>
 <dd><p>Data frame containing marker information.</p></dd>
+
+
+<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
+<dd><p>Logical. Whether to print progress messages. Default
+<code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

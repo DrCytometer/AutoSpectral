@@ -22,6 +22,19 @@ supply one directly via `unstained.sample` instead.
 The output is saved as an .rds file and per-fluorophore variant plots
 are produced if requested.
 
+Uses the Spillover Spreading Matrix built from
+[`get.fluor.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluor.variants.md)'s
+Residual Model regression rather than an empirical MAD ratio against a
+separately-unmixed unstained baseline. There is no
+`spread.denom.min.mad`/`"snr"` concept here: each control's own
+regression already separates its baseline (intercept) from its
+abundance-scaled spread (slope), estimated from its own dim-to-bright
+event range rather than compared against a different sample's estimate.
+A row is instead trusted once its regression used at least
+`spread.min.events` events; below that, the hotspot-matrix fallback
+(unchanged from `get.spectral.variants()`) fills the row when enough
+trusted rows exist to calibrate against.
+
 ## Usage
 
 ``` r
@@ -42,6 +55,11 @@ get.spectral.variants(
   sim.threshold.floor = 0.9,
   af.collinear.threshold = 0.95,
   noise.floor.tail.fraction = 0.2,
+  spread.min.events = 50L,
+  spread.hotspot.fallback = TRUE,
+  spread.hotspot.min.pairs = 20,
+  huber.k = 1.345,
+  huber.max.iter = 100L,
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
@@ -50,6 +68,7 @@ get.spectral.variants(
   unstained.sample = NULL,
   stained.sample = NULL,
   optimize.necessity.threshold = 0.01,
+  diagnostics = FALSE,
   ...
 )
 ```
@@ -101,8 +120,7 @@ get.spectral.variants(
 - n.cells:
 
   Integer, default `10000`. Maximum positive events per fluorophore used
-  for SOM clustering. Files with more events above threshold are
-  randomly downsampled. Passed to `get.fluor.variants`.
+  for SOM clustering. Passed to `get.fluor.variants`.
 
 - som.dim:
 
@@ -126,24 +144,60 @@ get.spectral.variants(
 
   Numeric, default `0.90`. Lower bound for adaptive relaxation of
   `sim.threshold` when the initial cutoff retains fewer than 20 events.
-  Relaxation is logged via
-  [`warning()`](https://rdrr.io/r/base/warning.html) and the threshold
-  actually used is returned as the `"cosine.threshold.used"` attribute.
 
 - af.collinear.threshold:
 
-  Numeric, default `0.95`. Minimum cosine similarity between `fluor`'s
-  reference spectrum and any of its paired unstained file's AF principal
-  directions (`af.pcs`) at or above which the AF-component projection
-  step is skipped, since a joint OLS fit against near-collinear AF and
-  fluorophore directions can push real fluorophore signal into the AF
-  term. Recorded as the `"af.collinear"` attribute.
+  Numeric, default `0.95`. Minimum cosine similarity between a
+  fluorophore's reference spectrum and any of its paired unstained
+  file's AF principal directions at or above which the AF-component
+  projection step (and the low-rank fit feeding the Residual Model) is
+  skipped.
 
 - noise.floor.tail.fraction:
 
   Numeric in (0, 1), default `0.20`. Fraction of each detector's raw
   values (lowest end) used to estimate the per-control noise floor.
   Passed to `get.fluor.variants`.
+
+- spread.min.events:
+
+  Integer, default `50`. Minimum number of events behind a source
+  fluorophore's Residual Model regression (`"spillover.spread.n"`)
+  before its Spillover Spreading Matrix row is trusted. A 2-parameter
+  regression needs more support than the old MAD point estimate did;
+  rows below this are left blank unless filled by the hotspot-matrix
+  fallback.
+
+- spread.hotspot.fallback:
+
+  Logical, default `TRUE`. When a source fluorophore's Spillover
+  Spreading Matrix row fails the `spread.min.events` check (a weak or
+  under-titrated control), fill that row from
+  `calculate.hotspot.matrix(spectra)` instead of leaving it blank. The
+  hotspot matrix is a purely geometric measure of pairwise spread
+  susceptibility from the reference spectra alone; filling uses a single
+  calibration constant (the median ratio of trusted `spillover.spread`
+  entries to their hotspot-matrix counterparts), so it requires at least
+  `spread.hotspot.min.pairs` trusted entries to calibrate against.
+  Filled rows are tagged `"hotspot"` in the returned matrix's `"source"`
+  attribute.
+
+- spread.hotspot.min.pairs:
+
+  Integer, default `20`. Minimum number of trusted (source, target)
+  entries required to calibrate the hotspot-matrix fallback. Below this,
+  weak controls are left blank as before and a message explains why.
+
+- huber.k:
+
+  Numeric, default `1.345`. Huber tuning constant passed to
+  [`get.fluor.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluor.variants.md)'s
+  spillover-spread regression.
+
+- huber.max.iter:
+
+  Integer, default `100L`. Maximum IRLS iterations passed to the same
+  regression.
 
 - variant.fill.color:
 
@@ -163,47 +217,33 @@ get.spectral.variants(
 
 - use.unmixed:
 
-  Logical, default `TRUE`. Whether AF extraction
-  ([`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md))
-  and fluorophore variant assessment
-  ([`get.fluor.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluor.variants.md))
-  may use full-spectra OLS unmixing as part of their SOM clustering
-  input, positivity selection, and Spillover Spreading Matrix
+  Logical, default `TRUE`. Whether AF extraction and fluorophore variant
+  assessment may use full-spectra OLS unmixing as part of their SOM
+  clustering input, positivity selection, and Spillover Spreading Matrix
   construction. Set to `FALSE` when `spectra` contains several similar
-  or collinear fluorophores (e.g. a bead-cell comparison panel), where a
-  full-spectra unmix is itself unstable or unsolvable and would corrupt
-  rather than inform those steps. When `FALSE`, clustering falls back to
-  raw detector space only, the unstained-sample positivity thresholds
-  used internally by
-  [`get.fluor.variants()`](https://drcytometer.github.io/AutoSpectral/reference/get.fluor.variants.md)
-  are not computed, and the returned `spillover.spread` is always
-  `NULL`.
+  or collinear fluorophores (e.g. a bead-cell comparison panel). When
+  `FALSE`, the returned `spillover.spread` is always `NULL`.
 
 - unstained.sample:
 
   Optional file path to a cell-based unstained FCS file, used as the
   autofluorescence reference when the control file has no `"AF"` row.
-  Required in that case; ignored (with a message) if the control file
-  does have an `"AF"` row, since the in-situ unstained paired with the
-  single-stained controls is used instead.
 
 - stained.sample:
 
-  Optional file path to a representative stained FCS file. When
-  supplied, it is read and unmixed to obtain per-fluorophore median
-  positive signal (MFI), which weights the optimization necessity scores
-  by fluorophore brightness. Pass `NULL` (default) to use purely
-  geometric scores.
+  Optional file path to a representative stained FCS file, weighting the
+  optimization necessity scores by fluorophore brightness. Pass `NULL`
+  (default) to use purely geometric scores.
 
 - optimize.necessity.threshold:
 
   Numeric in `[0, 1]`, default `0.01`. Passed to
   [`calculate.optimize.necessity()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.optimize.necessity.md).
-  Fluorophores whose normalised leakage score falls below this value are
-  flagged as not requiring per-cell spectral optimisation. The result is
-  stored in `$optimize.recommended` in the returned list and used
-  automatically by `unmix.autospectral.rcpp()` to skip unnecessary
-  optimisation passes.
+
+- diagnostics:
+
+  Logical, default `FALSE`. When `TRUE`, prints additional messages on
+  model characteristics to the console.
 
 - ...:
 
@@ -222,15 +262,11 @@ A named list with elements:
 - `neg.thresholds`:
 
   Named numeric vector, the 0.5th percentile of each fluorophore's
-  unstained unmixed distribution – the flat component of the negative
-  positivity boundary, measured directly from the unstained population's
-  own negative tail rather than mirrored from `thresholds` about zero.
-  `NA` for every fluorophore when `use.unmixed = FALSE`.
+  unstained unmixed distribution.
 
 - `variants`:
 
-  Named list of variant-spectra matrices, one per fluorophore. Each
-  matrix has variants in rows and detectors in columns.
+  Named list of variant-spectra matrices, one per fluorophore.
 
 - `delta.list`:
 
@@ -239,26 +275,40 @@ A named list with elements:
 
 - `delta.norms`:
 
-  Named list of Euclidean norms of the deltas, one numeric vector per
-  fluorophore.
+  Named list of Euclidean norms of the deltas.
 
 - `noise.floor`:
 
   Named numeric vector, per-detector electronic noise floor in signal
-  units (SD), pooled by minimum across controls. Matches the units of
-  `noise.floor` elsewhere in the package
-  ([`unmix.fcs()`](https://drcytometer.github.io/AutoSpectral/reference/unmix.fcs.md),
-  the C++ pipeline). Square it before passing to
-  `estimate.noise.model(read.var.floor = ...)`, which expects a
-  variance.
+  units (SD), pooled by minimum across controls.
 
 - `spillover.spread`:
 
-  Matrix (source fluorophore x target channel), the Spillover Spreading
-  Matrix: increase in unmixed variance a source fluorophore's positive
-  population contributes to each other channel, per unit of its own
-  on-channel signal. Diagonal entries are `NA`. `NULL` if no control
-  supplied enough positive events. Saved as a heatmap when
+  Matrix (source fluorophore x target channel), the Residual Model
+  Spillover Spreading Matrix: the Huber-robust slope of each target's
+  squared residual-projection against the source's own recovered
+  abundance – added unmixed variance per unit of the source's on-channel
+  abundance. Diagonal entries are `NA`. Rows below `spread.min.events`
+  are left `NA` across the row unless filled by the hotspot-matrix
+  fallback. Carries `"n.events"` and `"source"` attributes (named
+  integer/character vectors, one per source fluorophore): event count
+  behind the regression, and whether the row came from the regression
+  (`"residual"`) or the hotspot-matrix fallback (`"hotspot"`). `NULL` if
+  no control supplied enough positive events. Saved as a heatmap when
   `figures = TRUE`.
 
+- `spillover.spread.intercept`:
+
+  Matrix, same shape as `spillover.spread`: each source's regression
+  intercept per target channel – that source's own estimate of the
+  target's baseline unmixed variance at zero abundance. Not filled by
+  the hotspot fallback (the hotspot matrix has no calibrated intercept
+  term); `NA` wherever `spillover.spread` came from that fallback or was
+  left blank.
+
 The list is also saved as an .rds file in `output.dir`.
+
+## References
+
+Cai X et al. (2026). Residual Model for unmixed spread prediction in
+spectral flow cytometry. *bioRxiv* 2026.01.27.701929.

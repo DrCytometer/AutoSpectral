@@ -35,7 +35,7 @@ geom_scattermore + stat_density_2d combination from create.biplot()."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -102,6 +102,8 @@ user-supplied <code>x.min</code> / <code>y.min</code>.</p>
 <span>  <span class="va">fluorophore</span>,</span>
 <span>  <span class="va">asp</span>,</span>
 <span>  channels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  gate.boundary <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  scatter.param <span class="op">=</span> <span class="va">asp</span><span class="op">$</span><span class="va">default.scatter.parameter</span>,</span>
 <span>  max.points <span class="op">=</span> <span class="fl">50000</span>,</span>
 <span>  title <span class="op">=</span> <span class="st">"mxn_biplot"</span>,</span>
 <span>  biplot.size <span class="op">=</span> <span class="fl">3</span>,</span>
@@ -147,6 +149,22 @@ y-axis columns. When <code>NULL</code> (default) all columns except those in
 <code>fluorophore</code> are used. Must be present in the data if supplied.</p></dd>
 
 
+<dt id="arg-gate-boundary">gate.boundary<a class="anchor" aria-label="anchor" href="#arg-gate-boundary"></a></dt>
+<dd><p>Optional gate boundary, as returned by
+<code><a href="define.gate.landmarks.html">define.gate.landmarks()</a></code>, <code><a href="define.gate.density.html">define.gate.density()</a></code>, or <code><a href="do.gate.html">do.gate()</a></code> — a
+list containing at least numeric <code>x</code> and <code>y</code> components describing the
+polygon vertices. When supplied and <code>scatter.param</code> columns are present in
+the data, events are gated with <code><a href="apply.gate.html">apply.gate()</a></code> before downsampling to
+<code>max.points</code>. When <code>scatter.param</code> columns are absent, gating is skipped
+with a warning. Default <code>NULL</code> (no gating).</p></dd>
+
+
+<dt id="arg-scatter-param">scatter.param<a class="anchor" aria-label="anchor" href="#arg-scatter-param"></a></dt>
+<dd><p>Character vector of length 2 giving the names of the
+two scatter columns to gate on when <code>gate.boundary</code> is supplied. Default
+<code>asp$default.scatter.parameter</code>. Ignored if <code>gate.boundary</code> is <code>NULL</code>.</p></dd>
+
+
 <dt id="arg-max-points">max.points<a class="anchor" aria-label="anchor" href="#arg-max-points"></a></dt>
 <dd><p>Integer. Total number of events to retain after a single
 random downsample applied before drawing any panel. Default <code>5e4</code>.</p></dd>
@@ -180,7 +198,7 @@ units). Default <code>-1000</code>.</p></dd>
 
 <dt id="arg-x-width-basis">x.width.basis<a class="anchor" aria-label="anchor" href="#arg-x-width-basis"></a></dt>
 <dd><p>Numeric. Width basis for the biexponential x-axis
-transform (passed to <code><a href="https://rdrr.io/pkg/flowWorkspace/man/flowjo_biexp.html" class="external-link">flowWorkspace::flowjo_biexp()</a></code>). Default <code>-1000</code>.</p></dd>
+transform (passed to <code><a href="biexp.transform.html">biexp.transform()</a></code>). Default <code>-1000</code>.</p></dd>
 
 
 <dt id="arg-y-width-basis">y.width.basis<a class="anchor" aria-label="anchor" href="#arg-y-width-basis"></a></dt>

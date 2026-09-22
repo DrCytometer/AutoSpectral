@@ -7,7 +7,7 @@ fluorophores based on the longest character match to ensure specificity.
 ## Usage
 
 ``` r
-match.fluorophores(control.filenames, fluorophore.database)
+match.fluorophores(control.filenames, fluorophore.database, verbose = TRUE)
 ```
 
 ## Arguments
@@ -19,6 +19,10 @@ match.fluorophores(control.filenames, fluorophore.database)
 - fluorophore.database:
 
   Data frame containing fluorophore information.
+
+- verbose:
+
+  Logical. Whether to print progress messages. Default `TRUE`.
 
 ## Value
 

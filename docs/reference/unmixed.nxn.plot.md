@@ -24,6 +24,8 @@ unmixed.nxn.plot(
   unmixed.data,
   asp,
   channels = NULL,
+  gate.boundary = NULL,
+  scatter.param = asp$default.scatter.parameter,
   max.points = 50000,
   title = "nxn_biplot",
   biplot.size = 3,
@@ -60,6 +62,26 @@ unmixed.nxn.plot(
   Optional character vector. Subset of columns to include. When `NULL`
   (default) all columns are used. Large panels sets (\\n \> 20\\) will
   produce very large PDFs; consider subsetting.
+
+- gate.boundary:
+
+  Optional gate boundary, as returned by
+  [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md),
+  [`define.gate.density()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.density.md),
+  or
+  [`do.gate()`](https://drcytometer.github.io/AutoSpectral/reference/do.gate.md)
+  — a list containing at least numeric `x` and `y` components describing
+  the polygon vertices. When supplied and `scatter.param` columns are
+  present in the data, events are gated with
+  [`apply.gate()`](https://drcytometer.github.io/AutoSpectral/reference/apply.gate.md)
+  before downsampling to `max.points`. When `scatter.param` columns are
+  absent, gating is skipped with a warning. Default `NULL` (no gating).
+
+- scatter.param:
+
+  Character vector of length 2 giving the names of the two scatter
+  columns to gate on when `gate.boundary` is supplied. Default
+  `asp$default.scatter.parameter`. Ignored if `gate.boundary` is `NULL`.
 
 - max.points:
 

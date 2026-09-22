@@ -33,7 +33,7 @@ panel styling matches the package's other figures."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -291,11 +291,55 @@ for each fluorophore to <code>output.dir</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Invisibly, a named list (one entry per fluorophore) each
-containing the individual panel ggplot objects, the assembled
-<code>composite</code> cowplot object, and the empirical peak / AF-collision
-channels used.</p>
-    </div>
+    <p>Invisibly, a named list (one entry per fluorophore), each
+containing:</p><dl><dt><code>singlet.plot</code></dt>
+<dd><p>The assembled panel A (-A vs -H singlet gate,
+both scatter parameters side by side) as a single cowplot object.</p></dd>
+
+<dt><code>trace.plot</code></dt>
+<dd><p>Panel B, the AF/pre/post-orthogonalization
+peak-finding <code><a href="spectral.trace.html">spectral.trace()</a></code> plot.</p></dd>
+
+<dt><code>brightest.panel</code></dt>
+<dd><p>Panel C, the brightest-event candidate
+selection histogram.</p></dd>
+
+<dt><code>cosine.panel</code></dt>
+<dd><p>Panel D, the cosine-similarity filter biplot.</p></dd>
+
+<dt><code>scatter.match.file</code></dt>
+<dd><p>Character path to the saved panel E
+kNN scatter-match JPEG (written by <code><a href="scatter.match.plot.html">scatter.match.plot()</a></code>), or
+<code>NULL</code> if too few scatter channels were available to run that
+step. Unlike the other list entries this is a file path, not a
+ggplot/cowplot object – panel E is embedded into <code>composite</code> by
+reading this file back in via <code>magick</code>, not passed through
+directly.</p></dd>
+
+<dt><code>subtraction.plot</code></dt>
+<dd><p>Panel F, the final spectral profile
+comparison (<code><a href="spectral.trace.html">spectral.trace()</a></code> of Cells / Beads / AF).</p></dd>
+
+<dt><code>composite</code></dt>
+<dd><p>The assembled six-panel cowplot object saved to
+<code>output.dir</code> when <code>save = TRUE</code>.</p></dd>
+
+<dt><code>empirical.peak</code></dt>
+<dd><p>Character. The AF-orthogonalization peak
+channel identified in panel B and annotated there.</p></dd>
+
+<dt><code>y.channel.peak</code></dt>
+<dd><p>Character. The non-colliding AF peak channel
+used as the y-axis of panel D.</p></dd>
+
+<dt><code>reference.profile</code></dt>
+<dd><p>Named numeric vector (over
+<code>spectral.channels</code>) used as the "Beads" trace in panel F, or
+<code>NULL</code> if neither a paired bead control nor the spectral reference
+library had data for this fluorophore.</p></dd>
+
+
+</dl></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="get.spectra.automated.html">get.spectra.automated()</a></code>, <code><a href="create.biplot.html">create.biplot()</a></code>, <code><a href="spectral.trace.html">spectral.trace()</a></code>,

@@ -51,7 +51,7 @@ per iteration is O(D k^2 + k^3) with k the active low-rank total
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -131,6 +131,7 @@ per iteration is <code>O(D k^2 + k^3)</code> with <code>k</code> the active low-
 <span>  use.af.covariance <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  use.node.prior <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  use.abundance.prior <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  lambda.impact <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  include.spillover <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  spillover.kappa <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  gain.cv <span class="op">=</span> <span class="fl">0</span>,</span>
@@ -192,6 +193,24 @@ Set <code>FALSE</code> for the A/B comparison. Default <code>TRUE</code>.</p></d
 <dt id="arg-use-abundance-prior">use.abundance.prior<a class="anchor" aria-label="anchor" href="#arg-use-abundance-prior"></a></dt>
 <dd><p>Logical, add the per-node lognormal prior on
 abundance. Default <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-lambda-impact">lambda.impact<a class="anchor" aria-label="anchor" href="#arg-lambda-impact"></a></dt>
+<dd><p>Numeric, weight on a fluorophore-leakage penalty
+added to the per-candidate score: <code>-lambda.impact * log(score_ik)</code>,
+where <code>score_ik</code> is the same covariance-weighted proportional score
+<code><a href="assign.af.joint.cov.html">assign.af.joint.cov()</a></code> uses to build the candidate shortlist
+(<code>p_resid * p_fluor</code>, lower is better). The likelihood term
+(<code>logdet</code> + <code>chisq</code>) answers "how well does this node explain the raw
+detector counts under the fitted noise model"; the leakage term
+answers "how little does this node disturb the fluorophore estimates"
+– these can disagree, most often for fluorophores whose channels
+overlap the AF dictionary. <code>0</code> (default) reproduces the pure-likelihood
+selection exactly. Larger values increasingly favour the
+leakage-minimising node; in the limit, selection converges to
+<code><a href="assign.af.joint.cov.html">assign.af.joint.cov()</a></code>'s own ranking, restricted to whichever nodes
+reached the <code>n.candidates</code> shortlist. Requires <code>spectra</code> to be
+supplied. Default <code>0</code>.</p></dd>
 
 
 <dt id="arg-include-spillover">include.spillover<a class="anchor" aria-label="anchor" href="#arg-include-spillover"></a></dt>

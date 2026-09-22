@@ -10,9 +10,12 @@ automatically fill in the matching `universal.negative` filename when
 exactly one unstained/negative control shares that control.type.
 `universal.negative` is left blank when `control.type` could not be
 determined or when more than one unstained/negative control of that type
-exists (in which case you will need to set it manually). You will need
-to fill in any "No Match" results manually. You will need to add marker
-names manually.
+exists (in which case you will need to set it manually). It will also
+assign the `large.gate` column based on the matched marker's entry in
+`marker_database.csv`. Bead controls are never assigned
+`large.gate = TRUE`, even if the matched marker is flagged as large.gate
+in the marker database. You will need to fill in any "No Match" results
+manually. You will need to add marker names manually.
 
 ## Usage
 
@@ -20,6 +23,7 @@ names manually.
 create.control.file(
   control.dir,
   asp,
+  control.files = NULL,
   fill.gate.name = TRUE,
   filename = "fcs_control_file",
   legacy = FALSE,
@@ -37,6 +41,16 @@ create.control.file(
 
   The AutoSpectral parameter list. Generate using
   `get.autospectral.param`
+
+- control.files:
+
+  Optional specification of the control files to use. This will override
+  the default, which is to use all the FCS files in the `control.dir` to
+  create the control file. Files and path(s) may be specified, allowing
+  you to use files from different subdirectories. For instance, you may
+  wish to exclude bead controls from a folder containing both bead and
+  cell controls, saving you the work of deleting the lines from the
+  created control file.
 
 - fill.gate.name:
 

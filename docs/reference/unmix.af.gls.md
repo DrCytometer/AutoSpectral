@@ -36,6 +36,7 @@ unmix.af.gls(
   use.af.covariance = TRUE,
   use.node.prior = TRUE,
   use.abundance.prior = FALSE,
+  lambda.impact = 0,
   include.spillover = FALSE,
   spillover.kappa = NULL,
   gain.cv = 0,
@@ -98,6 +99,25 @@ unmix.af.gls(
 
   Logical, add the per-node lognormal prior on abundance. Default
   `FALSE`.
+
+- lambda.impact:
+
+  Numeric, weight on a fluorophore-leakage penalty added to the
+  per-candidate score: `-lambda.impact * log(score_ik)`, where
+  `score_ik` is the same covariance-weighted proportional score
+  [`assign.af.joint.cov()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.joint.cov.md)
+  uses to build the candidate shortlist (`p_resid * p_fluor`, lower is
+  better). The likelihood term (`logdet` + `chisq`) answers "how well
+  does this node explain the raw detector counts under the fitted noise
+  model"; the leakage term answers "how little does this node disturb
+  the fluorophore estimates" – these can disagree, most often for
+  fluorophores whose channels overlap the AF dictionary. `0` (default)
+  reproduces the pure-likelihood selection exactly. Larger values
+  increasingly favour the leakage-minimising node; in the limit,
+  selection converges to
+  [`assign.af.joint.cov()`](https://drcytometer.github.io/AutoSpectral/reference/assign.af.joint.cov.md)'s
+  own ranking, restricted to whichever nodes reached the `n.candidates`
+  shortlist. Requires `spectra` to be supplied. Default `0`.
 
 - include.spillover:
 

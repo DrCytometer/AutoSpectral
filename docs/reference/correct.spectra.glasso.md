@@ -45,11 +45,14 @@ raw data by
 [`extract.raw.signature()`](https://drcytometer.github.io/AutoSpectral/reference/extract.raw.signature.md),
 exactly as
 [`fix.my.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/fix.my.unmix.md)'s
-second phase does, with one difference: the co-fluorophores carried into
-that fit (`active`) are the ones this function's lasso selected for that
-target, not the whole panel run through a ridge penalty. A pair the
-lasso found no evidence of coupling for is left out of the signature fit
-entirely, rather than being included and shrunk.
+second phase does, with one difference: by default
+(`nuisance.set = "selected"`) the co-fluorophores carried into that fit
+(`active`) are the ones this function's lasso selected for that target,
+not the whole panel run through a ridge penalty. A pair the lasso found
+no evidence of coupling for is left out of the signature fit entirely,
+rather than being included and shrunk. `nuisance.set` controls this
+choice directly; see its own documentation for the other two settings
+and when each is the right one.
 
 A coefficient's sign carries the identification, and it is not symmetric
 in target and source. A marker-negative population cannot read below
@@ -91,6 +94,7 @@ correct.spectra.glasso(
   af.n.pc = "auto",
   bg.mode = c("af.deconv", "af.row", "global.mean", "none"),
   large.gate = TRUE,
+  scatter.gate = FALSE,
   downsample = 20000,
   downsample.background.frac = 0.3,
   downsample.min.stratum = 2000L,
@@ -134,10 +138,13 @@ correct.spectra.glasso(
   n.levels = 60L,
   min.bin.events = 50L,
   multivariate = TRUE,
+  nuisance.set = c("selected", "panel", "target.only"),
   ridge = 1e-06,
   output.suffix = "_glasso",
   figures = TRUE,
   save = TRUE,
+  true.spectra = NULL,
+  min.deg.start = 0.1,
   verbose = TRUE
 )
 ```
@@ -204,6 +211,18 @@ correct.spectra.glasso(
 - large.gate:
 
   Logical, whether to use a large scatter gate. Default `TRUE`.
+
+- scatter.gate:
+
+  Logical, whether to gate on scatter at all before fitting. `FALSE`
+  keeps every event in both `unstained.sample` and
+  `fully.stained.sample`, ignoring `large.gate` entirely. As in
+  [`fix.my.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/fix.my.unmix.md),
+  turn off when a population the correction needs – a large, highly
+  autofluorescent cell type such as alveolar macrophages, say – sits far
+  enough outside the main scatter population that no single gate shape
+  can be expected to enclose everyone the correction needs. Default
+  `FALSE`.
 
 - downsample:
 
@@ -439,6 +458,24 @@ correct.spectra.glasso(
   [`extract.raw.signature()`](https://drcytometer.github.io/AutoSpectral/reference/extract.raw.signature.md).
   Default `TRUE`.
 
+- nuisance.set:
+
+  Character, which other fluorophores are removed alongside `target`
+  when its signature is re-measured. `"selected"` (default) uses
+  `active.set[[target]]`, phase one's own finding of which fluorophores
+  are actually coupled to this one, and preserves this function's
+  original behaviour. `"panel"` always removes the whole panel,
+  [`fix.my.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/fix.my.unmix.md)'s
+  convention, trading that specificity for protection against real
+  coupling the lasso missed. `"target.only"` removes nothing, the
+  ordinary single-stain-control assumption that every other channel
+  reads true zero in this population; use it for a best possible output
+  (unrealistic) when `fully.stained.sample` is actually a concatenated
+  single-stained control set rather than a fully stained sample, since
+  there every other luorophore's apparent abundance in a given tube is
+  compensation artefact, not co-expression a ridge fit should partial
+  out. Default `"selected"`.
+
 - ridge:
 
   Numeric, ridge penalty for that joint fit. Default `1e-6`.
@@ -457,6 +494,22 @@ correct.spectra.glasso(
 - save:
 
   Logical, whether to write the csv outputs. Default `TRUE`.
+
+- true.spectra:
+
+  Optional numeric matrix (fluorophores x detectors),
+  independently-known ground truth with row names matching `spectra`.
+  Purely diagnostic: when supplied, the returned `recovery` table
+  reports the angular error against it before and after this run,
+  whether or not the run's own gates accepted the row.
+
+- min.deg.start:
+
+  Numeric, degrees. Below this starting angular error, `recovered` is
+  reported as `0` instead of `(deg.start - deg.after) / deg.start`,
+  since a fluorophore that started (near) exactly correct makes that
+  ratio blow up or divide by zero for a change of a fraction of a
+  degree. Default `0.1`.
 
 - verbose:
 
@@ -504,6 +557,10 @@ A named list:
 
   Per-fluorophore signature statistics and gate outcomes, from
   [`extract.raw.signature()`](https://drcytometer.github.io/AutoSpectral/reference/extract.raw.signature.md).
+  `n.active.selected` is phase one's own active-set finding regardless
+  of `nuisance.set`; `n.active` is how many fluorophores were actually
+  removed in that row's fit, which only differs from `n.active.selected`
+  when `nuisance.set != "selected"`.
 
 - `convergence.log`:
 
@@ -529,6 +586,14 @@ A named list:
 
   The autofluorescence basis, its coupling to the panel, and the
   fluorophores frozen because of it.
+
+- `recovery`:
+
+  Data frame of angular errors against `true.spectra`. `recovered` is
+  the fraction of the starting angular error removed,
+  `(deg.start - deg.after) / deg.start` – `1` is fully recovered, `0` is
+  no change, negative is worse; see `min.deg.start` for the
+  near-zero-`deg.start` case. `NULL` if `true.spectra` was not supplied.
 
 ## How the lasso row is estimated
 

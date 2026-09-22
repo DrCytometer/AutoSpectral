@@ -16,7 +16,8 @@ qc.af.spectra(
   spectra,
   output.dir = "./figure_autofluorescence",
   remove = TRUE,
-  pass = 1
+  pass = 1,
+  sample.label = NULL
 )
 ```
 
@@ -50,6 +51,14 @@ qc.af.spectra(
   Numeric, default `1`. Counter to separate multiple passes of AF
   extraction, such as occur when `refine=TRUE` in
   [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md).
+
+- sample.label:
+
+  Optional character string identifying the sample (e.g. the unstained
+  FCS file name), prepended to the QC table and report filenames.
+  Prevents different samples writing to the same `output.dir` from
+  overwriting each other's QC output. Default `NULL`, which omits the
+  prefix.
 
 ## Value
 

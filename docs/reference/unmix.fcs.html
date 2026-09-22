@@ -17,7 +17,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,6 +103,8 @@
 <span>  collinear.threshold <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  joint.pair.resolution <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  refine.af.quantile <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  estimate.time <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  estimate.sample.events <span class="op">=</span> <span class="fl">5000</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -314,6 +316,23 @@ conflict-resolution for collinear fluorophore pairs. Only used when
 <dd><p>Numeric, default <code>0.5</code>. Fraction of cells taken
 forward for additional AF passes (see <code>n.af.passes</code>). Only used when
 <code>pipeline = "joint"</code>. Passed to <code>unmix.autospectral.rcpp()</code>.</p></dd>
+
+
+<dt id="arg-estimate-time">estimate.time<a class="anchor" aria-label="anchor" href="#arg-estimate-time"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Before unmixing the first
+chunk, times a small probe drawn from that chunk's already-loaded data
+and messages a rough total-time estimate. Only runs for methods slow
+enough to warrant it (<code>Poisson</code>, <code>FastPoisson</code>, or <code>AutoSpectral</code> with
+<code>spectra.variants</code> supplied), and only when the file is bigger than
+<code>estimate.sample.events</code>; a no-op otherwise. Requires <code>verbose = TRUE</code>
+to have any effect, since the estimate is only printed. See
+<code><a href="estimate.unmix.time.html">?estimate.unmix.time</a></code> for the same check usable standalone, ahead of
+a run.</p></dd>
+
+
+<dt id="arg-estimate-sample-events">estimate.sample.events<a class="anchor" aria-label="anchor" href="#arg-estimate-sample-events"></a></dt>
+<dd><p>Numeric, default <code>5000</code>. Number of events
+used for the <code>estimate.time</code> probe. Only relevant when <code>estimate.time = TRUE</code> and the method qualifies; see <code>estimate.time</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

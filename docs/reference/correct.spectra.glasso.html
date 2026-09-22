@@ -38,11 +38,14 @@ As in fix.my.unmix(), nothing is back-solved out of the spillover matrix.
 The matrix is used only to refine which events count as negative for each
 target; the spectra themselves are re-measured directly from background
 subtracted raw data by extract.raw.signature(), exactly as
-fix.my.unmix()'s second phase does, with one difference: the
-co-fluorophores carried into that fit (active) are the ones this
-function's lasso selected for that target, not the whole panel run through
-a ridge penalty. A pair the lasso found no evidence of coupling for is left
-out of the signature fit entirely, rather than being included and shrunk.
+fix.my.unmix()'s second phase does, with one difference: by default
+(nuisance.set = &quot;selected&quot;) the co-fluorophores carried into that fit
+(active) are the ones this function's lasso selected for that target,
+not the whole panel run through a ridge penalty. A pair the lasso found no
+evidence of coupling for is left out of the signature fit entirely, rather
+than being included and shrunk. nuisance.set controls this choice
+directly; see its own documentation for the other two settings and when
+each is the right one.
 A coefficient's sign carries the identification, and it is not symmetric
 in target and source. A marker-negative population cannot read below zero
 from real emission - nothing biological subtracts signal - so where a
@@ -98,11 +101,14 @@ As in fix.my.unmix(), nothing is back-solved out of the spillover matrix.
 The matrix is used only to refine which events count as negative for each
 target; the spectra themselves are re-measured directly from background
 subtracted raw data by extract.raw.signature(), exactly as
-fix.my.unmix()'s second phase does, with one difference: the
-co-fluorophores carried into that fit (active) are the ones this
-function's lasso selected for that target, not the whole panel run through
-a ridge penalty. A pair the lasso found no evidence of coupling for is left
-out of the signature fit entirely, rather than being included and shrunk.
+fix.my.unmix()'s second phase does, with one difference: by default
+(nuisance.set = &quot;selected&quot;) the co-fluorophores carried into that fit
+(active) are the ones this function's lasso selected for that target,
+not the whole panel run through a ridge penalty. A pair the lasso found no
+evidence of coupling for is left out of the signature fit entirely, rather
+than being included and shrunk. nuisance.set controls this choice
+directly; see its own documentation for the other two settings and when
+each is the right one.
 A coefficient's sign carries the identification, and it is not symmetric
 in target and source. A marker-negative population cannot read below zero
 from real emission - nothing biological subtracts signal - so where a
@@ -137,7 +143,7 @@ to its own signature re-measurement."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -218,11 +224,14 @@ jointly changes what two collinear predictors can and cannot identify.</p>
 The matrix is used only to refine which events count as negative for each
 target; the spectra themselves are re-measured directly from background
 subtracted raw data by <code><a href="extract.raw.signature.html">extract.raw.signature()</a></code>, exactly as
-<code><a href="fix.my.unmix.html">fix.my.unmix()</a></code>'s second phase does, with one difference: the
-co-fluorophores carried into that fit (<code>active</code>) are the ones this
-function's lasso selected for that target, not the whole panel run through
-a ridge penalty. A pair the lasso found no evidence of coupling for is left
-out of the signature fit entirely, rather than being included and shrunk.</p>
+<code><a href="fix.my.unmix.html">fix.my.unmix()</a></code>'s second phase does, with one difference: by default
+(<code>nuisance.set = "selected"</code>) the co-fluorophores carried into that fit
+(<code>active</code>) are the ones this function's lasso selected for that target,
+not the whole panel run through a ridge penalty. A pair the lasso found no
+evidence of coupling for is left out of the signature fit entirely, rather
+than being included and shrunk. <code>nuisance.set</code> controls this choice
+directly; see its own documentation for the other two settings and when
+each is the right one.</p>
 <p>A coefficient's sign carries the identification, and it is not symmetric
 in target and source. A marker-negative population cannot read below zero
 from real emission - nothing biological subtracts signal - so where a
@@ -262,6 +271,7 @@ to its own signature re-measurement.</p>
 <span>  af.n.pc <span class="op">=</span> <span class="st">"auto"</span>,</span>
 <span>  bg.mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"af.deconv"</span>, <span class="st">"af.row"</span>, <span class="st">"global.mean"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  large.gate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  scatter.gate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  downsample <span class="op">=</span> <span class="fl">20000</span>,</span>
 <span>  downsample.background.frac <span class="op">=</span> <span class="fl">0.3</span>,</span>
 <span>  downsample.min.stratum <span class="op">=</span> <span class="fl">2000L</span>,</span>
@@ -305,10 +315,13 @@ to its own signature re-measurement.</p>
 <span>  n.levels <span class="op">=</span> <span class="fl">60L</span>,</span>
 <span>  min.bin.events <span class="op">=</span> <span class="fl">50L</span>,</span>
 <span>  multivariate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  nuisance.set <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"selected"</span>, <span class="st">"panel"</span>, <span class="st">"target.only"</span><span class="op">)</span>,</span>
 <span>  ridge <span class="op">=</span> <span class="fl">1e-06</span>,</span>
 <span>  output.suffix <span class="op">=</span> <span class="st">"_glasso"</span>,</span>
 <span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  save <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  true.spectra <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  min.deg.start <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -375,6 +388,17 @@ background.</p></dd>
 <dt id="arg-large-gate">large.gate<a class="anchor" aria-label="anchor" href="#arg-large-gate"></a></dt>
 <dd><p>Logical, whether to use a large scatter gate. Default
 <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-scatter-gate">scatter.gate<a class="anchor" aria-label="anchor" href="#arg-scatter-gate"></a></dt>
+<dd><p>Logical, whether to gate on scatter at all before
+fitting. <code>FALSE</code> keeps every event in both <code>unstained.sample</code> and
+<code>fully.stained.sample</code>, ignoring <code>large.gate</code> entirely. As in
+<code><a href="fix.my.unmix.html">fix.my.unmix()</a></code>, turn off when a population the correction needs – a
+large, highly autofluorescent cell type such as alveolar macrophages,
+say – sits far enough outside the main scatter population that no
+single gate shape can be expected to enclose everyone the correction
+needs. Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-downsample">downsample<a class="anchor" aria-label="anchor" href="#arg-downsample"></a></dt>
@@ -613,6 +637,23 @@ passed to <code><a href="extract.raw.signature.html">extract.raw.signature()</a>
 <code>TRUE</code>.</p></dd>
 
 
+<dt id="arg-nuisance-set">nuisance.set<a class="anchor" aria-label="anchor" href="#arg-nuisance-set"></a></dt>
+<dd><p>Character, which other fluorophores are removed
+alongside <code>target</code> when its signature is re-measured. <code>"selected"</code>
+(default) uses <code>active.set[[target]]</code>, phase one's own finding of which
+fluorophores are actually coupled to this one, and preserves this
+function's original behaviour. <code>"panel"</code> always removes the whole
+panel, <code><a href="fix.my.unmix.html">fix.my.unmix()</a></code>'s convention, trading that specificity for
+protection against real coupling the lasso missed. <code>"target.only"</code>
+removes nothing, the ordinary single-stain-control assumption that
+every other channel reads true zero in this population; use it for a best
+possible output (unrealistic) when <code>fully.stained.sample</code> is actually a
+concatenated single-stained control set rather than a fully stained sample,
+since there every other luorophore's apparent abundance in a given tube is
+compensation artefact, not co-expression a ridge fit should partial out.
+Default <code>"selected"</code>.</p></dd>
+
+
 <dt id="arg-ridge">ridge<a class="anchor" aria-label="anchor" href="#arg-ridge"></a></dt>
 <dd><p>Numeric, ridge penalty for that joint fit. Default <code>1e-6</code>.</p></dd>
 
@@ -630,6 +671,21 @@ in the same directory. Default <code>"_glasso"</code>.</p></dd>
 
 <dt id="arg-save">save<a class="anchor" aria-label="anchor" href="#arg-save"></a></dt>
 <dd><p>Logical, whether to write the csv outputs. Default <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-true-spectra">true.spectra<a class="anchor" aria-label="anchor" href="#arg-true-spectra"></a></dt>
+<dd><p>Optional numeric matrix (fluorophores x detectors),
+independently-known ground truth with row names matching <code>spectra</code>.
+Purely diagnostic: when supplied, the returned <code>recovery</code> table reports
+the angular error against it before and after this run, whether or not
+the run's own gates accepted the row.</p></dd>
+
+
+<dt id="arg-min-deg-start">min.deg.start<a class="anchor" aria-label="anchor" href="#arg-min-deg-start"></a></dt>
+<dd><p>Numeric, degrees. Below this starting angular error,
+<code>recovered</code> is reported as <code>0</code> instead of <code>(deg.start - deg.after) / deg.start</code>, since a fluorophore that started (near) exactly correct
+makes that ratio blow up or divide by zero for a change of a fraction
+of a degree. Default <code>0.1</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -671,7 +727,11 @@ events used, candidate sources, sources selected, and the chosen
 
 <dt><code>signature.log</code></dt>
 <dd><p>Per-fluorophore signature statistics and gate
-outcomes, from <code><a href="extract.raw.signature.html">extract.raw.signature()</a></code>.</p></dd>
+outcomes, from <code><a href="extract.raw.signature.html">extract.raw.signature()</a></code>. <code>n.active.selected</code> is
+phase one's own active-set finding regardless of <code>nuisance.set</code>;
+<code>n.active</code> is how many fluorophores were actually removed in that
+row's fit, which only differs from <code>n.active.selected</code> when
+<code>nuisance.set != "selected"</code>.</p></dd>
 
 <dt><code>convergence.log</code></dt>
 <dd><p>Per-iteration delta history.</p></dd>
@@ -695,6 +755,14 @@ coefficient candidate source.</p></dd>
 <dt><code>af.basis</code>, <code>af.hotspot</code>, <code>af.frozen</code></dt>
 <dd><p>The autofluorescence basis,
 its coupling to the panel, and the fluorophores frozen because of it.</p></dd>
+
+<dt><code>recovery</code></dt>
+<dd><p>Data frame of angular errors against <code>true.spectra</code>.
+<code>recovered</code> is the fraction of the starting angular error removed,
+<code>(deg.start - deg.after) / deg.start</code> – <code>1</code> is fully recovered, <code>0</code>
+is no change, negative is worse; see <code>min.deg.start</code> for the
+near-zero-<code>deg.start</code> case. <code>NULL</code> if <code>true.spectra</code> was not
+supplied.</p></dd>
 
 
 </dl></div>

@@ -5,7 +5,7 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Create Control File — create.control.file"><meta name="description" content='A helper function to draft a description of your single stained control
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Create Control File — create.control.file"><meta name="description" content="A helper function to draft a description of your single stained control
 files such that AutoSpectral can understand and process them correctly.
 Given a set of single stained control fcs files, create.control.file will
 produce a csv file listing the matching peak detector channels for your
@@ -15,8 +15,12 @@ the matching universal.negative filename when exactly one unstained/negative
 control shares that control.type. universal.negative is left blank when
 control.type could not be determined or when more than one unstained/negative
 control of that type exists (in which case you will need to set it manually).
-You will need to fill in any "No Match" results manually.
-You will need to add marker names manually.'><meta property="og:description" content='A helper function to draft a description of your single stained control
+It will also assign the large.gate column based on the matched marker's
+entry in marker_database.csv. Bead controls are never assigned
+large.gate = TRUE, even if the matched marker is flagged as large.gate
+in the marker database.
+You will need to fill in any &quot;No Match&quot; results manually.
+You will need to add marker names manually."><meta property="og:description" content="A helper function to draft a description of your single stained control
 files such that AutoSpectral can understand and process them correctly.
 Given a set of single stained control fcs files, create.control.file will
 produce a csv file listing the matching peak detector channels for your
@@ -26,8 +30,12 @@ the matching universal.negative filename when exactly one unstained/negative
 control shares that control.type. universal.negative is left blank when
 control.type could not be determined or when more than one unstained/negative
 control of that type exists (in which case you will need to set it manually).
-You will need to fill in any "No Match" results manually.
-You will need to add marker names manually.'><script>
+It will also assign the large.gate column based on the matched marker's
+entry in marker_database.csv. Bead controls are never assigned
+large.gate = TRUE, even if the matched marker is flagged as large.gate
+in the marker database.
+You will need to fill in any &quot;No Match&quot; results manually.
+You will need to add marker names manually."><script>
   window.MathJax = {
     tex: { packages: {'[+]': ['boldsymbol']} }
   };
@@ -39,7 +47,7 @@ You will need to add marker names manually.'><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,6 +105,10 @@ the matching <code>universal.negative</code> filename when exactly one unstained
 control shares that control.type. <code>universal.negative</code> is left blank when
 <code>control.type</code> could not be determined or when more than one unstained/negative
 control of that type exists (in which case you will need to set it manually).
+It will also assign the <code>large.gate</code> column based on the matched marker's
+entry in <code>marker_database.csv</code>. Bead controls are never assigned
+<code>large.gate = TRUE</code>, even if the matched marker is flagged as large.gate
+in the marker database.
 You will need to fill in any "No Match" results manually.
 You will need to add marker names manually.</p>
     </div>
@@ -106,6 +118,7 @@ You will need to add marker names manually.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">create.control.file</span><span class="op">(</span></span>
 <span>  <span class="va">control.dir</span>,</span>
 <span>  <span class="va">asp</span>,</span>
+<span>  control.files <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill.gate.name <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  filename <span class="op">=</span> <span class="st">"fcs_control_file"</span>,</span>
 <span>  legacy <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -124,6 +137,16 @@ You will need to add marker names manually.</p>
 <dt id="arg-asp">asp<a class="anchor" aria-label="anchor" href="#arg-asp"></a></dt>
 <dd><p>The AutoSpectral parameter list. Generate using
 <code>get.autospectral.param</code></p></dd>
+
+
+<dt id="arg-control-files">control.files<a class="anchor" aria-label="anchor" href="#arg-control-files"></a></dt>
+<dd><p>Optional specification of the control files to use. This
+will override the default, which is to use all the FCS files in the
+<code>control.dir</code> to create the control file. Files and path(s) may be specified,
+allowing you to use files from different subdirectories. For instance, you may
+wish to exclude bead controls from a folder containing both bead and cell
+controls, saving you the work of deleting the lines from the created control
+file.</p></dd>
 
 
 <dt id="arg-fill-gate-name">fill.gate.name<a class="anchor" aria-label="anchor" href="#arg-fill-gate-name"></a></dt>

@@ -27,7 +27,7 @@ AutoSpectralRcpp still works, just without the OpenMP speedup."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,9 +90,10 @@ dependency) otherwise – so a plain <code>AutoSpectral</code> install with no
 <span>  <span class="va">som.dim</span>,</span>
 <span>  rlen <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  radius <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  dist <span class="op">=</span> <span class="fl">2L</span>,</span>
+<span>  dist <span class="op">=</span> <span class="fl">4L</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">1337L</span>,</span>
-<span>  threads <span class="op">=</span> <span class="fl">0L</span></span>
+<span>  threads <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  unit.norm <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -123,8 +124,7 @@ schedule internally.</p></dd>
 
 <dt id="arg-dist">dist<a class="anchor" aria-label="anchor" href="#arg-dist"></a></dt>
 <dd><p>Integer 1:4, distance function (1 manhattan, 2 euclidean,
-3 chebyshev, 4 cosine). Default <code>2</code>. Only used on the AutoSpectralRcpp
-path.</p></dd>
+3 chebyshev, 4 cosine). Default <code>4</code>.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -136,6 +136,17 @@ should pass <code>asp$bird.seed</code>.</p></dd>
 <dd><p>Integer, OpenMP threads for the accelerated path. Default
 <code>0</code> (all available cores). Ignored on the <code><a href="https://rdrr.io/pkg/FlowSOM/man/SOM.html" class="external-link">FlowSOM::SOM()</a></code> fallback
 path, which is single-threaded.</p></dd>
+
+
+<dt id="arg-unit-norm">unit.norm<a class="anchor" aria-label="anchor" href="#arg-unit-norm"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. Scale every training row to unit
+L2 length before training. Appropriate with <code>dist = 4</code> (cosine), where the
+distortion-minimising code is the mean of unit event vectors rather than
+the mean of raw ones; without it, bright events dominate each node's code.
+Leaves cosine distances, and therefore node assignments, unchanged. Has no
+principled justification under <code>dist = 2</code> and is left off by default so
+existing callers are unaffected. Note that the returned codes are then on
+the unit-normalised scale.</p></dd>
 
 </dl></div>
     <div class="section level2">

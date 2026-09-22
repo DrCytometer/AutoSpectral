@@ -11,19 +11,19 @@ cells with similar AF profiles.
 Optionally deduplicates the resulting spectra by cosine similarity
 (deduplicate = TRUE, default) to remove near-identical profiles that cause
 spurious over-correction of near-zero events in fully stained samples. When
-refine = TRUE, a second round of targeted modulation is performed on cells
-that remain far from zero after the first-pass correction; modulated spectra
-are screened for redundancy against each other and against the base library
-before being appended."><meta property="og:description" content="Extracts autofluorescence spectra from an unstained sample. Intended for use
+refine = TRUE, a second round of discovery targets cells that remain far
+from zero after the first-pass correction: candidate spectra are built from
+density-boosted neighbourhoods of these problem cells and accepted only when
+the real per-cell AF solver demonstrably prefers them."><meta property="og:description" content="Extracts autofluorescence spectra from an unstained sample. Intended for use
 with unmix.autospectral. Uses SOM clustering for rapid identification of
 cells with similar AF profiles.
 Optionally deduplicates the resulting spectra by cosine similarity
 (deduplicate = TRUE, default) to remove near-identical profiles that cause
 spurious over-correction of near-zero events in fully stained samples. When
-refine = TRUE, a second round of targeted modulation is performed on cells
-that remain far from zero after the first-pass correction; modulated spectra
-are screened for redundancy against each other and against the base library
-before being appended."><script>
+refine = TRUE, a second round of discovery targets cells that remain far
+from zero after the first-pass correction: candidate spectra are built from
+density-boosted neighbourhoods of these problem cells and accepted only when
+the real per-cell AF solver demonstrably prefers them."><script>
   window.MathJax = {
     tex: { packages: {'[+]': ['boldsymbol']} }
   };
@@ -35,7 +35,7 @@ before being appended."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,10 +89,10 @@ cells with similar AF profiles.</p>
 <p>Optionally deduplicates the resulting spectra by cosine similarity
 (<code>deduplicate = TRUE</code>, default) to remove near-identical profiles that cause
 spurious over-correction of near-zero events in fully stained samples. When
-<code>refine = TRUE</code>, a second round of targeted modulation is performed on cells
-that remain far from zero after the first-pass correction; modulated spectra
-are screened for redundancy against each other and against the base library
-before being appended.</p>
+<code>refine = TRUE</code>, a second round of discovery targets cells that remain far
+from zero after the first-pass correction: candidate spectra are built from
+density-boosted neighbourhoods of these problem cells and accepted only when
+the real per-cell AF solver demonstrably prefers them.</p>
     </div>
 
     <div class="section level2">
@@ -101,18 +101,28 @@ before being appended.</p>
 <span>  <span class="va">unstained.sample</span>,</span>
 <span>  <span class="va">asp</span>,</span>
 <span>  <span class="va">spectra</span>,</span>
+<span>  unstained.exprs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  som.dim <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  dist <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  figures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  save <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot.dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  table.dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  title <span class="op">=</span> <span class="st">"Autofluorescence spectra"</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  af.assign.method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"l1"</span>, <span class="st">"l2"</span><span class="op">)</span>,</span>
 <span>  deduplicate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  duplication.threshold <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  use.unmixed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  af.basis.components <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  raw.pca.components <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  refine <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  k.neighbors <span class="op">=</span> <span class="fl">15L</span>,</span>
+<span>  refine.improvement.threshold <span class="op">=</span> <span class="fl">0.02</span>,</span>
+<span>  refine.min.shift.n <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  problem.quantile <span class="op">=</span> <span class="fl">0.99</span>,</span>
+<span>  plot.unmixed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  plot.unmixed.n <span class="op">=</span> <span class="fl">30000</span>,</span>
 <span>  remove.contaminants <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  contaminant.threshold <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -149,8 +159,18 @@ stained samples to which the AF will be applied, ideally.</p></dd>
 1, with fluorophores in rows and detectors in columns.</p></dd>
 
 
+<dt id="arg-unstained-exprs">unstained.exprs<a class="anchor" aria-label="anchor" href="#arg-unstained-exprs"></a></dt>
+<dd><p>Optional matrix of data from the unstained sample. The
+columns must match <code>spectra</code>. Default is <code>NULL</code>.</p></dd>
+
+
 <dt id="arg-som-dim">som.dim<a class="anchor" aria-label="anchor" href="#arg-som-dim"></a></dt>
 <dd><p>Number of x and y dimensions for the SOM. Default is <code>10</code>.</p></dd>
+
+
+<dt id="arg-dist">dist<a class="anchor" aria-label="anchor" href="#arg-dist"></a></dt>
+<dd><p>Integer 1:4, distance function (1 manhattan, 2 euclidean,
+3 chebyshev, 4 cosine). Default <code>2</code>.</p></dd>
 
 
 <dt id="arg-figures">figures<a class="anchor" aria-label="anchor" href="#arg-figures"></a></dt>
@@ -182,6 +202,21 @@ Default is <code>NULL</code>, which inherits from <code>asp$table.af.dir</code>.
 <dd><p>Logical, controls messaging. Default is <code>TRUE</code>.</p></dd>
 
 
+<dt id="arg-af-assign-method">af.assign.method<a class="anchor" aria-label="anchor" href="#arg-af-assign-method"></a></dt>
+<dd><p>Character, one of <code>"l1"</code> (default) or <code>"l2"</code>.
+Controls which per-cell AF assignment solver is used everywhere inside
+this function: the first-pass assignment, the refinement loop's
+candidate-preference check, and the second-pass diagnostic unmixing
+(<code>plot.unmixed = TRUE</code>). Both options score the joint covariance-
+weighted fluorophore error x raw-space residual error criterion,
+differing only in whether the fluorophore term is L1 (abs, <code>"l1"</code>,
+<code>assign.af.joint.cov</code>) or L2 (squared, <code>"l2"</code>, <code>assign.af.joint.cov.l2</code>).
+Each prefers its compiled Rcpp fast path
+(<code><a href="https://rdrr.io/pkg/AutoSpectralRcpp/man/assign.af.joint.cov.fast.html" class="external-link">AutoSpectralRcpp::assign.af.joint.cov.fast</a></code> /
+<code>assign.af.joint.cov.l2.fast</code>) when available and falls back to pure R
+otherwise.</p></dd>
+
+
 <dt id="arg-deduplicate">deduplicate<a class="anchor" aria-label="anchor" href="#arg-deduplicate"></a></dt>
 <dd><p>Logical, default <code>FALSE</code>. Whether to deduplicate AF spectra
 by cosine similarity after the base clustering stage and again after the
@@ -206,20 +241,84 @@ to cluster on raw detector space only, which is appropriate when
 <code>spectra</code> contains several similar or collinear fluorophores (e.g. a
 bead-cell comparison panel), where an OLS unmix is itself unstable and
 would corrupt the clustering features rather than enrich them.
-<code>use.unmixed = FALSE</code> also forces <code>refine = FALSE</code>, since the
-second-pass refinement identifies "problem cells" from per-cell
-unmixing residuals and is subject to the same instability.</p></dd>
+<code>use.unmixed = FALSE</code> also forces <code>refine = FALSE</code> and
+<code>plot.unmixed = FALSE</code>, since both rely on the same per-cell OLS
+unmixing residuals and are subject to the same instability.</p></dd>
+
+
+<dt id="arg-af-basis-components">af.basis.components<a class="anchor" aria-label="anchor" href="#arg-af-basis-components"></a></dt>
+<dd><p>Integer, default <code>NULL</code>. When supplied, appends
+this many components of the panel-oblique autofluorescence structure of
+the unstained sample to the SOM training features, alongside the raw
+detector data and (when <code>use.unmixed = TRUE</code>) the unmixed coefficients.
+Computed directly from the panel residual of the unstained events
+(trimming the top 1% by residual norm, subsampling to 50000 events for
+the decomposition, then projecting every event), reusing the unmixing
+matrix already computed for <code>unmixed.no.af</code> rather than re-deriving it.
+Training-time use carries none of the collinearity risk a per-cell
+regression design would, since clustering is not a regression; this
+only gives the SOM extra shape-discriminating features to place nodes
+with. Forced to <code>NULL</code> when <code>use.unmixed = FALSE</code>, since it depends on
+the same unmixing matrix. Default <code>NULL</code> disables it, matching prior
+behaviour.</p></dd>
+
+
+<dt id="arg-raw-pca-components">raw.pca.components<a class="anchor" aria-label="anchor" href="#arg-raw-pca-components"></a></dt>
+<dd><p>Integer, default <code>NULL</code>. When supplied, appends
+this many raw-event principal components of the unstained sample
+(ordinary singular vectors of the raw detector data, not restricted to
+the part the panel cannot explain, subsampled to 50000 events for the
+decomposition) to the SOM training features. Unlike
+<code>af.basis.components</code>, these components are free to cross into the
+panel's span; that carries no collinearity risk here for the same
+reason as above. Not affected by <code>use.unmixed</code>, since it does not use
+the unmixing matrix at all. Default <code>NULL</code> disables it.</p></dd>
 
 
 <dt id="arg-refine">refine<a class="anchor" aria-label="anchor" href="#arg-refine"></a></dt>
-<dd><p>Logical, default <code>FALSE</code>. Controls whether to perform a second
-round of autofluorescence measurement on "problem cells": those with the
-highest residual fluorophore signal after the first-pass per-cell AF
-extraction, as defined by <code>problem.quantile</code>. When <code>FALSE</code>, behavior is
-identical to versions of AutoSpectral prior to 1.0.0. If you are working
-with samples containing complex autofluorescence, e.g. tissues or tumors,
-using <code>refine = TRUE</code> will improve autofluorescence extraction at the cost
-of an increase in unmixing time.</p></dd>
+<dd><p>Logical, default <code>FALSE</code>. Controls whether to perform a
+second round of autofluorescence discovery targeting "problem cells":
+those with the highest residual fluorophore signal after the first-pass
+per-cell AF extraction, as defined by <code>problem.quantile</code>. Problem cells
+are grouped by the systematic pattern of their error, and each group's
+cells act as seeds for a nearest-neighbour expansion across the full
+unstained population (<code>k.neighbors</code>), so a candidate spectrum is built
+from a locally density-boosted set rather than the (typically sparse)
+seeds alone. A candidate is appended only if, once added to the library,
+the real per-cell AF solver reassigns a sufficient number of its own seed
+cells onto it (<code>refine.min.shift.n</code>) and those cells show a genuine,
+paired improvement in fit rather than one that only looks better because
+a candidate was added (<code>refine.improvement.threshold</code>). When <code>FALSE</code>,
+behavior is identical to versions of AutoSpectral prior to 1.0.0. If you
+are working with samples containing complex autofluorescence, e.g.
+tissues or tumors, using <code>refine = TRUE</code> will improve autofluorescence
+extraction at the cost of an increase in unmixing time.</p></dd>
+
+
+<dt id="arg-k-neighbors">k.neighbors<a class="anchor" aria-label="anchor" href="#arg-k-neighbors"></a></dt>
+<dd><p>Integer, default <code>15L</code>. Used only when <code>refine = TRUE</code>.
+Each error cluster's problem cells act as seeds into a nearest-neighbour
+search across the full unstained population, so a candidate spectrum is
+built from a locally density-boosted set rather than from the (typically
+too sparse) problem cells alone. Higher values recruit a larger, more
+stable candidate at the cost of reaching further from the seeds and
+risking dilution by unrelated bulk events.</p></dd>
+
+
+<dt id="arg-refine-improvement-threshold">refine.improvement.threshold<a class="anchor" aria-label="anchor" href="#arg-refine-improvement-threshold"></a></dt>
+<dd><p>Numeric, default <code>0.02</code>. Minimum median
+gain in cosine similarity (raw event to assigned AF spectrum), among the
+seed cells that shift their assignment onto a candidate under the real
+per-cell solver, before that candidate is accepted. The comparison is
+paired per cell, so adding more candidates cannot inflate it. Also
+requires the 25th percentile of that per-cell gain to be positive.</p></dd>
+
+
+<dt id="arg-refine-min-shift-n">refine.min.shift.n<a class="anchor" aria-label="anchor" href="#arg-refine-min-shift-n"></a></dt>
+<dd><p>Integer, default <code>8L</code>. Minimum number of a
+cluster's seed cells that must shift their AF assignment onto a candidate
+spectrum before that candidate is evaluated at all. Below this, a median
+gain is too volatile to trust.</p></dd>
 
 
 <dt id="arg-problem-quantile">problem.quantile<a class="anchor" aria-label="anchor" href="#arg-problem-quantile"></a></dt>
@@ -227,7 +326,28 @@ of an increase in unmixing time.</p></dd>
 which cells are "problematic" after first-pass per-cell AF extraction. Cells
 at or above this quantile with respect to the L2 norm of their unmixed
 fluorophore channels (i.e. still furthest from zero) are selected for the
-second-round modulation. A value of <code>0.99</code> means the top 1% of cells.</p></dd>
+second-round refinement.</p></dd>
+
+
+<dt id="arg-plot-unmixed">plot.unmixed<a class="anchor" aria-label="anchor" href="#arg-plot-unmixed"></a></dt>
+<dd><p>Logical, default <code>FALSE</code>. Whether to unmix the
+unstained sample before and after AF extraction and plot the comparison
+as a single side-by-side biplot (<code>unmixed.no.af</code>, <code>unmixed</code>, and, when
+<code>refine = TRUE</code> and modulation succeeds, <code>unmixed.second</code>). This runs a
+full per-cell AF unmixing pass purely for diagnostic plotting, so it
+defaults off. When <code>refine = FALSE</code>, the comparison plot is drawn
+immediately from the first-pass unmixing. When <code>refine = TRUE</code>, plotting
+is deferred until the refinement loop finishes, so the plot always
+reflects the final (possibly modulated) AF spectra rather than an
+intermediate state.</p></dd>
+
+
+<dt id="arg-plot-unmixed-n">plot.unmixed.n<a class="anchor" aria-label="anchor" href="#arg-plot-unmixed-n"></a></dt>
+<dd><p>Integer, default <code>30000</code>. When <code>plot.unmixed = TRUE</code>
+and <code>refine = FALSE</code>, the unstained sample is subsampled to this many
+events before the diagnostic unmixing pass, since the full refinement
+population isn't otherwise needed. Ignored when <code>refine = TRUE</code>, since
+the full population is already required for problem-cell identification.</p></dd>
 
 
 <dt id="arg-remove-contaminants">remove.contaminants<a class="anchor" aria-label="anchor" href="#arg-remove-contaminants"></a></dt>
@@ -315,8 +435,8 @@ variant plot. Default is <code>"black"</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A matrix of autofluorescence spectra (spectra in rows, detectors in
 columns). Row 1 is the population mean of the base spectra; subsequent rows
-are the deduplicated base spectra and, if <code>refine = TRUE</code>, modulated spectra
-for problem cells.</p>
+are the deduplicated base spectra and, if <code>refine = TRUE</code>, any solver-
+validated spectra discovered from under-represented problem cells.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

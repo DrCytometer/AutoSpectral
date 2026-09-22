@@ -10,6 +10,12 @@ from stained sample data, for the situation where the available reference
 spectra are subtly wrong for the sample being analysed - typically because
 bead-derived spectra are applied to cells, or spectra from another day,
 lot, or instrument state are in use.
+Takes either unstained.sample and fully.stained.sample file paths,
+reading and deriving unmixed.thresholds/spillover.spread itself (the
+direct-use convention shared with fix.my.unmix() and
+correct.spectra.glasso()), or raw.data supplied directly as an
+already-read matrix, the convention for a caller that already has it in
+memory. Supply one or the other, not both.
 Each event is assigned to the fluorophore it is most strongly positive
 for, as a fraction of that fluorophore's own dynamic range above its
 positivity threshold. Within each such dominance population, the data are
@@ -52,6 +58,12 @@ from stained sample data, for the situation where the available reference
 spectra are subtly wrong for the sample being analysed - typically because
 bead-derived spectra are applied to cells, or spectra from another day,
 lot, or instrument state are in use.
+Takes either unstained.sample and fully.stained.sample file paths,
+reading and deriving unmixed.thresholds/spillover.spread itself (the
+direct-use convention shared with fix.my.unmix() and
+correct.spectra.glasso()), or raw.data supplied directly as an
+already-read matrix, the convention for a caller that already has it in
+memory. Supply one or the other, not both.
 Each event is assigned to the fluorophore it is most strongly positive
 for, as a fraction of that fluorophore's own dynamic range above its
 positivity threshold. Within each such dominance population, the data are
@@ -101,7 +113,7 @@ contaminates the dominance populations and the background estimate."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -154,6 +166,12 @@ from stained sample data, for the situation where the available reference
 spectra are subtly wrong for the sample being analysed - typically because
 bead-derived spectra are applied to cells, or spectra from another day,
 lot, or instrument state are in use.</p>
+<p>Takes either <code>unstained.sample</code> and <code>fully.stained.sample</code> file paths,
+reading and deriving <code>unmixed.thresholds</code>/<code>spillover.spread</code> itself (the
+direct-use convention shared with <code><a href="fix.my.unmix.html">fix.my.unmix()</a></code> and
+<code><a href="correct.spectra.glasso.html">correct.spectra.glasso()</a></code>), or <code>raw.data</code> supplied directly as an
+already-read matrix, the convention for a caller that already has it in
+memory. Supply one or the other, not both.</p>
 <p>Each event is assigned to the fluorophore it is most strongly positive
 for, as a fraction of that fluorophore's own dynamic range above its
 positivity threshold. Within each such dominance population, the data are
@@ -196,20 +214,28 @@ contaminates the dominance populations and the background estimate.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">correct.unmixing.signatures</span><span class="op">(</span></span>
-<span>  <span class="va">raw.data</span>,</span>
 <span>  <span class="va">spectra</span>,</span>
-<span>  <span class="va">unmixed.thresholds</span>,</span>
+<span>  unstained.sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fully.stained.sample <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  flow.control <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  asp <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  variants <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  af.name <span class="op">=</span> <span class="st">"AF"</span>,</span>
+<span>  raw.data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  unmixed.thresholds <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  scatter <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  gate.main <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  gate.main <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  gate.level <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  spillover.spread <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  spread.kappa <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  bg.mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"global.mean"</span>, <span class="st">"scatter.knn"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  unstained <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  unstained.scatter <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  k.neighbors <span class="op">=</span> <span class="fl">20L</span>,</span>
+<span>  k.neighbors <span class="op">=</span> <span class="fl">3L</span>,</span>
+<span>  unstained.threshold <span class="op">=</span> <span class="fl">0.99</span>,</span>
+<span>  unstained.margin <span class="op">=</span> <span class="fl">1.3</span>,</span>
+<span>  threshold.prior.weight <span class="op">=</span> <span class="fl">0.3</span>,</span>
+<span>  threshold.max.ratio <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  n.levels <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  n.iter <span class="op">=</span> <span class="fl">6L</span>,</span>
 <span>  min.events <span class="op">=</span> <span class="fl">200L</span>,</span>
@@ -227,6 +253,7 @@ contaminates the dominance populations and the background estimate.</p>
 <span>  footprint.min.channels <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>  background.n <span class="op">=</span> <span class="fl">5000L</span>,</span>
 <span>  true.spectra <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  min.deg.start <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -235,23 +262,29 @@ contaminates the dominance populations and the background estimate.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-raw-data">raw.data<a class="anchor" aria-label="anchor" href="#arg-raw-data"></a></dt>
-<dd><p>Numeric matrix (events x detectors), raw detector-space
-data. Pooled or concatenated single-stained controls, or a fully
-stained sample with well-separated populations. Columns must match the
-columns of <code>spectra</code>.</p></dd>
-
-
-<dt id="arg-spectra">spectra<a class="anchor" aria-label="anchor" href="#arg-spectra"></a></dt>
+<dl><dt id="arg-spectra">spectra<a class="anchor" aria-label="anchor" href="#arg-spectra"></a></dt>
 <dd><p>Numeric matrix (fluorophores x detectors), the starting
 reference spectra to be corrected, L-infinity normalised.</p></dd>
 
 
-<dt id="arg-unmixed-thresholds">unmixed.thresholds<a class="anchor" aria-label="anchor" href="#arg-unmixed-thresholds"></a></dt>
-<dd><p>Named numeric vector covering every fluorophore
-in <code>spectra</code> (the autofluorescence row may be omitted), giving the
-positivity threshold in unmixed space, typically the 99.5th percentile
-of an unstained control unmixed against <code>spectra</code>.</p></dd>
+<dt id="arg-unstained-sample">unstained.sample<a class="anchor" aria-label="anchor" href="#arg-unstained-sample"></a></dt>
+<dd><p>File path and name for a raw unstained sample,
+used to derive <code>unmixed.thresholds</code> (any fluorophore not already
+covered by <code>variants$thresholds</code>) and, under <code>bg.mode = "scatter.knn"</code>,
+as the scatter-matched background reference. Ignored when <code>raw.data</code>
+is supplied directly. Required, together with <code>fully.stained.sample</code>
+and <code>flow.control</code>, whenever <code>raw.data</code> is not.</p></dd>
+
+
+<dt id="arg-fully-stained-sample">fully.stained.sample<a class="anchor" aria-label="anchor" href="#arg-fully-stained-sample"></a></dt>
+<dd><p>File path and name for a raw fully stained
+sample. Ignored when <code>raw.data</code> is supplied directly.</p></dd>
+
+
+<dt id="arg-flow-control">flow.control<a class="anchor" aria-label="anchor" href="#arg-flow-control"></a></dt>
+<dd><p>The flow.control list, used to select the scatter
+and spectral channel columns when reading <code>unstained.sample</code> and
+<code>fully.stained.sample</code>. Ignored when <code>raw.data</code> is supplied directly.</p></dd>
 
 
 <dt id="arg-asp">asp<a class="anchor" aria-label="anchor" href="#arg-asp"></a></dt>
@@ -261,10 +294,45 @@ generator (<code>asp$bird.seed</code>) for reproducible subsampling. Default
 <code>NULL</code>.</p></dd>
 
 
+<dt id="arg-variants">variants<a class="anchor" aria-label="anchor" href="#arg-variants"></a></dt>
+<dd><p>Optional variant list returned by
+<code><a href="get.spectral.variants.html">get.spectral.variants()</a></code>. Used as a shrinkage prior on top of the
+threshold this function derives from its own unmix (see
+<code>unmixed.thresholds</code>), not as the threshold itself:
+<code><a href="get.spectral.variants.html">get.spectral.variants()</a></code> measures <code>variants$thresholds</code> from a
+per-cell-optimised unmix at the 99.5th percentile, both of which make
+it systematically tighter than the bare-OLS, 99th-percentile estimate
+this function's own dominance assignment is judged against, especially
+for AF-collinear fluorophores. <code>variants$spillover.spread</code> supplies
+<code>spillover.spread</code> when that is not itself supplied. Default <code>NULL</code>.</p></dd>
+
+
 <dt id="arg-af-name">af.name<a class="anchor" aria-label="anchor" href="#arg-af-name"></a></dt>
 <dd><p>Character, the name of the autofluorescence row in
 <code>spectra</code>, or <code>NULL</code> if there is none. The AF row is never treated as a
 panel fluorophore and is never corrected. Default <code>"AF"</code>.</p></dd>
+
+
+<dt id="arg-raw-data">raw.data<a class="anchor" aria-label="anchor" href="#arg-raw-data"></a></dt>
+<dd><p>Optional numeric matrix (events x detectors), raw
+detector-space data. Pooled or concatenated single-stained controls, or
+a fully stained sample with well-separated populations. Columns must
+match the columns of <code>spectra</code>. Supply this directly to skip reading
+<code>fully.stained.sample</code> from disk – the internal calling convention,
+used when the raw matrix is already in memory. Default <code>NULL</code>, which
+requires <code>unstained.sample</code>, <code>fully.stained.sample</code> and <code>flow.control</code>
+instead.</p></dd>
+
+
+<dt id="arg-unmixed-thresholds">unmixed.thresholds<a class="anchor" aria-label="anchor" href="#arg-unmixed-thresholds"></a></dt>
+<dd><p>Optional named numeric vector covering every
+fluorophore in <code>spectra</code> (the autofluorescence row may be omitted),
+giving the positivity threshold in unmixed space. Default <code>NULL</code>, which
+computes the <code>unstained.margin</code>-scaled <code>unstained.threshold</code> percentile
+of <code>unstained</code>'s own bare unmix against <code>spectra</code> – the same
+pre-background-subtraction convention <code>dominant</code> below is judged
+against – then shrinks it toward <code>variants$thresholds</code> (see
+<code>threshold.prior.weight</code>, <code>threshold.max.ratio</code>).</p></dd>
 
 
 <dt id="arg-scatter">scatter<a class="anchor" aria-label="anchor" href="#arg-scatter"></a></dt>
@@ -275,7 +343,7 @@ row-matched to <code>raw.data</code>. Required for <code>gate.main</code> and fo
 
 <dt id="arg-gate-main">gate.main<a class="anchor" aria-label="anchor" href="#arg-gate-main"></a></dt>
 <dd><p>Logical, whether to gate events to the main scatter
-population before fitting. Requires <code>scatter</code>. Default <code>TRUE</code>.</p></dd>
+population before fitting. Requires <code>scatter</code>. Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-gate-level">gate.level<a class="anchor" aria-label="anchor" href="#arg-gate-level"></a></dt>
@@ -289,8 +357,9 @@ scatter density exceeds this fraction of the modal density. Default
 <code>get.spectral.variants()$spillover.spread</code>. When supplied, co-activity
 is judged against per-event thresholds widened by the spillover spread
 each bright fluorophore contributes, so spillover from the dominant dye
-is not mistaken for a co-active fluorophore. Default <code>NULL</code> (flat
-thresholds).</p></dd>
+is not mistaken for a co-active fluorophore. Default <code>NULL</code>, which
+falls back to <code>variants$spillover.spread</code> (flat thresholds if that is
+also unavailable).</p></dd>
 
 
 <dt id="arg-spread-kappa">spread.kappa<a class="anchor" aria-label="anchor" href="#arg-spread-kappa"></a></dt>
@@ -318,7 +387,39 @@ control is gated with the same density rule.</p></dd>
 
 <dt id="arg-k-neighbors">k.neighbors<a class="anchor" aria-label="anchor" href="#arg-k-neighbors"></a></dt>
 <dd><p>Integer, neighbours for scatter-matched background
-subtraction. Default <code>20</code>.</p></dd>
+subtraction. Default <code>3</code>.</p></dd>
+
+
+<dt id="arg-unstained-threshold">unstained.threshold<a class="anchor" aria-label="anchor" href="#arg-unstained-threshold"></a></dt>
+<dd><p>Numeric in (0, 1), the percentile of
+<code>unstained</code>'s own unmix defining positivity, used only when
+<code>unmixed.thresholds</code> is not supplied directly. Default <code>0.99</code> – less
+extreme than <code><a href="get.spectral.variants.html">get.spectral.variants()</a></code>'s <code>0.995</code>, and therefore less
+sensitive to the handful of poorly AF-corrected events that dominate
+the very top of the tail for a collinear fluorophore.</p></dd>
+
+
+<dt id="arg-unstained-margin">unstained.margin<a class="anchor" aria-label="anchor" href="#arg-unstained-margin"></a></dt>
+<dd><p>Numeric, multiplier applied to that threshold.
+Default <code>1.3</code>.</p></dd>
+
+
+<dt id="arg-threshold-prior-weight">threshold.prior.weight<a class="anchor" aria-label="anchor" href="#arg-threshold-prior-weight"></a></dt>
+<dd><p>Numeric in <code>[0, 1]</code>, the log-space weight
+given to <code>variants$thresholds</code> when shrinking the internally-computed
+<code>unmixed.thresholds</code> toward it. <code>0</code> uses the internal estimate
+unchanged; <code>1</code> uses <code>variants$thresholds</code> outright. Ignored for any
+fluorophore <code>variants$thresholds</code> does not cover, or when <code>variants</code>
+is <code>NULL</code>. Default <code>0.3</code>.</p></dd>
+
+
+<dt id="arg-threshold-max-ratio">threshold.max.ratio<a class="anchor" aria-label="anchor" href="#arg-threshold-max-ratio"></a></dt>
+<dd><p>Numeric <code>&gt; 1</code>, the magnitude ratio (either
+direction) between the internal estimate and <code>variants$thresholds</code>
+beyond which the internal side is treated as unreliable – most likely
+under-corrected autofluorescence – rather than partially trusted, and
+the threshold reverts to <code>variants$thresholds</code> outright instead of
+blending. Default <code>3</code>.</p></dd>
 
 
 <dt id="arg-n-levels">n.levels<a class="anchor" aria-label="anchor" href="#arg-n-levels"></a></dt>
@@ -433,6 +534,13 @@ Purely diagnostic: when supplied, the returned <code>recovery</code> table repor
 the angular error before and after correction per fluorophore.</p></dd>
 
 
+<dt id="arg-min-deg-start">min.deg.start<a class="anchor" aria-label="anchor" href="#arg-min-deg-start"></a></dt>
+<dd><p>Numeric, degrees. Below this starting angular error,
+<code>recovered</code> is reported as <code>0</code> instead of <code>(deg.start - deg.after) / deg.start</code>, since a fluorophore that started (near) exactly correct
+makes that ratio blow up or divide by zero for a change of a fraction
+of a degree. Default <code>0.1</code>.</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical, controls messaging. Default <code>TRUE</code>.</p></dd>
 
@@ -473,8 +581,12 @@ correction (<code>spectra</code> rows minus <code>af.name</code>).</p></dd>
 gating was applied.</p></dd>
 
 <dt><code>recovery</code></dt>
-<dd><p>Data frame of angular errors against <code>true.spectra</code>,
-or <code>NULL</code> if <code>true.spectra</code> was not supplied.</p></dd>
+<dd><p>Data frame of angular errors against <code>true.spectra</code>.
+<code>recovered</code> is the fraction of the starting angular error removed,
+<code>(deg.start - deg.after) / deg.start</code> – <code>1</code> is fully recovered, <code>0</code>
+is no change, negative is worse; see <code>min.deg.start</code> for the
+near-zero-<code>deg.start</code> case. <code>NULL</code> if <code>true.spectra</code> was not
+supplied.</p></dd>
 
 
 </dl></div>

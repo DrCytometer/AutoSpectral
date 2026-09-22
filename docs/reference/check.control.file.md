@@ -15,7 +15,8 @@ check.control.file(
   min.event.warning = 5000,
   min.event.error = 1000,
   legacy = FALSE,
-  allow.duplicate.controls = FALSE
+  allow.duplicate.controls = FALSE,
+  verbose = TRUE
 )
 ```
 
@@ -67,6 +68,10 @@ check.control.file(
   [`validate.control.file()`](https://drcytometer.github.io/AutoSpectral/reference/validate.control.file.md).
   Set `TRUE` to permit multiple controls for the same fluorophore
   (diagnostic/QC use only).
+
+- verbose:
+
+  Logical. Whether to print progress messages. Default `TRUE`.
 
 ## Value
 
