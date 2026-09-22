@@ -131,30 +131,8 @@ create.biplot <- function(
     plot.data <- plot.data[ sample( seq_len( nrow( plot.data ) ), max.points ), ]
   }
 
-  ### The FlowJo Biexponential transformation caps out at -1000 for the width
-  # parameter in both FlowJo and in the R implementation in flowWorkspace. This
-  # is inadequate for a lot of spectral flow data. As a crude work-around, we can
-  # use any "excess" width basis to feed into modifying the number of positive log
-  # decades used in the transformation, which has a (sort of) similar effect.
-  # At some point, this needs to be implemented in C or C++ with a full range of
-  # width bases, but that's beyond me at the moment.
-  if ( x.width.basis < -1000 ) {
-    x.excess.width.basis <- x.width.basis + 1000
-    x.pos.log.delta <- log10( abs( x.excess.width.basis ) )
-    x.pos.log <- log10( x.max ) - 1 - x.pos.log.delta
-    x.pos.log <- pmax( x.pos.log, 2 )
-  } else {
-    x.pos.log <- log10( x.max ) - 1
-  }
-
-  if ( y.width.basis < -1000 ) {
-    y.excess.width.basis <- y.width.basis + 1000
-    y.pos.log.delta <- log10( abs( y.excess.width.basis ) )
-    y.pos.log <- log10( y.max ) - 1 - y.pos.log.delta
-    y.pos.log <- pmax( y.pos.log, 2 )
-  } else {
-    y.pos.log <- log10( y.max ) - 1
-  }
+  x.pos.log <- log10( x.max ) - 1
+  y.pos.log <- log10( y.max ) - 1
 
   # set defaults
   if ( is.null( title ) )
@@ -163,9 +141,32 @@ create.biplot <- function(
   if ( is.null( output.dir ) )
     output.dir <- getwd()
 
+  # If x.min/y.min (whether "auto"-computed or supplied directly) reaches
+  # past whatever ribbon.breaks already covers on the negative side, add
+  # whole-decade ticks (-1e4, -1e5, ...) down to the decade containing
+  # x.min/y.min, so the axis isn't left with its deepest label sitting
+  # well short of where the data (and the curve) actually extend.
+  extend.negative.breaks <- function( breaks, min.value ) {
+
+    if ( !is.finite( min.value ) || min.value >= 0 ) return( breaks )
+
+    neg.breaks <- breaks[ breaks < 0 ]
+    max.decade.present <- if ( length( neg.breaks ) == 0 ) 0 else
+      floor( log10( max( abs( neg.breaks ) ) ) )
+
+    needed.decade <- floor( log10( abs( min.value ) ) )
+
+    if ( needed.decade <= max.decade.present ) return( breaks )
+
+    new.decades <- seq( max.decade.present + 1, needed.decade )
+    sort( c( breaks, -( 10 ^ new.decades ) ) )
+  }
+
   # set plot limits
-  x.breaks <- asp$ribbon.breaks[ asp$ribbon.breaks < x.max ]
-  y.breaks <- asp$ribbon.breaks[ asp$ribbon.breaks < y.max ]
+  x.breaks <- extend.negative.breaks( asp$ribbon.breaks, x.min )
+  y.breaks <- extend.negative.breaks( asp$ribbon.breaks, y.min )
+  x.breaks <- x.breaks[ x.breaks < x.max ]
+  y.breaks <- y.breaks[ y.breaks < y.max ]
   x.axis.labels <- sapply( x.breaks, function( x ) {
     if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
   } )
