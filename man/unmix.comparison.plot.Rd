@@ -24,6 +24,15 @@ unmix.comparison.plot(
   legend.font.size = NULL,
   legend.key.size = 0.8,
   legend.width.per.col = 1.1,
+  stats.detail = NULL,
+  reference.folder = "AutoSpectral",
+  stats.alpha = 0.05,
+  stats.text.size = NULL,
+  stats.step.increase = 0.12,
+  stats.digits = 3,
+  stats.label.style = c("pvalue", "stars"),
+  stats.star.breaks = c(0.05, 0.01, 0.001),
+  stats.star.symbols = c("*", "**", "***"),
   verbose = TRUE
 )
 }
@@ -97,6 +106,57 @@ legend color swatches; smaller values fit more entries per column.}
 \item{legend.width.per.col}{Numeric, default \code{1.1}. Extra figure width
 (inches) added for each legend column beyond the first, so a wrapped
 legend never crowds the plot panel.}
+
+\item{stats.detail}{Optional \code{detail} data frame from
+\code{test.unmix.comparison()} (columns \code{folder}, \code{metric}, \code{p.adjusted},
+among others). When supplied, the \code{Unstained.rSD} and each summary-figure
+metric's rows are passed through to \code{.plot.metric.boxplot()}, which adds
+a significance bracket (via \code{ggpubr::stat_pvalue_manual()}) for every
+folder whose adjusted p-value against \code{reference.folder} is below
+\code{stats.alpha}. Default \code{NULL} draws no brackets. Requires the \code{ggpubr}
+package; a missing installation triggers a warning and is otherwise
+silently skipped.}
+
+\item{reference.folder}{Character, default \code{"AutoSpectral"}. The folder
+every bracket in \code{stats.detail} is drawn against. Only used when
+\code{stats.detail} is supplied.}
+
+\item{stats.alpha}{Numeric, default \code{0.05}. Adjusted p-value threshold
+below which a significance bracket is drawn. Only used when
+\code{stats.detail} is supplied.}
+
+\item{stats.text.size}{Numeric, default \code{NULL}. Font size (points) for
+the significance annotation labels drawn when \code{stats.detail} is
+supplied. \code{NULL} scales it from \code{base.font.size} (matching
+\code{legend.font.size}'s own default derivation).}
+
+\item{stats.step.increase}{Numeric, default \code{0.12}. Only used when
+\code{stats.label.style = "pvalue"}. Vertical spacing between stacked
+significance brackets, as a fraction of the data's own max value -
+multiplicatively on a log-scale plot (\code{log.scale = TRUE}), additively
+otherwise. Increase this (or \code{stats.text.size}, or switch
+\code{stats.label.style} to \code{"stars"}) if bracket labels overlap the bracket
+above them.}
+
+\item{stats.digits}{Numeric, default \code{3}. Number of significant figures
+shown in each bracket's p-value label. Only used when
+\code{stats.label.style = "pvalue"}.}
+
+\item{stats.label.style}{Character, one of \code{"pvalue"} (default) or
+\code{"stars"}. \code{"pvalue"} draws a full bracket from \code{reference.folder} to
+each significant folder, labeled with its adjusted p-value.  \code{"stars"}
+instead draws a single significance marker directly above each
+significant folder's own box (see \code{stats.star.breaks}/
+\code{stats.star.symbols}), with no bracket and no vertical stacking between
+folders - a more compact alternative when many simultaneous comparisons
+make stacked \code{"pvalue"} brackets overlap or run out of headroom.}
+
+\item{stats.star.breaks}{Numeric vector, default \code{c(0.05, 0.01, 0.001)}.
+Adjusted p-value thresholds for \code{stats.label.style = "stars"}, ordered
+loosest-first and matched one-to-one against \code{stats.star.symbols}.}
+
+\item{stats.star.symbols}{Character vector, default \code{c("*", "**", "***")}. Marker text for each threshold in \code{stats.star.breaks}, in the
+same order. Only used when \code{stats.label.style = "stars"}.}
 
 \item{verbose}{Logical, default \code{TRUE}. Currently unused by
 \code{unmix.comparison.plot()} itself -- no progress messages are printed here.

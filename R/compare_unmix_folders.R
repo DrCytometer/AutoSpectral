@@ -353,6 +353,35 @@
 ## metric plotted here is non-negative, but exact-zero values have no log
 ## and are dropped from the plot, with a warning.
 ##
+## When `stats.df` is supplied, a significance annotation is drawn for
+## every other folder in `stats.df` whose `p.adjusted` clears
+## `stats.alpha`, in the same left-to-right order those folders appear on
+## this plot's own x-axis (not by p-value rank, so annotations never cross
+## out of order). Folders in `stats.df` that either equal
+## `reference.folder` or are not present in `df` (e.g. a folder tested in
+## an earlier run but filtered out of this particular plot) are silently
+## excluded rather than passed to `ggpubr::stat_pvalue_manual()`, which
+## errors on an unmatched group. Requires the `ggpubr` package; a missing
+## installation triggers a warning and annotations are skipped.
+##
+## `stats.label.style` selects between two annotation styles. `"pvalue"`
+## (default) draws a full pairwise bracket from `reference.folder` to each
+## significant folder, labeled with its adjusted p-value at
+## `stats.digits` significant figures, stacked vertically by
+## `stats.step.increase` per bracket (multiplicatively on a log-scale
+## plot, additively otherwise) to keep them from overlapping - the more
+## simultaneous comparisons a plot has, the more headroom
+## `stats.step.increase` needs, and the larger `stats.text.size` is, the
+## more headroom each step needs to actually clear the label above it.
+## `"stars"` instead draws a single significance marker directly above
+## each significant folder's own box (thresholds `stats.star.breaks`,
+## symbols `stats.star.symbols`, matched loosest-first, e.g. `p < 0.05` ->
+## `"*"`, `p < 0.01` -> `"**"`), with no bracket back to `reference.folder`
+## and no vertical stacking between folders, since every comparison shares
+## the same reference and each marker sits independently above its own
+## box - the style to prefer when many simultaneous comparisons make
+## `"pvalue"`'s stacked brackets unreadable.
+##
 ## @keywords internal
 .plot.metric.boxplot <- function(
     df,
@@ -373,7 +402,16 @@
     legend.ncol         = NULL,
     legend.font.size    = NULL,
     legend.key.size     = 0.8,
-    legend.width.per.col = 1.1
+    legend.width.per.col = 1.1,
+    stats.df             = NULL,
+    reference.folder      = "AutoSpectral",
+    stats.alpha           = 0.05,
+    stats.text.size       = NULL,
+    stats.step.increase    = 0.12,
+    stats.digits            = 3,
+    stats.label.style        = c( "pvalue", "stars" ),
+    stats.star.breaks         = c( 0.05, 0.01, 0.001 ),
+    stats.star.symbols        = c( "*", "**", "***" )
 ) {
 
   use.color <- !is.null( color.col ) && !is.null( color.map ) &&
@@ -459,6 +497,117 @@
 
   if ( !is.null( title.size ) ) {
     p <- p + ggplot2::theme( plot.title = ggplot2::element_text( size = title.size ) )
+  }
+
+  if (
+    !is.null( stats.df ) && nrow( stats.df ) > 0 &&
+    reference.folder %in% as.character( df$folder )
+  ) {
+
+    if ( !requireNamespace( "ggpubr", quietly = TRUE ) ) {
+
+      warning(
+        "Package 'ggpubr' is required to draw significance brackets; skipping.",
+        call. = FALSE
+      )
+
+    } else {
+
+      plotted.folders <- as.character( df$folder )
+      axis.order       <- if ( is.factor( df$folder ) )
+        levels( df$folder ) else sort( unique( plotted.folders ) )
+
+      sig.df <- stats.df[
+        !is.na( stats.df$p.adjusted ) & stats.df$p.adjusted < stats.alpha &
+          as.character( stats.df$folder ) != reference.folder &
+          as.character( stats.df$folder ) %in% plotted.folders,
+      ]
+
+      sig.df <- sig.df[ order( match( as.character( sig.df$folder ), axis.order ) ), ]
+
+      if ( nrow( sig.df ) > 0 ) {
+
+        stats.label.style <- match.arg( stats.label.style )
+
+        if ( is.null( stats.text.size ) ) stats.text.size <- base.font.size / 2.8
+
+        if ( stats.label.style == "stars" ) {
+
+          # Compact mode: draws a single significance marker directly above
+          # each significant folder's own box, rather than a full pairwise
+          # bracket back to reference.folder for every comparison - since
+          # every comparison here shares the same reference.folder, the
+          # marker alone already conveys what full brackets would, and
+          # markers sit at independent heights (each just above its own
+          # folder's data) rather than needing to be stacked to avoid
+          # overlapping bracket lines and label text.
+          assign.stars <- function( p ) {
+            n.matched <- sum( p < stats.star.breaks )
+            if ( n.matched == 0 ) "" else stats.star.symbols[ n.matched ]
+          }
+
+          star.labels <- vapply( sig.df$p.adjusted, assign.stars, character( 1 ) )
+
+          folder.max <- vapply(
+            as.character( sig.df$folder ),
+            function( fl ) {
+              vals <- df$value[ as.character( df$folder ) == fl ]
+              if ( log.scale ) vals <- vals[ vals > 0 ]
+              max( vals, na.rm = TRUE )
+            },
+            numeric( 1 )
+          )
+
+          panel.max <- max( if ( log.scale ) df$value[ df$value > 0 ] else df$value, na.rm = TRUE )
+
+          label.y <- if ( log.scale ) folder.max * 1.08 else folder.max + 0.03 * panel.max
+
+          star.df <- data.frame(
+            x     = match( as.character( sig.df$folder ), axis.order ),
+            y     = label.y,
+            label = star.labels,
+            stringsAsFactors = FALSE
+          )
+          star.df <- star.df[ star.df$label != "", , drop = FALSE ]
+
+          if ( nrow( star.df ) > 0 ) {
+            p <- p + ggplot2::annotate(
+              "text",
+              x = star.df$x, y = star.df$y, label = star.df$label,
+              size = stats.text.size, vjust = 0
+            )
+          }
+
+        } else {
+
+          plot.values <- if ( log.scale ) df$value[ df$value > 0 ] else df$value
+          y.max <- max( plot.values, na.rm = TRUE )
+
+          y.position <- if ( log.scale ) {
+            y.max * ( 1 + stats.step.increase ) ^ seq_len( nrow( sig.df ) )
+          } else {
+            y.max + stats.step.increase * y.max * seq_len( nrow( sig.df ) )
+          }
+
+          p.label.format <- paste0( "p = %.", stats.digits, "g" )
+
+          bracket.df <- data.frame(
+            group1     = reference.folder,
+            group2     = as.character( sig.df$folder ),
+            label      = sprintf( p.label.format, sig.df$p.adjusted ),
+            y.position = y.position,
+            stringsAsFactors = FALSE
+          )
+
+          p <- p + ggpubr::stat_pvalue_manual(
+            bracket.df,
+            label = "label",
+            tip.length = 0.01,
+            size = stats.text.size
+          )
+        }
+      }
+    }
   }
 
   effective.width <- if ( use.color ) {
