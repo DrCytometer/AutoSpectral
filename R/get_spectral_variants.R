@@ -77,12 +77,6 @@
 #' @param noise.floor.tail.fraction Numeric in (0, 1), default \code{0.20}.
 #'   Fraction of each detector's raw values (lowest end) used to estimate the
 #'   per-control noise floor. Passed to \code{get.fluor.variants}.
-#' @param noise.spillover.floor Numeric in (0, 1), default \code{0.002}. A
-#'   detector is excluded from a control's contribution to the pooled
-#'   noise-model regression when that control's own reference spectrum
-#'   falls below this fraction of its own peak there, in addition to the
-#'   upper exclusion already applied for detectors it dominates (see
-#'   \code{get.fluor.variants(noise.mask.threshold)}).
 #' @param spread.min.events Integer, default \code{50}. Minimum number of
 #'   events behind a source fluorophore's Residual Model regression
 #'   (\code{"spillover.spread.n"}) before its Spillover Spreading Matrix row
@@ -197,7 +191,6 @@ get.spectral.variants <- function(
     sim.threshold.floor    = 0.90,
     af.collinear.threshold = 0.95,
     noise.floor.tail.fraction = 0.20,
-    noise.spillover.floor = 0.002,
     spread.min.events        = 50L,
     spread.hotspot.fallback  = TRUE,
     spread.hotspot.min.pairs = 20,
@@ -752,71 +745,35 @@ get.spectral.variants <- function(
   }
 
   # ---------------------------------------------------------------------------
-  # Noise model (read.var, kappa), pooled across single-stained controls
+  # Noise model (read.var, kappa), fit on the unstained control
   # ---------------------------------------------------------------------------
-  if ( verbose )
+
+  if ( verbose & diagnostics )
     message( paste0( "\033[34m", "Modelling detector noise", "\033[0m" ) )
 
-  noise.model <- NULL
-  events.list <- lapply( spectral.variants, function( v ) attr( v, "noise.events" ) )
-  mask.list   <- lapply( spectral.variants, function( v ) attr( v, "noise.mask" ) )
-  have.noise  <- !vapply( events.list, is.null, logical( 1 ) )
-
-  if ( sum( have.noise ) >= 2L ) {
-
-    noise.fluors <- names( spectral.variants )[ have.noise ]
-
-    fit.list <- lapply( noise.fluors, function( fl ) {
-      ev  <- events.list[[ fl ]]
-      ref <- spectra[ fl, , drop = FALSE ]
-      co  <- unmix.ols( ev, ref )
-      list( fitted = co %*% ref, resid = ev - ( co %*% ref ) )
-    } )
-    names( fit.list ) <- noise.fluors
-
-    pool.fitted  <- do.call( rbind, lapply( fit.list, function( x ) x$fitted ) )
-    pool.resid   <- do.call( rbind, lapply( fit.list, function( x ) x$resid ) )
-    pool.file.id <- unlist( lapply( noise.fluors, function( fl )
-      rep( fl, nrow( events.list[[ fl ]] ) ) ) )
-
-    row.start <- 1L
-    for ( fl in noise.fluors ) {
-      n.fl     <- nrow( events.list[[ fl ]] )
-      rows     <- row.start:( row.start + n.fl - 1L )
-      low.mask <- spectra[ fl, ] < noise.spillover.floor * max( spectra[ fl, ] )
-      excl     <- mask.list[[ fl ]] | low.mask
-      pool.resid[ rows, excl ] <- NA_real_
-      row.start <- row.start + n.fl
-    }
-
-    noise.model <- tryCatch(
-      suppressWarnings( .fit.noise.regression(
-        y.hat          = pool.fitted,
-        resid          = pool.resid,
-        det.names      = spectral.channel,
-        read.var.floor = if ( length( floor.list ) > 0 ) noise.floor^2 else NULL,
-        unstained.data = unstained,
-        file.id        = pool.file.id,
-        verbose        = FALSE
-      ) ),
-      error = function( e ) {
-        warning( "Pooled single-stained-control noise model failed: ",
+  noise.model <- tryCatch(
+    estimate.noise.model(
+      raw.data       = unstained,
+      spectra        = spectra,
+      af.spectra     = af.spectra,
+      read.var.floor = if ( length( floor.list ) > 0 ) noise.floor^2 else NULL,
+      unstained.data = unstained,
+      verbose        = FALSE
+    ),
+    error = function( e ) {
+      if ( diagnostics ) {
+        warning( "Noise model from the unstained control failed: ",
                  conditionMessage( e ), call. = FALSE )
-        NULL
       }
-    )
+      NULL
+    }
+  )
 
-    if ( verbose && !is.null( noise.model ) & diagnostics )
-      message( sprintf(
-        "Noise model from %d control(s): median read SD %.1f, median counts.per.unit %.3g",
-        length( noise.fluors ),
-        stats::median( sqrt( noise.model$read.var ) ),
-        stats::median( noise.model$counts.per.unit ) ) )
-
-  } else if ( verbose & diagnostics ) {
-    message( "Fewer than 2 controls carried noise-model events; ",
-             "skipping pooled noise-model estimation." )
-  }
+  if ( verbose && !is.null( noise.model ) & diagnostics )
+    message( sprintf(
+      "Noise model from the unstained control: median read SD %.1f, median counts.per.unit %.3g",
+      stats::median( sqrt( noise.model$read.var ) ),
+      stats::median( noise.model$counts.per.unit ) ) )
 
   # ---------------------------------------------------------------------------
   # Spillover Spreading Matrix (Residual Model)

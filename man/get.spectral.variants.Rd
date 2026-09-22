@@ -21,7 +21,6 @@ get.spectral.variants(
   sim.threshold.floor = 0.9,
   af.collinear.threshold = 0.95,
   noise.floor.tail.fraction = 0.2,
-  noise.spillover.floor = 0.002,
   spread.min.events = 50L,
   spread.hotspot.fallback = TRUE,
   spread.hotspot.min.pairs = 20,
@@ -93,13 +92,6 @@ Residual Model) is skipped.}
 \item{noise.floor.tail.fraction}{Numeric in (0, 1), default \code{0.20}.
 Fraction of each detector's raw values (lowest end) used to estimate the
 per-control noise floor. Passed to \code{get.fluor.variants}.}
-
-\item{noise.spillover.floor}{Numeric in (0, 1), default \code{0.002}. A
-detector is excluded from a control's contribution to the pooled
-noise-model regression when that control's own reference spectrum
-falls below this fraction of its own peak there, in addition to the
-upper exclusion already applied for detectors it dominates (see
-\code{get.fluor.variants(noise.mask.threshold)}).}
 
 \item{spread.min.events}{Integer, default \code{50}. Minimum number of
 events behind a source fluorophore's Residual Model regression
