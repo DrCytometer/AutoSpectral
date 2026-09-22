@@ -1,3 +1,44 @@
+# AutoSpectral 1.8.3 (2026-09-22)
+
+## New Features
+
+- Unmixing calculation time is now estimated on a small sample of events when
+calling the slower unmixing methods (`AutoSpectral` with `spectral.variants` or
+the Poisson functions). This takes a small amount of time, so set `estimate.time`
+to `FALSE` if you want the fastest output.
+- CSV files are now saved for similarity, hotspot and spillover spread matrices.
+- Functions to replicate the workflow and figures in the manuscript have been
+added to `inst/scripts`. These may be generally useful for people wishing to 
+perform comparisons between unmixing methods. See `compare_compensaid_folders.R`,
+`compare_unmix_folders.R`, `run_compensaid_comparison_example.R`,
+`run_unmix_comparison_specSymp.R` and `run_bead_cell_comparison.R`.
+
+## Improvements
+
+- The `flowWorkspace::flowjo_biexp()` has been replaced with an in-house logicle
+(biexponential) transform. This is essentially identical to 
+`flowCore::logicleTransform()` and allows a wider range of width basis values to
+be used, more fitting for spectral flow data.
+- The Residual Model by [Cai et al.](https://doi.org/10.64898/2026.01.27.701929)
+is now used to calculate spillover spread robustly.
+- FlowSOM is now moved to `Suggests` to eliminate heavy dependencies. Users who
+do not install `AutoSpectralRcpp` will need `FlowSOM` in order to assess 
+`af.spectra` and `spectral.variants`.
+- The `patchwork` has been replaced by `cowplot`.
+- The `sp::point.in.polygon()` dependency has been replaced by an in-house
+version of the function.
+
+## Bug fixes
+
+- A previous change to reduce memory usage when calling `unmix.folder()` left
+the FCS writing without access to the marker (antigen) labels. This is now fixed.
+- FCS files that come with unmixed channels already present (FACSDiscover, A5SE,
+Xenith) should now have the original unmixed data channels removed properly, and
+imaging, scatter and time channels should be retained properly. Sorry, this took
+a while.
+
+
+
 # AutoSpectral 1.8.2 (2026-09-12)
 
 ## New Features
