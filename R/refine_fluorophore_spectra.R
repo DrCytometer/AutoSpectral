@@ -72,7 +72,18 @@
 #'   it. Bead controls are never AF-removed, matching `clean.controls()`.
 #'   Set `FALSE` for a bead-only panel.
 #' @param af.figures Logical, default `FALSE`. Whether `remove.af()` writes
-#'   its own AF-removal diagnostic figures for each control.
+#' its own AF-removal diagnostic figures for each control.
+#' @param af.regressor Logical, default `TRUE`. When the panel being refined
+#' has no `"AF"` row, fit a per-event autofluorescence proxy -- the
+#' projection of each event onto the paired unstained control's mean raw
+#' spectrum -- as an extra regressor in `extract.raw.signature()`, via its
+#' `extra.abundance` argument. A single-stained control still carries real,
+#' cell-to-cell-varying autofluorescence even though no other dye is
+#' present; without this, that variance has nowhere to go but the target's
+#' own re-measured signature. Has no effect when an `"AF"` row is already
+#' present in `marker.spectra`, when `multivariate = FALSE`, when a
+#' sample's `control.type` is not `"cells"`, or when no unstained control
+#' can be resolved for it.
 #' @param singlet.quantiles,remove.doublets As in `get.spectra.automated()`,
 #'   passed to `.read.fcs.clean()` for every file read here.
 #' @param allow.duplicate.controls Logical, default `FALSE`. As in
@@ -148,6 +159,7 @@ refine.fluorophore.spectra <- function(
     unstained.margin = 1.3,
     crosstalk.check = TRUE,
     max.crosstalk = 0.1,
+    af.regressor = TRUE,
     n.levels.pair = 10L,
     convergence.threshold = 0.5,
     step = 1,
@@ -169,6 +181,8 @@ refine.fluorophore.spectra <- function(
   fluor.attr <- attr( marker.spectra, "fluorophore" )
   if ( is.null( fluor.attr ) ) fluor.attr <- fluorophores
   names( fluor.attr ) <- fluorophores
+
+  need.af.regressor <- af.regressor && multivariate && !( "AF" %in% fluor.attr )
 
   if ( verbose )
     message( paste0( "\033[34m", "Checking control file for refine step",
@@ -285,7 +299,7 @@ refine.fluorophore.spectra <- function(
       }
 
       neg.mat <- NULL
-      if ( af.remove && is.cell && src$type == "file" ) {
+      if ( is.cell && src$type == "file" && ( af.remove || need.af.regressor ) ) {
         neg.mat <- tryCatch(
           read.one( src$file, paste0( samp, " (negative)" ) ),
           error = function( e ) {
@@ -298,7 +312,7 @@ refine.fluorophore.spectra <- function(
 
       y <- pos.mat
 
-      if ( !is.null( neg.mat ) ) {
+      if ( af.remove && !is.null( neg.mat ) ) {
 
         clean.pair <- list()
         clean.pair[[ samp ]]  <- pos.mat
@@ -326,21 +340,40 @@ refine.fluorophore.spectra <- function(
           } )
       }
 
+      # When no "AF" row exists in the panel, autofluorescence has nowhere
+      # to go in the fit below: unlike the other dyes (genuinely absent, so
+      # correctly left out of `active`), AF is real and varies cell to cell
+      # even in a single-stained control. Left unmodelled, that variance is
+      # attributed to the target's own abundance and biases the re-measured
+      # signature. A per-event AF proxy -- the projection of each event
+      # onto the paired unstained control's mean raw spectrum -- gives the
+      # fit somewhere to put it, via `extra.abundance`.
+      af.extra <- NULL
+      if ( need.af.regressor && !is.null( neg.mat ) ) {
+        af.basis <- colMeans( neg.mat[ , detectors, drop = FALSE ] )
+        af.norm2 <- sum( af.basis^2 )
+        if ( af.norm2 > 0 )
+          af.extra <- matrix(
+            as.numeric( y[ , detectors, drop = FALSE ] %*% af.basis ) / af.norm2,
+            ncol = 1, dimnames = list( NULL, "AF" ) )
+      }
+
       abundance <- project.one( y, marker.spectra[ samp, , drop = FALSE ] )
 
       candidate <- extract.raw.signature(
-        raw.data       = y[ , detectors, drop = FALSE ],
-        spectra        = marker.spectra,
-        abundance      = matrix( abundance, ncol = 1,
-                                 dimnames = list( NULL, samp ) ),
-        target         = samp,
-        active         = samp,
-        intercept      = intercept,
-        multivariate   = multivariate,
-        ridge          = ridge,
-        n.levels       = n.levels,
-        min.bin.events = min.bin.events,
-        min.events     = min.events )
+        raw.data        = y[ , detectors, drop = FALSE ],
+        spectra         = marker.spectra,
+        abundance       = matrix( abundance, ncol = 1,
+                                  dimnames = list( NULL, samp ) ),
+        target          = samp,
+        active          = samp,
+        extra.abundance = af.extra,
+        intercept       = intercept,
+        multivariate    = multivariate,
+        ridge           = ridge,
+        n.levels        = n.levels,
+        min.bin.events  = min.bin.events,
+        min.events      = min.events )
 
       reject <- NA_character_
       if ( is.null( candidate ) ) reject <- "no.fit"

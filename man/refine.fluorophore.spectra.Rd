@@ -31,6 +31,7 @@ refine.fluorophore.spectra(
   unstained.margin = 1.3,
   crosstalk.check = TRUE,
   max.crosstalk = 0.1,
+  af.regressor = TRUE,
   n.levels.pair = 10L,
   convergence.threshold = 0.5,
   step = 1,
@@ -90,6 +91,18 @@ negative, when one is defined. Same convention as \code{fix.my.unmix()}.}
 \item{max.crosstalk}{Numeric, the abundance-space coefficient above which
 a console warning is printed. Diagnostic only; does not gate a row.
 Default \code{0.1}.}
+
+\item{af.regressor}{Logical, default \code{TRUE}. When the panel being refined
+has no \code{"AF"} row, fit a per-event autofluorescence proxy -- the
+projection of each event onto the paired unstained control's mean raw
+spectrum -- as an extra regressor in \code{extract.raw.signature()}, via its
+\code{extra.abundance} argument. A single-stained control still carries real,
+cell-to-cell-varying autofluorescence even though no other dye is
+present; without this, that variance has nowhere to go but the target's
+own re-measured signature. Has no effect when an \code{"AF"} row is already
+present in \code{marker.spectra}, when \code{multivariate = FALSE}, when a
+sample's \code{control.type} is not \code{"cells"}, or when no unstained control
+can be resolved for it.}
 
 \item{n.levels.pair}{Integer, abundance bins for the cross-talk pair
 estimator. Default \code{10L}.}
