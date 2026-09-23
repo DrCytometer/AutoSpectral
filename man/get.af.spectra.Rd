@@ -161,7 +161,7 @@ tissues or tumors, using \code{refine = TRUE} will improve autofluorescence
 extraction at the cost of an increase in unmixing time.}
 
 \item{k.neighbors}{Integer, default \code{15L}. Used only when \code{refine = TRUE}.
-Each error cluster's problem cells act as seeds into a nearest-neighbour
+Each error group's problem cells act as seeds into a nearest-neighbour
 search across the full unstained population, so a candidate spectrum is
 built from a locally density-boosted set rather than from the (typically
 too sparse) problem cells alone. Higher values recruit a larger, more
@@ -176,7 +176,7 @@ paired per cell, so adding more candidates cannot inflate it. Also
 requires the 25th percentile of that per-cell gain to be positive.}
 
 \item{refine.min.shift.n}{Integer, default \code{8L}. Minimum number of a
-cluster's seed cells that must shift their AF assignment onto a candidate
+group's seed cells that must shift their AF assignment onto a candidate
 spectrum before that candidate is evaluated at all. Below this, a median
 gain is too volatile to trust.}
 
