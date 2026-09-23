@@ -117,7 +117,7 @@
 #'   tissues or tumors, using `refine = TRUE` will improve autofluorescence
 #'   extraction at the cost of an increase in unmixing time.
 #' @param k.neighbors Integer, default `15L`. Used only when `refine = TRUE`.
-#'   Each error cluster's problem cells act as seeds into a nearest-neighbour
+#'   Each error group's problem cells act as seeds into a nearest-neighbour
 #'   search across the full unstained population, so a candidate spectrum is
 #'   built from a locally density-boosted set rather than from the (typically
 #'   too sparse) problem cells alone. Higher values recruit a larger, more
@@ -130,7 +130,7 @@
 #'   paired per cell, so adding more candidates cannot inflate it. Also
 #'   requires the 25th percentile of that per-cell gain to be positive.
 #' @param refine.min.shift.n Integer, default `8L`. Minimum number of a
-#'   cluster's seed cells that must shift their AF assignment onto a candidate
+#'   group's seed cells that must shift their AF assignment onto a candidate
 #'   spectrum before that candidate is evaluated at all. Below this, a median
 #'   gain is too volatile to trust.
 #' @param problem.quantile Numeric, default `0.99`. The quantile for determining
@@ -376,11 +376,11 @@ get.af.spectra <- function(
     }
   }
 
-  # OLS unmix without AF - combined with raw data for richer clustering
+  # OLS unmix without AF - combined with raw data for richer SOM
   # features. Skipped entirely when `use.unmixed = FALSE`, since an OLS
   # unmix against a collinear `spectra` (e.g. several similar fluorophores
   # in a bead-cell comparison panel) is itself unstable and would corrupt
-  # rather than enrich the clustering features.
+  # rather than enrich the SOM training features.
   #
   # The unmixing matrix is computed directly here, rather than through
   # unmix.ols.fast(), so af.basis.components below can reuse it instead of
@@ -396,10 +396,7 @@ get.af.spectra <- function(
     cluster.data  <- unstained.exprs
   }
 
-  # Optional extra shape-discriminating features for SOM training. Neither
-  # carries the collinearity risk a per-cell regression design would, since
-  # clustering is not a regression; both only change which directions the
-  # SOM has to differentiate nodes along.
+  # Optional extra shape-discriminating features for SOM training.
   if ( !is.null( af.basis.components ) ) {
 
     # Panel residual of every event -- the part the fluorophores cannot
@@ -655,7 +652,7 @@ get.af.spectra <- function(
           )
         )
 
-      # ---- Discover candidate spectra from density-boosted error clusters --
+      # ---- Discover candidate spectra from density-boosted error groups --
 
       if ( problem.cell.n > 10 ) {
 
@@ -702,10 +699,7 @@ get.af.spectra <- function(
         accepted.n <- 0L
 
         # Neighbour search is batched across all problem cells rather than
-        # done per cluster: FNN::get.knnx() rebuilds its kd-tree from `data`
-        # on every call, so a per-cluster query against the full unstained
-        # pool would rebuild that same tree once per cluster instead of once
-        # overall.
+        # done per group
         problem.unit <- pool.unit[ problem.idx, , drop = FALSE ]
         nn.all       <- FNN::get.knnx( data = pool.unit, query = problem.unit, k = k.neighbors )
 
@@ -793,7 +787,7 @@ get.af.spectra <- function(
 
           if ( verbose )
             message( sprintf(
-              "Refine: cluster %s accepted - %d/%d seed cells shifted (n=%d enriched), median cosine gain %.4f.",
+              "Refine: group %s accepted - %d/%d seed cells shifted (n=%d enriched), median cosine gain %.4f.",
               cl, length( shifted ), length( seed.idx ), length( enriched.idx ), median.delta
             ) )
         }
