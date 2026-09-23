@@ -62,7 +62,7 @@
 #'   that can cause overzealous matching of near-zero events in fully stained
 #'   samples, reducing apparent "squishing". Deduplication is slightly less
 #'   accurate. Set to `TRUE` to us it.
-#' @param duplication.threshold Numeric, default `0.99`. The cosine similarity
+#' @param duplication.threshold Numeric, default `0.995`. The cosine similarity
 #'   threshold used for deduplication. A spectrum is dropped if its cosine
 #'   similarity to any already-retained spectrum meets or exceeds this value.
 #'   Only used when `deduplicate = TRUE`.
@@ -123,7 +123,7 @@
 #'   too sparse) problem cells alone. Higher values recruit a larger, more
 #'   stable candidate at the cost of reaching further from the seeds and
 #'   risking dilution by unrelated bulk events.
-#' @param refine.improvement.threshold Numeric, default `0.02`. Minimum median
+#' @param refine.improvement.threshold Numeric, default `0.01`. Minimum median
 #'   gain in cosine similarity (raw event to assigned AF spectrum), among the
 #'   seed cells that shift their assignment onto a candidate under the real
 #'   per-cell solver, before that candidate is accepted. The comparison is
@@ -225,7 +225,7 @@ get.af.spectra <- function(
     verbose              = TRUE,
     af.assign.method     = c( "l1", "l2" ),
     deduplicate          = FALSE,
-    duplication.threshold = 0.99,
+    duplication.threshold = 0.995,
     use.unmixed          = TRUE,
     af.basis.components  = NULL,
     raw.pca.components   = NULL,
@@ -668,6 +668,7 @@ get.af.spectra <- function(
         spill.ratios <- error[ problem.idx, ] / af.abundance.problem
 
         som.dim.error <- max( 2, floor( sqrt( problem.cell.n / 3 ) ) )
+        som.dim.error <- min( som.dim.error, 10 )
 
         colnames( spill.ratios ) <- colnames( spectra )
         map.error <- get.som.codes(
@@ -700,6 +701,14 @@ get.af.spectra <- function(
         pool.unit  <- l2.normalize.spectra( unstained.exprs.pass )
         accepted.n <- 0L
 
+        # Neighbour search is batched across all problem cells rather than
+        # done per cluster: FNN::get.knnx() rebuilds its kd-tree from `data`
+        # on every call, so a per-cluster query against the full unstained
+        # pool would rebuild that same tree once per cluster instead of once
+        # overall.
+        problem.unit <- pool.unit[ problem.idx, , drop = FALSE ]
+        nn.all       <- FNN::get.knnx( data = pool.unit, query = problem.unit, k = k.neighbors )
+
         for ( cl in cluster.ids ) {
 
           cl.sub.idx <- which( error.assign == cl )
@@ -707,9 +716,9 @@ get.af.spectra <- function(
 
           # ---- density-boost: recruit each seed's nearest neighbours ------
 
-          seed.unit    <- pool.unit[ seed.idx, , drop = FALSE ]
-          nn           <- FNN::get.knnx( data = pool.unit, query = seed.unit, k = k.neighbors )
-          enriched.idx <- unique( c( seed.idx, as.integer( nn$nn.index ) ) )
+          enriched.idx <- unique(
+            c( seed.idx, as.integer( nn.all$nn.index[ cl.sub.idx, , drop = FALSE ] ) )
+          )
 
           candidate <- colMeans( pool.unit[ enriched.idx, , drop = FALSE ] )
           peak      <- max( abs( candidate ) )

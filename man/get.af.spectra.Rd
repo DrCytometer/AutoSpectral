@@ -19,7 +19,7 @@ get.af.spectra(
   verbose = TRUE,
   af.assign.method = c("l1", "l2"),
   deduplicate = FALSE,
-  duplication.threshold = 0.99,
+  duplication.threshold = 0.995,
   use.unmixed = TRUE,
   af.basis.components = NULL,
   raw.pca.components = NULL,
@@ -101,7 +101,7 @@ that can cause overzealous matching of near-zero events in fully stained
 samples, reducing apparent "squishing". Deduplication is slightly less
 accurate. Set to \code{TRUE} to us it.}
 
-\item{duplication.threshold}{Numeric, default \code{0.99}. The cosine similarity
+\item{duplication.threshold}{Numeric, default \code{0.995}. The cosine similarity
 threshold used for deduplication. A spectrum is dropped if its cosine
 similarity to any already-retained spectrum meets or exceeds this value.
 Only used when \code{deduplicate = TRUE}.}
@@ -168,7 +168,7 @@ too sparse) problem cells alone. Higher values recruit a larger, more
 stable candidate at the cost of reaching further from the seeds and
 risking dilution by unrelated bulk events.}
 
-\item{refine.improvement.threshold}{Numeric, default \code{0.02}. Minimum median
+\item{refine.improvement.threshold}{Numeric, default \code{0.01}. Minimum median
 gain in cosine similarity (raw event to assigned AF spectrum), among the
 seed cells that shift their assignment onto a candidate under the real
 per-cell solver, before that candidate is accepted. The comparison is
