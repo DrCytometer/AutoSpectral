@@ -1,6 +1,6 @@
 # zzz.R  (AutoSpectral)
 
-# Mutable state container — never use top-level NULL bindings mutated by
+# Mutable state container: never use top-level NULL bindings mutated by
 # assignInMyNamespace(); that corrupts .rdb files under R 4.6+/libdeflate.
 .AS <- new.env(parent = emptyenv())
 
