@@ -144,6 +144,32 @@ clean.controls <- function(
     clean.universal.negative <- NULL
   }
 
+  # Identify every sample whose own FCS file is used as another sample's
+  # universal negative -- by file identity, not by fluorophore name -- so
+  # that AF removal and universal-negative cleaning below never treat the
+  # negative/AF source itself as a fluorophore control with a positive
+  # population to clean. Reuses the same per-row resolution as
+  # get.spectra.automated()/refine.fluorophore.spectra(), which covers both
+  # `universal.negative` conventions: a literal filename on the referencing
+  # row, and `TRUE` (every referencing row shares one global negative,
+  # resolved to whichever row is marked TRUE). Relying on the referencing
+  # rows' own values (`!= FALSE`) is not enough by itself: under the `TRUE`
+  # convention the negative row's own value is also `TRUE`, not `FALSE`.
+  uneg.bool.all <- suppressWarnings( as.logical( flow.negative ) )
+
+  negative.source.file <- vapply( flow.negative, function( val ) {
+    src <- .parse.unstained.source( val )
+    if ( src$type == "file" ) return( src$file )
+    if ( src$type == "global.true" ) {
+      true.idx <- which( !is.na( uneg.bool.all ) & uneg.bool.all )
+      if ( length( true.idx ) > 0 ) return( flow.control$filename[ true.idx[ 1L ] ] )
+    }
+    NA_character_
+  }, character( 1L ), USE.NAMES = FALSE )
+
+  negative.source.sample <- flow.control$sample[
+    flow.control$filename %in% stats::na.omit( unique( negative.source.file ) ) ]
+
   # split expression data by sample into a list
   clean.expr <- lapply( flow.sample, function( fs ) {
     clean.expr[ clean.event.sample == fs, ]
@@ -177,8 +203,6 @@ clean.controls <- function(
     univ.neg <- univ.neg[ !is.na( univ.neg ) ]
     univ.neg <- univ.neg[ univ.neg != FALSE ]
 
-    univ.neg.sample <- flow.control$sample[
-      flow.control.type == "cells" & flow.sample %in% univ.neg ]
     # create new negative slot
     clean.universal.negative <- flow.negative
     flow.control$clean.universal.negative <- clean.universal.negative
@@ -192,7 +216,7 @@ clean.controls <- function(
 
       # don't remove AF from negatives (to allow scatter matching)
       af.removal.sample <- af.removal.sample[
-        !( af.removal.sample  %in% univ.neg.sample ) ]
+        !( af.removal.sample %in% negative.source.sample ) ]
 
       # check that we have samples to work with
       if ( length( af.removal.sample ) > 0 ) {
@@ -310,8 +334,13 @@ clean.controls <- function(
         ignore.case = TRUE
       ) & flow.negative != FALSE ]
 
-    # exclude AF
-    univ.sample <- univ.sample[ univ.sample != "AF" ]
+    # exclude AF and any sample whose own file supplies another sample's
+    # universal negative -- identified by file identity rather than by
+    # fluorophore name, since a "TRUE"-convention negative row's own
+    # `universal.negative` value is not FALSE and would otherwise pass
+    # the filter above
+    univ.sample <- univ.sample[
+      univ.sample != "AF" & !( univ.sample %in% negative.source.sample ) ]
 
     # if AF removal has been done with scatter-matching, run only on beads
     if ( af.remove ) {
@@ -382,7 +411,7 @@ clean.controls <- function(
 
     # select fluorophore samples to be used
     downsample.sample <- flow.control$sample[
-      !grepl( "AF|negative", flow.control$fluorophore, ignore.case = TRUE ) ]
+      !grepl( "^AF$|^Negative", flow.control$fluorophore, ignore.case = TRUE ) ]
 
     downsample.peak.channels <- flow.control$channel[
       flow.control$sample %in% downsample.sample ]
