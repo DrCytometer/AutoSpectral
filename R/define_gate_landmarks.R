@@ -145,7 +145,7 @@ define.gate.landmarks <- function(
 
   # check for unstained samples, remove if present and warn
   sample.fluors <- control.table$fluorophore[ file.idx ]
-  unstained.samples <- grepl( "AF|negative", sample.fluors, ignore.case = TRUE )
+  unstained.samples <- grepl( "^AF$|^Negative", sample.fluors, ignore.case = TRUE )
 
   if ( any( unstained.samples ) ) {
     unstained.sample.names <- control.table$filename[ file.idx[ unstained.samples ] ]
@@ -211,7 +211,7 @@ define.gate.landmarks <- function(
   names( files.channels ) <- control.table$filename[ file.idx ]
   # exclude unstained samples--shouldn't be any at this point
   files.channels <- files.channels[
-    !grepl( "AF|negative", control.table$fluorophore, ignore.case = TRUE ) ]
+    !grepl( "^AF$|^Negative", control.table$fluorophore, ignore.case = TRUE ) ]
   files.channels <- files.channels[ !is.na( files.channels ) ]
 
   pooled.scatter.data <- do.call( rbind, lapply( names( files.channels ), function( f ) {

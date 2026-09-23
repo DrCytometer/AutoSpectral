@@ -148,7 +148,7 @@ tune.gate <- function(
 
   # check for unstained samples, remove if present and warn
   sample.fluors <- control.table$fluorophore[ file.idx ]
-  unstained.samples <- grepl( "AF|negative", sample.fluors, ignore.case = TRUE )
+  unstained.samples <- grepl( "^AF$|^Negative", sample.fluors, ignore.case = TRUE )
 
   if ( any( unstained.samples ) ) {
     file.idx <- file.idx[ !unstained.samples ]
@@ -207,7 +207,7 @@ tune.gate <- function(
   names( files.channels ) <- control.table$filename[ file.idx ]
   # exclude unstained samples--shouldn't be any at this point
   files.channels <- files.channels[
-    !grepl( "AF|negative", control.table$fluorophore, ignore.case = TRUE ) ]
+    !grepl( "^AF$|^Negative", control.table$fluorophore, ignore.case = TRUE ) ]
   files.channels <- files.channels[ !is.na( files.channels ) ]
 
   # read in up to maximum requested cell number of pos events for each control
