@@ -1,3 +1,20 @@
+# AutoSpectral 1.8.4 (2026-09-23)
+
+## Bug fixes
+
+- In `tune.gate()` and `define.gate.landmarks()`, the regex string used to 
+identify unstained (or AF) controls wasn't anchored properly.
+- Negative or unstained samples are more systematically identified for 
+`clean.controls()` to avoid running AF removal on these.
+- In `refine.fluorophore.spectra()`, AF will now be processed alongside other
+fluorophores if it is present in `spectra`. This failed previously.
+- Updates to the default values in `get.af.spectra()` affecting deduplication
+and refinement.
+- The `refine` section of `get.af.spectra()` should now run faster: kNN searching
+was being repeated per problem group, and the SOM dimensions on the problematic
+cells were being allowed to go very high.
+
+
 # AutoSpectral 1.8.3 (2026-09-22)
 
 ## New Features
