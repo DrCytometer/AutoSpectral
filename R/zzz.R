@@ -149,7 +149,7 @@
       packageStartupMessage(
         "NOTE: AutoSpectralRcpp ", .AS.RCPP.RECOMMENDED, " includes a ",
         "recommended bug fix (installed: ", installed.version, "). This is ",
-        "not required — AutoSpectral will keep using the Rcpp-accelerated ",
+        "not required. AutoSpectral will keep using the Rcpp-accelerated ",
         "path as normal either way. Update with:\n",
         "  pak::pak(\"DrCytometer/AutoSpectralRcpp\")"
       )
