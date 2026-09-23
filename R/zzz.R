@@ -10,6 +10,12 @@
 # feature requires a newer minimum.
 .AS.RCPP.MIN.COLUMNS <- "1.3.1"
 
+# Latest AutoSpectralRcpp version containing a recommended bug fix. This is
+# informational only: unlike .AS.RCPP.MIN.COLUMNS, it never changes which
+# code path AutoSpectral uses. Update the version string (and the message in
+# .onAttach() below) when a new fix ships that's worth flagging.
+.AS.RCPP.RECOMMENDED <- "1.3.3"
+
 #' Check GitHub for a newer tagged release of a package
 #'
 #' Queries the GitHub tags API for `repo`, compares the newest semantic-
@@ -56,13 +62,17 @@
   on.exit(options(timeout = old.timeout), add = TRUE)
   options(timeout = 3)
 
-  raw.json <- tryCatch({
+  raw.json <- suppressWarnings(tryCatch({
     con <- url(paste0("https://api.github.com/repos/", repo, "/tags"), open = "rb")
     on.exit(close(con), add = TRUE)
     paste(readLines(con, warn = FALSE, n = 40), collapse = "\n")
-  }, error = function(e) NULL)
+  }, error = function(e) NULL))
 
   if (is.null(raw.json)) {
+    tryCatch({
+      dir.create(cache.dir, recursive = TRUE, showWarnings = FALSE)
+      saveRDS(list(time = Sys.time(), latest = NULL), cache.file)
+    }, error = function(e) NULL)
     return(invisible(NULL))
   }
 
@@ -82,8 +92,10 @@
     return(invisible(NULL))
   }
 
-  dir.create(cache.dir, recursive = TRUE, showWarnings = FALSE)
-  saveRDS(list(time = Sys.time(), latest = latest.version), cache.file)
+  tryCatch({
+    dir.create(cache.dir, recursive = TRUE, showWarnings = FALSE)
+    saveRDS(list(time = Sys.time(), latest = latest.version), cache.file)
+  }, error = function(e) NULL)
 
   if (latest.version > installed.version) {
     latest.version
@@ -131,6 +143,15 @@
         "AutoSpectralRcpp ", .AS.RCPP.MIN.COLUMNS, "). AutoSpectral will keep ",
         "working, but memory-optimized reads will fall back to a slower path. ",
         "Update with:\n  pak::pak(\"DrCytometer/AutoSpectralRcpp\")"
+      )
+    } else if (!is.null(installed.version) &&
+               installed.version < package_version(.AS.RCPP.RECOMMENDED)) {
+      packageStartupMessage(
+        "NOTE: AutoSpectralRcpp ", .AS.RCPP.RECOMMENDED, " includes a ",
+        "recommended bug fix (installed: ", installed.version, "). This is ",
+        "not required — AutoSpectral will keep using the Rcpp-accelerated ",
+        "path as normal either way. Update with:\n",
+        "  pak::pak(\"DrCytometer/AutoSpectralRcpp\")"
       )
     }
 
