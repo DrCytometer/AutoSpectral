@@ -56,12 +56,12 @@
 #'   (`AutoSpectralRcpp::assign.af.joint.cov.fast` /
 #'   `assign.af.joint.cov.l2.fast`) when available and falls back to pure R
 #'   otherwise.
-#' @param deduplicate Logical, default `FALSE`. Whether to deduplicate AF spectra
+#' @param deduplicate Logical, default `TRUE`. Whether to deduplicate AF spectra
 #'   by cosine similarity after the base clustering stage and again after the
 #'   refinement stage. Deduplication removes near-identical spectral profiles
 #'   that can cause overzealous matching of near-zero events in fully stained
 #'   samples, reducing apparent "squishing". Deduplication is slightly less
-#'   accurate. Set to `TRUE` to us it.
+#'   accurate, but not noticeably with the current default settings.
 #' @param duplication.threshold Numeric, default `0.995`. The cosine similarity
 #'   threshold used for deduplication. A spectrum is dropped if its cosine
 #'   similarity to any already-retained spectrum meets or exceeds this value.
@@ -99,7 +99,7 @@
 #'   panel's span; that carries no collinearity risk here for the same
 #'   reason as above. Not affected by `use.unmixed`, since it does not use
 #'   the unmixing matrix at all. Default `NULL` disables it.
-#' @param refine Logical, default `FALSE`. Controls whether to perform a
+#' @param refine Logical, default `TRUE`. Controls whether to perform a
 #'   second round of autofluorescence discovery targeting "problem cells":
 #'   those with the highest residual fluorophore signal after the first-pass
 #'   per-cell AF extraction, as defined by `problem.quantile`. Problem cells
@@ -123,7 +123,7 @@
 #'   too sparse) problem cells alone. Higher values recruit a larger, more
 #'   stable candidate at the cost of reaching further from the seeds and
 #'   risking dilution by unrelated bulk events.
-#' @param refine.improvement.threshold Numeric, default `0.01`. Minimum median
+#' @param refine.improvement.threshold Numeric, default `0.005`. Minimum median
 #'   gain in cosine similarity (raw event to assigned AF spectrum), among the
 #'   seed cells that shift their assignment onto a candidate under the real
 #'   per-cell solver, before that candidate is accepted. The comparison is
@@ -223,15 +223,15 @@ get.af.spectra <- function(
     table.dir            = NULL,
     title                = "Autofluorescence spectra",
     verbose              = TRUE,
-    af.assign.method     = c( "l1", "l2" ),
-    deduplicate          = FALSE,
+    af.assign.method     = c( "l2", "l1" ),
+    deduplicate          = TRUE,
     duplication.threshold = 0.995,
     use.unmixed          = TRUE,
     af.basis.components  = NULL,
     raw.pca.components   = NULL,
-    refine                        = FALSE,
+    refine                        = TRUE,
     k.neighbors                   = 15L,
-    refine.improvement.threshold  = 0.02,
+    refine.improvement.threshold  = 0.005,
     refine.min.shift.n            = 8L,
     problem.quantile              = 0.99,
     plot.unmixed         = FALSE,
