@@ -385,7 +385,7 @@ unmix.fcs <- function(
   # deal with manufacturer peculiarities in writing FCS files
   if ( asp$cytometer %in% c( "ID7000", "Mosaic" ) ) {
     file.name <- sub(
-      "([ _])Raw(\\.fcs$|\\s|$)",
+      "([ _])Raw(\\.fcs$|[ _]|$)",
       paste0("\\1", method, "\\2"),
       file.name,
       ignore.case = TRUE
