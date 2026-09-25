@@ -213,6 +213,16 @@ create.control.file <- function(
     ref.channels <- paste0( ref.channels, suffix )
   }
 
+  # some ID7000 instruments write different laser labels into the channel names
+  # (e.g. "DUVCH12-A" for "320CH12-A"); use the spelling found in these files
+  if ( asp$cytometer == "ID7000" ) {
+    ref.channels <- .align.id7000.channels( ref.channels, available.channels )
+    detectors[] <- .align.id7000.channels( detectors, available.channels )
+    control.table$channel <- .align.id7000.channels(
+      control.table$channel, available.channels
+    )
+  }
+
   missing.channels <- setdiff( ref.channels, available.channels )
 
   if ( length( missing.channels ) > 0 ) {

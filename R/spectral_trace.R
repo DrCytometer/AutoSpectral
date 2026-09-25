@@ -104,7 +104,8 @@ spectral.trace <- function(
     }
   } else if ( asp$cytometer == "ID7000" ) {
     detectors <- stats::setNames(
-      cytometer.database$ID7000, cytometer.database$ID7000_laser )
+      .align.id7000.channels( cytometer.database$ID7000, colnames( spectral.matrix ) ),
+      cytometer.database$ID7000_laser )
   } else if ( asp$cytometer %in% c( "FACSDiscover A8", "FACSDiscover S8", "FACSDiscover" ) ) {
     detectors <- stats::setNames(
       cytometer.database$Discover, cytometer.database$Discover_laser )

@@ -12,6 +12,9 @@
 #' - `NothernLights_laser`: Laser associated with each channel on the NorthernLights
 #' - `ID7000`: Sony ID7000 channels (7-laser is used as archetype)
 #' - `ID7000_laser`: Laser associated with each channel on the ID7000
+#' - `ID7000_alt`: Alternate ID7000 channel name (shortened laser label,
+#'   e.g. "DUVCH12-A" for "320CH12-A"). Used only when the name in `ID7000` is
+#'   absent from the acquired data.}
 #' - `Discover`: BD FACSDiscover (A8 and S8) channels
 #' - `Discover_laser`: Laser associated with each channel on the Discover
 #' - `Opteon`: Agilent Novocyte Opteon channels

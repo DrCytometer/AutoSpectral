@@ -81,7 +81,10 @@ check.channels <- function( spectral.channels, asp ) {
       detectors <- cytometers$Aurora
     }
   } else if ( asp$cytometer == "ID7000" ) {
-    detectors <- cytometers$ID7000
+    # some ID7000 instruments write different laser labels into the channel
+    # names (e.g. "DUVCH12-A" for "320CH12-A"); see the ID7000_alt column of
+    # cytometer_database.csv
+    detectors <- .align.id7000.channels( cytometers$ID7000, spectral.channels )
   } else if ( grepl( "Discover", asp$cytometer ) ) {
     detectors <- cytometers$Discover
   } else if ( asp$cytometer == "Opteon" ) {

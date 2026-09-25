@@ -121,6 +121,12 @@ spectral.reference.plot <- function(
   ref.fluor.names <- rownames( reference.fluors )
   ref.cols        <- colnames( reference.fluors )
 
+  # some ID7000 instruments write different laser labels into the channel names;
+  # express the library detectors in the spelling used by the acquired channels
+  if ( identical( cyt, "ID7000" ) ) {
+    ref.cols <- .align.id7000.channels( ref.cols, detector.names )
+  }
+
   base.detector.names <- if ( identical( cyt, "CytoStellar" ) ) {
     sub( "-[AH]$", "", detector.names )
   } else {

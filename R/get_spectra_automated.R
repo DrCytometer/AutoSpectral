@@ -49,6 +49,14 @@
 
   ref.fluors <- utils::read.csv( ref.path, row.names = 1, check.names = FALSE )
 
+  # some ID7000 instruments write different laser labels into the channel names;
+  # express the library detectors in the spelling used by the acquired channels
+  if ( identical( db.col, "ID7000" ) ) {
+    colnames( ref.fluors ) <- .align.id7000.channels(
+      colnames( ref.fluors ), spectral.channels
+    )
+  }
+
   if ( identical( db.col, "CytoStellar" ) ) {
     # library columns may be stored with a fixed suffix (e.g. "-A") while
     # spectral.channels carries whichever suffix was actually acquired;
