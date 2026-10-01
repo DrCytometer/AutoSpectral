@@ -120,7 +120,7 @@
   if ( !is.na( ssc.a ) && all( c( ssc.a, ssc.h ) %in% colnames( mat ) ) &&
        length( singlet.quantiles ) >= 2L ) {
     ssc.ratio <- mat[ , ssc.a ] / ( mat[ , ssc.h ] + 1e-9 )
-    # mirrors .read.fcs.clean: the second-stage quantile is computed on the
+    # mirrors read.fcs.clean: the second-stage quantile is computed on the
     # subset that already passed the first-stage (FSC) gate
     ssc.cut  <- stats::quantile( ssc.ratio[ fsc.keep ], probs = singlet.quantiles[ 2L ] )
     ssc.keep <- ssc.ratio < ssc.cut
@@ -383,12 +383,12 @@
         call. = FALSE
       )
     } else {
-      bead.pos <- .read.fcs.clean(
+      bead.pos <- read.fcs.clean(
         bead.path, paste0( fluor, " (beads, positive)" ),
         spectral.channels, scatter.channels, sat.value, singlet.quantiles,
         asp = asp, verbose = verbose
       )
-      bead.neg.mat <- .read.fcs.clean(
+      bead.neg.mat <- read.fcs.clean(
         file.path( control.dir, bead.neg$file ), paste0( fluor, " (beads, negative)" ),
         spectral.channels, scatter.channels, sat.value, singlet.quantiles,
         asp = asp, verbose = verbose
@@ -793,7 +793,7 @@ spectra.automated.steps.plot <- function(
     }
 
     # -- B. Unstained AF reference (fully cleaned, as in the main pipeline)
-    unstained.mat <- .read.fcs.clean(
+    unstained.mat <- read.fcs.clean(
       unstained.path, paste0( "Unstained (", unstained.file, ")" ),
       spectral.channels, scatter.channels, sat.value, singlet.quantiles,
       asp = asp, verbose = FALSE

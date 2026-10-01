@@ -17,7 +17,7 @@
 #' cosine-similarity filter.
 #'
 #' That fresh read is done one control at a time, not by building a second,
-#' whole-panel `flow.control` in memory: `.read.fcs.clean()` (the private FCS
+#' whole-panel `flow.control` in memory: `read.fcs.clean()` (the FCS
 #' reader `get.spectra.automated()` already uses) reads one file, drops
 #' saturating and doublet events, and returns a plain matrix; nothing else is
 #' retained. Where a control needs autofluorescence removed, its matching
@@ -85,7 +85,7 @@
 #' sample's `control.type` is not `"cells"`, or when no unstained control
 #' can be resolved for it.
 #' @param singlet.quantiles,remove.doublets As in `get.spectra.automated()`,
-#'   passed to `.read.fcs.clean()` for every file read here.
+#'   passed to `read.fcs.clean()` for every file read here.
 #' @param allow.duplicate.controls Logical, default `FALSE`. As in
 #'   `define.flow.control()`/`get.spectra.automated()`; set `TRUE` if the
 #'   control file the first pass used permits multiple controls per dye.
@@ -247,7 +247,7 @@ refine.fluorophore.spectra <- function(
   }
 
   read.one <- function( filename, label )
-    .read.fcs.clean(
+    read.fcs.clean(
       file.path( control.dir, filename ), label,
       spectral.channels, scatter.channels, sat.value,
       singlet.quantiles, remove.doublets, asp, verbose )

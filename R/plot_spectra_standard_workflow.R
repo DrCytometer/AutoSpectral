@@ -751,7 +751,7 @@ spectra.standard.workflow.plot <- function(
           call. = FALSE
         )
       } else {
-        external.af.mat <- .read.fcs.clean(
+        external.af.mat <- read.fcs.clean(
           external.af.path, paste0( "Unstained (", unstained.src.i$file, ")" ),
           spectral.channels, scatter.channels, sat.value, singlet.quantiles,
           asp = asp, verbose = FALSE
