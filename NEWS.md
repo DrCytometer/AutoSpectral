@@ -1,3 +1,22 @@
+# AutoSpectral 1.8.6 (2026-09-30)
+
+## New Features
+
+- `read.fcs.clean()` is now exported. This is the FCS reader used by
+`get.spectra.automated()` (saturation removal, scatter-maximum removal and
+two-pass Area/Height singlet gating), made available so that related samples
+can be cleaned identically elsewhere (e.g., `FlowCodeUnmix::unmix.backbone()`).
+
+## Bug fixes
+
+- `estimate.residual.spillover()` now accepts `negative.mask` as a vector (one
+value per event, applied to every target), as documented. Previously a vector
+only set the first target column, leaving every other target with no negative
+events.
+- `apply.gate()` now always returns a matrix (or data frame), including when
+the gate retains a single event.
+
+
 # AutoSpectral 1.8.4 (2026-09-23)
 
 ## Bug fixes
