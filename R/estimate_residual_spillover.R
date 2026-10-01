@@ -11,9 +11,12 @@
 #'   column in `unmixed`.
 #' @param targets Character vector, the names of the target fluorophores'
 #'   columns in `unmixed` to estimate residual spillover into.
-#' @param negative.mask Logical vector, length `nrow(unmixed)`, `TRUE` for
-#'   events already known to be target-negative. Used directly in place of
-#'   the batched estimator's own negative-event inference.
+#' @param negative.mask Logical, `TRUE` for events already known to be
+#'   target-negative, used in place of the batched estimator's own
+#'   negative-event inference. Either a matrix (events x `length(targets)`),
+#'   giving negativity per target, or a vector of length `nrow(unmixed)`,
+#'   applied to every target. `FALSE` marks an event as never negative for
+#'   that target; `NA` falls through to `threshold.target`.
 #' @param threshold.source Numeric scalar or vector of length
 #'   `nrow(unmixed)`, the source fluorophore's own per-event positivity
 #'   boundary.
@@ -48,6 +51,12 @@ estimate.residual.spillover <- function(
   } else {
     threshold.target[ , targets, drop = FALSE ]
   }
+  if ( is.null( dim( negative.mask ) ) )
+    negative.mask <- matrix( negative.mask, nrow = nrow( X.target ), ncol = ncol( X.target ) )
+  if ( !identical( dim( negative.mask ), dim( X.target ) ) )
+    stop( "`negative.mask` must be a vector of length nrow(unmixed) or a matrix ",
+          "with one column per target.", call. = FALSE )
+
   Threshold.target[ which( negative.mask ) ]  <-  BIG
   Threshold.target[ which( !negative.mask ) ] <- -BIG
 
