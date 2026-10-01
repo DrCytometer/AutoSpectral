@@ -233,66 +233,6 @@
   invisible( NULL )
 }
 
-# read FCS files, removing saturating events
-.read.fcs.clean <- function(
-    path,
-    label,
-    spectral.channels,
-    scatter.channels,
-    sat.value,
-    singlet.quantiles,
-    remove.doublets = TRUE,
-    asp,
-    verbose = TRUE
-) {
-  fsc.a <- asp$default.scatter.parameter[ 1L ]
-  ssc.a <- asp$default.scatter.parameter[ 2L ]
-  fsc.h <- sub( "-A$", "-H", fsc.a )
-  ssc.h <- sub( "-A$", "-H", ssc.a )
-
-  height.channels <- sub( "-A$", "-H", scatter.channels )
-  cols.keep       <- c( scatter.channels, height.channels, spectral.channels )
-
-  probe.cols <- colnames( readFCS( path, start.row = 1, end.row = 1 ) )
-  present    <- intersect( cols.keep, probe.cols )
-  mat        <- readFCS( path, columns = present )
-
-  # -- remove spectral-saturating events
-  spec.present <- intersect( spectral.channels, colnames( mat ) )
-  if ( length( spec.present ) > 0 ) {
-    keep <- rowSums( mat[ , spec.present, drop = FALSE ] >= sat.value ) == 0
-    mat  <- mat[ keep, , drop = FALSE ]
-  }
-
-  # -- remove scatter-saturating events--we may not actually want this
-  if ( fsc.a %in% colnames( mat ) && !is.null( asp$scatter.data.max.x ) )
-    mat <- mat[ mat[ , fsc.a ] < asp$scatter.data.max.x, , drop = FALSE ]
-  if ( ssc.a %in% colnames( mat ) && !is.null( asp$scatter.data.max.y ) )
-    mat <- mat[ mat[ , ssc.a ] < asp$scatter.data.max.y, , drop = FALSE ]
-
-  # -- remove doublets (two-pass scatter-ratio, mirrors flowstate::select_singlets)
-  if ( remove.doublets && all( c( fsc.a, fsc.h ) %in% colnames( mat ) ) ) {
-    fsc.ratio <- mat[ , fsc.a ] / ( mat[ , fsc.h ] + 1e-9 )
-    mat       <- mat[ fsc.ratio < stats::quantile( fsc.ratio, probs = singlet.quantiles[ 1L ] ), ,
-                      drop = FALSE ]
-
-    if ( all( c( ssc.a, ssc.h ) %in% colnames( mat ) ) ) {
-      ssc.ratio <- mat[ , ssc.a ] / ( mat[ , ssc.h ] + 1e-9 )
-      mat       <- mat[ ssc.ratio < stats::quantile( ssc.ratio, probs = singlet.quantiles[ 2L ] ), ,
-                        drop = FALSE ]
-    }
-  }
-
-  # drop height channels -- not needed downstream
-  mat <- mat[ , intersect( c( scatter.channels, spectral.channels ), colnames( mat ) ),
-              drop = FALSE ]
-
-  if ( verbose )
-    message( sprintf( "\033[32m  %-40s  %d events\033[0m", label, nrow( mat ) ) )
-  mat
-}
-
-
 # ---------------------------------------------------------------------------
 # Exported function
 # ---------------------------------------------------------------------------
@@ -563,7 +503,7 @@ get.spectra.automated <- function(
       warning( "Unstained file not found, skipping: ", uf, call. = FALSE )
       next
     }
-    unstained.cache[[ uf ]] <- .read.fcs.clean(
+    unstained.cache[[ uf ]] <- read.fcs.clean(
       uf.path, paste0( "Unstained (", uf, ")" ),
       spectral.channels, scatter.channels, sat.value, singlet.quantiles,
       remove.doublets, asp, verbose
@@ -594,7 +534,7 @@ get.spectra.automated <- function(
       if ( !uf.af %in% names( af.cache ) ) {
         uf.af.path <- file.path( control.dir, uf.af )
         if ( file.exists( uf.af.path ) ) {
-          ust.af       <- .read.fcs.clean(
+          ust.af       <- read.fcs.clean(
             uf.af.path, paste0( "AF (", uf.af, ")" ),
             spectral.channels, scatter.channels, sat.value, singlet.quantiles,
             remove.doublets, asp, verbose
@@ -640,7 +580,7 @@ get.spectra.automated <- function(
     expeak <- fluor.channels[ i ]
 
     fcs.path.i <- file.path( control.dir, fluor.files[ i ] )
-    mat.i <- .read.fcs.clean(
+    mat.i <- read.fcs.clean(
       fcs.path.i, fluor.names[ i ],
       spectral.channels, scatter.channels, sat.value, singlet.quantiles,
       remove.doublets, asp, verbose
