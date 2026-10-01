@@ -137,5 +137,5 @@ apply.gate <- function(
     )
   }
 
-  return( flow.data[ gate.population.idx, ] )
+  return( flow.data[ gate.population.idx, , drop = FALSE ] )
 }
