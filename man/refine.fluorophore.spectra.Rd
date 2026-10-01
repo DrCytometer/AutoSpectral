@@ -61,7 +61,7 @@ Set \code{FALSE} for a bead-only panel.}
 its own AF-removal diagnostic figures for each control.}
 
 \item{singlet.quantiles, remove.doublets}{As in \code{get.spectra.automated()},
-passed to \code{.read.fcs.clean()} for every file read here.}
+passed to \code{read.fcs.clean()} for every file read here.}
 
 \item{allow.duplicate.controls}{Logical, default \code{FALSE}. As in
 \code{define.flow.control()}/\code{get.spectra.automated()}; set \code{TRUE} if the
@@ -145,7 +145,7 @@ gate, \code{clean.controls()}'s downsampling, or \code{get.spectra.automated()}'
 cosine-similarity filter.
 
 That fresh read is done one control at a time, not by building a second,
-whole-panel \code{flow.control} in memory: \code{.read.fcs.clean()} (the private FCS
+whole-panel \code{flow.control} in memory: \code{read.fcs.clean()} (the FCS
 reader \code{get.spectra.automated()} already uses) reads one file, drops
 saturating and doublet events, and returns a plain matrix; nothing else is
 retained. Where a control needs autofluorescence removed, its matching

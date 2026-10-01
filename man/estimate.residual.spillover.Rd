@@ -27,9 +27,12 @@ column in \code{unmixed}.}
 \item{targets}{Character vector, the names of the target fluorophores'
 columns in \code{unmixed} to estimate residual spillover into.}
 
-\item{negative.mask}{Logical vector, length \code{nrow(unmixed)}, \code{TRUE} for
-events already known to be target-negative. Used directly in place of
-the batched estimator's own negative-event inference.}
+\item{negative.mask}{Logical, \code{TRUE} for events already known to be
+target-negative, used in place of the batched estimator's own
+negative-event inference. Either a matrix (events x \code{length(targets)}),
+giving negativity per target, or a vector of length \code{nrow(unmixed)},
+applied to every target. \code{FALSE} marks an event as never negative for
+that target; \code{NA} falls through to \code{threshold.target}.}
 
 \item{threshold.source}{Numeric scalar or vector of length
 \code{nrow(unmixed)}, the source fluorophore's own per-event positivity
