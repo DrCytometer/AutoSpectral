@@ -172,6 +172,19 @@ build.operator.biplot <- function(
 #' @param x.width.basis,y.width.basis Width basis for the x/y-axis
 #' biexponential transform, applied identically to every panel in the row.
 #' Passed through to `build.operator.biplot()`.
+#' @param save.dir Optional directory. If not `NULL`, each operator's biplot
+#' is also saved on its own as a square JPEG in this directory (created if
+#' needed), named `<file.prefix>_<label>_biplot.jpg`. Default `NULL` saves
+#' nothing.
+#' @param file.prefix Optional character, the leading part of each saved
+#' filename (for example `"7C"`). Default `NULL` omits it.
+#' @param file.labels Optional named character vector, keyed by entries of
+#' `panel.order`, giving the `<label>` part of the saved filename (for
+#' example `c( "FlowJo Unmixing Wizard" = "FlowJo" )`). Entries not present
+#' use the key itself. Any run of characters other than letters and digits
+#' is converted to a single underscore.
+#' @param save.size Numeric, width and height (inches) of each individually
+#' saved biplot. Default `4`.
 #'
 #' @seealso
 #' * [build.operator.biplot()]
@@ -199,7 +212,11 @@ build.operator.biplot.row <- function(
     y.min = -5000,
     y.max = asp$expr.data.max,
     x.width.basis = -1000,
-    y.width.basis = -1000
+    y.width.basis = -1000,
+    save.dir = NULL,
+    file.prefix = NULL,
+    file.labels = NULL,
+    save.size = 4
 ) {
 
   plots <- lapply( panel.order, function( key ) {
@@ -207,7 +224,7 @@ build.operator.biplot.row <- function(
     subtitle <- if ( !is.null( panel.labels ) && key %in% names( panel.labels ) )
       panel.labels[[ key ]] else key
 
-    build.operator.biplot(
+    biplot <- build.operator.biplot(
       setup.csv.path = file.path(
         setup.dir, paste0( key, "_unmix_comparison_setup.csv" )
       ),
@@ -222,6 +239,24 @@ build.operator.biplot.row <- function(
       x.min = x.min, x.max = x.max, y.min = y.min, y.max = y.max,
       x.width.basis = x.width.basis, y.width.basis = y.width.basis
     )
+
+    if ( !is.null( save.dir ) ) {
+      if ( !dir.exists( save.dir ) ) dir.create( save.dir, recursive = TRUE )
+
+      file.label <- if ( !is.null( file.labels ) && key %in% names( file.labels ) )
+        file.labels[[ key ]] else key
+      file.label <- gsub( "[^A-Za-z0-9]+", "_", file.label )
+
+      ggplot2::ggsave(
+        file.path(
+          save.dir,
+          paste0( paste( c( file.prefix, file.label, "biplot" ), collapse = "_" ), ".jpg" )
+        ),
+        plot = biplot, width = save.size, height = save.size
+      )
+    }
+
+    biplot
   } )
 
   row.plots <- cowplot::plot_grid( plotlist = plots, nrow = 1 )
