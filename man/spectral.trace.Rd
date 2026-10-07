@@ -17,7 +17,8 @@ spectral.trace(
   plot.width = NULL,
   plot.height = NULL,
   file.type = "jpg",
-  save = TRUE
+  save = TRUE,
+  color.by.laser = TRUE
 )
 }
 \arguments{
@@ -61,6 +62,10 @@ is \code{NULL}.}
 
 \item{save}{Logical, if \code{TRUE}, saves a file to the \code{plot.dir}.
 Otherwise, the plot will simply be created in the Viewer.}
+
+\item{color.by.laser}{Logical, default \code{TRUE}. Colour the detector axis
+labels by excitation laser (from \code{cytometer_database.csv}). Falls back to
+black labels if the detectors do not all map to the instrument's detectors.}
 }
 \value{
 Saves the plot(s) as image files in the specified directory.

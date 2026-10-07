@@ -18,7 +18,9 @@ spectral.mismatch.plot(
   color.palette = NULL,
   show.legend = TRUE,
   plot.width = NULL,
-  plot.height = NULL
+  plot.height = NULL,
+  color.by.laser = TRUE,
+  asp = NULL
 )
 }
 \arguments{
@@ -66,6 +68,14 @@ upper panel. Default is \code{TRUE}.}
 
 \item{plot.height}{Numeric. Height of the saved figure in inches. If \code{NULL}
 (default), an automatic height is derived from the number of spectra rows.}
+
+\item{color.by.laser}{Logical, default \code{TRUE}. Colour the detector axis
+labels by excitation laser (from \code{cytometer_database.csv}). Falls back to
+black labels if the detectors do not all map to the instrument's detectors.}
+
+\item{asp}{Optional AutoSpectral parameter list, used only to identify the
+cytometer for \code{color.by.laser}. If \code{NULL} (default), the cytometer is
+identified from the detector names.}
 }
 \value{
 The combined cowplot object is returned invisibly. The figure is
