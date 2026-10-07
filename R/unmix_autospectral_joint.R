@@ -211,6 +211,11 @@ unmix.autospectral.joint <- function(
   af.cov.mat <- P %*% stats::cov( af.spectra ) %*% t( P )
   w_af       <- sqrt( abs( diag( af.cov.mat ) ) ) + 1e-8              # length F
 
+  # Weighted v_lib_af and its squared-column sums, precomputed once so the
+  # per-cell fluorophore-leakage term is a rank-1 (quadratic) update.
+  v_lib_af_w <- sweep( v_lib_af, 1, w_af, `*` )                       # F x nAF
+  c_fluor_af <- colSums( v_lib_af_w^2 )                               # nAF
+
   af.only <- is.null( spectra.variants ) || length( spectra.variants ) == 0
 
   # Per-cell (or per-residual) AF scoring closure — used both for the initial
@@ -236,15 +241,20 @@ unmix.autospectral.joint <- function(
 
     base.resid.sq   <- max( sum( resid.w.af * base.resid.af ), 1e-16 )
     base.resid.norm <- sqrt( base.resid.sq )
-    base.fluor.l1   <- max( sum( w_af * abs( init.f ) ), 1e-8 )
+    w_af_init       <- w_af * init.f
+    base.fluor.sq   <- max( sum( w_af_init^2 ), 1e-16 )
+    base.fluor.norm <- sqrt( base.fluor.sq )
 
     resid.sq.af <- base.resid.sq - 2 * ( k.af.vec * cross.af ) +
       ( k.af.vec^2 * r_dots_af_w )
     presid.af   <- sqrt( pmax( resid.sq.af, 0 ) ) / base.resid.norm
 
-    diffs.af  <- sweep( v_lib_af, 2, k.af.vec, `*` )
-    diffs.af  <- sweep( diffs.af, 1, init.f, `-` )
-    pfluor.af <- as.numeric( t( abs( diffs.af ) ) %*% w_af ) / base.fluor.l1
+    # Weighted-L2 fluorophore-leakage term for every candidate at once, via
+    # the same rank-1 (quadratic) update as presid.af above.
+    cross.fluor.af <- as.numeric( t( v_lib_af_w ) %*% w_af_init )
+    fluor.sq.af    <- base.fluor.sq - 2 * ( k.af.vec * cross.fluor.af ) +
+      ( k.af.vec^2 * c_fluor_af )
+    pfluor.af      <- sqrt( pmax( fluor.sq.af, 0 ) ) / base.fluor.norm
 
     score.af.vec <- presid.af * pfluor.af
     best.j       <- which.min( score.af.vec )
@@ -383,6 +393,7 @@ unmix.autospectral.joint <- function(
   worker.exports <- c(
     "spectra", "af.spectra", "F", "D", "nAF", "fluorophores",
     "P", "v_lib_af", "r_lib_af", "r_lib_af_w", "r_dots_af", "r_dots_af_w", "w_af",
+    "v_lib_af_w", "c_fluor_af",
     "w.global", "score.af",
     "af.only", "precomp", "active.names", "is.collinear",
     "cell.weight", "sqrt.w.global", "noise.floor",
