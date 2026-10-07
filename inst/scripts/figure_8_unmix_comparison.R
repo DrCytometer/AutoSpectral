@@ -1,50 +1,63 @@
 # figure_8_unmix_comparison.R
 #
-# Figure 8: cross-operator/method unmixing comparison, across three panels
-# (7-colour, 42-colour, OMIP-95), each contributing four rows:
+# Figure 8: cross-operator/method unmixing comparison. One figure is written
+# per flow cytometry panel (7-colour, 42-colour, OMIP-95), each with four
+# panels:
 #
-# A/E/I) Unstained noise (robust SD / MAD), one box per operator/method.
-# B/F/J) Total spillover error (sum of |delta MFI| across every off-target
-#         channel), one box per operator/method.
-# C/G/K) Spillover (delta MFI) for one representative off-target channel of
-#         one fluorophore.
-# D/H/L) Representative single-stained-control biplots, one per
-#         operator/method, with a larger shared axis label (arrow) on each
-#         side.
+# A) Unstained noise (robust SD / MAD), one box per operator/method.
+# B) Total spillover error (sum of |delta MFI| across every off-target
+#    channel), one box per operator/method.
+# C) Spillover (delta MFI) for one representative off-target channel of
+#    one fluorophore.
+# D) Representative single-stained-control biplots, one per
+#    operator/method, with a larger shared axis label (arrow) on each
+#    side.
 #
-# A, B, C, G, K are captured directly from the JPEG files already written by
+# A and B are captured directly from the JPEG files already written by
 # unmix.comparison.plot()/compare.unmix.folders() when the attached
-# run_unmix_comparison_*.R scripts were run. E, F, I, J need the same
-# unstained-MAD / summed-spillover-error plots, but with significance
-# brackets (adjusted p < 0.05 vs AutoSpectral) added - this needs the
-# ggpubr-based diff to .plot.metric.boxplot()/unmix.comparison.plot()
-# (presented separately, not applied here); this script assumes that diff
-# has been applied, regenerates those two plots per panel with it, and then
-# captures the resulting JPEGs exactly like the other image panels. D, H, L
-# are built natively as ggplot/cowplot objects via build.operator.biplot.row()
-# (see plot_unmix_comparison_biplots.R), reusing the fluorophore/channel
-# mapping already resolved by setup.unmix.comparison() for each folder - the
+# run_unmix_comparison_*.R scripts were run; C likewise. For the 42-colour
+# and OMIP-95 panels, A and B need significance brackets (adjusted p < 0.05
+# vs AutoSpectral) - this needs the ggpubr-based diff to
+# .plot.metric.boxplot()/unmix.comparison.plot() (presented separately, not
+# applied here); this script assumes that diff has been applied, regenerates
+# those two plots per panel with it, and then captures the resulting JPEGs
+# exactly like the other image panels. D is built natively as ggplot/cowplot
+# objects via build.operator.biplot.row() (see
+# plot_unmix_comparison_biplots.R), reusing the fluorophore/channel mapping
+# already resolved by setup.unmix.comparison() for each folder - the
 # per-folder setup CSVs already store one `match.fluorophores()` resolution
 # per folder, so no further fluorophore matching is needed here (see the
 # note at the top of plot_unmix_comparison_biplots.R).
 #
-# Panel letters (A-L) are drawn once per row/block via cowplot's own
-# plot_grid(labels = ...): A-C/E-G/I-K on the three image panels of each
-# row, D/H/L on the biplot row below. The A-C/E-G/I-K image panels are
-# captured JPEGs from an earlier run, so their own internal axis/annotation
-# text size is fixed at capture time and cannot be resized here; only the
-# D/H/L biplot rows' subtitle and shared-axis-label text sizes are
-# controllable from this script, via fig8.subtitle.text.size and
-# fig8.axis.label.text.size below.
+# Outputs, all under output.dir:
+#   Figure_8_7C.jpg, Figure_8_42C.jpg, Figure_8_OMIP95.jpg
+#       the three assembled figures.
+#   7C_panels/, 42C_panels/, OMIP95_panels/
+#       one subfolder per figure holding each individual image: every
+#       operator/method biplot (for example 7C_FlowJo_biplot.jpg,
+#       42C_Operator1_biplot.jpg) and a copy of each captured JPEG panel,
+#       prefixed with the panel name (for example 7C_Unstained_rSD.jpg).
+#
+# Panel letters (A-D) are drawn once per row via cowplot's own
+# plot_grid(labels = ...): A-C on the three image panels of the top row, D
+# on the biplot row below. The A-C image panels are captured JPEGs from an
+# earlier run, so their own internal axis/annotation text size is fixed at
+# capture time and cannot be resized here; only the D biplot row's subtitle
+# and shared-axis-label text sizes are controllable from this script, via
+# fig8.subtitle.text.size and fig8.axis.label.text.size below.
 
 library( AutoSpectral )
 library( cowplot )
 library( ggplot2 )
 
-asp.dir <- "/Users/oliverburton/Bioinformatics/AutoSpectral/R"
+asp.dir <- "/Users/oliverburton/Bioinformatics/AutoSpectral"
+scripts.dir <- "inst/scripts"
 devtools::load_all(asp.dir)
-source("~/Bioinformatics/AutoSpectral/inst/scripts/plot_unmix_comparison_biplots.R")
-source("~/Bioinformatics/AutoSpectral/inst/scripts/plot_biplot_annotations.R")
+source(file.path(asp.dir, scripts.dir, "plot_unmix_comparison_biplots.R"))
+source(file.path(asp.dir, scripts.dir, "plot_biplot_annotations.R"))
+source(file.path(asp.dir, scripts.dir, "plot_unmix_comparison.R"))
+source(file.path(asp.dir, scripts.dir, "test_unmix_comparison.R"))
+source(file.path(asp.dir, scripts.dir, "compare_unmix_folders.R"))
 
 asp <- get.autospectral.param()
 output.dir <- "./Figure 8"
@@ -60,26 +73,36 @@ fig8.subtitle.text.size <- NULL
 # Point size for the larger shared axis-label strip on each D/H/L row.
 fig8.axis.label.text.size <- 16
 
-# Size (inches) of each square biplot panel in the D/H/L rows, in the final
-# composite - the same role fig2.panel.size plays in
-# figure_2_multipanel_plots.R. The composite's overall width/height are
-# derived from it below, together with this figure's fixed structure: three
-# blocks (7-Colour, 42-Colour, OMIP-95), each with a title strip and two
-# content rows (a 3-wide row of captured JPEG panels, then a D/H/L row of
-# fig8.n.biplots.per.row square biplots wrapped in a left-hand label strip
-# by add.biplot.shared.axis.labels()). Unlike Figure 2's uniform panel
-# grid, the captured JPEG panels (A/B/C etc.) are not forced square and so
-# do not scale with this value the way the D/H/L biplots do - see the note
-# at the composite assembly below.
+# Size (inches) of each square biplot panel in the D rows, in the final
+# figures - the same role fig2.panel.size plays in
+# figure_2_multipanel_plots.R. Each figure's overall width/height are
+# derived from it below, together with the fixed structure shared by all
+# three figures: two content rows (a 3-wide row of captured JPEG panels,
+# then a D row of fig8.n.biplots.per.row square biplots wrapped in a
+# left-hand label strip by add.biplot.shared.axis.labels()). Unlike Figure
+# 2's uniform panel grid, the captured JPEG panels (A/B/C) are not forced
+# square and so do not scale with this value the way the D biplots do.
 fig8.panel.size <- 3.5
 
-# Structural constants used only to derive the composite's canvas size
-# below; change these only if the block/row layout itself changes.
-fig8.n.blocks <- 3
-fig8.rows.per.block <- 2
-fig8.block.title.rel.height <- 0.08
+# Size (inches) of each individually saved biplot image.
+fig8.individual.biplot.size <- 4
+
+# Structural constants used only to derive each figure's canvas size below;
+# change these only if the row layout itself changes.
+fig8.rows.per.figure <- 2
 fig8.n.biplots.per.row <- 6
 fig8.biplot.label.strip.width <- 0.08
+
+# Canvas derived from fig8.panel.size: width is set so each of the 6 D
+# biplots renders at fig8.panel.size inches square (the label strip on the
+# left of that row takes fig8.biplot.label.strip.width of the row's width,
+# so the full row - and so the figure - must be wider than
+# fig8.panel.size * fig8.n.biplots.per.row by that fraction). Height is set
+# so each of the figure's two content rows is fig8.panel.size tall. The top
+# row JPEG panels are not forced square and will fill whatever width/height
+# this allocates them.
+figure.8.width <- fig8.panel.size * fig8.n.biplots.per.row / ( 1 - fig8.biplot.label.strip.width )
+figure.8.height <- fig8.rows.per.figure * fig8.panel.size
 
 # ---------------------------------------------------------------------------
 # Dataset root directories - each is the working directory one of the three
@@ -100,18 +123,25 @@ embed.image.panel <- function( image.path ) {
   ggdraw() + draw_image( image.path )
 }
 
-build.figure8.block <- function( row.1, row.2, block.title ) {
+# Copies each captured JPEG panel into the figure's panel subfolder, with the
+# panel name prepended to the original filename (e.g. 7C_Unstained_rSD.jpg).
+copy.figure8.images <- function( image.paths, panel.dir, file.prefix ) {
 
-  title.row <- ggdraw() + draw_label( block.title, fontface = "bold", size = 14 )
+  if ( !dir.exists( panel.dir ) ) dir.create( panel.dir, recursive = TRUE )
 
-  plot_grid( title.row, row.1, row.2, ncol = 1, rel_heights = c( 0.08, 1, 1 ) )
+  file.copy(
+    image.paths,
+    file.path( panel.dir, paste0( file.prefix, "_", basename( image.paths ) ) ),
+    overwrite = TRUE
+  )
 }
 
 # ---------------------------------------------------------------------------
-# 7-colour panel (A-D)
+# 7-colour panel
 # ---------------------------------------------------------------------------
 
 fig8.7c.setup.dir <- file.path( fig8.7c.dir, "unmix_comparison_setup" )
+fig8.7c.panel.dir <- file.path( output.dir, "7C_panels" )
 
 fig8.7c.folders <- c(
   `FlowJo Unmixing Wizard` = file.path(
@@ -134,13 +164,13 @@ fig8.7c.folders <- c(
   )
 )
 
-panel.A <- embed.image.panel( file.path( fig8.7c.dir, "comparison_linear/Unstained_rSD.jpg" ) )
-panel.B <- embed.image.panel( file.path( fig8.7c.dir, "comparison_linear/Summary_Delta.MFI.jpg" ) )
-panel.C <- embed.image.panel(
+panel.7C.A <- embed.image.panel( file.path( fig8.7c.dir, "comparison_linear/Unstained_rSD.jpg" ) )
+panel.7C.B <- embed.image.panel( file.path( fig8.7c.dir, "comparison_linear/Summary_Delta.MFI.jpg" ) )
+panel.7C.C <- embed.image.panel(
   file.path( fig8.7c.dir, "comparison_linear/Delta.MFI_eFluor_780.jpg" )
 )
 
-panel.D <- build.operator.biplot.row(
+panel.7C.D <- build.operator.biplot.row(
   setup.dir        = fig8.7c.setup.dir,
   folders          = fig8.7c.folders,
   panel.order      = c(
@@ -153,25 +183,47 @@ panel.D <- build.operator.biplot.row(
   y.lab            = "Fixable viability dye eFluor 780",
   subtitle.text.size = fig8.subtitle.text.size,
   axis.label.text.size = fig8.axis.label.text.size,
-  x.min = -20000, y.min = -20000
+  x.min = -20000, y.min = -20000,
+  save.dir = fig8.7c.panel.dir,
+  file.prefix = "7C",
+  file.labels = c( "FlowJo Unmixing Wizard" = "FlowJo" ),
+  save.size = fig8.individual.biplot.size
 )
 
-row.ABC <- plot_grid(
-  panel.A, panel.B, panel.C, nrow = 1,
+row.7C <- plot_grid(
+  panel.7C.A, panel.7C.B, panel.7C.C, nrow = 1,
   labels = c( "A", "B", "C" ), label_size = fig8.panel.label.size, label_fontface = "bold"
 )
 
-panel.D.labeled <- plot_grid(
-  panel.D, labels = "D", label_size = fig8.panel.label.size, label_fontface = "bold"
+panel.7C.D.labeled <- plot_grid(
+  panel.7C.D, labels = "D", label_size = fig8.panel.label.size, label_fontface = "bold"
 )
 
-block.7C <- build.figure8.block( row.ABC, panel.D.labeled, "7-Colour Panel" )
+figure.8.7C <- plot_grid( row.7C, panel.7C.D.labeled, ncol = 1 )
+
+copy.figure8.images(
+  c(
+    file.path( fig8.7c.dir, "comparison_linear/Unstained_rSD.jpg" ),
+    file.path( fig8.7c.dir, "comparison_linear/Summary_Delta.MFI.jpg" ),
+    file.path( fig8.7c.dir, "comparison_linear/Delta.MFI_eFluor_780.jpg" )
+  ),
+  fig8.7c.panel.dir, "7C"
+)
+
+ggsave(
+  file.path( output.dir, "Figure_8_7C.jpg" ),
+  plot = figure.8.7C,
+  width = figure.8.width,
+  height = figure.8.height,
+  limitsize = FALSE
+)
 
 # ---------------------------------------------------------------------------
-# 42-colour panel (E-H)
+# 42-colour panel
 # ---------------------------------------------------------------------------
 
 fig8.42c.setup.dir <- file.path( fig8.42c.dir, "unmix_comparison_setup" )
+fig8.42c.panel.dir <- file.path( output.dir, "42C_panels" )
 
 fig8.42c.folders <- c(
   `FlowJo Unmixing Wizard` = file.path(
@@ -198,7 +250,7 @@ fig8.42c.summary <- utils::read.csv(
   file.path( fig8.42c.dir, "unmix_comparison_summary.csv" ), stringsAsFactors = FALSE
 )
 
-# regenerate only the two plots panels E/F need, with significance brackets;
+# regenerate only the two plots panels A and B need, with significance brackets;
 # requires the ggpubr diff to unmix.comparison.plot()/.plot.metric.boxplot()
 unmix.comparison.plot(
   results          = fig8.42c.results,
@@ -214,17 +266,17 @@ unmix.comparison.plot(
   stats.label.style = "stars"
 )
 
-panel.E <- embed.image.panel(
+panel.42C.A <- embed.image.panel(
   file.path( fig8.42c.dir, "comparison_log_stats/Unstained_rSD.jpg" )
 )
-panel.F <- embed.image.panel(
+panel.42C.B <- embed.image.panel(
   file.path( fig8.42c.dir, "comparison_log_stats/Summary_Delta.MFI.jpg" )
 )
-panel.G <- embed.image.panel(
+panel.42C.C <- embed.image.panel(
   file.path( fig8.42c.dir, "comparison_log/Delta.MFI_BV650.jpg" )
 )
 
-panel.H <- build.operator.biplot.row(
+panel.42C.D <- build.operator.biplot.row(
   setup.dir        = fig8.42c.setup.dir,
   folders          = fig8.42c.folders,
   panel.order      = c(
@@ -241,25 +293,47 @@ panel.H <- build.operator.biplot.row(
   x.min = -10000,
   y.min = -10000,
   x.width.basis = -500,
-  y.width.basis = -500
+  y.width.basis = -500,
+  save.dir = fig8.42c.panel.dir,
+  file.prefix = "42C",
+  file.labels = c( "FlowJo Unmixing Wizard" = "FlowJo" ),
+  save.size = fig8.individual.biplot.size
 )
 
-row.EFG <- plot_grid(
-  panel.E, panel.F, panel.G, nrow = 1,
-  labels = c( "E", "F", "G" ), label_size = fig8.panel.label.size, label_fontface = "bold"
+row.42C <- plot_grid(
+  panel.42C.A, panel.42C.B, panel.42C.C, nrow = 1,
+  labels = c( "A", "B", "C" ), label_size = fig8.panel.label.size, label_fontface = "bold"
 )
 
-panel.H.labeled <- plot_grid(
-  panel.H, labels = "H", label_size = fig8.panel.label.size, label_fontface = "bold"
+panel.42C.D.labeled <- plot_grid(
+  panel.42C.D, labels = "D", label_size = fig8.panel.label.size, label_fontface = "bold"
 )
 
-block.42C <- build.figure8.block( row.EFG, panel.H.labeled, "42-Colour Panel" )
+figure.8.42C <- plot_grid( row.42C, panel.42C.D.labeled, ncol = 1 )
+
+copy.figure8.images(
+  c(
+    file.path( fig8.42c.dir, "comparison_log_stats/Unstained_rSD.jpg" ),
+    file.path( fig8.42c.dir, "comparison_log_stats/Summary_Delta.MFI.jpg" ),
+    file.path( fig8.42c.dir, "comparison_log/Delta.MFI_BV650.jpg" )
+  ),
+  fig8.42c.panel.dir, "42C"
+)
+
+ggsave(
+  file.path( output.dir, "Figure_8_42C.jpg" ),
+  plot = figure.8.42C,
+  width = figure.8.width,
+  height = figure.8.height,
+  limitsize = FALSE
+)
 
 # ---------------------------------------------------------------------------
-# OMIP-95 (I-L)
+# OMIP-95
 # ---------------------------------------------------------------------------
 
 fig8.omip95.setup.dir <- file.path( fig8.omip95.dir, "unmix_comparison_setup2" )
+fig8.omip95.panel.dir <- file.path( output.dir, "OMIP95_panels" )
 
 fig8.omip95.folders <- c(
   `FlowJo Unmixing Wizard` = file.path(
@@ -284,15 +358,18 @@ fig8.omip95.folders <- c(
 )
 
 fig8.omip95.stats.detail <- utils::read.csv(
-  file.path( fig8.omip95.dir, "unmix_comparison_stats_channels_detail_log.csv" ),
+  file.path( fig8.omip95.dir, "unmix_comparison_results",
+             "unmix_comparison_stats_channels_detail_log.csv" ),
   stringsAsFactors = FALSE
 )
 
 fig8.omip95.results <- utils::read.csv(
-  file.path( fig8.omip95.dir, "unmix_comparison_results.csv" ), stringsAsFactors = FALSE
+  file.path( fig8.omip95.dir,  "unmix_comparison_results",
+             "unmix_comparison_results.csv" ), stringsAsFactors = FALSE
 )
 fig8.omip95.summary <- utils::read.csv(
-  file.path( fig8.omip95.dir, "unmix_comparison_summary.csv" ), stringsAsFactors = FALSE
+  file.path( fig8.omip95.dir,  "unmix_comparison_results",
+             "unmix_comparison_summary.csv" ), stringsAsFactors = FALSE
 )
 
 # unmix_comparison_results.csv/summary.csv carry every folder unmixed
@@ -324,17 +401,17 @@ unmix.comparison.plot(
   stats.label.style = "stars"
 )
 
-panel.I <- embed.image.panel(
+panel.OMIP95.A <- embed.image.panel(
   file.path( fig8.omip95.dir, "comparison_log_stats/Unstained_rSD.jpg" )
 )
-panel.J <- embed.image.panel(
+panel.OMIP95.B <- embed.image.panel(
   file.path( fig8.omip95.dir, "comparison_log_stats/Summary_Delta.MFI.jpg" )
 )
-panel.K <- embed.image.panel(
+panel.OMIP95.C <- embed.image.panel(
   file.path( fig8.omip95.dir, "comparison_log/Delta.MFI_APC-eFluor_780.jpg" )
 )
 
-panel.L <- build.operator.biplot.row(
+panel.OMIP95.D <- build.operator.biplot.row(
   setup.dir        = fig8.omip95.setup.dir,
   folders          = fig8.omip95.folders,
   panel.order      = c(
@@ -358,43 +435,36 @@ panel.L <- build.operator.biplot.row(
   x.min = -40000,
   y.min = -40000,
   x.width.basis = -3000,
-  y.width.basis = -3000
+  y.width.basis = -3000,
+  save.dir = fig8.omip95.panel.dir,
+  file.prefix = "OMIP95",
+  file.labels = c( "FlowJo Unmixing Wizard" = "FlowJo" ),
+  save.size = fig8.individual.biplot.size
 )
 
-row.IJK <- plot_grid(
-  panel.I, panel.J, panel.K, nrow = 1,
-  labels = c( "I", "J", "K" ), label_size = fig8.panel.label.size, label_fontface = "bold"
+row.OMIP95 <- plot_grid(
+  panel.OMIP95.A, panel.OMIP95.B, panel.OMIP95.C, nrow = 1,
+  labels = c( "A", "B", "C" ), label_size = fig8.panel.label.size, label_fontface = "bold"
 )
 
-panel.L.labeled <- plot_grid(
-  panel.L, labels = "L", label_size = fig8.panel.label.size, label_fontface = "bold"
+panel.OMIP95.D.labeled <- plot_grid(
+  panel.OMIP95.D, labels = "D", label_size = fig8.panel.label.size, label_fontface = "bold"
 )
 
-block.OMIP95 <- build.figure8.block( row.IJK, panel.L.labeled, "OMIP-95" )
+figure.8.OMIP95 <- plot_grid( row.OMIP95, panel.OMIP95.D.labeled, ncol = 1 )
 
-# ---------------------------------------------------------------------------
-# Composite
-# ---------------------------------------------------------------------------
-
-figure.8 <- plot_grid( block.7C, block.42C, block.OMIP95, ncol = 1 )
-
-# Canvas derived from fig8.panel.size: width is set so each of the 6 D/H/L
-# biplots renders at fig8.panel.size inches square (the label strip on the
-# left of each of those rows takes fig8.biplot.label.strip.width of the
-# row's width, so the full row - and so the figure - must be wider than
-# fig8.panel.size * fig8.n.biplots.per.row by that fraction). Height is set
-# so each block's two content rows (image row + biplot row) are each
-# fig8.panel.size tall, plus its title strip at
-# fig8.block.title.rel.height * fig8.panel.size, summed across
-# fig8.n.blocks stacked blocks. The row 1 JPEG panels are not forced square
-# and will fill whatever width/height this allocates them, same as before
-# this derivation was added.
-figure.8.width <- fig8.panel.size * fig8.n.biplots.per.row / ( 1 - fig8.biplot.label.strip.width )
-figure.8.height <- fig8.n.blocks * fig8.panel.size * ( fig8.rows.per.block + fig8.block.title.rel.height )
+copy.figure8.images(
+  c(
+    file.path( fig8.omip95.dir, "comparison_log_stats/Unstained_rSD.jpg" ),
+    file.path( fig8.omip95.dir, "comparison_log_stats/Summary_Delta.MFI.jpg" ),
+    file.path( fig8.omip95.dir, "comparison_log/Delta.MFI_APC-eFluor_780.jpg" )
+  ),
+  fig8.omip95.panel.dir, "OMIP95"
+)
 
 ggsave(
-  file.path( output.dir, "Figure_8.jpg" ),
-  plot = figure.8,
+  file.path( output.dir, "Figure_8_OMIP95.jpg" ),
+  plot = figure.8.OMIP95,
   width = figure.8.width,
   height = figure.8.height,
   limitsize = FALSE
