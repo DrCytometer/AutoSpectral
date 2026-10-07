@@ -39,6 +39,12 @@ utils::globalVariables( c(
 #' @param median.linewidth Thickness of the median reference line. Default is
 #'   `1`.
 #'
+#' @param color.by.laser Logical, default `TRUE`. Colour the detector axis
+#'   labels by excitation laser (from `cytometer_database.csv`). Falls back to
+#'   black labels if the detectors do not all map to the instrument's detectors.
+#' @param asp Optional AutoSpectral parameter list, used only to identify the
+#'   cytometer for `color.by.laser`. If `NULL` (default), the cytometer is
+#'   identified from the detector names.
 #' @return The `ggplot` object representing the variant density plot. When
 #'   `save = TRUE`, a JPEG is also written to `plot.dir`.
 #'
@@ -56,7 +62,9 @@ spectral.variant.plot.dens <- function(
     variant.alpha     = 0.05,
     variant.linewidth = 1.5,
     median.line.color = "black",
-    median.linewidth  = 1
+    median.linewidth  = 1,
+    color.by.laser    = TRUE,
+    asp               = NULL
 ) {
 
   detector.names <- colnames( spectra.variants )
@@ -91,6 +99,17 @@ spectral.variant.plot.dens <- function(
     min( c( as.matrix( spectra.variants ), median.spectrum ), na.rm = TRUE )
   )
 
+  # labels need clip = "off"; only safe if no data extend beyond the y limits
+  in.range <- all( c( as.matrix( spectra.variants ), median.spectrum ) >= y.lower &
+                     c( as.matrix( spectra.variants ), median.spectrum ) <= y.upper,
+                   na.rm = TRUE )
+  if ( isTRUE( color.by.laser ) && !in.range )
+    message( "Detector labels will be black: data extend beyond the y-axis limits." )
+  laser.labels <- .laser.axis.labels(
+    x = detector.n, labels = detector.names, asp = asp,
+    color.by.laser = color.by.laser && in.range, angle = 45, hjust = 1, vjust = 1
+  )
+
   variant.plot <- ggplot2::ggplot() +
     ggplot2::geom_line(
       data = long_variants,
@@ -114,11 +133,13 @@ spectral.variant.plot.dens <- function(
       y     = "Intensity",
       title = title
     ) +
-    ggplot2::coord_cartesian( ylim = c( y.lower, y.upper ) ) +
+    ggplot2::coord_cartesian( ylim = c( y.lower, y.upper ),
+                              clip = if ( laser.labels$mapped ) "off" else "on" ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text( angle = 45, hjust = 1 )
-    )
+    ) +
+    laser.labels$components
 
   if ( save ) {
     if ( is.null( plot.width ) )

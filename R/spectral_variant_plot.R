@@ -36,6 +36,12 @@
 #' @param median.linewidth Width of the line for the single optimized spectrum.
 #' Default is `1`.
 #'
+#' @param color.by.laser Logical, default `TRUE`. Colour the detector axis
+#'   labels by excitation laser (from `cytometer_database.csv`). Falls back to
+#'   black labels if the detectors do not all map to the instrument's detectors.
+#' @param asp Optional AutoSpectral parameter list, used only to identify the
+#'   cytometer for `color.by.laser`. If `NULL` (default), the cytometer is
+#'   identified from the detector names.
 #' @return Plots are displayed to the Viewer. Files are saved if saving enabled.
 #'
 #' @export
@@ -51,7 +57,9 @@ spectral.variant.plot <- function(
     variant.fill.color = "red",
     variant.fill.alpha = 0.7,
     median.line.color = "black",
-    median.linewidth = 1
+    median.linewidth = 1,
+    color.by.laser = TRUE,
+    asp = NULL
   ) {
 
   detector.names <- colnames( spectra.variants )
@@ -68,6 +76,17 @@ spectral.variant.plot <- function(
   y.lower <- max(
     -1,
     min( c( as.matrix( spectra.variants ), median.spectrum ), na.rm = TRUE )
+  )
+
+  # labels need clip = "off"; only safe if no data extend beyond the y limits
+  in.range <- all( c( variant.data$min, variant.data$max, variant.data$median.spec ) >= y.lower &
+                     c( variant.data$min, variant.data$max, variant.data$median.spec ) <= y.upper,
+                   na.rm = TRUE )
+  if ( isTRUE( color.by.laser ) && !in.range )
+    message( "Detector labels will be black: data extend beyond the y-axis limits." )
+  laser.labels <- .laser.axis.labels(
+    x = variant.data$detector.n, labels = detector.names, asp = asp,
+    color.by.laser = color.by.laser && in.range, angle = 45, hjust = 1, vjust = 1
   )
 
   variant.plot <- ggplot(
@@ -93,9 +112,11 @@ spectral.variant.plot <- function(
       y = "Intensity",
       title = title
     ) +
-    coord_cartesian( ylim = c( y.lower, y.upper ) ) +
+    coord_cartesian( ylim = c( y.lower, y.upper ),
+                     clip = if ( laser.labels$mapped ) "off" else "on" ) +
     theme_minimal() +
-    theme( axis.text.x = element_text( angle = 45, hjust = 1 ) )
+    theme( axis.text.x = element_text( angle = 45, hjust = 1 ) ) +
+    laser.labels$components
 
   if ( save ) {
     if ( is.null( plot.width ) )

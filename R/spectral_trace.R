@@ -39,6 +39,9 @@
 #' @param save Logical, if `TRUE`, saves a file to the `plot.dir`.
 #' Otherwise, the plot will simply be created in the Viewer.
 #'
+#' @param color.by.laser Logical, default `TRUE`. Colour the detector axis
+#'   labels by excitation laser (from `cytometer_database.csv`). Falls back to
+#'   black labels if the detectors do not all map to the instrument's detectors.
 #' @return Saves the plot(s) as image files in the specified directory.
 #' @export
 
@@ -55,7 +58,8 @@ spectral.trace <- function(
     plot.width = NULL,
     plot.height = NULL,
     file.type = "jpg",
-    save = TRUE
+    save = TRUE,
+    color.by.laser = TRUE
   ) {
 
   # resolve output device and file extension from file.type
@@ -182,6 +186,15 @@ spectral.trace <- function(
     ordered = TRUE
   )
 
+  # laser-coloured detector labels (shared by both plots)
+  detector.levels <- levels( fluor.spectra.long$Detector )
+  detector.x <- factor( detector.levels, levels = detector.levels, ordered = TRUE )
+  laser.labels <- .laser.axis.labels(
+    x = detector.x, labels = detector.levels, asp = asp,
+    color.by.laser = color.by.laser, angle = 45, hjust = 1, vjust = 1
+  )
+  label.clip <- if ( laser.labels$mapped ) "off" else "on"
+
   # create main plot
   spectra.plot <- ggplot(
     fluor.spectra.long,
@@ -199,7 +212,9 @@ spectral.trace <- function(
          y = "Normalized Intensity" ) +
     theme_minimal() +
     theme( axis.text.x = element_text( angle = 45, hjust = 1 )  ) +
-    theme( legend.position = "bottom" )
+    theme( legend.position = "bottom" ) +
+    coord_cartesian( clip = label.clip ) +
+    laser.labels$components
 
   # set the color palette on the plot
   if ( !is.null( color.palette ) )
@@ -227,6 +242,16 @@ spectral.trace <- function(
     # get number of lasers used
     laser.n <- length( unique( fluor.spectra.plotting$Laser ) )
 
+    # labels only in the bottom facet (where the x axis is drawn)
+    present.lasers <- levels( droplevels( fluor.spectra.long$Laser ) )
+    bottom.facet <- data.frame( Laser = factor(
+      utils::tail( present.lasers, 1 ), levels = levels( fluor.spectra.long$Laser ) ) )
+    laser.labels.split <- .laser.axis.labels(
+      x = detector.x, labels = detector.levels, asp = asp,
+      color.by.laser = color.by.laser, angle = 45, hjust = 1, vjust = 1,
+      facet = bottom.facet, verbose = FALSE
+    )
+
     plot.height <- ( plot.height - 1 ) * laser.n
 
     spectra.plot.split <- ggplot(
@@ -243,7 +268,9 @@ spectral.trace <- function(
       ) +
       theme_minimal() +
       theme( axis.text.x = element_text( angle = 45, hjust = 1 ) ) +
-      theme( legend.position = "bottom" )
+      theme( legend.position = "bottom" ) +
+      coord_cartesian( clip = label.clip ) +
+      laser.labels.split$components
 
     if ( !is.null( color.palette ) )
       spectra.plot.split <- spectra.plot.split +

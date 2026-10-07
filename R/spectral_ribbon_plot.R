@@ -51,6 +51,9 @@
 #' @param plot.height Height of the saved plot. Default is `10`.
 #' @param max.points Number of events per panel to plot. Default is `5e4`.
 #'
+#' @param color.by.laser Logical, default `TRUE`. Colour the detector axis
+#'   labels by excitation laser (from `cytometer_database.csv`). Falls back to
+#'   black labels if the detectors do not all map to the instrument's detectors.
 #' @return None. The function saves the generated spectral ribbon plot to
 #' a file.
 #'
@@ -72,7 +75,8 @@ spectral.ribbon.plot <- function(
     af = FALSE,
     plot.width = 15,
     plot.height = 10,
-    max.points = 5e4
+    max.points = 5e4,
+    color.by.laser = TRUE
 ) {
 
   # ---------------------------------------------------------------------------
@@ -263,7 +267,16 @@ spectral.ribbon.plot <- function(
   # 7. Build one ggplot panel per group, combine with patchwork
   # ---------------------------------------------------------------------------
 
+  # laser-coloured detector labels (bottom panel only)
+  laser.labels <- .laser.axis.labels(
+    x = seq_len( n_x ), labels = spectral.channel, asp = asp,
+    color.by.laser = color.by.laser, angle = asp$ribbon.plot.axis.text.angle,
+    hjust = 1, vjust = 1
+  )
+
   panels <- lapply( seq_along( factor.names ), function( i ) {
+    is.bottom <- i == length( factor.names )
+
     # suppress x-axis text on all but the bottom panel
     x.text <- if ( i == length( factor.names ) ) {
       element_text(
@@ -305,7 +318,9 @@ spectral.ribbon.plot <- function(
       ) +
       ggtitle( factor.names[[ i ]] ) +
       panel.theme +
-      theme( axis.text.x = x.text )
+      theme( axis.text.x = x.text ) +
+      coord_cartesian( clip = if ( is.bottom && laser.labels$mapped ) "off" else "on" ) +
+      ( if ( is.bottom ) laser.labels$components else NULL )
   } )
 
   ribbon.plot <- cowplot::plot_grid( plotlist = panels, ncol = 1, align = "v" )

@@ -45,6 +45,12 @@
 #' @param plot.height Numeric. Height of the saved figure in inches. If `NULL`
 #' (default), an automatic height is derived from the number of spectra rows.
 #'
+#' @param color.by.laser Logical, default `TRUE`. Colour the detector axis
+#'   labels by excitation laser (from `cytometer_database.csv`). Falls back to
+#'   black labels if the detectors do not all map to the instrument's detectors.
+#' @param asp Optional AutoSpectral parameter list, used only to identify the
+#'   cytometer for `color.by.laser`. If `NULL` (default), the cytometer is
+#'   identified from the detector names.
 #' @return The combined cowplot object is returned invisibly. The figure is
 #' always saved to disk as `<plot.dir>/<title>.jpg`.
 #'
@@ -70,7 +76,9 @@ spectral.mismatch.plot <- function(
     color.palette      = NULL,
     show.legend        = TRUE,
     plot.width         = NULL,
-    plot.height        = NULL
+    plot.height        = NULL,
+    color.by.laser     = TRUE,
+    asp                = NULL
   ) {
 
   # --- input validation ---
@@ -123,6 +131,13 @@ spectral.mismatch.plot <- function(
     ordered = TRUE
   )
 
+  # --- laser-coloured detector labels (both panels) ---
+  laser.labels <- .laser.axis.labels(
+    x = factor( pivot.cols, levels = pivot.cols, ordered = TRUE ), labels = pivot.cols,
+    asp = asp, color.by.laser = color.by.laser, angle = 45, hjust = 1, vjust = 1
+  )
+  label.clip <- if ( laser.labels$mapped ) "off" else "on"
+
   # --- upper panel: spectral traces ---
   spectra.plot <- ggplot2::ggplot(
     spectra.long,
@@ -144,7 +159,9 @@ spectral.mismatch.plot <- function(
     ggplot2::theme(
       axis.text.x    = ggplot2::element_text( angle = 45, hjust = 1 ),
       legend.position = "bottom"
-    )
+    ) +
+    ggplot2::coord_cartesian( clip = label.clip ) +
+    laser.labels$components
 
   # apply color palette
   if ( !is.null( fluorophore.colors ) ) {
@@ -188,7 +205,9 @@ spectral.mismatch.plot <- function(
     ggplot2::theme_minimal() +
     ggplot2::theme(
       axis.text.x = ggplot2::element_text( angle = 45, hjust = 1 )
-    )
+    ) +
+    ggplot2::coord_cartesian( clip = label.clip ) +
+    laser.labels$components
 
   # --- combine panels ---
   combined.plot <- cowplot::plot_grid(

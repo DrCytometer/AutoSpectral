@@ -34,6 +34,12 @@
 #' @param save Logical, if `TRUE`, saves a file to the `plot.dir`.
 #' Otherwise, the plot will simply be created in the Viewer.
 #'
+#' @param color.by.laser Logical, default `TRUE`. Colour the detector axis
+#'   labels by excitation laser (from `cytometer_database.csv`). Falls back to
+#'   black labels if the detectors do not all map to the instrument's detectors.
+#' @param asp Optional AutoSpectral parameter list, used only to identify the
+#'   cytometer for `color.by.laser`. If `NULL` (default), the cytometer is
+#'   identified from the detector names.
 #' @return Saves the heatmap plot as an image file in the specified directory.
 #'
 #' @export
@@ -48,7 +54,9 @@ spectral.heatmap <- function(
     show.legend = TRUE,
     plot.width = NULL,
     plot.height = NULL,
-    file.type = "jpg"
+    file.type = "jpg",
+    color.by.laser = TRUE,
+    asp = NULL
   ) {
 
   # resolve output device and file extension from file.type
@@ -109,13 +117,19 @@ spectral.heatmap <- function(
     levels = col.levels
   )
 
+  laser.labels <- .laser.axis.labels(
+    x = factor( col.levels, levels = col.levels ), labels = col.levels, asp = asp,
+    color.by.laser = color.by.laser, angle = 45, hjust = 1, vjust = 1
+  )
+
   heatmap.plot <- ggplot( heatmap.long, aes( Detector, Fluorophore, fill = value ) ) +
     geom_tile() +
     theme_classic() +
-    coord_fixed( ratio = 1 ) +
+    coord_fixed( ratio = 1, clip = if ( laser.labels$mapped ) "off" else "on" ) +
     theme( axis.text.x = element_text( angle = 45, hjust = 1 ) ) +
     labs( x = NULL, y = NULL, fill = legend.label )+
-    scale_fill_viridis_c( option = color.palette )
+    scale_fill_viridis_c( option = color.palette ) +
+    laser.labels$components
 
   if ( !show.legend )
     heatmap.plot <- heatmap.plot + theme( legend.position = "none" )

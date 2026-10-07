@@ -59,6 +59,9 @@
 #' @param highlight.fluors Optional numeric for differentiating comparison fluors
 #' in the plots with the "refined" tag.
 #'
+#' @param color.by.laser Logical, default `TRUE`. Colour the detector axis
+#'   labels by excitation laser (from `cytometer_database.csv`). Falls back to
+#'   black labels if the detectors do not all map to the instrument's detectors.
 #' @return None. Plots are saved to a PDF in `plot.dir`.
 #'
 #' @export
@@ -83,7 +86,8 @@ spectral.reference.plot <- function(
     filename = "spectral_qc_report.pdf",
     comparison.spectra = NULL,
     comparison.label = "Pre-refinement",
-    highlight.fluors = character( 0L )
+    highlight.fluors = character( 0L ),
+    color.by.laser = TRUE
 ) {
 
   # which cytometer is being used?
@@ -171,6 +175,13 @@ spectral.reference.plot <- function(
     Status = "No Reference Available",
     stringsAsFactors = FALSE
   )
+
+  # laser-coloured detector labels (same for every fluorophore)
+  laser.labels <- .laser.axis.labels(
+    x = seq_along( detector.names ), labels = detector.names, asp = asp,
+    color.by.laser = color.by.laser, angle = 45, hjust = 1, vjust = 1
+  )
+  label.clip <- if ( laser.labels$mapped ) "off" else "on"
 
   # for loop, generate all plots
   for ( i in seq_along( fluorophores ) ) {
@@ -268,7 +279,9 @@ spectral.reference.plot <- function(
         axis.text.x    = element_text( angle = 45, hjust = 1 ),
         plot.subtitle  = element_text( color = simil.color, face = "bold" ),
         legend.position = "top"
-      )
+      ) +
+      coord_cartesian( clip = label.clip ) +
+      laser.labels$components
   }
 
   # console output
