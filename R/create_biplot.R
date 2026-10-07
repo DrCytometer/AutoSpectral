@@ -248,38 +248,38 @@ create.biplot <- function(
 
     if ( length( flat.y ) == 1 && is.finite( flat.y ) ) {
 
-      y.pos.raw <- flat.y + spread.kappa * sqrt( ss.xy * abs( x.seq ) )
-      y.pos.raw <- pmin( pmax( y.pos.raw, y.min ), y.max )
+      y.pos <- .spread.boundary( x.seq, flat.y, ss.xy, spread.kappa, 1, y.min, y.max )
 
-      spread.curve.data$y.pos <- data.frame(
-        x = biexp.trans.x( x.seq ), y = biexp.trans.y( y.pos.raw ) )
+      if ( length( y.pos$along ) > 1 )
+        spread.curve.data$y.pos <- data.frame(
+          x = biexp.trans.x( y.pos$along ), y = biexp.trans.y( y.pos$value ) )
     }
 
     if ( length( flat.y.neg ) == 1 && is.finite( flat.y.neg ) ) {
 
-      y.neg.raw <- flat.y.neg - spread.kappa * sqrt( ss.xy * abs( x.seq ) )
-      y.neg.raw <- pmin( pmax( y.neg.raw, y.min ), y.max )
+      y.neg <- .spread.boundary( x.seq, flat.y.neg, ss.xy, spread.kappa, -1, y.min, y.max )
 
-      spread.curve.data$y.neg <- data.frame(
-        x = biexp.trans.x( x.seq ), y = biexp.trans.y( y.neg.raw ) )
+      if ( length( y.neg$along ) > 1 )
+        spread.curve.data$y.neg <- data.frame(
+          x = biexp.trans.x( y.neg$along ), y = biexp.trans.y( y.neg$value ) )
     }
 
     if ( length( flat.x ) == 1 && is.finite( flat.x ) ) {
 
-      x.pos.raw <- flat.x + spread.kappa * sqrt( ss.yx * abs( y.seq ) )
-      x.pos.raw <- pmin( pmax( x.pos.raw, x.min ), x.max )
+      x.pos <- .spread.boundary( y.seq, flat.x, ss.yx, spread.kappa, 1, x.min, x.max )
 
-      spread.curve.data$x.pos <- data.frame(
-        x = biexp.trans.x( x.pos.raw ), y = biexp.trans.y( y.seq ) )
+      if ( length( x.pos$along ) > 1 )
+        spread.curve.data$x.pos <- data.frame(
+          x = biexp.trans.x( x.pos$value ), y = biexp.trans.y( x.pos$along ) )
     }
 
     if ( length( flat.x.neg ) == 1 && is.finite( flat.x.neg ) ) {
 
-      x.neg.raw <- flat.x.neg - spread.kappa * sqrt( ss.yx * abs( y.seq ) )
-      x.neg.raw <- pmin( pmax( x.neg.raw, x.min ), x.max )
+      x.neg <- .spread.boundary( y.seq, flat.x.neg, ss.yx, spread.kappa, -1, x.min, x.max )
 
-      spread.curve.data$x.neg <- data.frame(
-        x = biexp.trans.x( x.neg.raw ), y = biexp.trans.y( y.seq ) )
+      if ( length( x.neg$along ) > 1 )
+        spread.curve.data$x.neg <- data.frame(
+          x = biexp.trans.x( x.neg$value ), y = biexp.trans.y( x.neg$along ) )
     }
   }
 
@@ -340,13 +340,16 @@ create.biplot <- function(
       biplot <- biplot +
         geom_line( data = spread.curve.data$y.neg, aes( x = x, y = y ),
                    color = "red", inherit.aes = FALSE, na.rm = TRUE )
+    # x-direction curves are functions of |y|: draw them in data (y) order
+    # with geom_path(); geom_line() would sort by x and interleave the
+    # positive- and negative-y branches into a zigzag
     if ( !is.null( spread.curve.data$x.pos ) )
       biplot <- biplot +
-        geom_line( data = spread.curve.data$x.pos, aes( x = x, y = y ),
+        geom_path( data = spread.curve.data$x.pos, aes( x = x, y = y ),
                    color = "red", inherit.aes = FALSE, na.rm = TRUE )
     if ( !is.null( spread.curve.data$x.neg ) )
       biplot <- biplot +
-        geom_line( data = spread.curve.data$x.neg, aes( x = x, y = y ),
+        geom_path( data = spread.curve.data$x.neg, aes( x = x, y = y ),
                    color = "red", inherit.aes = FALSE, na.rm = TRUE )
   }
 
@@ -380,4 +383,33 @@ create.biplot <- function(
   print( biplot )
 }
 
+# Spillover-spread boundary `flat + sign * kappa * sqrt( ss * |along| )`,
+# sampled along the other axis (`along`). The exact `along` value at which
+# the curve reaches the axis limit it is heading towards is added to the
+# samples, and points beyond that limit are dropped, so the drawn curve stops
+# at the plot edge instead of running along it. The curve is monotone in
+# |along|, so the kept points are one contiguous run. No NA is returned:
+# biexp.transform() cannot take NA (its `if ( residual > 1e-6 )` check fails).
+#
+# @return list( along, value ), same length, possibly 0.
+# @noRd
+.spread.boundary <- function( along, flat, ss, kappa, sign, lim.min, lim.max ) {
 
+  if ( !is.finite( ss ) || ss < 0 ) ss <- 0
+  lim   <- if ( sign > 0 ) lim.max else lim.min
+  reach <- sign * ( lim - flat )
+
+  if ( ss > 0 && kappa > 0 && reach > 0 ) {
+    a.cross <- ( reach / kappa )^2 / ss
+    a.cross <- c( -a.cross, a.cross )
+    a.cross <- a.cross[ a.cross > min( along ) & a.cross < max( along ) ]
+    along   <- sort( c( along, a.cross ) )
+  }
+
+  value <- flat + sign * kappa * sqrt( ss * abs( along ) )
+  tol   <- 1e-9 * max( 1, abs( lim.min ), abs( lim.max ) )
+  keep  <- value >= lim.min - tol & value <= lim.max + tol
+  value <- pmin( pmax( value[ keep ], lim.min ), lim.max )
+
+  list( along = along[ keep ], value = value )
+}
