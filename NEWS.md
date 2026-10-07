@@ -1,3 +1,25 @@
+# AutoSpectral (development version)
+
+## New Features
+
+- Detector axis labels are now coloured by excitation laser in
+`spectral.trace()`, `spectral.heatmap()`, `spectral.mismatch.plot()`,
+`spectral.reference.plot()`, `spectral.ribbon.plot()`,
+`spectral.variant.plot()` and `spectral.variant.plot.dens()` (new argument
+`color.by.laser`, default `TRUE`). Lasers come from `cytometer_database.csv`,
+using the cytometer in `asp` or, for functions without `asp` (now an optional
+argument there), the database column matching all detector names. Labels fall
+back to black if the detectors do not all map to the instrument's detectors.
+
+## Bug fixes
+
+- In `create.biplot()`, spillover-spread boundary curves now stop where they
+reach the axis limits instead of continuing along the plot edge.
+- In `create.biplot()`, the x-direction spillover-spread boundaries are drawn
+in data order (`geom_path()`); `geom_line()` sorted them by x, interleaving the
+positive- and negative-y branches into a zigzag.
+
+
 # AutoSpectral 1.8.6 (2026-09-30)
 
 ## New Features
