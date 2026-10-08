@@ -28,10 +28,13 @@
 #' @export
 
 read.spectroflo.expt <- function(
-    expt.file, output.dir,
+    expt.file,
+    output.dir,
     output.filename = "SpectroFlo_spillover_matrix.csv",
     fcs.file = NULL
   ) {
+
+  if ( !dir.exists( output.dir ) ) dir.create( output.dir )
 
   # read SpectroFlo .Expt file (XML format)
   expt <- xml2::read_xml( expt.file )
