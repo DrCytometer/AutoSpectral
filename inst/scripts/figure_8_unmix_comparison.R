@@ -50,6 +50,7 @@ library( AutoSpectral )
 library( cowplot )
 library( ggplot2 )
 
+# if loading locally:
 asp.dir <- "/Users/oliverburton/Bioinformatics/AutoSpectral"
 scripts.dir <- "inst/scripts"
 devtools::load_all(asp.dir)
