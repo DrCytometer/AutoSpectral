@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -494,8 +494,11 @@ Unstained cells, myeloid gate
 <p>Now we can continue to control clean-up. This helps remove noisy
 events, like autofluorescence spikes, and tries to match the positive
 events for each control to corresponding cells/beads in the unstained
-<code>universal.negative</code> that you defined in the
-control.file.</p>
+<code>universal.negative</code> that you defined in the control.file.
+Matching the autofluorescence background of the negative to that of the
+positive events follows Roederer (2002), and the automated gating and
+robust linear modelling used to extract the spectra are adapted from
+AutoSpill (Roca et al., 2021).</p>
 <p>The default settings here are usually best. See more on the cleaning
 article on <a href="https://drcytometer.github.io/AutoSpectral/articles/05_Cleaning.html">GitHub</a>
 or <a href="https://www.colibri-cytometry.com/post/autospectral-cleaning" class="external-link">Colibri</a>.
@@ -569,19 +572,18 @@ Spectral Signature Heatmap
 Cosine Similarity Heatmap
 </p>
 </div>
-<p>You also get a “Hotspot” matrix, as in the paper by Peter Mage et
-al.</p>
+<p>You also get a “Hotspot” matrix, as in Mage et al. (2026).</p>
 <div class="figure" style="text-align: center">
 <img src="figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg" class="r-plt" alt="Hotspot Matrix Heatmap" width="1200"><p class="caption">
 Hotspot Matrix Heatmap
 </p>
 </div>
-<p>As per their <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12139922/" class="external-link">manuscript</a>,
-we probably don’t need to worry about anything under 4, may want to
-check stuff between 4-6, and should definitely look into values above 6.
-That said, this hotspot matrix will include the “AF” as if you were
-doing OLS unmixing, and that is not really relevant if you proceed with
-AutoSpectral unmixing of per-cell autofluorescence.</p>
+<p>As per <a href="https://doi.org/10.1002/cyto.a.70044" class="external-link">Mage et
+al. (2026)</a>, we probably don’t need to worry about anything under 4,
+may want to check stuff between 4-6, and should definitely look into
+values above 6. That said, this hotspot matrix will include the “AF” as
+if you were doing OLS unmixing, and that is not really relevant if you
+proceed with AutoSpectral unmixing of per-cell autofluorescence.</p>
 <p>As of version 1.5.0, you should also get a pdf quality control
 report.</p>
 <div class="figure" style="text-align: center">
@@ -709,7 +711,12 @@ optimization, AutoSpectral needs more information. We will extract
 autofluorescence signatures from the three tissues involved here, and
 look at how to use those in the unmixing. We’ll also get information
 about the fluorophore emission variability and use that to try to
-improve the unmixing.</p>
+improve the unmixing. Manually defining several autofluorescence
+signatures and adding them to the unmixing matrix is the established way
+of handling variable autofluorescence (Niewold et al., 2020; Wanner et
+al., 2022; Jameson et al., 2022; Roet et al., 2024; Pilkington, 2024);
+per-cell autofluorescence extraction automates the choice of signature
+for each cell.</p>
 <p>When we go to use this information in the unmixing, we select
 <code>method = AutoSpectral</code>.</p>
 <p>As of version 1.0.0, per-cell autofluorescence extraction will be
@@ -955,6 +962,48 @@ solution for that approach, though.</p>
 determined by arguments to create.biplot(). That can be modified, of
 course, but as stated, you’re better off doing that in dedicated flow
 analysis software.</p>
+<div class="section level3">
+<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h3>
+<ul>
+<li>Jameson VJ, Luke T, Yan Y, Hind A, Evrard M, Man K, Mackay LK,
+Kallies A, Villadangos JA, McWilliam HEG, Perez-Gonzalez A (2022).
+Unlocking autofluorescence in the era of full spectrum analysis:
+Implications for immunophenotype discovery projects. <em>Cytometry
+A</em> 101(11):922-941. <a href="https://doi.org/10.1002/cyto.a.24555" class="external-link">doi:10.1002/cyto.a.24555</a>
+</li>
+<li>Mage PL, Konecny AJ, Mair F (2026). Measurement and prediction of
+unmixing-dependent spreading due to collinearity in spectral flow
+cytometry. <em>Cytometry A</em> 109(6):436-455. <a href="https://doi.org/10.1002/cyto.a.70044" class="external-link">doi:10.1002/cyto.a.70044</a>
+</li>
+<li>Niewold P, Ashhurst TM, Smith AL, King NJC (2020). Evaluating
+spectral cytometry for immune profiling in viral disease. <em>Cytometry
+A</em> 97(11):1165-1179. <a href="https://doi.org/10.1002/cyto.a.24211" class="external-link">doi:10.1002/cyto.a.24211</a>
+</li>
+<li>Pilkington KR (2024). Autofluorescence: From burden to benefit.
+<em>Cytometry A</em> 105(8):563-567. <a href="https://doi.org/10.1002/cyto.a.24885" class="external-link">doi:10.1002/cyto.a.24885</a>
+</li>
+<li>Roca CP, Burton OT, Gergelits V, Prezzemolo T, Whyte CE, Halpert R,
+Kreft L, Collier J, Botzki A, Spidlen J, Humblet-Baron S, Liston A
+(2021). AutoSpill is a principled framework that simplifies the analysis
+of multichromatic flow cytometry data. <em>Nat Commun</em> 12(1):2890.
+<a href="https://doi.org/10.1038/s41467-021-23126-8" class="external-link">doi:10.1038/s41467-021-23126-8</a>
+</li>
+<li>Roederer M (2002). Compensation in flow cytometry. <em>Curr Protoc
+Cytom</em> Chapter 1:Unit 1.14. <a href="https://doi.org/10.1002/0471142956.cy0114s22" class="external-link">doi:10.1002/0471142956.cy0114s22</a>
+</li>
+<li>Roet JEG, Mikula AM, de Kok M, Chadick CH, Garcia Vallejo JJ, Roest
+HP, van der Laan LJW, de Winde CM, Mebius RE (2024). Unbiased method for
+spectral analysis of cells with great diversity of autofluorescence
+spectra. <em>Cytometry A</em> 105(8):595-606. <a href="https://doi.org/10.1002/cyto.a.24856" class="external-link">doi:10.1002/cyto.a.24856</a>
+</li>
+<li>Wanner N, Barnhart J, Apostolakis N, Zlojutro V, Asosingh K (2022).
+Using the Autofluorescence Finder on the Sony ID7000 Spectral Cell
+Analyzer to identify and unmix multiple highly autofluorescent murine
+lung populations. <em>Front Bioeng Biotechnol</em> 10:827987. <a href="https://doi.org/10.3389/fbioe.2022.827987" class="external-link">doi:10.3389/fbioe.2022.827987</a>
+</li>
+</ul>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

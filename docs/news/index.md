@@ -1,5 +1,88 @@
 # Changelog
 
+## AutoSpectral (development version)
+
+### New Features
+
+- [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
+  now returns the AF spectra ranked by spectral angle to the mean AF
+  spectrum (smallest angle first, row 1 is the mean), with rows renamed
+  `AF1`, `AF2`, … in that order, so the AF index is roughly continuous.
+- Detector axis labels are now coloured by excitation laser in
+  [`spectral.trace()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.trace.md),
+  [`spectral.heatmap()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.heatmap.md),
+  [`spectral.mismatch.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.mismatch.plot.md),
+  [`spectral.reference.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.reference.plot.md),
+  [`spectral.ribbon.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.ribbon.plot.md),
+  [`spectral.variant.plot()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.variant.plot.md)
+  and
+  [`spectral.variant.plot.dens()`](https://drcytometer.github.io/AutoSpectral/reference/spectral.variant.plot.dens.md)
+  (new argument `color.by.laser`, default `TRUE`). Lasers come from
+  `cytometer_database.csv`, using the cytometer in `asp` or, for
+  functions without `asp` (now an optional argument there), the database
+  column matching all detector names. Labels fall back to black if the
+  detectors do not all map to the instrument’s detectors.
+
+### Bug fixes
+
+- In
+  [`create.biplot()`](https://drcytometer.github.io/AutoSpectral/reference/create.biplot.md),
+  spillover-spread boundary curves now stop where they reach the axis
+  limits instead of continuing along the plot edge.
+- In
+  [`create.biplot()`](https://drcytometer.github.io/AutoSpectral/reference/create.biplot.md),
+  the x-direction spillover-spread boundaries are drawn in data order
+  (`geom_path()`); `geom_line()` sorted them by x, interleaving the
+  positive- and negative-y branches into a zigzag.
+
+## AutoSpectral 1.8.6 (2026-09-30)
+
+### New Features
+
+- [`read.fcs.clean()`](https://drcytometer.github.io/AutoSpectral/reference/read.fcs.clean.md)
+  is now exported. This is the FCS reader used by
+  [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md)
+  (saturation removal, scatter-maximum removal and two-pass Area/Height
+  singlet gating), made available so that related samples can be cleaned
+  identically elsewhere (e.g., `FlowCodeUnmix::unmix.backbone()`).
+
+### Bug fixes
+
+- [`estimate.residual.spillover()`](https://drcytometer.github.io/AutoSpectral/reference/estimate.residual.spillover.md)
+  now accepts `negative.mask` as a vector (one value per event, applied
+  to every target), as documented. Previously a vector only set the
+  first target column, leaving every other target with no negative
+  events.
+- [`apply.gate()`](https://drcytometer.github.io/AutoSpectral/reference/apply.gate.md)
+  now always returns a matrix (or data frame), including when the gate
+  retains a single event.
+
+## AutoSpectral 1.8.4 (2026-09-23)
+
+### Bug fixes
+
+- In
+  [`tune.gate()`](https://drcytometer.github.io/AutoSpectral/reference/tune.gate.md)
+  and
+  [`define.gate.landmarks()`](https://drcytometer.github.io/AutoSpectral/reference/define.gate.landmarks.md),
+  the regex string used to identify unstained (or AF) controls wasn’t
+  anchored properly.
+- Negative or unstained samples are more systematically identified for
+  [`clean.controls()`](https://drcytometer.github.io/AutoSpectral/reference/clean.controls.md)
+  to avoid running AF removal on these.
+- In
+  [`refine.fluorophore.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/refine.fluorophore.spectra.md),
+  AF will now be processed alongside other fluorophores if it is present
+  in `spectra`. This failed previously.
+- Updates to the default values in
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
+  affecting deduplication and refinement.
+- The `refine` section of
+  [`get.af.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/get.af.spectra.md)
+  should now run faster: kNN searching was being repeated per problem
+  group, and the SOM dimensions on the problematic cells were being
+  allowed to go very high.
+
 ## AutoSpectral 1.8.3 (2026-09-22)
 
 ### New Features
@@ -448,11 +531,14 @@ scatter.param = colnames(original.fsc.ssc.data)
   [`unmixed.nxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.nxn.plot.md)
 - Calculate the secondary stain index per “Evaluating the performance of
   Slingshot SpectraComp particles as universal single stain controls in
-  flow cytometry” by Oliveira et al. Call
+  flow cytometry” by Oliveira et al. The index is defined in [Morgado
+  (2020)](https://wi.mit.edu/sites/default/files/2021-05/20200504_Post-it_Secondary_Stain_Index_Final.pdf).
+  Call
   [`calculate.ssi()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.ssi.md).
 - Plot the mismatch between two spectral profiles (e.g., beads
-  vs. cells) as in the pre-print by Konecny et al. on unmixing-dependent
-  spread. Call `ppectral.mismatch.plot()`.
+  vs. cells) as in the paper by [Mage, Konecny and Mair
+  (2026)](https://doi.org/10.1002/cyto.a.70044) (previously a pre-print)
+  on unmixing-dependent spread. Call `ppectral.mismatch.plot()`.
 - Compare unmixing of the same data side-by-side with two different
   spectral mixing matrices. Call
   [`compare.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/compare.unmix.md).
@@ -758,8 +844,9 @@ scatter.param = colnames(original.fsc.ssc.data)
 - Shiny app for control file setup via AutoSpectralHelper
 - Marker names will now be added to the control file based on matches in
   the FCS file names, where possible.
-- The Hotspot(TM) matrix will be calculated and plotted as per the
-  pre-print by Peter Mage et al.
+- The Hotspot(TM) matrix will be calculated and plotted as per [Mage,
+  Konecny and Mair (2026)](https://doi.org/10.1002/cyto.a.70044)
+  (previously a pre-print).
 
 ### Improvements
 

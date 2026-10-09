@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -242,6 +242,10 @@ like the reference spectrum, that one is kept. In the event of a
 fallback check, both versions of the spectrum are saved for you to
 inspect.</li>
 </ol>
+<p>Selecting the brightest events and matching the autofluorescence
+background of the negative follows Roederer (2002) and Ferrer-Font et
+al. (2021). The legacy fallback pipeline is adapted from AutoSpill (Roca
+et al., 2021).</p>
 <p>The default settings work well across a wide range of panels, but the
 key parameters can be adjusted if needed:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -286,8 +290,8 @@ Cosine Similarity Heatmap
 </div>
 <p><strong>Hotspot matrix</strong>
 (<code>figure_similarity_heatmap/</code>) — highlights fluorophore pairs
-with high spectral overlap, as in Mage et al. Values above 6 are most
-likely to cause unmixing problems; values between 4 and 6 are worth
+with high spectral overlap, as in Mage et al. (2026). Values above 6 are
+most likely to cause unmixing problems; values between 4 and 6 are worth
 reviewing.</p>
 <div class="figure" style="text-align: center">
 <img src="figures/Automated_workflow/Automated_Hotspot_Matrix_heatmap.jpg" class="r-plt" alt="Hotspot Matrix Heatmap" width="1200"><p class="caption">
@@ -820,6 +824,30 @@ solution for that approach, though.</p>
 determined by arguments to create.biplot(). That can be modified, of
 course, but as stated, you’re better off doing that in dedicated flow
 analysis software.</p>
+<div class="section level3">
+<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h3>
+<ul>
+<li>Ferrer-Font L, Small SJ, Lewer B, Pilkington KR, Johnston LK, Park
+LM, Lannigan J, Jaimes MC, Price KM (2021). Panel optimization for
+high-dimensional immunophenotyping assays using full-spectrum flow
+cytometry. <em>Curr Protoc</em> 1(9):e222. <a href="https://doi.org/10.1002/cpz1.222" class="external-link">doi:10.1002/cpz1.222</a>
+</li>
+<li>Mage PL, Konecny AJ, Mair F (2026). Measurement and prediction of
+unmixing-dependent spreading due to collinearity in spectral flow
+cytometry. <em>Cytometry A</em> 109(6):436-455. <a href="https://doi.org/10.1002/cyto.a.70044" class="external-link">doi:10.1002/cyto.a.70044</a>
+</li>
+<li>Roca CP, Burton OT, Gergelits V, Prezzemolo T, Whyte CE, Halpert R,
+Kreft L, Collier J, Botzki A, Spidlen J, Humblet-Baron S, Liston A
+(2021). AutoSpill is a principled framework that simplifies the analysis
+of multichromatic flow cytometry data. <em>Nat Commun</em> 12(1):2890.
+<a href="https://doi.org/10.1038/s41467-021-23126-8" class="external-link">doi:10.1038/s41467-021-23126-8</a>
+</li>
+<li>Roederer M (2002). Compensation in flow cytometry. <em>Curr Protoc
+Cytom</em> Chapter 1:Unit 1.14. <a href="https://doi.org/10.1002/0471142956.cy0114s22" class="external-link">doi:10.1002/0471142956.cy0114s22</a>
+</li>
+</ul>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

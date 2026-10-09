@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,7 +97,10 @@ about optimizing the fluorophore signatures used for unmixing on a
 per-cell basis in AutoSpectral. Let me know if the explanation doesn’t
 make sense. There are days when I think it’s really weird that we can
 actually figure this stuff out from the data. Also, this is not the only
-way of doing this, just the best one I’ve found so far.</p>
+way of doing this, just the best one I’ve found so far. A related
+approach, which drops irrelevant fluorophore spectra from the mixing
+matrix cell by cell to reduce spread, is described by Kmet and Novo
+(2025).</p>
 <p>Okay, so we’re basically going to play some Tetris with your
 unmixing. You can also think of this as “theme and variations” if you’re
 musically inclined, or multiverse unmixing, if you prefer comics.</p>
@@ -105,26 +108,31 @@ musically inclined, or multiverse unmixing, if you prefer comics.</p>
 the emissions from the fluorophores. This variability manifests at the
 level of the cell (or particle/data point) as spread. Spread is a
 population-level thing; individual cells do not have spread, they have
-exact positions. We get spread in the unmixing (and compensation in
-conventional flow) because we have a <em>distribution</em> of outcomes
-in the spillover/spectra for the fluorophores and we unmix using only a
-single (hopefully) best fit spectrum. This means there are data on both
-sides of that single best fit (think of it as a median or average for
-the distribution), both in the raw data and the unmixed. If there is a
-mismatch between the single-colour control used to generate the
-fluorophore’s spectrum and the actual data in the fully stained sample,
-this will manifest as a skew in the distribution of the unmixed data
-(i.e., unmixing error). These mismatches can occur for a multitude of
-reasons, including tandem breakdown, improperly prepared controls,
-bead-based controls, low brightness or autofluorescence (AF)
-contamination of the spectrum. The first part of AutoSpectral–getting
-the optimized single spectra using <code><a href="../reference/clean.controls.html">clean.controls()</a></code> and
+exact positions. Noise from the instrument, from photon counting and
+from variable autofluorescence all contribute to the distribution
+(Roederer, 2016), and collinearity between the spectra of the
+fluorophores being unmixed compounds it (Novo, 2022; Kmet &amp; Novo,
+2025; Mage et al., 2026). We get spread in the unmixing (and
+compensation in conventional flow) because we have a
+<em>distribution</em> of outcomes in the spillover/spectra for the
+fluorophores and we unmix using only a single (hopefully) best fit
+spectrum. This means there are data on both sides of that single best
+fit (think of it as a median or average for the distribution), both in
+the raw data and the unmixed. If there is a mismatch between the
+single-colour control used to generate the fluorophore’s spectrum and
+the actual data in the fully stained sample, this will manifest as a
+skew in the distribution of the unmixed data (i.e., unmixing error).
+These mismatches can occur for a multitude of reasons, including tandem
+breakdown, improperly prepared controls, bead-based controls, low
+brightness or autofluorescence (AF) contamination of the spectrum. The
+first part of AutoSpectral–getting the optimized single spectra using
+<code><a href="../reference/clean.controls.html">clean.controls()</a></code> and
 <code><a href="../reference/get.fluorophore.spectra.html">get.fluorophore.spectra()</a></code>, gets you as far as it can with a
 single spectrum per fluorophore. This is the next step.</p>
 <p>What we are going to do is similar to what we did with the single
 cell AF extraction. We will start by mapping the variation in the
 single-color controls for each fluorophore using a self-organizing map
-(SOM).</p>
+(SOM; Kohonen, 1995).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span> <span class="va"><a href="https://github.com/DrCytometer/AutoSpectral" class="external-link">AutoSpectral</a></span> <span class="op">)</span></span>
 <span><span class="co">#&gt; AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS.</span></span></code></pre></div>
@@ -442,6 +450,29 @@ similarity values between the ground truth and the assigned spectrum for
 BUV661. Comparison between standard OLS unmixing and AutoSpectral with
 per-cell fluorophore optimization on synthetic data. Stats by
 Komogorov-Smirnov test.</p>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<ul>
+<li>Kmet R, Novo D (2025). Reducing spreading: removing the impact of
+irrelevant dyes improves unmixed flow cytometry data. <em>Cytometry
+A</em>. <a href="https://doi.org/10.1002/cyto.a.24957" class="external-link">doi:10.1002/cyto.a.24957</a>
+</li>
+<li>Kohonen T (1995). <em>Self-organizing maps</em>. Springer.</li>
+<li>Mage PL, Konecny AJ, Mair F (2026). Measurement and prediction of
+unmixing-dependent spreading due to collinearity in spectral flow
+cytometry. <em>Cytometry A</em> 109(6):436-455. <a href="https://doi.org/10.1002/cyto.a.70044" class="external-link">doi:10.1002/cyto.a.70044</a>
+</li>
+<li>Novo D (2022). A comparison of spectral unmixing to conventional
+compensation for the calculation of fluorochrome abundances from flow
+cytometric data. <em>Cytometry A</em> 101(11):885-891. <a href="https://doi.org/10.1002/cyto.a.24669" class="external-link">doi:10.1002/cyto.a.24669</a>
+</li>
+<li>Roederer M (2016). Distributions of autofluorescence after
+compensation: Be panglossian, fret not. <em>Cytometry A</em>
+89(4):398-402. <a href="https://doi.org/10.1002/cyto.a.22820" class="external-link">doi:10.1002/cyto.a.22820</a>
+</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

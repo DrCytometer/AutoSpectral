@@ -474,7 +474,11 @@ Unstained cells, myeloid gate
 Now we can continue to control clean-up. This helps remove noisy events,
 like autofluorescence spikes, and tries to match the positive events for
 each control to corresponding cells/beads in the unstained
-`universal.negative` that you defined in the control.file.
+`universal.negative` that you defined in the control.file. Matching the
+autofluorescence background of the negative to that of the positive
+events follows Roederer (2002), and the automated gating and robust
+linear modelling used to extract the spectra are adapted from AutoSpill
+(Roca et al., 2021).
 
 The default settings here are usually best. See more on the cleaning
 article on
@@ -567,15 +571,14 @@ Heatmap](figures/Workflow/Clean_autospectral_similarity_matrix.jpg)
 
 Cosine Similarity Heatmap
 
-You also get a “Hotspot” matrix, as in the paper by Peter Mage et al.
+You also get a “Hotspot” matrix, as in Mage et al. (2026).
 
 ![Hotspot Matrix
 Heatmap](figures/Workflow/Clean_Hotspot_Matrix_heatmap.jpg)
 
 Hotspot Matrix Heatmap
 
-As per their
-[manuscript](https://pmc.ncbi.nlm.nih.gov/articles/PMC12139922/), we
+As per [Mage et al. (2026)](https://doi.org/10.1002/cyto.a.70044), we
 probably don’t need to worry about anything under 4, may want to check
 stuff between 4-6, and should definitely look into values above 6. That
 said, this hotspot matrix will include the “AF” as if you were doing OLS
@@ -720,7 +723,12 @@ optimization, AutoSpectral needs more information. We will extract
 autofluorescence signatures from the three tissues involved here, and
 look at how to use those in the unmixing. We’ll also get information
 about the fluorophore emission variability and use that to try to
-improve the unmixing.
+improve the unmixing. Manually defining several autofluorescence
+signatures and adding them to the unmixing matrix is the established way
+of handling variable autofluorescence (Niewold et al., 2020; Wanner et
+al., 2022; Jameson et al., 2022; Roet et al., 2024; Pilkington, 2024);
+per-cell autofluorescence extraction automates the choice of signature
+for each cell.
 
 When we go to use this information in the unmixing, we select
 `method = AutoSpectral`.
@@ -1011,3 +1019,41 @@ Also, the plots shown here have hard cut-offs on the x and y axes,
 determined by arguments to create.biplot(). That can be modified, of
 course, but as stated, you’re better off doing that in dedicated flow
 analysis software.
+
+### References
+
+- Jameson VJ, Luke T, Yan Y, Hind A, Evrard M, Man K, Mackay LK, Kallies
+  A, Villadangos JA, McWilliam HEG, Perez-Gonzalez A (2022). Unlocking
+  autofluorescence in the era of full spectrum analysis: Implications
+  for immunophenotype discovery projects. *Cytometry A* 101(11):922-941.
+  [doi:10.1002/cyto.a.24555](https://doi.org/10.1002/cyto.a.24555)
+- Mage PL, Konecny AJ, Mair F (2026). Measurement and prediction of
+  unmixing-dependent spreading due to collinearity in spectral flow
+  cytometry. *Cytometry A* 109(6):436-455.
+  [doi:10.1002/cyto.a.70044](https://doi.org/10.1002/cyto.a.70044)
+- Niewold P, Ashhurst TM, Smith AL, King NJC (2020). Evaluating spectral
+  cytometry for immune profiling in viral disease. *Cytometry A*
+  97(11):1165-1179.
+  [doi:10.1002/cyto.a.24211](https://doi.org/10.1002/cyto.a.24211)
+- Pilkington KR (2024). Autofluorescence: From burden to benefit.
+  *Cytometry A* 105(8):563-567.
+  [doi:10.1002/cyto.a.24885](https://doi.org/10.1002/cyto.a.24885)
+- Roca CP, Burton OT, Gergelits V, Prezzemolo T, Whyte CE, Halpert R,
+  Kreft L, Collier J, Botzki A, Spidlen J, Humblet-Baron S, Liston A
+  (2021). AutoSpill is a principled framework that simplifies the
+  analysis of multichromatic flow cytometry data. *Nat Commun*
+  12(1):2890.
+  [doi:10.1038/s41467-021-23126-8](https://doi.org/10.1038/s41467-021-23126-8)
+- Roederer M (2002). Compensation in flow cytometry. *Curr Protoc Cytom*
+  Chapter 1:Unit 1.14.
+  [doi:10.1002/0471142956.cy0114s22](https://doi.org/10.1002/0471142956.cy0114s22)
+- Roet JEG, Mikula AM, de Kok M, Chadick CH, Garcia Vallejo JJ, Roest
+  HP, van der Laan LJW, de Winde CM, Mebius RE (2024). Unbiased method
+  for spectral analysis of cells with great diversity of
+  autofluorescence spectra. *Cytometry A* 105(8):595-606.
+  [doi:10.1002/cyto.a.24856](https://doi.org/10.1002/cyto.a.24856)
+- Wanner N, Barnhart J, Apostolakis N, Zlojutro V, Asosingh K (2022).
+  Using the Autofluorescence Finder on the Sony ID7000 Spectral Cell
+  Analyzer to identify and unmix multiple highly autofluorescent murine
+  lung populations. *Front Bioeng Biotechnol* 10:827987.
+  [doi:10.3389/fbioe.2022.827987](https://doi.org/10.3389/fbioe.2022.827987)

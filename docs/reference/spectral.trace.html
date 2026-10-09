@@ -19,7 +19,7 @@ splitting by excitation lasers, and saves the plots as JPEG files."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,7 +86,8 @@ splitting by excitation lasers, and saves the plots as JPEG files.</p>
 <span>  plot.width <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plot.height <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  file.type <span class="op">=</span> <span class="st">"jpg"</span>,</span>
-<span>  save <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  save <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  color.by.laser <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -159,6 +160,12 @@ is <code>NULL</code>.</p></dd>
 <dt id="arg-save">save<a class="anchor" aria-label="anchor" href="#arg-save"></a></dt>
 <dd><p>Logical, if <code>TRUE</code>, saves a file to the <code>plot.dir</code>.
 Otherwise, the plot will simply be created in the Viewer.</p></dd>
+
+
+<dt id="arg-color-by-laser">color.by.laser<a class="anchor" aria-label="anchor" href="#arg-color-by-laser"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Colour the detector axis
+labels by excitation laser (from <code>cytometer_database.csv</code>). Falls back to
+black labels if the detectors do not all map to the instrument's detectors.</p></dd>
 
 </dl></div>
     <div class="section level2">

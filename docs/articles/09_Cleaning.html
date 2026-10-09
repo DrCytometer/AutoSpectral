@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -128,25 +128,27 @@ PBMCs or staining other low-AF populations like lymph nodes. Once you
 get macrophages in the mix (e.g., splenocytes), this can definitely
 help. AF exclusion is never performed on beads.</p></li>
 <li><p>Matching negatives. Again, we need matching unstained samples
-(universal negatives). Here, we’re trying to match the background of the
-unstained and stained cells as closely as possible. For instance, if we
-are staining a T cell marker, the correct background to subtract is that
-of T cells. For a macrophage marker, we want to subtract the background
-given by unstained macrophages. While we can’t do that perfectly without
-sorting a whole bunch of different cell types (which wouldn’t work
-anyway due to changes in cells due to handling), we can do better than
-just using all the rest of the cells (the internal negative population).
-If we take the matching unstained sample, we can locate cells that have
-similar forward (FSC) and side scatter (SSC) profiles, and use these as
-the negative. This works pretty well as long as your negatives and
-positives have been treated identically and have been run on the same
-instrument settings.</p></li>
+(universal negatives). Matching the autofluorescence background of the
+negative to the positive events is a long-standing requirement for
+accurate spectra (Roederer, 2002). Here, we’re trying to match the
+background of the unstained and stained cells as closely as possible.
+For instance, if we are staining a T cell marker, the correct background
+to subtract is that of T cells. For a macrophage marker, we want to
+subtract the background given by unstained macrophages. While we can’t
+do that perfectly without sorting a whole bunch of different cell types
+(which wouldn’t work anyway due to changes in cells due to handling), we
+can do better than just using all the rest of the cells (the internal
+negative population). If we take the matching unstained sample, we can
+locate cells that have similar forward (FSC) and side scatter (SSC)
+profiles, and use these as the negative. This works pretty well as long
+as your negatives and positives have been treated identically and have
+been run on the same instrument settings.</p></li>
 </ol>
 <p>By default, <code>clean.controls</code> downsamples the data,
 selecting the <code>500</code> brightest events in the peak channel for
 each fluorophore’s control. The brightest events are almost always the
-most accurate, and this speeds up the calculations a great deal. Better
-results, faster.</p>
+most accurate (Roederer, 2002; Ferrer-Font et al., 2021), and this
+speeds up the calculations a great deal. Better results, faster.</p>
 <p>Right, let’s go over some data as an example.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span> <span class="va"><a href="https://github.com/DrCytometer/AutoSpectral" class="external-link">AutoSpectral</a></span> <span class="op">)</span></span>
@@ -175,8 +177,8 @@ control file and gating articles for more info.</p>
 <span><span class="va">flow.control.cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/define.flow.control.html">define.flow.control</a></span><span class="op">(</span> <span class="va">control.dir</span>, <span class="va">control.file.cells</span>, <span class="va">asp</span> <span class="op">)</span></span></code></pre></div>
 <p><img src="figures/Cleaning_cells_nonViability_smallGate.jpg" alt="Standard gate"><img src="figures/Cleaning_cells_nonViability_largeGate.jpg" alt="Large gate"></p>
 <p>We can get the fluorophore spectra using only the Robust Linear
-Modelling approach (no cleaning). This is slow since it calculates over
-all the gated data.</p>
+Modelling approach (no cleaning), as in AutoSpill (Roca et al., 2021).
+This is slow since it calculates over all the gated data.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spectra.cells.rlm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get.fluorophore.spectra.html">get.fluorophore.spectra</a></span><span class="op">(</span> <span class="va">flow.control.cells</span>, <span class="va">asp</span>, </span>
 <span>                                              title <span class="op">=</span> <span class="st">"Cells RLM"</span> <span class="op">)</span></span></code></pre></div>
@@ -315,6 +317,26 @@ number? It was over 80. Same panel, same controls, different result.</p>
 </div>
 <p>A value of 0.5 corresponds to 50% peak emission, in other words, a
 massive change.</p>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<ul>
+<li>Ferrer-Font L, Small SJ, Lewer B, Pilkington KR, Johnston LK, Park
+LM, Lannigan J, Jaimes MC, Price KM (2021). Panel optimization for
+high-dimensional immunophenotyping assays using full-spectrum flow
+cytometry. <em>Curr Protoc</em> 1(9):e222. <a href="https://doi.org/10.1002/cpz1.222" class="external-link">doi:10.1002/cpz1.222</a>
+</li>
+<li>Roca CP, Burton OT, Gergelits V, Prezzemolo T, Whyte CE, Halpert R,
+Kreft L, Collier J, Botzki A, Spidlen J, Humblet-Baron S, Liston A
+(2021). AutoSpill is a principled framework that simplifies the analysis
+of multichromatic flow cytometry data. <em>Nat Commun</em> 12(1):2890.
+<a href="https://doi.org/10.1038/s41467-021-23126-8" class="external-link">doi:10.1038/s41467-021-23126-8</a>
+</li>
+<li>Roederer M (2002). Compensation in flow cytometry. <em>Curr Protoc
+Cytom</em> Chapter 1:Unit 1.14. <a href="https://doi.org/10.1002/0471142956.cy0114s22" class="external-link">doi:10.1002/0471142956.cy0114s22</a>
+</li>
+</ul>
+</div>
   </main>
 </div>
 

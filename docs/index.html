@@ -33,7 +33,7 @@
 
     <a class="navbar-brand me-2" href="index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,17 +87,17 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>AutoSpectral is AutoSpill updated for the spectral flow era.</p>
+<p>AutoSpectral is AutoSpill (Roca et al., 2021) updated for the spectral flow era.</p>
 <p>The goal of AutoSpectral is to provide you with the best possible spectral signatures of the fluorophores in your single-stained controls. Whether or not these accurately model your fully stained samples will depend on what you’ve chosen to use for the controls, how they were prepared and other factors such as machine condition and any divergence in handling between samples and controls.</p>
 <p>More to the point, AutoSpectral is intended to make working with messy cell-based controls as easy as compensation beads. This should give you better accuracy and precision in your spectral definition and thus in your unmixing. AutoSpectral does not negate the requirement for good controls or good panel design. It will work better with better controls.</p>
 <p>AutoSpectral aims to provide reproducible unmixing, meaning that anyone should be able to obtain reliably good (probably better) unmixing from the same set of controls. The aim is to remove the human “fiddling” part, which is slow and not always so scientific.</p>
 <p>Plus, you can extract each cell’s individual autofluorescent background in a manner specific to that cell, producing better unmixing with less spread. Per-cell fluorescence spectral optimization can reduce unmixing errors in some cases.</p>
 <p>The central ideas are as follows:</p>
 <ul>
-<li>Encode Roederer’s Rules for controls as much as possible.</li>
+<li>Encode Roederer’s Rules for controls (Roederer, 2002; Ferrer-Font et al., 2021) as much as possible.</li>
 <li>Deal with cellular autofluorescence interfering with identifying fluorophore signatures.</li>
-<li>Autofluorescence is variable on a cell-to-cell basis, both in magnitude and in type. We can figure out, more or less, what this should be for each cell.</li>
-<li>Fluorophore emissions are variable, and this variability manifests on the level of the cell. Again, we can more or less figure this out and deal with it.</li>
+<li>Autofluorescence is variable on a cell-to-cell basis, both in magnitude and in type. We can figure out, more or less, what this should be for each cell. Manually defining multiple autofluorescence signatures is the established approach to this problem (Niewold et al., 2020; Wanner et al., 2022; Jameson et al., 2022; Roet et al., 2024; Pilkington, 2024); AutoSpectral automates the choice of signature for each cell.</li>
+<li>Fluorophore emissions are variable, and this variability manifests on the level of the cell. Again, we can more or less figure this out and deal with it. Spectral collinearity between fluorophores amplifies the resulting errors (Novo, 2022; Kmet &amp; Novo, 2025; Mage et al., 2026).</li>
 <li>By formalizing the unmixing workflow, we make it reproducible and available to users of any experience level (although this is currently limited by the R interface).</li>
 </ul>
 <p>At the moment, the following cytometers are supported:</p>
@@ -116,7 +116,8 @@
 <p>If you have data from a different instrument and are willing to share files, contact the author/maintainer.</p>
 <p>AutoSpectral will probably not solve all your unmixing issues; hopefully it will help. Here are some other tools that may also help:</p>
 <ul>
-<li><a href="https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html" class="external-link">CompensAID</a></li>
+<li>
+<a href="https://bioc.r-universe.dev/articles/CompensAID/CompensAID.html" class="external-link">CompensAID</a> (Olsman et al., 2026)</li>
 <li><a href="https://github.com/nlaniewski/spectracle/" class="external-link">spectracle</a></li>
 <li><a href="https://github.com/nlaniewski/flowstate" class="external-link">flowstate</a></li>
 <li><a href="https://github.com/pkheisig/spectreasy" class="external-link">spectreasy</a></li>
@@ -142,12 +143,12 @@
 <div class="section level3">
 <h3 id="latest-stable-release">Latest Stable Release<a class="anchor" aria-label="anchor" href="#latest-stable-release"></a>
 </h3>
-<p><strong>Version 1.8.3</strong></p>
+<p><strong>Version 1.8.7</strong></p>
 <p>Version 1.6+ provides a new automated approach to extracting spectral profiles. Most of the development here has been by Nathan Laniewksi. This is fast, highly reproducible, clean and avoids all the issues with gating. Try it out with <code><a href="reference/get.spectra.automated.html">get.spectra.automated()</a></code>.</p>
 <p>Version 1.6+ also provides a new unmixing pipeline for per-cell fluorophore optimization to eliminate discontinuities that appeared in some data sets. To use this approach, call <code><a href="reference/unmix.fcs.html">unmix.fcs()</a></code> or <code><a href="reference/unmix.folder.html">unmix.folder()</a></code> with <code>pipeline = "joint"</code>. Otherwise the unmixing will default to the original approach.</p>
 <p>This has been tested on Windows 11 and on macOS Sequoia 15.2 (Apple Silicon).</p>
 <p>Version 1.0+ is intended to greatly speed up the process of unmixing. This is done by pre-screening the variation in autofluorescence and fluorophores for each cell, identifying likely “best” candidates rather than using a brute force approach. If you are using <a href="https://github.com/DrCytometer/AutoSpectralRcpp" class="external-link">AutoSpectralRcpp</a>, you will need to update that for compatibility.</p>
-<p>To install the latest, hopefully stable version, install using <code>pak</code> or <code>remotes</code>. As of version 1.7.0, AutoSpectral relies primarily on SOM via an in-house port of the batched parallel SOM from <code>EmbedSOM</code> via <code>AutoSpectralRcpp</code>. If you do not install <code>AutoSpectralRcpp</code>, you will need to install <code>FlowSOM</code> via Bioconductor or using <code>pak</code>.</p>
+<p>To install the latest, hopefully stable version, install using <code>pak</code> or <code>remotes</code>. As of version 1.7.0, AutoSpectral relies primarily on self-organizing maps (SOM; Kohonen, 1995) via an in-house port of the batched parallel SOM from <code>EmbedSOM</code> (<a href="https://pubmed.ncbi.nlm.nih.gov/32518625/" class="external-link">PubMed 32518625</a>) via <code>AutoSpectralRcpp</code>. If you do not install <code>AutoSpectralRcpp</code>, you will need to install <code>FlowSOM</code> (Van Gassen et al., 2015) via Bioconductor or using <code>pak</code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># You'll need pak or remotes to install from GitHub.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
@@ -227,6 +228,46 @@
 <h2 id="updates-and-news">Updates and news<a class="anchor" aria-label="anchor" href="#updates-and-news"></a>
 </h2>
 <p>See the article <a href="https://drcytometer.github.io/AutoSpectral/articles/15_Updates_And_Issues.html">Updates and Issues</a> for more on this, or read the NEWS with the latest release.</p>
+</div>
+<div class="section level2">
+<h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
+</h2>
+<p>If you use AutoSpectral, please cite the manuscript:</p>
+<p>Burton OT, Laniewski N, Rogers SS, Lopez Munoz-de-Leon A, Khan S, Arunthavalingam J, Smith E, Bücken L, De Vuyst L, Humblet-Baron S, Cerveira J, Scheible K, Dooley J, Liston A. AutoSpectral improves spectral flow cytometry accuracy through optimised spectral unmixing and autofluorescence-matching at the cellular level. Manuscript; citation details will be updated on publication.</p>
+<p>The automated gating and robust linear modelling used to extract spectra from single-stained controls were developed in AutoSpill (Roca et al., 2021), so please cite that paper too.</p>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<ul>
+<li>Ferrer-Font L, Small SJ, Lewer B, Pilkington KR, Johnston LK, Park LM, Lannigan J, Jaimes MC, Price KM (2021). Panel optimization for high-dimensional immunophenotyping assays using full-spectrum flow cytometry. <em>Curr Protoc</em> 1(9):e222. <a href="https://doi.org/10.1002/cpz1.222" class="external-link">doi:10.1002/cpz1.222</a>
+</li>
+<li>Jameson VJ, Luke T, Yan Y, Hind A, Evrard M, Man K, Mackay LK, Kallies A, Villadangos JA, McWilliam HEG, Perez-Gonzalez A (2022). Unlocking autofluorescence in the era of full spectrum analysis: Implications for immunophenotype discovery projects. <em>Cytometry A</em> 101(11):922-941. <a href="https://doi.org/10.1002/cyto.a.24555" class="external-link">doi:10.1002/cyto.a.24555</a>
+</li>
+<li>Kmet R, Novo D (2025). Reducing spreading: removing the impact of irrelevant dyes improves unmixed flow cytometry data. <em>Cytometry A</em>. <a href="https://doi.org/10.1002/cyto.a.24957" class="external-link">doi:10.1002/cyto.a.24957</a>
+</li>
+<li>Kohonen T (1995). <em>Self-organizing maps</em>. Springer.</li>
+<li>Mage PL, Konecny AJ, Mair F (2026). Measurement and prediction of unmixing-dependent spreading due to collinearity in spectral flow cytometry. <em>Cytometry A</em> 109(6):436-455. <a href="https://doi.org/10.1002/cyto.a.70044" class="external-link">doi:10.1002/cyto.a.70044</a>
+</li>
+<li>Niewold P, Ashhurst TM, Smith AL, King NJC (2020). Evaluating spectral cytometry for immune profiling in viral disease. <em>Cytometry A</em> 97(11):1165-1179. <a href="https://doi.org/10.1002/cyto.a.24211" class="external-link">doi:10.1002/cyto.a.24211</a>
+</li>
+<li>Novo D (2022). A comparison of spectral unmixing to conventional compensation for the calculation of fluorochrome abundances from flow cytometric data. <em>Cytometry A</em> 101(11):885-891. <a href="https://doi.org/10.1002/cyto.a.24669" class="external-link">doi:10.1002/cyto.a.24669</a>
+</li>
+<li>Olsman R, Bonte S, Hofmans M, Buysse M, Van der Borght K, Saeys Y, van der Velden VHJ, Van Gassen S (2026). CompensAID: An automated detection tool for reference errors. <em>Cytometry A</em> 109(2):124-134. <a href="https://doi.org/10.1002/cyto.a.70016" class="external-link">doi:10.1002/cyto.a.70016</a>
+</li>
+<li>Pilkington KR (2024). Autofluorescence: From burden to benefit. <em>Cytometry A</em> 105(8):563-567. <a href="https://doi.org/10.1002/cyto.a.24885" class="external-link">doi:10.1002/cyto.a.24885</a>
+</li>
+<li>Roca CP, Burton OT, Gergelits V, Prezzemolo T, Whyte CE, Halpert R, Kreft L, Collier J, Botzki A, Spidlen J, Humblet-Baron S, Liston A (2021). AutoSpill is a principled framework that simplifies the analysis of multichromatic flow cytometry data. <em>Nat Commun</em> 12(1):2890. <a href="https://doi.org/10.1038/s41467-021-23126-8" class="external-link">doi:10.1038/s41467-021-23126-8</a>
+</li>
+<li>Roederer M (2002). Compensation in flow cytometry. <em>Curr Protoc Cytom</em> Chapter 1:Unit 1.14. <a href="https://doi.org/10.1002/0471142956.cy0114s22" class="external-link">doi:10.1002/0471142956.cy0114s22</a>
+</li>
+<li>Roet JEG, Mikula AM, de Kok M, Chadick CH, Garcia Vallejo JJ, Roest HP, van der Laan LJW, de Winde CM, Mebius RE (2024). Unbiased method for spectral analysis of cells with great diversity of autofluorescence spectra. <em>Cytometry A</em> 105(8):595-606. <a href="https://doi.org/10.1002/cyto.a.24856" class="external-link">doi:10.1002/cyto.a.24856</a>
+</li>
+<li>Van Gassen S, Callebaut B, Van Helden MJ, Lambrecht BN, Demeester P, Dhaene T, Saeys Y (2015). FlowSOM: Using self-organizing maps for visualization and interpretation of cytometry data. <em>Cytometry A</em> 87(7):636-645. <a href="https://doi.org/10.1002/cyto.a.22625" class="external-link">doi:10.1002/cyto.a.22625</a>
+</li>
+<li>Wanner N, Barnhart J, Apostolakis N, Zlojutro V, Asosingh K (2022). Using the Autofluorescence Finder on the Sony ID7000 Spectral Cell Analyzer to identify and unmix multiple highly autofluorescent murine lung populations. <em>Front Bioeng Biotechnol</em> 10:827987. <a href="https://doi.org/10.3389/fbioe.2022.827987" class="external-link">doi:10.3389/fbioe.2022.827987</a>
+</li>
+</ul>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

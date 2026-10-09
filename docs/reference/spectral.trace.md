@@ -20,7 +20,8 @@ spectral.trace(
   plot.width = NULL,
   plot.height = NULL,
   file.type = "jpg",
-  save = TRUE
+  save = TRUE,
+  color.by.laser = TRUE
 )
 ```
 
@@ -90,6 +91,12 @@ spectral.trace(
 
   Logical, if `TRUE`, saves a file to the `plot.dir`. Otherwise, the
   plot will simply be created in the Viewer.
+
+- color.by.laser:
+
+  Logical, default `TRUE`. Colour the detector axis labels by excitation
+  laser (from `cytometer_database.csv`). Falls back to black labels if
+  the detectors do not all map to the instrument's detectors.
 
 ## Value
 

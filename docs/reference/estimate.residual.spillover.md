@@ -39,9 +39,12 @@ estimate.residual.spillover(
 
 - negative.mask:
 
-  Logical vector, length `nrow(unmixed)`, `TRUE` for events already
-  known to be target-negative. Used directly in place of the batched
-  estimator's own negative-event inference.
+  Logical, `TRUE` for events already known to be target-negative, used
+  in place of the batched estimator's own negative-event inference.
+  Either a matrix (events x `length(targets)`), giving negativity per
+  target, or a vector of length `nrow(unmixed)`, applied to every
+  target. `FALSE` marks an event as never negative for that target; `NA`
+  falls through to `threshold.target`.
 
 - threshold.source:
 

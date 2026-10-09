@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -361,11 +361,12 @@ spectral profiles from BD S8/A8 FCS files.</li>
 </li>
 <li>Calculate the secondary stain index per “Evaluating the performance
 of Slingshot SpectraComp particles as universal single stain controls in
-flow cytometry” by Oliveira et al. Call
-<code><a href="../reference/calculate.ssi.html">calculate.ssi()</a></code>.</li>
+flow cytometry” by Oliveira et al. The index is defined in <a href="https://wi.mit.edu/sites/default/files/2021-05/20200504_Post-it_Secondary_Stain_Index_Final.pdf" class="external-link">Morgado
+(2020)</a>. Call <code><a href="../reference/calculate.ssi.html">calculate.ssi()</a></code>.</li>
 <li>Plot the mismatch between two spectral profiles (e.g., beads
-vs. cells) as in the pre-print by Konecny et al. on unmixing-dependent
-spread. Call <code>ppectral.mismatch.plot()</code>.</li>
+vs. cells) as in the paper by <a href="https://doi.org/10.1002/cyto.a.70044" class="external-link">Mage, Konecny and Mair
+(2026)</a> (previously a pre-print) on unmixing-dependent spread. Call
+<code>ppectral.mismatch.plot()</code>.</li>
 <li>Compare unmixing of the same data side-by-side with two different
 spectral mixing matrices. Call <code><a href="../reference/compare.unmix.html">compare.unmix()</a></code>.</li>
 <li>Multiple file formats when creating plots: pdf, tiff, png, jpg,

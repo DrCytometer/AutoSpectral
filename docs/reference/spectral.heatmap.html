@@ -19,7 +19,7 @@ color palette, and saves it as a JPEG file."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +83,9 @@ color palette, and saves it as a JPEG file.</p>
 <span>  show.legend <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot.width <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plot.height <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  file.type <span class="op">=</span> <span class="st">"jpg"</span></span>
+<span>  file.type <span class="op">=</span> <span class="st">"jpg"</span>,</span>
+<span>  color.by.laser <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  asp <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -140,6 +142,18 @@ case the height will be scaled automatically based on the number of rows in
 <dt id="arg-file-type">file.type<a class="anchor" aria-label="anchor" href="#arg-file-type"></a></dt>
 <dd><p>Character string specifying the output file format. One of
 <code>"jpg"</code> (default), <code>"jpeg"</code>, <code>"tiff"</code>, <code>"png"</code>, or <code>"pdf"</code>.</p></dd>
+
+
+<dt id="arg-color-by-laser">color.by.laser<a class="anchor" aria-label="anchor" href="#arg-color-by-laser"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Colour the detector axis
+labels by excitation laser (from <code>cytometer_database.csv</code>). Falls back to
+black labels if the detectors do not all map to the instrument's detectors.</p></dd>
+
+
+<dt id="arg-asp">asp<a class="anchor" aria-label="anchor" href="#arg-asp"></a></dt>
+<dd><p>Optional AutoSpectral parameter list, used only to identify the
+cytometer for <code>color.by.laser</code>. If <code>NULL</code> (default), the cytometer is
+identified from the detector names.</p></dd>
 
 </dl></div>
     <div class="section level2">

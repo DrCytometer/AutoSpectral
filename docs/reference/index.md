@@ -226,6 +226,8 @@
   : Extract Spectra From BD FCS File
 - [`read.channel()`](https://drcytometer.github.io/AutoSpectral/reference/read.channel.md)
   : Read Channel Information
+- [`read.fcs.clean()`](https://drcytometer.github.io/AutoSpectral/reference/read.fcs.clean.md)
+  : Read And Clean An FCS File
 - [`read.scatter.parameter()`](https://drcytometer.github.io/AutoSpectral/reference/read.scatter.parameter.md)
   : Read Scatter Parameters
 - [`read.spectra()`](https://drcytometer.github.io/AutoSpectral/reference/read.spectra.md)

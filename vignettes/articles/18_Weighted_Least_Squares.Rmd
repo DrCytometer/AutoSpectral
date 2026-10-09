@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
 
 ## Why weighting matters
 
-Ordinary least squares (OLS) unmixing treats every detector as equally reliable.
+Ordinary least squares (OLS) unmixing treats every detector as equally reliable. OLS and weighted least squares (WLS) unmixing for spectral flow cytometry were described by Futamura et al. (2015) and Nolan et al. (2013).
 In practice, detectors are not equally reliable. Under a Poisson noise model,
 absolute noise scales with signal level: a channel carrying high photon counts
 has high absolute variance and therefore a less precise measurement. Weighted 
@@ -314,8 +314,10 @@ every event; see the [Speed It Up](https://drcytometer.github.io/AutoSpectral/ar
 article for benchmarks and guidance on accelerating it with `AutoSpectralRcpp`.
 Also, per-cell autofluorescence extraction generally outperforms WLS and Poisson.
 
-The reference for the Poisson unmixing model is:
+The reference for the Poisson unmixing model is Novo et al. (2013).
 
-> Novo D. et al. (2014). Generalized Unmixing Model for Multispectral Flow
-> Cytometry Utilizing Nonsquare Compensation Matrices. *Cytometry Part A*,
-> 83(5):508-520. <https://doi.org/10.1002/cyto.a.22272>
+## References
+
+- Futamura K, Sekino M, Hata A, Ikebuchi R, Nakanishi Y, Egawa G, Kabashima K, Watanabe T, Furuki M, Tomura M (2015). Novel full-spectral flow cytometry with multiple spectrally-adjacent fluorescent proteins and fluorochromes and visualization of in vivo cellular movement. *Cytometry A* 87(9):830-842. [doi:10.1002/cyto.a.22725](https://doi.org/10.1002/cyto.a.22725)
+- Nolan JP, Condello D, Duggan E, Naivar M, Novo D (2013). Visible and near infrared fluorescence spectral flow cytometry. *Cytometry A* 83(3):253-264. [doi:10.1002/cyto.a.22241](https://doi.org/10.1002/cyto.a.22241)
+- Novo D, Gregori G, Rajwa B (2013). Generalized unmixing model for multispectral flow cytometry utilizing nonsquare compensation matrices. *Cytometry A* 83(5):508-520. [doi:10.1002/cyto.a.22272](https://doi.org/10.1002/cyto.a.22272)

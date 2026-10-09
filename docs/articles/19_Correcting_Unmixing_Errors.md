@@ -6,9 +6,10 @@ One key problem in spectral cytometry is what to do when the unmixing
 isn’t correct. Oftentimes this means that the controls weren’t a good
 match for the sample, and better controls a probably the best solution.
 See BioLegend beads, Slingshot aka Spectracomp beads, CD45 bispecific
-binding or just good old cells for options. Mathematically, however, it
-should be possible to account for low levels of mismatch between the
-control and the sample, adapting the unmixing to adjust for this.
+binding (CaptureBody; Zambidis et al., 2026) or just good old cells for
+options. Mathematically, however, it should be possible to account for
+low levels of mismatch between the control and the sample, adapting the
+unmixing to adjust for this.
 
 The current implementation of AutoSpectral does not provide “adaptive”
 unmixing. It only uses variation found in the single-stained controls to
@@ -75,9 +76,10 @@ reduction.
 
 At present, there are a couple of ways this noise is dealt with in
 certain unmixing approaches already available. Weighted least squares
-allows you to take individual detector noise levels into account,
-effectively saying that some of the raw measurements are more reliable
-than others. Poisson unmixing takes this a step further: it adapts to
+(Futamura et al., 2015; Nolan et al., 2013) allows you to take
+individual detector noise levels into account, effectively saying that
+some of the raw measurements are more reliable than others. Poisson
+unmixing (Novo et al., 2013) takes this a step further: it adapts to
 each cell, determining a unique set of weights for each cell based on
 the magnitude of signals in that cell (more signal = more noise from
 spillover). Multiple autofluorescence extraction can be considered as a
@@ -96,33 +98,34 @@ The locations of the errors are quite predictable from the data we can
 get from the single-stained controls. Our PE-Cy7 can produce an error
 against PE, but it should never produce one directly against BUV395,
 with which it shares no overlap in detector signal. So, collinearity
-(e.g., cosine similarity) is involved. I am going to suggest, however,
-that the key is to consider the similarity between the variability in
-Fluorophore A versus the profile of Fluorophore B. Where do we get
-variability in our PE-tandems? In the PE region (from tandem breakdown),
-in the direct laser excitation of the tandem element (say red laser
-exciting Cy7 weakly), and in the echoes of that across other laser
-excitation lines. The variance (or standard deviation, or covariance if
-you want to be fancy) of the fluorophore (and autofluorescence)
-emissions propagates as error through the unmixing matrix. We can take
-the variation in spectral signature, as produced by AutoSpectral here,
-and consider this a map of where we will have problems for a given
-fluorophore. Compiling all the similarity values for fluorophore
-variability versus other fluorophore signatures allows us to make a
-heatmap for a panel like this:
+(e.g., cosine similarity) is involved (Mage et al., 2026; Kmet & Novo,
+2025). I am going to suggest, however, that the key is to consider the
+similarity between the variability in Fluorophore A versus the profile
+of Fluorophore B. Where do we get variability in our PE-tandems? In the
+PE region (from tandem breakdown), in the direct laser excitation of the
+tandem element (say red laser exciting Cy7 weakly), and in the echoes of
+that across other laser excitation lines. The variance (or standard
+deviation, or covariance if you want to be fancy) of the fluorophore
+(and autofluorescence) emissions propagates as error through the
+unmixing matrix. We can take the variation in spectral signature, as
+produced by AutoSpectral here, and consider this a map of where we will
+have problems for a given fluorophore. Compiling all the similarity
+values for fluorophore variability versus other fluorophore signatures
+allows us to make a heatmap for a panel like this:
 
 ![Covariance Matrix](figures/19_Predicting/error_propagation.jpg)
 
 Covariance Matrix
 
-Notice how we get a hotspot for BUV661 versus APC. In this panel, there
-is a lot of spillover spread (uncertainty) from BUV661 into APC (but not
-the other way around). We also get a peak for PE-Vio770 into
-RB780—that’s the blue laser excitation of PE-Vio770 (like PE-Cy7)
-interfering with RB780 measurements. A very good reason to use the new
-dyes. There is generally a lot of uncertainty around 500nm in the
-violet, where I have intentionally overloaded the panel to trigger
-unmixing errors with respect to autofluorescence.
+Notice how we get a hotspot for BUV661 versus APC (hotspot matrix as in
+Mage et al., 2026). In this panel, there is a lot of spillover spread
+(uncertainty) from BUV661 into APC (but not the other way around). We
+also get a peak for PE-Vio770 into RB780—that’s the blue laser
+excitation of PE-Vio770 (like PE-Cy7) interfering with RB780
+measurements. A very good reason to use the new dyes. There is generally
+a lot of uncertainty around 500nm in the violet, where I have
+intentionally overloaded the panel to trigger unmixing errors with
+respect to autofluorescence.
 
 This error propagation matrix isn’t a new concept, as far as I can work
 out. It appears to be well known in statistics. I’m also blundering
@@ -168,3 +171,33 @@ discrete profiles that are useful for unmixing without introducing
 spread from collinearity.
 
 Anyway, this is fairly speculative still.
+
+## References
+
+- Futamura K, Sekino M, Hata A, Ikebuchi R, Nakanishi Y, Egawa G,
+  Kabashima K, Watanabe T, Furuki M, Tomura M (2015). Novel
+  full-spectral flow cytometry with multiple spectrally-adjacent
+  fluorescent proteins and fluorochromes and visualization of in vivo
+  cellular movement. *Cytometry A* 87(9):830-842.
+  [doi:10.1002/cyto.a.22725](https://doi.org/10.1002/cyto.a.22725)
+- Kmet R, Novo D (2025). Reducing spreading: removing the impact of
+  irrelevant dyes improves unmixed flow cytometry data. *Cytometry A*.
+  [doi:10.1002/cyto.a.24957](https://doi.org/10.1002/cyto.a.24957)
+- Mage PL, Konecny AJ, Mair F (2026). Measurement and prediction of
+  unmixing-dependent spreading due to collinearity in spectral flow
+  cytometry. *Cytometry A* 109(6):436-455.
+  [doi:10.1002/cyto.a.70044](https://doi.org/10.1002/cyto.a.70044)
+- Nolan JP, Condello D, Duggan E, Naivar M, Novo D (2013). Visible and
+  near infrared fluorescence spectral flow cytometry. *Cytometry A*
+  83(3):253-264.
+  [doi:10.1002/cyto.a.22241](https://doi.org/10.1002/cyto.a.22241)
+- Novo D, Gregori G, Rajwa B (2013). Generalized unmixing model for
+  multispectral flow cytometry utilizing nonsquare compensation
+  matrices. *Cytometry A* 83(5):508-520.
+  [doi:10.1002/cyto.a.22272](https://doi.org/10.1002/cyto.a.22272)
+- Zambidis AE, Siddaramaiah LK, Gray M, Konecny AJ, Prlic M (2026).
+  CaptureBody enables accurate unmixing for spectral flow cytometry.
+  *Cell Rep Methods* 101571.
+  [doi:10.1016/j.crmeth.2026.101571](https://doi.org/10.1016/j.crmeth.2026.101571)
+  [full
+  text](https://www.cell.com/cell-reports-methods/fulltext/S2667-2375%2826%2900272-9)
