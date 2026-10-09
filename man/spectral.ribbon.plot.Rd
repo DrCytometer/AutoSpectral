@@ -20,7 +20,8 @@ spectral.ribbon.plot(
   af = FALSE,
   plot.width = 15,
   plot.height = 10,
-  max.points = 50000
+  max.points = 50000,
+  color.by.laser = TRUE
 )
 }
 \arguments{
@@ -73,6 +74,10 @@ whether autofluorescence removal is being performed. Default is \code{FALSE}.}
 \item{plot.height}{Height of the saved plot. Default is \code{10}.}
 
 \item{max.points}{Number of events per panel to plot. Default is \code{5e4}.}
+
+\item{color.by.laser}{Logical, default \code{TRUE}. Colour the detector axis
+labels by excitation laser (from \code{cytometer_database.csv}). Falls back to
+black labels if the detectors do not all map to the instrument's detectors.}
 }
 \value{
 None. The function saves the generated spectral ribbon plot to

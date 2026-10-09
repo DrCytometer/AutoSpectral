@@ -14,7 +14,9 @@ spectral.heatmap(
   show.legend = TRUE,
   plot.width = NULL,
   plot.height = NULL,
-  file.type = "jpg"
+  file.type = "jpg",
+  color.by.laser = TRUE,
+  asp = NULL
 )
 }
 \arguments{
@@ -48,6 +50,14 @@ case the height will be scaled automatically based on the number of rows in
 
 \item{file.type}{Character string specifying the output file format. One of
 \code{"jpg"} (default), \code{"jpeg"}, \code{"tiff"}, \code{"png"}, or \code{"pdf"}.}
+
+\item{color.by.laser}{Logical, default \code{TRUE}. Colour the detector axis
+labels by excitation laser (from \code{cytometer_database.csv}). Falls back to
+black labels if the detectors do not all map to the instrument's detectors.}
+
+\item{asp}{Optional AutoSpectral parameter list, used only to identify the
+cytometer for \code{color.by.laser}. If \code{NULL} (default), the cytometer is
+identified from the detector names.}
 }
 \value{
 Saves the heatmap plot as an image file in the specified directory.

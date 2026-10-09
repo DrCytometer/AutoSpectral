@@ -15,7 +15,9 @@ spectral.variant.plot(
   variant.fill.color = "red",
   variant.fill.alpha = 0.7,
   median.line.color = "black",
-  median.linewidth = 1
+  median.linewidth = 1,
+  color.by.laser = TRUE,
+  asp = NULL
 )
 }
 \arguments{
@@ -54,6 +56,14 @@ optimized single spectrum. Default is "black".}
 
 \item{median.linewidth}{Width of the line for the single optimized spectrum.
 Default is \code{1}.}
+
+\item{color.by.laser}{Logical, default \code{TRUE}. Colour the detector axis
+labels by excitation laser (from \code{cytometer_database.csv}). Falls back to
+black labels if the detectors do not all map to the instrument's detectors.}
+
+\item{asp}{Optional AutoSpectral parameter list, used only to identify the
+cytometer for \code{color.by.laser}. If \code{NULL} (default), the cytometer is
+identified from the detector names.}
 }
 \value{
 Plots are displayed to the Viewer. Files are saved if saving enabled.

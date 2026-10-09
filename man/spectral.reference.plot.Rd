@@ -24,7 +24,8 @@ spectral.reference.plot(
   filename = "spectral_qc_report.pdf",
   comparison.spectra = NULL,
   comparison.label = "Pre-refinement",
-  highlight.fluors = character(0L)
+  highlight.fluors = character(0L),
+  color.by.laser = TRUE
 )
 }
 \arguments{
@@ -94,6 +95,10 @@ for the \code{comparison.spectra}.}
 
 \item{highlight.fluors}{Optional numeric for differentiating comparison fluors
 in the plots with the "refined" tag.}
+
+\item{color.by.laser}{Logical, default \code{TRUE}. Colour the detector axis
+labels by excitation laser (from \code{cytometer_database.csv}). Falls back to
+black labels if the detectors do not all map to the instrument's detectors.}
 }
 \value{
 None. Plots are saved to a PDF in \code{plot.dir}.

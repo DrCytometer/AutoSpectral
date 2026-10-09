@@ -16,7 +16,9 @@ spectral.variant.plot.dens(
   variant.alpha = 0.05,
   variant.linewidth = 1.5,
   median.line.color = "black",
-  median.linewidth = 1
+  median.linewidth = 1,
+  color.by.laser = TRUE,
+  asp = NULL
 )
 }
 \arguments{
@@ -53,6 +55,14 @@ is \code{"red"}.}
 
 \item{median.linewidth}{Thickness of the median reference line. Default is
 \code{1}.}
+
+\item{color.by.laser}{Logical, default \code{TRUE}. Colour the detector axis
+labels by excitation laser (from \code{cytometer_database.csv}). Falls back to
+black labels if the detectors do not all map to the instrument's detectors.}
+
+\item{asp}{Optional AutoSpectral parameter list, used only to identify the
+cytometer for \code{color.by.laser}. If \code{NULL} (default), the cytometer is
+identified from the detector names.}
 }
 \value{
 The \code{ggplot} object representing the variant density plot. When
