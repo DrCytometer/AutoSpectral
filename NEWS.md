@@ -1,4 +1,4 @@
-# AutoSpectral (development version)
+# AutoSpectral 1.8.7 (2026-10-09)
 
 ## New Features
 
