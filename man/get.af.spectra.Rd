@@ -260,9 +260,16 @@ variant plot. Default is \code{"black"}.}
 }
 \value{
 A matrix of autofluorescence spectra (spectra in rows, detectors in
-columns). Row 1 is the population mean of the base spectra; subsequent rows
-are the deduplicated base spectra and, if \code{refine = TRUE}, any solver-
-validated spectra discovered from under-represented problem cells.
+columns). The rows are the population mean of the base spectra, the
+deduplicated base spectra and, if \code{refine = TRUE}, any solver-validated
+spectra discovered from under-represented problem cells. Rows are ordered
+by spectral angle to the mean AF spectrum, smallest angle (most similar)
+first, so row 1 is the mean itself (angle 0) and the row index (\code{"AF1"},
+\code{"AF2"}, ...) increases with spectral dissimilarity from the mean. This
+makes the AF index roughly continuous, so it can be used directly for
+plotting and summary statistics. The ranking is a one-dimensional
+projection: two spectra that are equally far from the mean, but in
+different directions, receive adjacent ranks.
 }
 \description{
 Extracts autofluorescence spectra from an unstained sample. Intended for use
@@ -279,7 +286,8 @@ the real per-cell AF solver demonstrably prefers them.
 }
 \references{
 Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-87(7), 636-645. \doi{10.1002/cyto.a.22625}
+visualization and interpretation of cytometry data." \emph{Cytometry A},
+\emph{87}(7), 636-645. \doi{10.1002/cyto.a.22625}
 Wehrens R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen
 3.0." \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
 \doi{10.18637/jss.v087.i07}
