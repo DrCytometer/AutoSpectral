@@ -148,6 +148,8 @@ steps automatically, without requiring you to define or tune any gates:
    more like the reference spectrum, that one is kept. In the event of a fallback
    check, both versions of the spectrum are saved for you to inspect.
 
+Selecting the brightest events and matching the autofluorescence background of the negative follows Roederer (2002) and Ferrer-Font et al. (2021). The legacy fallback pipeline is adapted from AutoSpill (Roca et al., 2021).
+
 The default settings work well across a wide range of panels, but the key
 parameters can be adjusted if needed:
 
@@ -190,7 +192,7 @@ knitr::include_graphics("figures/Automated_workflow/Automated_autospectral_simil
 ```
 
 **Hotspot matrix** (`figure_similarity_heatmap/`) — highlights fluorophore pairs with high spectral overlap,
-as in Mage et al. Values above 6 are most likely to cause unmixing problems;
+as in Mage et al. (2026). Values above 6 are most likely to cause unmixing problems;
 values between 4 and 6 are worth reviewing.
 
 ```{r, echo=FALSE, fig.cap="Hotspot Matrix Heatmap", fig.align="center"}
@@ -506,3 +508,10 @@ Here we have CD45-BUV395 and CD4-BV421. There really shouldn't be much of anythi
 The original unmixing only uses a single autofluorescence parameter. As mentioned at the beginning of this post, you can use multiple autofluorescence to achieve better results in SpectroFlo with this small panel as it has been designed to accommodate that. There is no one solution for that approach, though.
 
 Also, the plots shown here have hard cut-offs on the x and y axes, determined by arguments to create.biplot(). That can be modified, of course, but as stated, you're better off doing that in dedicated flow analysis software.
+
+## References
+
+- Ferrer-Font L, Small SJ, Lewer B, Pilkington KR, Johnston LK, Park LM, Lannigan J, Jaimes MC, Price KM (2021). Panel optimization for high-dimensional immunophenotyping assays using full-spectrum flow cytometry. *Curr Protoc* 1(9):e222. [doi:10.1002/cpz1.222](https://doi.org/10.1002/cpz1.222)
+- Mage PL, Konecny AJ, Mair F (2026). Measurement and prediction of unmixing-dependent spreading due to collinearity in spectral flow cytometry. *Cytometry A* 109(6):436-455. [doi:10.1002/cyto.a.70044](https://doi.org/10.1002/cyto.a.70044)
+- Roca CP, Burton OT, Gergelits V, Prezzemolo T, Whyte CE, Halpert R, Kreft L, Collier J, Botzki A, Spidlen J, Humblet-Baron S, Liston A (2021). AutoSpill is a principled framework that simplifies the analysis of multichromatic flow cytometry data. *Nat Commun* 12(1):2890. [doi:10.1038/s41467-021-23126-8](https://doi.org/10.1038/s41467-021-23126-8)
+- Roederer M (2002). Compensation in flow cytometry. *Curr Protoc Cytom* Chapter 1:Unit 1.14. [doi:10.1002/0471142956.cy0114s22](https://doi.org/10.1002/0471142956.cy0114s22)

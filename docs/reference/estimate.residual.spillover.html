@@ -21,7 +21,7 @@ estimator to infer it."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,9 +110,12 @@ columns in <code>unmixed</code> to estimate residual spillover into.</p></dd>
 
 
 <dt id="arg-negative-mask">negative.mask<a class="anchor" aria-label="anchor" href="#arg-negative-mask"></a></dt>
-<dd><p>Logical vector, length <code>nrow(unmixed)</code>, <code>TRUE</code> for
-events already known to be target-negative. Used directly in place of
-the batched estimator's own negative-event inference.</p></dd>
+<dd><p>Logical, <code>TRUE</code> for events already known to be
+target-negative, used in place of the batched estimator's own
+negative-event inference. Either a matrix (events x <code>length(targets)</code>),
+giving negativity per target, or a vector of length <code>nrow(unmixed)</code>,
+applied to every target. <code>FALSE</code> marks an event as never negative for
+that target; <code>NA</code> falls through to <code>threshold.target</code>.</p></dd>
 
 
 <dt id="arg-threshold-source">threshold.source<a class="anchor" aria-label="anchor" href="#arg-threshold-source"></a></dt>

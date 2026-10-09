@@ -17,7 +17,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,6 +63,46 @@
       <small>Source: <a href="https://github.com/DrCytometer/AutoSpectral/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="autospectral-development-version">AutoSpectral (development version)<a class="anchor" aria-label="anchor" href="#autospectral-development-version"></a></h2>
+<div class="section level3">
+<h3 id="new-features-development-version">New Features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<ul><li>
+<code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> now returns the AF spectra ranked by spectral angle to the mean AF spectrum (smallest angle first, row 1 is the mean), with rows renamed <code>AF1</code>, <code>AF2</code>, … in that order, so the AF index is roughly continuous.</li>
+<li>Detector axis labels are now coloured by excitation laser in <code><a href="../reference/spectral.trace.html">spectral.trace()</a></code>, <code><a href="../reference/spectral.heatmap.html">spectral.heatmap()</a></code>, <code><a href="../reference/spectral.mismatch.plot.html">spectral.mismatch.plot()</a></code>, <code><a href="../reference/spectral.reference.plot.html">spectral.reference.plot()</a></code>, <code><a href="../reference/spectral.ribbon.plot.html">spectral.ribbon.plot()</a></code>, <code><a href="../reference/spectral.variant.plot.html">spectral.variant.plot()</a></code> and <code><a href="../reference/spectral.variant.plot.dens.html">spectral.variant.plot.dens()</a></code> (new argument <code>color.by.laser</code>, default <code>TRUE</code>). Lasers come from <code>cytometer_database.csv</code>, using the cytometer in <code>asp</code> or, for functions without <code>asp</code> (now an optional argument there), the database column matching all detector names. Labels fall back to black if the detectors do not all map to the instrument’s detectors.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li>In <code><a href="../reference/create.biplot.html">create.biplot()</a></code>, spillover-spread boundary curves now stop where they reach the axis limits instead of continuing along the plot edge.</li>
+<li>In <code><a href="../reference/create.biplot.html">create.biplot()</a></code>, the x-direction spillover-spread boundaries are drawn in data order (<code>geom_path()</code>); <code>geom_line()</code> sorted them by x, interleaving the positive- and negative-y branches into a zigzag.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.8.6" id="autospectral-186-2026-09-30">AutoSpectral 1.8.6 (2026-09-30)<a class="anchor" aria-label="anchor" href="#autospectral-186-2026-09-30"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-8-6">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-8-6"></a></h3>
+<ul><li>
+<code><a href="../reference/read.fcs.clean.html">read.fcs.clean()</a></code> is now exported. This is the FCS reader used by <code><a href="../reference/get.spectra.automated.html">get.spectra.automated()</a></code> (saturation removal, scatter-maximum removal and two-pass Area/Height singlet gating), made available so that related samples can be cleaned identically elsewhere (e.g., <code>FlowCodeUnmix::unmix.backbone()</code>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-8-6">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-8-6"></a></h3>
+<ul><li>
+<code><a href="../reference/estimate.residual.spillover.html">estimate.residual.spillover()</a></code> now accepts <code>negative.mask</code> as a vector (one value per event, applied to every target), as documented. Previously a vector only set the first target column, leaving every other target with no negative events.</li>
+<li>
+<code><a href="../reference/apply.gate.html">apply.gate()</a></code> now always returns a matrix (or data frame), including when the gate retains a single event.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.8.4" id="autospectral-184-2026-09-23">AutoSpectral 1.8.4 (2026-09-23)<a class="anchor" aria-label="anchor" href="#autospectral-184-2026-09-23"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-1-8-4">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-8-4"></a></h3>
+<ul><li>In <code><a href="../reference/tune.gate.html">tune.gate()</a></code> and <code><a href="../reference/define.gate.landmarks.html">define.gate.landmarks()</a></code>, the regex string used to identify unstained (or AF) controls wasn’t anchored properly.</li>
+<li>Negative or unstained samples are more systematically identified for <code><a href="../reference/clean.controls.html">clean.controls()</a></code> to avoid running AF removal on these.</li>
+<li>In <code><a href="../reference/refine.fluorophore.spectra.html">refine.fluorophore.spectra()</a></code>, AF will now be processed alongside other fluorophores if it is present in <code>spectra</code>. This failed previously.</li>
+<li>Updates to the default values in <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> affecting deduplication and refinement.</li>
+<li>The <code>refine</code> section of <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> should now run faster: kNN searching was being repeated per problem group, and the SOM dimensions on the problematic cells were being allowed to go very high.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.8.3" id="autospectral-183-2026-09-22">AutoSpectral 1.8.3 (2026-09-22)<a class="anchor" aria-label="anchor" href="#autospectral-183-2026-09-22"></a></h2>
 <div class="section level3">
@@ -286,8 +326,8 @@
 <h3 id="improvements-1-5-6">Improvements<a class="anchor" aria-label="anchor" href="#improvements-1-5-6"></a></h3>
 <ul><li>M x N and N x N plotting of unmixed data using <code><a href="../reference/unmixed.mxn.plot.html">unmixed.mxn.plot()</a></code> and <code><a href="../reference/unmixed.nxn.plot.html">unmixed.nxn.plot()</a></code>
 </li>
-<li>Calculate the secondary stain index per “Evaluating the performance of Slingshot SpectraComp particles as universal single stain controls in flow cytometry” by Oliveira et al. Call <code><a href="../reference/calculate.ssi.html">calculate.ssi()</a></code>.</li>
-<li>Plot the mismatch between two spectral profiles (e.g., beads vs. cells) as in the pre-print by Konecny et al. on unmixing-dependent spread. Call <code>ppectral.mismatch.plot()</code>.</li>
+<li>Calculate the secondary stain index per “Evaluating the performance of Slingshot SpectraComp particles as universal single stain controls in flow cytometry” by Oliveira et al. The index is defined in <a href="https://wi.mit.edu/sites/default/files/2021-05/20200504_Post-it_Secondary_Stain_Index_Final.pdf" class="external-link">Morgado (2020)</a>. Call <code><a href="../reference/calculate.ssi.html">calculate.ssi()</a></code>.</li>
+<li>Plot the mismatch between two spectral profiles (e.g., beads vs. cells) as in the paper by <a href="https://doi.org/10.1002/cyto.a.70044" class="external-link">Mage, Konecny and Mair (2026)</a> (previously a pre-print) on unmixing-dependent spread. Call <code>ppectral.mismatch.plot()</code>.</li>
 <li>Compare unmixing of the same data side-by-side with two different spectral mixing matrices. Call <code><a href="../reference/compare.unmix.html">compare.unmix()</a></code>.</li>
 <li>Multiple file formats when creating plots: pdf, tiff, png, jpg, etc.</li>
 </ul></div>
@@ -450,7 +490,7 @@
 <li>Support for Cytek Northern Lights</li>
 <li>Shiny app for control file setup via AutoSpectralHelper</li>
 <li>Marker names will now be added to the control file based on matches in the FCS file names, where possible.</li>
-<li>The Hotspot(TM) matrix will be calculated and plotted as per the pre-print by Peter Mage et al.</li>
+<li>The Hotspot(TM) matrix will be calculated and plotted as per <a href="https://doi.org/10.1002/cyto.a.70044" class="external-link">Mage, Konecny and Mair (2026)</a> (previously a pre-print).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-8-7">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-8-7"></a></h3>

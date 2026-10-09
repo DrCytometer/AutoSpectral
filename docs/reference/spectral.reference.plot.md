@@ -28,7 +28,8 @@ spectral.reference.plot(
   filename = "spectral_qc_report.pdf",
   comparison.spectra = NULL,
   comparison.label = "Pre-refinement",
-  highlight.fluors = character(0L)
+  highlight.fluors = character(0L),
+  color.by.laser = TRUE
 )
 ```
 
@@ -136,6 +137,12 @@ spectral.reference.plot(
 
   Optional numeric for differentiating comparison fluors in the plots
   with the "refined" tag.
+
+- color.by.laser:
+
+  Logical, default `TRUE`. Colour the detector axis labels by excitation
+  laser (from `cytometer_database.csv`). Falls back to black labels if
+  the detectors do not all map to the instrument's detectors.
 
 ## Value
 

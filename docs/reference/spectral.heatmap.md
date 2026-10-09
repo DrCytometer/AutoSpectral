@@ -16,7 +16,9 @@ spectral.heatmap(
   show.legend = TRUE,
   plot.width = NULL,
   plot.height = NULL,
-  file.type = "jpg"
+  file.type = "jpg",
+  color.by.laser = TRUE,
+  asp = NULL
 )
 ```
 
@@ -72,6 +74,18 @@ spectral.heatmap(
 
   Character string specifying the output file format. One of `"jpg"`
   (default), `"jpeg"`, `"tiff"`, `"png"`, or `"pdf"`.
+
+- color.by.laser:
+
+  Logical, default `TRUE`. Colour the detector axis labels by excitation
+  laser (from `cytometer_database.csv`). Falls back to black labels if
+  the detectors do not all map to the instrument's detectors.
+
+- asp:
+
+  Optional AutoSpectral parameter list, used only to identify the
+  cytometer for `color.by.laser`. If `NULL` (default), the cytometer is
+  identified from the detector names.
 
 ## Value
 

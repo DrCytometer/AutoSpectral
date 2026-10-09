@@ -2,6 +2,9 @@
 
 ## New Features
 
+- `get.af.spectra()` now returns the AF spectra ranked by spectral angle to the
+mean AF spectrum (smallest angle first, row 1 is the mean), with rows renamed
+`AF1`, `AF2`, ... in that order, so the AF index is roughly continuous.
 - Detector axis labels are now coloured by excitation laser in
 `spectral.trace()`, `spectral.heatmap()`, `spectral.mismatch.plot()`,
 `spectral.reference.plot()`, `spectral.ribbon.plot()`,
@@ -418,9 +421,9 @@ from the A8 and S8 use `$SPILL`. Fixed.
 `unmixed.nxn.plot()`
 - Calculate the secondary stain index per "Evaluating the performance of Slingshot 
 SpectraComp particles as universal single stain controls in flow cytometry" by 
-Oliveira et al. Call `calculate.ssi()`.
+Oliveira et al. The index is defined in [Morgado (2020)](https://wi.mit.edu/sites/default/files/2021-05/20200504_Post-it_Secondary_Stain_Index_Final.pdf). Call `calculate.ssi()`.
 - Plot the mismatch between two spectral profiles (e.g., beads vs. cells) as in 
-the pre-print by Konecny et al. on unmixing-dependent spread. Call `ppectral.mismatch.plot()`.
+the paper by [Mage, Konecny and Mair (2026)](https://doi.org/10.1002/cyto.a.70044) (previously a pre-print) on unmixing-dependent spread. Call `ppectral.mismatch.plot()`.
 - Compare unmixing of the same data side-by-side with two different spectral mixing
 matrices. Call `compare.unmix()`.
 - Multiple file formats when creating plots: pdf, tiff, png, jpg, etc.
@@ -659,8 +662,7 @@ impacting on `clean.controls()`.
 - Shiny app for control file setup via AutoSpectralHelper
 - Marker names will now be added to the control file based on matches in the 
 FCS file names, where possible. 
-- The Hotspot(TM) matrix will be calculated and plotted as per the pre-print by 
-Peter Mage et al.
+- The Hotspot(TM) matrix will be calculated and plotted as per [Mage, Konecny and Mair (2026)](https://doi.org/10.1002/cyto.a.70044) (previously a pre-print).
 
 ## Improvements
 - More improvements to plotting.

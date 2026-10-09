@@ -246,11 +246,14 @@
   [`unmixed.nxn.plot()`](https://drcytometer.github.io/AutoSpectral/reference/unmixed.nxn.plot.md)
 - Calculate the secondary stain index per “Evaluating the performance of
   Slingshot SpectraComp particles as universal single stain controls in
-  flow cytometry” by Oliveira et al. Call
+  flow cytometry” by Oliveira et al. The index is defined in [Morgado
+  (2020)](https://wi.mit.edu/sites/default/files/2021-05/20200504_Post-it_Secondary_Stain_Index_Final.pdf).
+  Call
   [`calculate.ssi()`](https://drcytometer.github.io/AutoSpectral/reference/calculate.ssi.md).
 - Plot the mismatch between two spectral profiles (e.g., beads
-  vs. cells) as in the pre-print by Konecny et al. on unmixing-dependent
-  spread. Call `ppectral.mismatch.plot()`.
+  vs. cells) as in the paper by [Mage, Konecny and Mair
+  (2026)](https://doi.org/10.1002/cyto.a.70044) (previously a pre-print)
+  on unmixing-dependent spread. Call `ppectral.mismatch.plot()`.
 - Compare unmixing of the same data side-by-side with two different
   spectral mixing matrices. Call
   [`compare.unmix()`](https://drcytometer.github.io/AutoSpectral/reference/compare.unmix.md).

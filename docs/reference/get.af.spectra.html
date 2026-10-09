@@ -35,7 +35,7 @@ the real per-cell AF solver demonstrably prefers them."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,15 +110,15 @@ the real per-cell AF solver demonstrably prefers them.</p>
 <span>  table.dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  title <span class="op">=</span> <span class="st">"Autofluorescence spectra"</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  af.assign.method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"l1"</span>, <span class="st">"l2"</span><span class="op">)</span>,</span>
-<span>  deduplicate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  duplication.threshold <span class="op">=</span> <span class="fl">0.99</span>,</span>
+<span>  af.assign.method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"l2"</span>, <span class="st">"l1"</span><span class="op">)</span>,</span>
+<span>  deduplicate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  duplication.threshold <span class="op">=</span> <span class="fl">0.995</span>,</span>
 <span>  use.unmixed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  af.basis.components <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  raw.pca.components <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  refine <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  refine <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  k.neighbors <span class="op">=</span> <span class="fl">15L</span>,</span>
-<span>  refine.improvement.threshold <span class="op">=</span> <span class="fl">0.02</span>,</span>
+<span>  refine.improvement.threshold <span class="op">=</span> <span class="fl">0.005</span>,</span>
 <span>  refine.min.shift.n <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  problem.quantile <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  plot.unmixed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -218,16 +218,16 @@ otherwise.</p></dd>
 
 
 <dt id="arg-deduplicate">deduplicate<a class="anchor" aria-label="anchor" href="#arg-deduplicate"></a></dt>
-<dd><p>Logical, default <code>FALSE</code>. Whether to deduplicate AF spectra
+<dd><p>Logical, default <code>TRUE</code>. Whether to deduplicate AF spectra
 by cosine similarity after the base clustering stage and again after the
 refinement stage. Deduplication removes near-identical spectral profiles
 that can cause overzealous matching of near-zero events in fully stained
 samples, reducing apparent "squishing". Deduplication is slightly less
-accurate. Set to <code>TRUE</code> to us it.</p></dd>
+accurate, but not noticeably with the current default settings.</p></dd>
 
 
 <dt id="arg-duplication-threshold">duplication.threshold<a class="anchor" aria-label="anchor" href="#arg-duplication-threshold"></a></dt>
-<dd><p>Numeric, default <code>0.99</code>. The cosine similarity
+<dd><p>Numeric, default <code>0.995</code>. The cosine similarity
 threshold used for deduplication. A spectrum is dropped if its cosine
 similarity to any already-retained spectrum meets or exceeds this value.
 Only used when <code>deduplicate = TRUE</code>.</p></dd>
@@ -276,7 +276,7 @@ the unmixing matrix at all. Default <code>NULL</code> disables it.</p></dd>
 
 
 <dt id="arg-refine">refine<a class="anchor" aria-label="anchor" href="#arg-refine"></a></dt>
-<dd><p>Logical, default <code>FALSE</code>. Controls whether to perform a
+<dd><p>Logical, default <code>TRUE</code>. Controls whether to perform a
 second round of autofluorescence discovery targeting "problem cells":
 those with the highest residual fluorophore signal after the first-pass
 per-cell AF extraction, as defined by <code>problem.quantile</code>. Problem cells
@@ -297,7 +297,7 @@ extraction at the cost of an increase in unmixing time.</p></dd>
 
 <dt id="arg-k-neighbors">k.neighbors<a class="anchor" aria-label="anchor" href="#arg-k-neighbors"></a></dt>
 <dd><p>Integer, default <code>15L</code>. Used only when <code>refine = TRUE</code>.
-Each error cluster's problem cells act as seeds into a nearest-neighbour
+Each error group's problem cells act as seeds into a nearest-neighbour
 search across the full unstained population, so a candidate spectrum is
 built from a locally density-boosted set rather than from the (typically
 too sparse) problem cells alone. Higher values recruit a larger, more
@@ -306,7 +306,7 @@ risking dilution by unrelated bulk events.</p></dd>
 
 
 <dt id="arg-refine-improvement-threshold">refine.improvement.threshold<a class="anchor" aria-label="anchor" href="#arg-refine-improvement-threshold"></a></dt>
-<dd><p>Numeric, default <code>0.02</code>. Minimum median
+<dd><p>Numeric, default <code>0.005</code>. Minimum median
 gain in cosine similarity (raw event to assigned AF spectrum), among the
 seed cells that shift their assignment onto a candidate under the real
 per-cell solver, before that candidate is accepted. The comparison is
@@ -316,7 +316,7 @@ requires the 25th percentile of that per-cell gain to be positive.</p></dd>
 
 <dt id="arg-refine-min-shift-n">refine.min.shift.n<a class="anchor" aria-label="anchor" href="#arg-refine-min-shift-n"></a></dt>
 <dd><p>Integer, default <code>8L</code>. Minimum number of a
-cluster's seed cells that must shift their AF assignment onto a candidate
+group's seed cells that must shift their AF assignment onto a candidate
 spectrum before that candidate is evaluated at all. Below this, a median
 gain is too volatile to trust.</p></dd>
 
@@ -434,14 +434,22 @@ variant plot. Default is <code>"black"</code>.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A matrix of autofluorescence spectra (spectra in rows, detectors in
-columns). Row 1 is the population mean of the base spectra; subsequent rows
-are the deduplicated base spectra and, if <code>refine = TRUE</code>, any solver-
-validated spectra discovered from under-represented problem cells.</p>
+columns). The rows are the population mean of the base spectra, the
+deduplicated base spectra and, if <code>refine = TRUE</code>, any solver-validated
+spectra discovered from under-represented problem cells. Rows are ordered
+by spectral angle to the mean AF spectrum, smallest angle (most similar)
+first, so row 1 is the mean itself (angle 0) and the row index (<code>"AF1"</code>,
+<code>"AF2"</code>, ...) increases with spectral dissimilarity from the mean. This
+makes the AF index roughly continuous, so it can be used directly for
+plotting and summary statistics. The ranking is a one-dimensional
+projection: two spectra that are equally far from the mean, but in
+different directions, receive adjacent ranks.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-87(7), 636-645. <a href="https://doi.org/10.1002/cyto.a.22625" class="external-link">doi:10.1002/cyto.a.22625</a>
+visualization and interpretation of cytometry data." <em>Cytometry A</em>,
+<em>87</em>(7), 636-645. <a href="https://doi.org/10.1002/cyto.a.22625" class="external-link">doi:10.1002/cyto.a.22625</a>
 
 Wehrens R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen
 3.0." <em>Journal of Statistical Software</em>, <em>87</em>(7), 1-18.

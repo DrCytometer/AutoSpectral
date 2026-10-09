@@ -24,7 +24,8 @@ spectral.ribbon.plot(
   af = FALSE,
   plot.width = 15,
   plot.height = 10,
-  max.points = 50000
+  max.points = 50000,
+  color.by.laser = TRUE
 )
 ```
 
@@ -112,6 +113,12 @@ spectral.ribbon.plot(
 - max.points:
 
   Number of events per panel to plot. Default is `5e4`.
+
+- color.by.laser:
+
+  Logical, default `TRUE`. Colour the detector axis labels by excitation
+  laser (from `cytometer_database.csv`). Falls back to black labels if
+  the detectors do not all map to the instrument's detectors.
 
 ## Value
 

@@ -29,15 +29,15 @@ get.af.spectra(
   table.dir = NULL,
   title = "Autofluorescence spectra",
   verbose = TRUE,
-  af.assign.method = c("l1", "l2"),
-  deduplicate = FALSE,
-  duplication.threshold = 0.99,
+  af.assign.method = c("l2", "l1"),
+  deduplicate = TRUE,
+  duplication.threshold = 0.995,
   use.unmixed = TRUE,
   af.basis.components = NULL,
   raw.pca.components = NULL,
-  refine = FALSE,
+  refine = TRUE,
   k.neighbors = 15L,
-  refine.improvement.threshold = 0.02,
+  refine.improvement.threshold = 0.005,
   refine.min.shift.n = 8L,
   problem.quantile = 0.99,
   plot.unmixed = FALSE,
@@ -136,16 +136,17 @@ get.af.spectra(
 
 - deduplicate:
 
-  Logical, default `FALSE`. Whether to deduplicate AF spectra by cosine
+  Logical, default `TRUE`. Whether to deduplicate AF spectra by cosine
   similarity after the base clustering stage and again after the
   refinement stage. Deduplication removes near-identical spectral
   profiles that can cause overzealous matching of near-zero events in
   fully stained samples, reducing apparent "squishing". Deduplication is
-  slightly less accurate. Set to `TRUE` to us it.
+  slightly less accurate, but not noticeably with the current default
+  settings.
 
 - duplication.threshold:
 
-  Numeric, default `0.99`. The cosine similarity threshold used for
+  Numeric, default `0.995`. The cosine similarity threshold used for
   deduplication. A spectrum is dropped if its cosine similarity to any
   already-retained spectrum meets or exceeds this value. Only used when
   `deduplicate = TRUE`.
@@ -194,10 +195,10 @@ get.af.spectra(
 
 - refine:
 
-  Logical, default `FALSE`. Controls whether to perform a second round
-  of autofluorescence discovery targeting "problem cells": those with
-  the highest residual fluorophore signal after the first-pass per-cell
-  AF extraction, as defined by `problem.quantile`. Problem cells are
+  Logical, default `TRUE`. Controls whether to perform a second round of
+  autofluorescence discovery targeting "problem cells": those with the
+  highest residual fluorophore signal after the first-pass per-cell AF
+  extraction, as defined by `problem.quantile`. Problem cells are
   grouped by the systematic pattern of their error, and each group's
   cells act as seeds for a nearest-neighbour expansion across the full
   unstained population (`k.neighbors`), so a candidate spectrum is built
@@ -216,7 +217,7 @@ get.af.spectra(
 - k.neighbors:
 
   Integer, default `15L`. Used only when `refine = TRUE`. Each error
-  cluster's problem cells act as seeds into a nearest-neighbour search
+  group's problem cells act as seeds into a nearest-neighbour search
   across the full unstained population, so a candidate spectrum is built
   from a locally density-boosted set rather than from the (typically too
   sparse) problem cells alone. Higher values recruit a larger, more
@@ -225,16 +226,16 @@ get.af.spectra(
 
 - refine.improvement.threshold:
 
-  Numeric, default `0.02`. Minimum median gain in cosine similarity (raw
-  event to assigned AF spectrum), among the seed cells that shift their
-  assignment onto a candidate under the real per-cell solver, before
-  that candidate is accepted. The comparison is paired per cell, so
-  adding more candidates cannot inflate it. Also requires the 25th
+  Numeric, default `0.005`. Minimum median gain in cosine similarity
+  (raw event to assigned AF spectrum), among the seed cells that shift
+  their assignment onto a candidate under the real per-cell solver,
+  before that candidate is accepted. The comparison is paired per cell,
+  so adding more candidates cannot inflate it. Also requires the 25th
   percentile of that per-cell gain to be positive.
 
 - refine.min.shift.n:
 
-  Integer, default `8L`. Minimum number of a cluster's seed cells that
+  Integer, default `8L`. Minimum number of a group's seed cells that
   must shift their AF assignment onto a candidate spectrum before that
   candidate is evaluated at all. Below this, a median gain is too
   volatile to trust.
@@ -352,15 +353,22 @@ get.af.spectra(
 ## Value
 
 A matrix of autofluorescence spectra (spectra in rows, detectors in
-columns). Row 1 is the population mean of the base spectra; subsequent
-rows are the deduplicated base spectra and, if `refine = TRUE`, any
-solver- validated spectra discovered from under-represented problem
-cells.
+columns). The rows are the population mean of the base spectra, the
+deduplicated base spectra and, if `refine = TRUE`, any solver-validated
+spectra discovered from under-represented problem cells. Rows are
+ordered by spectral angle to the mean AF spectrum, smallest angle (most
+similar) first, so row 1 is the mean itself (angle 0) and the row index
+(`"AF1"`, `"AF2"`, ...) increases with spectral dissimilarity from the
+mean. This makes the AF index roughly continuous, so it can be used
+directly for plotting and summary statistics. The ranking is a
+one-dimensional projection: two spectra that are equally far from the
+mean, but in different directions, receive adjacent ranks.
 
 ## References
 
 Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-87(7), 636-645.
+visualization and interpretation of cytometry data." *Cytometry A*,
+*87*(7), 636-645.
 [doi:10.1002/cyto.a.22625](https://doi.org/10.1002/cyto.a.22625) Wehrens
 R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen
 3.0." *Journal of Statistical Software*, *87*(7), 1-18.

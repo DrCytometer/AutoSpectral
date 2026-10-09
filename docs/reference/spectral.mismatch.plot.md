@@ -28,7 +28,9 @@ spectral.mismatch.plot(
   color.palette = NULL,
   show.legend = TRUE,
   plot.width = NULL,
-  plot.height = NULL
+  plot.height = NULL,
+  color.by.laser = TRUE,
+  asp = NULL
 )
 ```
 
@@ -110,6 +112,18 @@ spectral.mismatch.plot(
 
   Numeric. Height of the saved figure in inches. If `NULL` (default), an
   automatic height is derived from the number of spectra rows.
+
+- color.by.laser:
+
+  Logical, default `TRUE`. Colour the detector axis labels by excitation
+  laser (from `cytometer_database.csv`). Falls back to black labels if
+  the detectors do not all map to the instrument's detectors.
+
+- asp:
+
+  Optional AutoSpectral parameter list, used only to identify the
+  cytometer for `color.by.laser`. If `NULL` (default), the cytometer is
+  identified from the detector names.
 
 ## Value
 

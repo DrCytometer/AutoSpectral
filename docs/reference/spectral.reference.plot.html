@@ -23,7 +23,7 @@ two spectral profiles."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,7 +99,8 @@ two spectral profiles.</p>
 <span>  filename <span class="op">=</span> <span class="st">"spectral_qc_report.pdf"</span>,</span>
 <span>  comparison.spectra <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  comparison.label <span class="op">=</span> <span class="st">"Pre-refinement"</span>,</span>
-<span>  highlight.fluors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0L</span><span class="op">)</span></span>
+<span>  highlight.fluors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0L</span><span class="op">)</span>,</span>
+<span>  color.by.laser <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -212,6 +213,12 @@ for the <code>comparison.spectra</code>.</p></dd>
 <dt id="arg-highlight-fluors">highlight.fluors<a class="anchor" aria-label="anchor" href="#arg-highlight-fluors"></a></dt>
 <dd><p>Optional numeric for differentiating comparison fluors
 in the plots with the "refined" tag.</p></dd>
+
+
+<dt id="arg-color-by-laser">color.by.laser<a class="anchor" aria-label="anchor" href="#arg-color-by-laser"></a></dt>
+<dd><p>Logical, default <code>TRUE</code>. Colour the detector axis
+labels by excitation laser (from <code>cytometer_database.csv</code>). Falls back to
+black labels if the detectors do not all map to the instrument's detectors.</p></dd>
 
 </dl></div>
     <div class="section level2">

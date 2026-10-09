@@ -17,7 +17,7 @@ first-pass spectra, whether that was define.flow.control()'s scatter
 gate, clean.controls()'s downsampling, or get.spectra.automated()'s
 cosine-similarity filter.
 That fresh read is done one control at a time, not by building a second,
-whole-panel flow.control in memory: .read.fcs.clean() (the private FCS
+whole-panel flow.control in memory: read.fcs.clean() (the FCS
 reader get.spectra.automated() already uses) reads one file, drops
 saturating and doublet events, and returns a plain matrix; nothing else is
 retained. Where a control needs autofluorescence removed, its matching
@@ -65,7 +65,7 @@ first-pass spectra, whether that was define.flow.control()'s scatter
 gate, clean.controls()'s downsampling, or get.spectra.automated()'s
 cosine-similarity filter.
 That fresh read is done one control at a time, not by building a second,
-whole-panel flow.control in memory: .read.fcs.clean() (the private FCS
+whole-panel flow.control in memory: read.fcs.clean() (the FCS
 reader get.spectra.automated() already uses) reads one file, drops
 saturating and doublet events, and returns a plain matrix; nothing else is
 retained. Where a control needs autofluorescence removed, its matching
@@ -113,7 +113,7 @@ order controls happen to be listed in."><script>
 
     <a class="navbar-brand me-2" href="../index.html">AutoSpectral</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -173,7 +173,7 @@ first-pass spectra, whether that was <code><a href="define.flow.control.html">de
 gate, <code><a href="clean.controls.html">clean.controls()</a></code>'s downsampling, or <code><a href="get.spectra.automated.html">get.spectra.automated()</a></code>'s
 cosine-similarity filter.</p>
 <p>That fresh read is done one control at a time, not by building a second,
-whole-panel <code>flow.control</code> in memory: <code>.read.fcs.clean()</code> (the private FCS
+whole-panel <code>flow.control</code> in memory: <code><a href="read.fcs.clean.html">read.fcs.clean()</a></code> (the FCS
 reader <code><a href="get.spectra.automated.html">get.spectra.automated()</a></code> already uses) reads one file, drops
 saturating and doublet events, and returns a plain matrix; nothing else is
 retained. Where a control needs autofluorescence removed, its matching
@@ -285,7 +285,7 @@ its own AF-removal diagnostic figures for each control.</p></dd>
 
 <dt id="arg-singlet-quantiles-remove-doublets">singlet.quantiles, remove.doublets<a class="anchor" aria-label="anchor" href="#arg-singlet-quantiles-remove-doublets"></a></dt>
 <dd><p>As in <code><a href="get.spectra.automated.html">get.spectra.automated()</a></code>,
-passed to <code>.read.fcs.clean()</code> for every file read here.</p></dd>
+passed to <code><a href="read.fcs.clean.html">read.fcs.clean()</a></code> for every file read here.</p></dd>
 
 
 <dt id="arg-allow-duplicate-controls">allow.duplicate.controls<a class="anchor" aria-label="anchor" href="#arg-allow-duplicate-controls"></a></dt>

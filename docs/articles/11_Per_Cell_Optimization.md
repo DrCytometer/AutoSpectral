@@ -5,7 +5,10 @@ optimizing the fluorophore signatures used for unmixing on a per-cell
 basis in AutoSpectral. Let me know if the explanation doesn’t make
 sense. There are days when I think it’s really weird that we can
 actually figure this stuff out from the data. Also, this is not the only
-way of doing this, just the best one I’ve found so far.
+way of doing this, just the best one I’ve found so far. A related
+approach, which drops irrelevant fluorophore spectra from the mixing
+matrix cell by cell to reduce spread, is described by Kmet and Novo
+(2025).
 
 Okay, so we’re basically going to play some Tetris with your unmixing.
 You can also think of this as “theme and variations” if you’re musically
@@ -15,7 +18,11 @@ The aim here is to deal with the inherent variability that exists in the
 emissions from the fluorophores. This variability manifests at the level
 of the cell (or particle/data point) as spread. Spread is a
 population-level thing; individual cells do not have spread, they have
-exact positions. We get spread in the unmixing (and compensation in
+exact positions. Noise from the instrument, from photon counting and
+from variable autofluorescence all contribute to the distribution
+(Roederer, 2016), and collinearity between the spectra of the
+fluorophores being unmixed compounds it (Novo, 2022; Kmet & Novo, 2025;
+Mage et al., 2026). We get spread in the unmixing (and compensation in
 conventional flow) because we have a *distribution* of outcomes in the
 spillover/spectra for the fluorophores and we unmix using only a single
 (hopefully) best fit spectrum. This means there are data on both sides
@@ -38,7 +45,7 @@ is the next step.
 What we are going to do is similar to what we did with the single cell
 AF extraction. We will start by mapping the variation in the
 single-color controls for each fluorophore using a self-organizing map
-(SOM).
+(SOM; Kohonen, 1995).
 
 ``` r
 
@@ -390,3 +397,21 @@ Distribution of cosine similarity values between the ground truth and
 the assigned spectrum for BUV661. Comparison between standard OLS
 unmixing and AutoSpectral with per-cell fluorophore optimization on
 synthetic data. Stats by Komogorov-Smirnov test.
+
+## References
+
+- Kmet R, Novo D (2025). Reducing spreading: removing the impact of
+  irrelevant dyes improves unmixed flow cytometry data. *Cytometry A*.
+  [doi:10.1002/cyto.a.24957](https://doi.org/10.1002/cyto.a.24957)
+- Kohonen T (1995). *Self-organizing maps*. Springer.
+- Mage PL, Konecny AJ, Mair F (2026). Measurement and prediction of
+  unmixing-dependent spreading due to collinearity in spectral flow
+  cytometry. *Cytometry A* 109(6):436-455.
+  [doi:10.1002/cyto.a.70044](https://doi.org/10.1002/cyto.a.70044)
+- Novo D (2022). A comparison of spectral unmixing to conventional
+  compensation for the calculation of fluorochrome abundances from flow
+  cytometric data. *Cytometry A* 101(11):885-891.
+  [doi:10.1002/cyto.a.24669](https://doi.org/10.1002/cyto.a.24669)
+- Roederer M (2016). Distributions of autofluorescence after
+  compensation: Be panglossian, fret not. *Cytometry A* 89(4):398-402.
+  [doi:10.1002/cyto.a.22820](https://doi.org/10.1002/cyto.a.22820)

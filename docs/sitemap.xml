@@ -150,6 +150,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/do.gate.test.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/do.peacoQC.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-AS.check.github.update.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-align.id7000.channels.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-build.control.sample.names.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-check.control.voltages.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-check.spectra.collinearity.html</loc></url>
@@ -158,6 +159,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-extract.spectral.voltages.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-new_issue.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-point.in.polygon.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-rank.af.by.angle.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-save.ggplot.fast.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-select.retained.channels.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/dot-spectral.voltage.suffix.html</loc></url>
@@ -223,6 +225,7 @@
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/qc.af.spectra.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.bd.spectra.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.channel.html</loc></url>
+<url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.fcs.clean.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.scatter.parameter.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.spectra.html</loc></url>
 <url><loc>https://drcytometer.github.io/AutoSpectral/reference/read.spectroflo.expt.html</loc></url>

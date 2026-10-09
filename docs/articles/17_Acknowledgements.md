@@ -45,7 +45,64 @@ Mario Roederer, Peter Mage, [Chris Hall](https://github.com/hally166),
 [Sofie Van Gassen](https://www.crig.ugent.be/en/dr-sofie-van-gassen-phd)
 and others. Flow cytometry is a great, collaborative field to be in.
 
+Key publications on which AutoSpectral builds include AutoSpill (Roca et
+al., 2021), the work on compensation and controls by Roederer (2002,
+2016), least-squares and Poisson unmixing (Nolan et al., 2013; Futamura
+et al., 2015; Novo et al., 2013), collinearity and spread in unmixing
+(Novo, 2022; Kmet & Novo, 2025; Mage et al., 2026), FlowSOM (Van Gassen
+et al., 2015) and CompensAID (Olsman et al., 2026). Full references are
+given at the end of this article.
+
 This work was supported by the Medical Research Council grant
 MR/Y004450/1 through the MRC Proactive Vaccinology consortium IMMPROVE
 (<https://immprove.ac.uk/>), and the Wellcome Trust through Wellcome
 Investigator Award 222442/A/21/Z.
+
+## References
+
+- Futamura K, Sekino M, Hata A, Ikebuchi R, Nakanishi Y, Egawa G,
+  Kabashima K, Watanabe T, Furuki M, Tomura M (2015). Novel
+  full-spectral flow cytometry with multiple spectrally-adjacent
+  fluorescent proteins and fluorochromes and visualization of in vivo
+  cellular movement. *Cytometry A* 87(9):830-842.
+  [doi:10.1002/cyto.a.22725](https://doi.org/10.1002/cyto.a.22725)
+- Kmet R, Novo D (2025). Reducing spreading: removing the impact of
+  irrelevant dyes improves unmixed flow cytometry data. *Cytometry A*.
+  [doi:10.1002/cyto.a.24957](https://doi.org/10.1002/cyto.a.24957)
+- Mage PL, Konecny AJ, Mair F (2026). Measurement and prediction of
+  unmixing-dependent spreading due to collinearity in spectral flow
+  cytometry. *Cytometry A* 109(6):436-455.
+  [doi:10.1002/cyto.a.70044](https://doi.org/10.1002/cyto.a.70044)
+- Nolan JP, Condello D, Duggan E, Naivar M, Novo D (2013). Visible and
+  near infrared fluorescence spectral flow cytometry. *Cytometry A*
+  83(3):253-264.
+  [doi:10.1002/cyto.a.22241](https://doi.org/10.1002/cyto.a.22241)
+- Novo D (2022). A comparison of spectral unmixing to conventional
+  compensation for the calculation of fluorochrome abundances from flow
+  cytometric data. *Cytometry A* 101(11):885-891.
+  [doi:10.1002/cyto.a.24669](https://doi.org/10.1002/cyto.a.24669)
+- Novo D, Gregori G, Rajwa B (2013). Generalized unmixing model for
+  multispectral flow cytometry utilizing nonsquare compensation
+  matrices. *Cytometry A* 83(5):508-520.
+  [doi:10.1002/cyto.a.22272](https://doi.org/10.1002/cyto.a.22272)
+- Olsman R, Bonte S, Hofmans M, Buysse M, Van der Borght K, Saeys Y, van
+  der Velden VHJ, Van Gassen S (2026). CompensAID: An automated
+  detection tool for reference errors. *Cytometry A* 109(2):124-134.
+  [doi:10.1002/cyto.a.70016](https://doi.org/10.1002/cyto.a.70016)
+- Roca CP, Burton OT, Gergelits V, Prezzemolo T, Whyte CE, Halpert R,
+  Kreft L, Collier J, Botzki A, Spidlen J, Humblet-Baron S, Liston A
+  (2021). AutoSpill is a principled framework that simplifies the
+  analysis of multichromatic flow cytometry data. *Nat Commun*
+  12(1):2890.
+  [doi:10.1038/s41467-021-23126-8](https://doi.org/10.1038/s41467-021-23126-8)
+- Roederer M (2002). Compensation in flow cytometry. *Curr Protoc Cytom*
+  Chapter 1:Unit 1.14.
+  [doi:10.1002/0471142956.cy0114s22](https://doi.org/10.1002/0471142956.cy0114s22)
+- Roederer M (2016). Distributions of autofluorescence after
+  compensation: Be panglossian, fret not. *Cytometry A* 89(4):398-402.
+  [doi:10.1002/cyto.a.22820](https://doi.org/10.1002/cyto.a.22820)
+- Van Gassen S, Callebaut B, Van Helden MJ, Lambrecht BN, Demeester P,
+  Dhaene T, Saeys Y (2015). FlowSOM: Using self-organizing maps for
+  visualization and interpretation of cytometry data. *Cytometry A*
+  87(7):636-645.
+  [doi:10.1002/cyto.a.22625](https://doi.org/10.1002/cyto.a.22625)

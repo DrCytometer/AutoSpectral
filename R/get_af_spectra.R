@@ -197,15 +197,23 @@
 #'   variant plot. Default is `"black"`.
 #'
 #' @return A matrix of autofluorescence spectra (spectra in rows, detectors in
-#'   columns). Row 1 is the population mean of the base spectra; subsequent rows
-#'   are the deduplicated base spectra and, if `refine = TRUE`, any solver-
-#'   validated spectra discovered from under-represented problem cells.
+#'   columns). The rows are the population mean of the base spectra, the
+#'   deduplicated base spectra and, if `refine = TRUE`, any solver-validated
+#'   spectra discovered from under-represented problem cells. Rows are ordered
+#'   by spectral angle to the mean AF spectrum, smallest angle (most similar)
+#'   first, so row 1 is the mean itself (angle 0) and the row index (`"AF1"`,
+#'   `"AF2"`, ...) increases with spectral dissimilarity from the mean. This
+#'   makes the AF index roughly continuous, so it can be used directly for
+#'   plotting and summary statistics. The ranking is a one-dimensional
+#'   projection: two spectra that are equally far from the mean, but in
+#'   different directions, receive adjacent ranks.
 #'
 #' @export
 #'
 #' @references
 #' Van Gassen S et al. (2015). "FlowSOM: Using self-organizing maps for
-#' 87(7), 636-645. \doi{10.1002/cyto.a.22625}
+#' visualization and interpretation of cytometry data." \emph{Cytometry A},
+#' \emph{87}(7), 636-645. \doi{10.1002/cyto.a.22625}
 #' Wehrens R, Kruisselbrink J (2018). "Flexible Self-Organizing Maps in kohonen
 #' 3.0." \emph{Journal of Statistical Software}, \emph{87}(7), 1-18.
 #' \doi{10.18637/jss.v087.i07}
@@ -927,6 +935,12 @@ get.af.spectra <- function(
   }   # end first pass / refine / plot.unmixed
 
   # ---------------------------------------------------------------------------
+  # Rank AF spectra by spectral angle to the mean AF
+  # ---------------------------------------------------------------------------
+
+  af.spectra <- .rank.af.by.angle( af.spectra, mean.af )
+
+  # ---------------------------------------------------------------------------
   # Save and final figures
   # ---------------------------------------------------------------------------
 
@@ -990,6 +1004,48 @@ get.af.spectra <- function(
 
 }
 
+
+# ---------------------------------------------------------------------------
+# Helper: rank AF spectra by spectral angle to the mean AF
+# ---------------------------------------------------------------------------
+
+#' @title Rank AF Spectra by Spectral Angle
+#'
+#' @description
+#' Reorders autofluorescence spectra by their spectral angle to a reference
+#' (the mean AF spectrum), smallest angle first, and renames the rows
+#' `AF1`, `AF2`, ... in the new order. The spectral angle is
+#' `acos( cosine similarity )`, so the ordering is identical to ranking by
+#' decreasing cosine similarity. Ties keep their original order. Spectra with
+#' zero norm have an undefined angle and are placed last. Intended for internal
+#' use by `get.af.spectra`.
+#'
+#' @param af.spectra Numeric matrix of AF spectra, spectra in rows, detectors
+#'   in columns.
+#' @param reference.spectrum Numeric vector, the reference (mean AF) spectrum,
+#'   with one value per column of `af.spectra`.
+#'
+#' @return `af.spectra` with rows reordered and renamed.
+#'
+#' @keywords internal
+
+.rank.af.by.angle <- function( af.spectra, reference.spectrum ) {
+
+  row.norm <- sqrt( rowSums( af.spectra^2 ) )
+  ref.norm <- sqrt( sum( reference.spectrum^2 ) )
+
+  cosine.sim <- as.numeric( af.spectra %*% reference.spectrum ) / ( row.norm * ref.norm )
+  cosine.sim[ !is.finite( cosine.sim ) ] <- NA_real_
+  cosine.sim <- pmin( pmax( cosine.sim, -1 ), 1 )
+
+  angle     <- acos( cosine.sim )
+  order.idx <- order( angle, na.last = TRUE )
+
+  af.spectra <- af.spectra[ order.idx, , drop = FALSE ]
+  rownames( af.spectra ) <- paste0( "AF", seq_len( nrow( af.spectra ) ) )
+
+  af.spectra
+}
 
 # ---------------------------------------------------------------------------
 # Helper: greedy cosine-similarity deduplication

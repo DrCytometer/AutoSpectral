@@ -25,8 +25,9 @@ downsampling, or
 cosine-similarity filter.
 
 That fresh read is done one control at a time, not by building a second,
-whole-panel `flow.control` in memory: `.read.fcs.clean()` (the private
-FCS reader
+whole-panel `flow.control` in memory:
+[`read.fcs.clean()`](https://drcytometer.github.io/AutoSpectral/reference/read.fcs.clean.md)
+(the FCS reader
 [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md)
 already uses) reads one file, drops saturating and doublet events, and
 returns a plain matrix; nothing else is retained. Where a control needs
@@ -156,7 +157,9 @@ refine.fluorophore.spectra(
 
   As in
   [`get.spectra.automated()`](https://drcytometer.github.io/AutoSpectral/reference/get.spectra.automated.md),
-  passed to `.read.fcs.clean()` for every file read here.
+  passed to
+  [`read.fcs.clean()`](https://drcytometer.github.io/AutoSpectral/reference/read.fcs.clean.md)
+  for every file read here.
 
 - allow.duplicate.controls:
 

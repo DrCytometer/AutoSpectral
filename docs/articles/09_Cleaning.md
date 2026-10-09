@@ -42,25 +42,28 @@ Right, so there are two cleaning methods in AutoSpectral:
     performed on beads.
 
 2.  Matching negatives. Again, we need matching unstained samples
-    (universal negatives). Here, we’re trying to match the background of
-    the unstained and stained cells as closely as possible. For
-    instance, if we are staining a T cell marker, the correct background
-    to subtract is that of T cells. For a macrophage marker, we want to
-    subtract the background given by unstained macrophages. While we
-    can’t do that perfectly without sorting a whole bunch of different
-    cell types (which wouldn’t work anyway due to changes in cells due
-    to handling), we can do better than just using all the rest of the
-    cells (the internal negative population). If we take the matching
-    unstained sample, we can locate cells that have similar forward
-    (FSC) and side scatter (SSC) profiles, and use these as the
-    negative. This works pretty well as long as your negatives and
-    positives have been treated identically and have been run on the
-    same instrument settings.
+    (universal negatives). Matching the autofluorescence background of
+    the negative to the positive events is a long-standing requirement
+    for accurate spectra (Roederer, 2002). Here, we’re trying to match
+    the background of the unstained and stained cells as closely as
+    possible. For instance, if we are staining a T cell marker, the
+    correct background to subtract is that of T cells. For a macrophage
+    marker, we want to subtract the background given by unstained
+    macrophages. While we can’t do that perfectly without sorting a
+    whole bunch of different cell types (which wouldn’t work anyway due
+    to changes in cells due to handling), we can do better than just
+    using all the rest of the cells (the internal negative population).
+    If we take the matching unstained sample, we can locate cells that
+    have similar forward (FSC) and side scatter (SSC) profiles, and use
+    these as the negative. This works pretty well as long as your
+    negatives and positives have been treated identically and have been
+    run on the same instrument settings.
 
 By default, `clean.controls` downsamples the data, selecting the `500`
 brightest events in the peak channel for each fluorophore’s control. The
-brightest events are almost always the most accurate, and this speeds up
-the calculations a great deal. Better results, faster.
+brightest events are almost always the most accurate (Roederer, 2002;
+Ferrer-Font et al., 2021), and this speeds up the calculations a great
+deal. Better results, faster.
 
 Right, let’s go over some data as an example.
 
@@ -101,8 +104,8 @@ gate](figures/Cleaning_cells_nonViability_smallGate.jpg)![Large
 gate](figures/Cleaning_cells_nonViability_largeGate.jpg)
 
 We can get the fluorophore spectra using only the Robust Linear
-Modelling approach (no cleaning). This is slow since it calculates over
-all the gated data.
+Modelling approach (no cleaning), as in AutoSpill (Roca et al., 2021).
+This is slow since it calculates over all the gated data.
 
 ``` r
 
@@ -296,3 +299,20 @@ Spectral changes
 
 A value of 0.5 corresponds to 50% peak emission, in other words, a
 massive change.
+
+## References
+
+- Ferrer-Font L, Small SJ, Lewer B, Pilkington KR, Johnston LK, Park LM,
+  Lannigan J, Jaimes MC, Price KM (2021). Panel optimization for
+  high-dimensional immunophenotyping assays using full-spectrum flow
+  cytometry. *Curr Protoc* 1(9):e222.
+  [doi:10.1002/cpz1.222](https://doi.org/10.1002/cpz1.222)
+- Roca CP, Burton OT, Gergelits V, Prezzemolo T, Whyte CE, Halpert R,
+  Kreft L, Collier J, Botzki A, Spidlen J, Humblet-Baron S, Liston A
+  (2021). AutoSpill is a principled framework that simplifies the
+  analysis of multichromatic flow cytometry data. *Nat Commun*
+  12(1):2890.
+  [doi:10.1038/s41467-021-23126-8](https://doi.org/10.1038/s41467-021-23126-8)
+- Roederer M (2002). Compensation in flow cytometry. *Curr Protoc Cytom*
+  Chapter 1:Unit 1.14.
+  [doi:10.1002/0471142956.cy0114s22](https://doi.org/10.1002/0471142956.cy0114s22)

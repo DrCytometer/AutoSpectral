@@ -20,7 +20,9 @@ spectral.variant.plot.dens(
   variant.alpha = 0.05,
   variant.linewidth = 1.5,
   median.line.color = "black",
-  median.linewidth = 1
+  median.linewidth = 1,
+  color.by.laser = TRUE,
+  asp = NULL
 )
 ```
 
@@ -78,6 +80,18 @@ spectral.variant.plot.dens(
 - median.linewidth:
 
   Thickness of the median reference line. Default is `1`.
+
+- color.by.laser:
+
+  Logical, default `TRUE`. Colour the detector axis labels by excitation
+  laser (from `cytometer_database.csv`). Falls back to black labels if
+  the detectors do not all map to the instrument's detectors.
+
+- asp:
+
+  Optional AutoSpectral parameter list, used only to identify the
+  cytometer for `color.by.laser`. If `NULL` (default), the cytometer is
+  identified from the detector names.
 
 ## Value
 
