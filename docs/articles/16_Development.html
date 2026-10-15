@@ -62,7 +62,7 @@
     <li><a class="dropdown-item" href="../articles/14_Speed_It_Up.html">14 Speed It Up (Why So Slow?)</a></li>
     <li><a class="dropdown-item" href="../articles/15_Updates_And_Issues.html">15 Updates and Issues</a></li>
     <li><a class="dropdown-item" href="../articles/16_Development.html">16 Development</a></li>
-    <li><a class="dropdown-item" href="../articles/17_Acknowledgements.html">17 Acknowledgements</a></li>
+    <li><a class="dropdown-item" href="../articles/17_Acknowledgements.html">17 Acknowledgements &amp; References</a></li>
     <li><a class="dropdown-item" href="../articles/18_Weighted_Least_Squares.html">18 Weighted Least Squares Unmixing</a></li>
     <li><a class="dropdown-item" href="../articles/19_Correcting_Unmixing_Errors.html">19 Correcting Unmixing Errors</a></li>
   </ul>
@@ -129,18 +129,25 @@ this is likely the QSPE values, which are in the FCS files.</p></li>
 <li><p>I’d need to sit down and work out the normalization functions.
 This hasn’t been a top priority.</p></li>
 <li><p>More flexibility in negative/unstained samples.</p></li>
-<li><p>Allow multiple controls per fluorophore.</p></li>
+<li><p>Allow multiple controls per fluorophore. This is implemented, but
+is difficult to manage well without a graphical user interface, in my
+opinion. This is therefore better supported in Honeychrome, and will be
+better supported in other people’s GUI applications porting
+AutoSpectral. If you have ideas about how to do this well without a
+graphical interface, I’m all ears.</p></li>
 <li>
 <p>Fix the issue causing discontinuities.</p>
 <ul>
-<li>This is now fixed in Version 1.6.0 if you call the “joint” pipeline
-when unmixing. This uses a variance-covariance matrix plus residual
-alignment to determine optimal per-cell fluorophore spectra, without the
-requirement to use the TRU-OLS trick of dropping into a
+<li>This is now mostly fixed in Version 1.6.0 if you call the “joint”
+pipeline when unmixing. This uses a variance-covariance matrix plus
+residual alignment to determine optimal per-cell fluorophore spectra,
+without the requirement to use the TRU-OLS trick of dropping into a
 “positive-fluorophore only” unmixed space. That trick is faster and
 highly effective, since it gives us much more information about the
 shape of the residual, but inevitably surfaces optimization artefacts
 around the positivity threshold.</li>
+<li>Further improvements will be release later, after the manuscript
+completes peer review.</li>
 </ul>
 </li>
 <li>
@@ -152,23 +159,12 @@ of variation seen in the single-color controls. Some thoughts on this
 can be seen in <a href="https://drcytometer.github.io/AutoSpectral/articles/19_Correcting_Unmixing_Errors.html">Correcting
 Unmixing Errors</a>
 </li>
-<li>This should be improved further with the next round of updates,
-tentatively 1.6.0</li>
 </ul>
 </li>
-<li><p>Autofluorescence modeling +infer more precise AF spectra through
-geometric mapping to multiple points on the SOM. I tried this using
-weighted averages of how much each AF “helped” or “fit” the cell, but
-the result was worse. Probably I did something wrong because
-conceptually this make sense to me.</p></li>
-<li><p>Faster AF assignment through machine learning</p></li>
-<li><p>Run a representative or pooled sample, figure out which AF
-spectrum belongs to each cell, train a model, use the model for
-lightweight (quick) approximation of the best spectrum for remaining
-samples. This is how I anticipate AutoSpectral could be employed on cell
-sorters. That said, the Honeychrome implementation in Python uses either
-a 3D matrix multiplication via NumPy or a C kernel and is quite fast, so
-this may not be necessary.</p></li>
+<li><p>Autofluorescence modeling</p></li>
+<li><p>An improvement to the model is in progress. This will be in the
+Honeychrome version 1.0.0 first, and in the AutoSpectral R package after
+the manuscript completes peer review.</p></li>
 </ul>
 </div>
 <div class="section level2">

@@ -1,5 +1,5 @@
 ---
-title: "17 Acknowledgements"
+title: "17 Acknowledgements & References"
 output: html_document
 date: "2026-03-21"
 ---
@@ -8,7 +8,7 @@ date: "2026-03-21"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Thank you to anyone who has used AutoSpectral and provided feedback. In no particular order, here are some people who have helped or provided insights that allowed me to develop this tool:
+Thank you to anyone who has used AutoSpectral and provided feedback. Below, in no particular order, are some people who have helped or provided insights that furthered the development of this tool. This is not meant to indicate that these people endorse AutoSpectral or have validated it in anyway; it is simply a statement of gratitude.
 
 + [Nathan Laniewski](https://github.com/nlaniewski)
 + [Florian Mair](https://fccf.ethz.ch/people1.html)
@@ -61,3 +61,6 @@ This work was supported by the Medical Research Council grant MR/Y004450/1 throu
 - Roederer M (2002). Compensation in flow cytometry. *Curr Protoc Cytom* Chapter 1:Unit 1.14. [doi:10.1002/0471142956.cy0114s22](https://doi.org/10.1002/0471142956.cy0114s22)
 - Roederer M (2016). Distributions of autofluorescence after compensation: Be panglossian, fret not. *Cytometry A* 89(4):398-402. [doi:10.1002/cyto.a.22820](https://doi.org/10.1002/cyto.a.22820)
 - Van Gassen S, Callebaut B, Van Helden MJ, Lambrecht BN, Demeester P, Dhaene T, Saeys Y (2015). FlowSOM: Using self-organizing maps for visualization and interpretation of cytometry data. *Cytometry A* 87(7):636-645. [doi:10.1002/cyto.a.22625](https://doi.org/10.1002/cyto.a.22625)
+- Nguyen R, Perfetto S, Mahnke YD, Chattopadhyay P, Roederer M (2013). Quantifying spillover spreading for comparing instrument performance and aiding in multicolor panel design. *Cytometry A* 83*3(:306-15). [doi: 10.1002/cyto.a.22251](https://doi.org/10.1002/cyto.a.22251)
+- Cai X, Garcia-Garcia S, Kuhnen L, Gianniou M, Garcia Vallejo JJ (2026). Unmixing Spread Estimation Based on Residual Model in Spectral Flow Cytometry. *bioRxiv* (pre-print). [doi: 10.64898/2026.01.27.701929](https://doi.org/10.64898/2026.01.27.701929)
+

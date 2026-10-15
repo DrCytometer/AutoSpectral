@@ -46,7 +46,7 @@
     <li><a class="dropdown-item" href="../articles/14_Speed_It_Up.html">14 Speed It Up (Why So Slow?)</a></li>
     <li><a class="dropdown-item" href="../articles/15_Updates_And_Issues.html">15 Updates and Issues</a></li>
     <li><a class="dropdown-item" href="../articles/16_Development.html">16 Development</a></li>
-    <li><a class="dropdown-item" href="../articles/17_Acknowledgements.html">17 Acknowledgements</a></li>
+    <li><a class="dropdown-item" href="../articles/17_Acknowledgements.html">17 Acknowledgements &amp; References</a></li>
     <li><a class="dropdown-item" href="../articles/18_Weighted_Least_Squares.html">18 Weighted Least Squares Unmixing</a></li>
     <li><a class="dropdown-item" href="../articles/19_Correcting_Unmixing_Errors.html">19 Correcting Unmixing Errors</a></li>
   </ul></li>
@@ -64,15 +64,15 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="autospectral-development-version">AutoSpectral (development version)<a class="anchor" aria-label="anchor" href="#autospectral-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.8.7" id="autospectral-187-2026-10-09">AutoSpectral 1.8.7 (2026-10-09)<a class="anchor" aria-label="anchor" href="#autospectral-187-2026-10-09"></a></h2>
 <div class="section level3">
-<h3 id="new-features-development-version">New Features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="new-features-1-8-7">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-8-7"></a></h3>
 <ul><li>
 <code><a href="../reference/get.af.spectra.html">get.af.spectra()</a></code> now returns the AF spectra ranked by spectral angle to the mean AF spectrum (smallest angle first, row 1 is the mean), with rows renamed <code>AF1</code>, <code>AF2</code>, … in that order, so the AF index is roughly continuous.</li>
 <li>Detector axis labels are now coloured by excitation laser in <code><a href="../reference/spectral.trace.html">spectral.trace()</a></code>, <code><a href="../reference/spectral.heatmap.html">spectral.heatmap()</a></code>, <code><a href="../reference/spectral.mismatch.plot.html">spectral.mismatch.plot()</a></code>, <code><a href="../reference/spectral.reference.plot.html">spectral.reference.plot()</a></code>, <code><a href="../reference/spectral.ribbon.plot.html">spectral.ribbon.plot()</a></code>, <code><a href="../reference/spectral.variant.plot.html">spectral.variant.plot()</a></code> and <code><a href="../reference/spectral.variant.plot.dens.html">spectral.variant.plot.dens()</a></code> (new argument <code>color.by.laser</code>, default <code>TRUE</code>). Lasers come from <code>cytometer_database.csv</code>, using the cytometer in <code>asp</code> or, for functions without <code>asp</code> (now an optional argument there), the database column matching all detector names. Labels fall back to black if the detectors do not all map to the instrument’s detectors.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<h3 id="bug-fixes-1-8-7">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-8-7"></a></h3>
 <ul><li>In <code><a href="../reference/create.biplot.html">create.biplot()</a></code>, spillover-spread boundary curves now stop where they reach the axis limits instead of continuing along the plot edge.</li>
 <li>In <code><a href="../reference/create.biplot.html">create.biplot()</a></code>, the x-direction spillover-spread boundaries are drawn in data order (<code>geom_path()</code>); <code>geom_line()</code> sorted them by x, interleaving the positive- and negative-y branches into a zigzag.</li>
 </ul></div>

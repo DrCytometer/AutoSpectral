@@ -1,8 +1,10 @@
-# 17 Acknowledgements
+# 17 Acknowledgements & References
 
-Thank you to anyone who has used AutoSpectral and provided feedback. In
-no particular order, here are some people who have helped or provided
-insights that allowed me to develop this tool:
+Thank you to anyone who has used AutoSpectral and provided feedback.
+Below, in no particular order, are some people who have helped or
+provided insights that furthered the development of this tool. This is
+not meant to indicate that these people endorse AutoSpectral or have
+validated it in anyway; it is simply a statement of gratitude.
 
 - [Nathan Laniewski](https://github.com/nlaniewski)
 - [Florian Mair](https://fccf.ethz.ch/people1.html)
@@ -106,3 +108,11 @@ Investigator Award 222442/A/21/Z.
   visualization and interpretation of cytometry data. *Cytometry A*
   87(7):636-645.
   [doi:10.1002/cyto.a.22625](https://doi.org/10.1002/cyto.a.22625)
+- Nguyen R, Perfetto S, Mahnke YD, Chattopadhyay P, Roederer M (2013).
+  Quantifying spillover spreading for comparing instrument performance
+  and aiding in multicolor panel design. *Cytometry A* 83\*3(:306-15).
+  [doi: 10.1002/cyto.a.22251](https://doi.org/10.1002/cyto.a.22251)
+- Cai X, Garcia-Garcia S, Kuhnen L, Gianniou M, Garcia Vallejo JJ
+  (2026). Unmixing Spread Estimation Based on Residual Model in Spectral
+  Flow Cytometry. *bioRxiv* (pre-print). [doi:
+  10.64898/2026.01.27.701929](https://doi.org/10.64898/2026.01.27.701929)

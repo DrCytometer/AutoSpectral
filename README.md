@@ -335,10 +335,10 @@ If you use AutoSpectral, please cite the manuscript:
 
 Burton OT, Laniewski N, Rogers SS, Lopez Munoz-de-Leon A, Khan S,
 Arunthavalingam J, Smith E, Bücken L, De Vuyst L, Humblet-Baron S,
-Cerveira J, Scheible K, Dooley J, Liston A. AutoSpectral improves
+Cerveira J, Scheible K, Dooley J, Liston A (2025). AutoSpectral improves
 spectral flow cytometry accuracy through optimised spectral unmixing and
-autofluorescence-matching at the cellular level. Manuscript; citation
-details will be updated on publication.
+autofluorescence-matching at the cellular level. *bioRxiv* [doi:
+10.1101/2025.10.27.684855](https://doi.org/10.1101/2025.10.27.684855)
 
 The automated gating and robust linear modelling used to extract spectra
 from single-stained controls were developed in AutoSpill (Roca et al.,
@@ -403,3 +403,11 @@ from single-stained controls were developed in AutoSpill (Roca et al.,
   Analyzer to identify and unmix multiple highly autofluorescent murine
   lung populations. *Front Bioeng Biotechnol* 10:827987.
   [doi:10.3389/fbioe.2022.827987](https://doi.org/10.3389/fbioe.2022.827987)
+- Nguyen R, Perfetto S, Mahnke YD, Chattopadhyay P, Roederer M (2013).
+  Quantifying spillover spreading for comparing instrument performance
+  and aiding in multicolor panel design. *Cytometry A* 83\*3(:306-15).
+  [doi: 10.1002/cyto.a.22251](https://doi.org/10.1002/cyto.a.22251)
+- Cai X, Garcia-Garcia S, Kuhnen L, Gianniou M, Garcia Vallejo JJ
+  (2026). Unmixing Spread Estimation Based on Residual Model in Spectral
+  Flow Cytometry. *bioRxiv* (pre-print). [doi:
+  10.64898/2026.01.27.701929](https://doi.org/10.64898/2026.01.27.701929)

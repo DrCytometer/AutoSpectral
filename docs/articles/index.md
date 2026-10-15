@@ -38,8 +38,8 @@
   Issues](https://drcytometer.github.io/AutoSpectral/articles/15_Updates_And_Issues.md):
 - [16
   Development](https://drcytometer.github.io/AutoSpectral/articles/16_Development.md):
-- [17
-  Acknowledgements](https://drcytometer.github.io/AutoSpectral/articles/17_Acknowledgements.md):
+- [17 Acknowledgements &
+  References](https://drcytometer.github.io/AutoSpectral/articles/17_Acknowledgements.md):
 - [18 Weighted Least Squares
   Unmixing](https://drcytometer.github.io/AutoSpectral/articles/18_Weighted_Least_Squares.md):
 - [19 Correcting Unmixing
