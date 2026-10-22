@@ -29,22 +29,24 @@
 # sample.
 
 library( AutoSpectral )
+library( scattermore )
+library( MASS )
 
 
 # ---- setup --------------------------------------------------------------
 
 asp <- get.autospectral.param()
 
-control.file <- "control_file_cells.csv"
-control.dir <- "./Single stained controls"
+control.file <- "../Unmixing comparison/SpecSymp analysis/cell_control_file.csv"
+control.dir <- "../Unmixing comparison/SpecSymp analysis/raw_data/SSC_cells"
 
 flow.control.cells <- define.flow.control(
-  control.file = control.file,
   control.dir = control.dir,
+  control.def.file = control.file,
   asp = asp
 )
 
-spleen.file <- "./Fully stained/A3 Spleen_GFP_003_Samples.fcs"
+spleen.file <- "../Unmixing comparison/SpecSymp analysis/raw_data/Samples/Spleen/A3 Spleen_GFP_003_Samples.fcs"
 
 output.dir <- "./figure_3_4_5"
 if ( !dir.exists( output.dir ) ) dir.create( output.dir, recursive = TRUE )
@@ -147,8 +149,12 @@ gated.spleen.data <- gate.large.sample(
 spectra.bb700.posneg <- read.spectra( "Cell pos neg spectra FlowJo renamed.csv" )
 spectra.bb700.rlm <- read.spectra( "Cells RLM autospectral spectra.csv" )
 
-unmixed.spleen.posneg <- unmix.ols( gated.spleen.data, spectra.bb700.posneg )
-unmixed.spleen.rlm <- unmix.ols( gated.spleen.data, spectra.bb700.rlm )
+unmixed.spleen.posneg <- unmix.ols(
+  gated.spleen.data[ , colnames( spectra.bb700.posneg ) ], spectra.bb700.posneg
+)
+unmixed.spleen.rlm <- unmix.ols(
+  gated.spleen.data[ , colnames( spectra.bb700.rlm ) ], spectra.bb700.rlm
+)
 
 fig.3g.posneg <- create.biplot(
   plot.data = unmixed.spleen.posneg,
@@ -191,8 +197,14 @@ fig.3g.rlm <- create.biplot(
 spectra.bv650.unmatched <- read.spectra( "Cell pos neg spectra FlowJo renamed.csv" )
 spectra.bv650.matched <- read.spectra( "Cells Matching Negative autospectral spectra.csv" )
 
-unmixed.spleen.unmatched <- unmix.ols( gated.spleen.data, spectra.bv650.unmatched )
-unmixed.spleen.matched <- unmix.ols( gated.spleen.data, spectra.bv650.matched )
+unmixed.spleen.unmatched <- unmix.ols(
+  gated.spleen.data[ , colnames( spectra.bv650.unmatched ) ],
+  spectra.bv650.unmatched
+)
+unmixed.spleen.matched <- unmix.ols(
+  gated.spleen.data[ , colnames( spectra.bv650.matched ) ],
+  spectra.bv650.matched
+)
 
 fig.4e.unmatched <- create.biplot(
   plot.data = unmixed.spleen.unmatched,
@@ -245,8 +257,14 @@ fig.5a.plots <- lapply( fig.5a.detector.pairs, function( pair ) {
 spectra.bv605.posneg <- read.spectra( "Cell pos neg spectra FlowJo renamed.csv" )
 spectra.bv605.cleaned <- read.spectra( "Cells AF Removed autospectral spectra.csv" )
 
-unmixed.spleen.bv605.posneg <- unmix.ols( gated.spleen.data, spectra.bv605.posneg )
-unmixed.spleen.bv605.cleaned <- unmix.ols( gated.spleen.data, spectra.bv605.cleaned )
+unmixed.spleen.bv605.posneg <- unmix.ols(
+  gated.spleen.data[ , colnames( spectra.bv605.posneg ) ],
+  spectra.bv605.posneg
+)
+unmixed.spleen.bv605.cleaned <- unmix.ols(
+  gated.spleen.data[ , colnames( spectra.bv605.cleaned ) ],
+  spectra.bv605.cleaned
+)
 
 fig.5g.posneg <- create.biplot(
   plot.data = unmixed.spleen.bv605.posneg,
