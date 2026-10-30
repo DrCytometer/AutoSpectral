@@ -1,8 +1,8 @@
 # figure_helpers.R
 #
 # Small shared helpers for the bead-vs-cell manuscript figures:
-#  - spectrum normalisation (L2 via AutoSpectral::l2.normalize.spectra())
 #  - detector -> laser lookup from AutoSpectral's cytometer_database.csv
+#  - one laser colour key shared by several spectral.mismatch.plot() panels
 #  - loading cell/bead spectra from a run.bead.cell.comparison() results folder
 #  - saving individual panels as 300 dpi PNG with controllable size
 
@@ -18,17 +18,13 @@ default.laser.colors <- c(
   Unknown     = "grey50"
 )
 
-#' Normalise a spectrum
+#' Laser colour key (single row) shared by several spectral.mismatch.plot()
+#' panels (each made with show.laser.key = FALSE); the package's own key.
 #'
-#' @param x Named numeric vector.
-#' @param method "max" (peak = 1), "L2" (unit Euclidean norm) or "none".
-normalize.spectrum <- function( x, method = c( "max", "L2", "none" ) ) {
-  method <- match.arg( method )
-  switch( method,
-    max  = x / max( x ),
-    L2   = stats::setNames( as.numeric( l2.normalize.spectra( matrix( x, nrow = 1 ) ) ), names( x ) ),
-    none = x )
-}
+#' @param lasers Laser names to show, in display order.
+#' @return A legend grob for cowplot::plot_grid().
+make.laser.key <- function( lasers, base.size = 9 )
+  utils::getFromNamespace( ".laser.key.legend", "AutoSpectral" )( lasers, base.size = base.size )
 
 #' Detector -> laser lookup from cytometer_database.csv
 #'

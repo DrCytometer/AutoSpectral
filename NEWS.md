@@ -1,3 +1,68 @@
+# AutoSpectral 1.8.8 (2026-10-30)
+
+## New Features
+
+- `run.bead.cell.comparison()` (and its internal `finalize.control.file()`)
+moved from `inst/scripts/run_bead_cell_comparison.R` into the package and is
+now exported.
+- New exported functions from the bead-vs-cell manuscript analysis:
+`laser.space.shift()` and `laser.shift.concordance()` (per-laser,
+instrument-independent description of a cell-to-bead spectral shift, with a
+laser-label permutation test across cytometers), `spectral.messiness()`
+(effective number of detectors as a fraction of all detectors; Hill numbers of
+order 2 and infinity) and `suggest.panel.swaps()` (rank replacement
+fluorophores by condition number).
+- `inst/scripts/bead_cell/figure_functions/`: the plotting and statistics
+helpers for the bead-vs-cell manuscript figures (sourced by the figure
+scripts via `system.file()`).
+- `get.fluor.variants()`: the Residual Model line fit (projection through the
+panel and the `spread.estimator` choice) is now the internal
+`.residual.model.line()`, with identical output; the bead-vs-cell figure
+functions use it, so their spillover-spread boundaries use the same
+`"binned.mad"` default.
+- `spectral.mismatch.plot()`: new optional arguments for figure panels, all
+off by default (default output unchanged): `normalization` (`"max"`, `"L2"`),
+`exclude.lasers` (display only), `show.cosine`, `cosine.on.plotted`,
+`cosine.digits`, `label.every`, `label.angle`, `trace.labels`, `y.label`,
+`diff.label`, `legend.position`, `legend.title`, `bar.line.width`,
+`show.laser.key`, `base.size`, `axis.text.size` and `save`. The cosine
+similarity and the displayed lasers are returned as attributes. Named numeric
+vectors are now accepted as documented, and `fluorophore.colors` now follows
+reference/test order rather than the alphabetical order of the labels.
+- `fix.my.unmix()` has a new default pair estimator, `estimator = "anchored"`:
+the source-negative bulk only fixes where the line passes and the source's
+clearly positive events set the slope, with target negativity a band around the
+current line after a first one-sided pass. Clearly positive events are those
+above both the spread-scaled boundary and the upper bound of the stained
+sample's own negative population in that channel (`negative.tail`, the
+autogating tail threshold), so the tilted negative population of collinear
+channels no longer sets a slope. Requires AutoSpectralRcpp's
+`fix_anchored_batch_rcpp()` for speed; falls back to R otherwise.
+- `fix.my.unmix()`: a source's trust now rises smoothly with the number of its
+clearly positive events beyond the rate the unstained sample gives
+(`source.events`, default `c( 50, 250 )`), returned per source in `source.log`.
+- `fix.my.unmix()`: `glasso.check` (default `TRUE`) scales each pair
+coefficient's trust by its agreement with a joint lasso of the channel over
+every other fluorophore.
+- `fix.my.unmix()`: optional `af.gate` drops a row change that looks like an
+AF spectrum, in phase one and phase two.
+- `fix.my.unmix()`: `phase.two.rows = "flagged"` (default) re-measures only the
+rows phase one changed.
+- `get.spectral.variants()` and `get.fluor.variants()`: new
+`spread.estimator`. The default, `"binned.mad"`, fits the Residual Model line
+through binned squared MADs; the former Huber line on squared projections
+(`"huber.squared"`) gives about half the variance slope.
+
+## Changes
+
+- `fix.my.unmix()`: `spread.kappa` now defaults to `3`.
+
+## Bug fixes
+
+- `fix.my.unmix()`: a coefficient without a standard error got full trust; it
+now gets none.
+
+
 # AutoSpectral 1.8.7 (2026-10-09)
 
 ## New Features

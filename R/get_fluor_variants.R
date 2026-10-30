@@ -156,6 +156,22 @@
 #'   supply, and pools to a very large, AF-dominated mass across many
 #'   controls; restricting to the positive gate avoids re-fitting that
 #'   problem at high cost.
+#' @param spread.estimator Character, how the Residual Model line is fitted.
+#'   \code{"binned.mad"} (default): the events are split into
+#'   \code{spread.n.bins} quantile bins of the control's own abundance, each
+#'   bin's variance in every target is its squared normalised MAD, and a
+#'   Huber line through the bins gives intercept and slope.
+#'   \code{"huber.squared"}: a Huber line of each squared projection on the
+#'   abundance. The squared projections are chi-square distributed, so the
+#'   Huber weights pull that line towards their median: for Gaussian noise its
+#'   slope is about 0.47 of the variance slope, which leaves the spread-scaled
+#'   boundaries too narrow. With fewer than three bins of
+#'   \code{spread.min.bin.events}, \code{"binned.mad"} falls back to
+#'   \code{"huber.squared"}.
+#' @param spread.n.bins Integer, default \code{20L}. Quantile bins for
+#'   \code{"binned.mad"}.
+#' @param spread.min.bin.events Integer, default \code{20L}. Fewest events a
+#'   bin may hold for \code{"binned.mad"}.
 #' @param huber.k Numeric, default \code{1.345}. Huber tuning constant passed
 #'   to \code{.fix.huber.slope()} for the spillover-spread regression.
 #' @param huber.max.iter Integer, default \code{100L}. Maximum IRLS
@@ -236,6 +252,9 @@ get.fluor.variants <- function(
     noise.floor.tail.fraction = 0.20,
     noise.mask.threshold = 0.05,
     noise.n.cells = 2000L,
+    spread.estimator      = c( "binned.mad", "huber.squared" ),
+    spread.n.bins         = 20L,
+    spread.min.bin.events = 20L,
     huber.k         = 1.345,
     huber.max.iter  = 100L,
     variant.fill.color = "red",
@@ -248,6 +267,8 @@ get.fluor.variants <- function(
 
   if ( verbose )
     message( paste0( "\033[34m", "Getting spectral variants for ", fluor, "\033[0m" ) )
+
+  spread.estimator <- match.arg( spread.estimator )
 
   # reference spectrum for this fluorophore
   original.spectrum <- spectra[ fluor, , drop = FALSE ]
@@ -512,16 +533,12 @@ get.fluor.variants <- function(
 
   if ( use.unmixed && length( b.h ) >= 20 ) {
 
-    proj <- unmix.ols( resid.lr, spectra )
-
-    spread.coef <- apply( proj, 2, function( p ) {
-      tryCatch(
-        .fix.huber.slope( b.h, p^2, k = huber.k, max.iter = huber.max.iter ),
-        error = function( e ) fit.robust.linear.model(
-          b.h, p^2, x.name = "b.h", y.name = "proj2", fix.unmix = TRUE
-        )
-      )
-    } )
+    spread.coef <- .residual.model.line(
+      b.h, resid.lr, spectra,
+      spread.estimator = spread.estimator,
+      n.bins = spread.n.bins, min.bin.events = spread.min.bin.events,
+      huber.k = huber.k, huber.max.iter = huber.max.iter
+    )
 
     spread.intercept <- spread.coef[ 1, ]
     spread.mad       <- spread.coef[ 2, ]
@@ -683,4 +700,98 @@ get.fluor.variants <- function(
   attr( variant.spectra, "cosine.threshold.used" )   <- threshold.used
   attr( variant.spectra, "af.collinear" )            <- af.collinear
   return( variant.spectra )
+}
+
+
+#' Residual Model line of every target fluorophore.
+#'
+#' Projects the residual of the low-rank fit through the full-panel unmixing
+#' matrix (`unmix.ols()`) and fits, for every target k,
+#' `Var(proj_k | b) = intercept_k + slope_k * b`: from binned squared MADs
+#' (`.binned.variance.line()`) for `"binned.mad"`, or, if that is not possible
+#' (fewer than three usable bins) or `"huber.squared"` is requested, a Huber
+#' line of the squared projections (`.fix.huber.slope()`, falling back to
+#' `fit.robust.linear.model()` if it errors). Used by `get.fluor.variants()`
+#' and by the bead-vs-cell figure functions
+#' (inst/scripts/bead_cell/figure_functions/residual_spread_model.R), so both
+#' use the same estimator.
+#'
+#' @param b Numeric vector, the control's own abundance per event.
+#' @param resid Numeric matrix (events x detectors), the residual of the
+#'   low-rank fit.
+#' @param spectra Full-panel spectral matrix (fluorophores x detectors).
+#' @param spread.estimator,n.bins,min.bin.events,huber.k,huber.max.iter As
+#'   `spread.estimator`, `spread.n.bins`, `spread.min.bin.events`, `huber.k`
+#'   and `huber.max.iter` in `get.fluor.variants()`.
+#'
+#' @return A 2 x fluorophores matrix (intercept, slope).
+#'
+#' @noRd
+.residual.model.line <- function( b, resid, spectra,
+                                  spread.estimator = c( "binned.mad", "huber.squared" ),
+                                  n.bins = 20L, min.bin.events = 20L,
+                                  huber.k = 1.345, huber.max.iter = 100L ) {
+
+  spread.estimator <- match.arg( spread.estimator )
+  proj <- unmix.ols( resid, spectra )
+
+  coef <- if ( spread.estimator == "binned.mad" )
+    .binned.variance.line( b, proj, n.bins = n.bins, min.bin.events = min.bin.events,
+                           huber.k = huber.k, huber.max.iter = huber.max.iter ) else NULL
+
+  if ( is.null( coef ) )
+    coef <- apply( proj, 2, function( p ) {
+      tryCatch(
+        .fix.huber.slope( b, p^2, k = huber.k, max.iter = huber.max.iter ),
+        error = function( e ) fit.robust.linear.model(
+          b, p^2, x.name = "b.h", y.name = "proj2", fix.unmix = TRUE
+        )
+      )
+    } )
+
+  coef
+}
+
+#' Residual Model line of every target from binned variances.
+#'
+#' The events are split into `n.bins` quantile bins of `b` (as many as
+#' `min.bin.events` per bin allows); each bin's variance in every target is
+#' its squared normalised MAD, and a Huber line of those variances on the
+#' bins' mean `b` gives intercept and slope -- the variance added per unit of
+#' abundance, unlike a Huber line of the squared projections, whose weights
+#' pull it towards the chi-square median.
+#'
+#' @param b Numeric vector, the control's own abundance per event.
+#' @param proj Numeric matrix (events x targets), the residual projected
+#'   through the panel's unmixing matrix.
+#' @param n.bins,min.bin.events Integer, bins and their minimum size.
+#' @param huber.k,huber.max.iter Passed to `.fix.huber.slope()`.
+#'
+#' @return A 2 x targets matrix (intercept, slope), as `.fix.huber.slope()`
+#'   gives per target, or `NULL` with fewer than three usable bins.
+#'
+#' @noRd
+.binned.variance.line <- function( b, proj, n.bins = 20L, min.bin.events = 20L,
+                                   huber.k = 1.345, huber.max.iter = 100L ) {
+
+  n.bins <- as.integer( max( 1, min( n.bins, length( b ) %/% max( min.bin.events, 1 ) ) ) )
+  if ( n.bins < 3L ) return( NULL )
+
+  edges <- stats::quantile( b, probs = seq( 0, 1, length.out = n.bins + 1L ), names = FALSE )
+  bin <- findInterval( b, edges, rightmost.closed = TRUE, all.inside = TRUE )
+
+  centres   <- numeric( 0 )
+  variances <- NULL
+
+  for ( i in seq_len( n.bins ) ) {
+    sel <- which( bin == i )
+    if ( length( sel ) < min.bin.events ) next
+    centres <- c( centres, mean( b[ sel ] ) )
+    variances <- rbind( variances, apply( proj[ sel, , drop = FALSE ], 2, stats::mad )^2 )
+  }
+
+  if ( length( centres ) < 3L ) return( NULL )
+
+  apply( variances, 2, function( v )
+    .fix.huber.slope( centres, v, k = huber.k, max.iter = huber.max.iter ) )
 }
