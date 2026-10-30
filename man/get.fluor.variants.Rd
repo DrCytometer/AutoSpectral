@@ -32,6 +32,9 @@ get.fluor.variants(
   noise.floor.tail.fraction = 0.2,
   noise.mask.threshold = 0.05,
   noise.n.cells = 2000L,
+  spread.estimator = c("binned.mad", "huber.squared"),
+  spread.n.bins = 20L,
+  spread.min.bin.events = 20L,
   huber.k = 1.345,
   huber.max.iter = 100L,
   variant.fill.color = "red",
@@ -163,6 +166,25 @@ control carries no information the unstained sample doesn't already
 supply, and pools to a very large, AF-dominated mass across many
 controls; restricting to the positive gate avoids re-fitting that
 problem at high cost.}
+
+\item{spread.estimator}{Character, how the Residual Model line is fitted.
+\code{"binned.mad"} (default): the events are split into
+\code{spread.n.bins} quantile bins of the control's own abundance, each
+bin's variance in every target is its squared normalised MAD, and a
+Huber line through the bins gives intercept and slope.
+\code{"huber.squared"}: a Huber line of each squared projection on the
+abundance. The squared projections are chi-square distributed, so the
+Huber weights pull that line towards their median: for Gaussian noise its
+slope is about 0.47 of the variance slope, which leaves the spread-scaled
+boundaries too narrow. With fewer than three bins of
+\code{spread.min.bin.events}, \code{"binned.mad"} falls back to
+\code{"huber.squared"}.}
+
+\item{spread.n.bins}{Integer, default \code{20L}. Quantile bins for
+\code{"binned.mad"}.}
+
+\item{spread.min.bin.events}{Integer, default \code{20L}. Fewest events a
+bin may hold for \code{"binned.mad"}.}
 
 \item{huber.k}{Numeric, default \code{1.345}. Huber tuning constant passed
 to \code{.fix.huber.slope()} for the spillover-spread regression.}
