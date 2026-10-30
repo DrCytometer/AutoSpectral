@@ -131,9 +131,13 @@ handle.gating.error <- function(
     theme_bw() + theme(legend.position = "right") +
     labs(title = paste("Gating Failure:", samp), x = x.lab, y = y.lab)
 
+  # the gate folder is NULL under get.autospectral.param( figures = FALSE ) and
+  # may not exist yet when called from tune.gate()
+  fail.dir <- if ( is.null( asp$figure.gate.dir ) ) "figure_gate" else asp$figure.gate.dir
+  if ( !dir.exists( fail.dir ) ) dir.create( fail.dir, recursive = TRUE )
   fail.file <- sprintf("FAILURE_%s.jpg", samp)
   ggsave(
-    file.path( asp$figure.gate.dir, fail.file ),
+    file.path( fail.dir, fail.file ),
     plot = diag.plot,
     device = ragg::agg_jpeg,
     width = 6,

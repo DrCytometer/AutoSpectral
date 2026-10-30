@@ -23,3 +23,5 @@
 #' - `excitation.laser`: Excitation laser
 #' - `nominal.wavelength`: Numeric; nominal peak emission wavelength
 #' - `is.viability`: Logical; whether the fluorophore is a viability dye
+#' - `tandem.parent`: For a tandem dye, the fluorophore its donor is on its
+#'   own (e.g. `PE` for `PE-Cy7`); empty otherwise

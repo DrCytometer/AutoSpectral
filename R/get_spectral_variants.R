@@ -74,9 +74,6 @@
 #'   its paired unstained file's AF principal directions at or above which
 #'   the AF-component projection step (and the low-rank fit feeding the
 #'   Residual Model) is skipped.
-#' @param noise.floor.tail.fraction Numeric in (0, 1), default \code{0.20}.
-#'   Fraction of each detector's raw values (lowest end) used to estimate the
-#'   per-control noise floor. Passed to \code{get.fluor.variants}.
 #' @param spread.min.events Integer, default \code{50}. Minimum number of
 #'   events behind a source fluorophore's Residual Model regression
 #'   (\code{"spillover.spread.n"}) before its Spillover Spreading Matrix row
@@ -129,11 +126,10 @@
 #'   brightness. Pass `NULL` (default) to use purely geometric scores.
 #' @param optimize.necessity.threshold Numeric in `[0, 1]`, default `0.01`.
 #'   Passed to `calculate.optimize.necessity()`.
-#' @param diagnostics Logical, default \code{FALSE}. When \code{TRUE}, prints
-#'   additional messages on model characteristics to the console.
 #' @param ... Ignored. Catches and warns on previously used deprecated
 #'   arguments: \code{af.spectra}, \code{refine}, \code{problem.quantile},
-#'   \code{pos.quantile}.
+#'   \code{pos.quantile}, \code{noise.floor.tail.fraction},
+#'   \code{diagnostics}.
 #'
 #' @return A named list with elements:
 #' \describe{
@@ -146,8 +142,6 @@
 #'   \item{\code{delta.list}}{Named list of delta matrices (variant minus
 #'     reference spectrum), one per fluorophore.}
 #'   \item{\code{delta.norms}}{Named list of Euclidean norms of the deltas.}
-#'   \item{\code{noise.floor}}{Named numeric vector, per-detector electronic
-#'     noise floor in signal units (SD), pooled by minimum across controls.}
 #'   \item{\code{spillover.spread}}{Matrix (source fluorophore x target
 #'     channel), the Residual Model Spillover Spreading Matrix: the
 #'     slope of each target's residual-projection variance against the
@@ -193,7 +187,6 @@ get.spectral.variants <- function(
     sim.threshold      = 0.985,
     sim.threshold.floor    = 0.90,
     af.collinear.threshold = 0.95,
-    noise.floor.tail.fraction = 0.20,
     spread.min.events        = 50L,
     spread.hotspot.fallback  = TRUE,
     spread.hotspot.min.pairs = 20,
@@ -208,7 +201,6 @@ get.spectral.variants <- function(
     unstained.sample             = NULL,
     stained.sample               = NULL,
     optimize.necessity.threshold = 0.01,
-    diagnostics                  = FALSE,
     ...
 ) {
 
@@ -225,6 +217,13 @@ get.spectral.variants <- function(
       lifecycle::deprecate_warn( "0.9.0",
         paste0( "get.spectral.variants(", old.arg, ")" ),
         details = "no longer used" )
+  }
+
+  for ( old.arg in c( "noise.floor.tail.fraction", "diagnostics" ) ) {
+    if ( !is.null( dots[[ old.arg ]] ) )
+      lifecycle::deprecate_warn( "1.8.8",
+        paste0( "get.spectral.variants(", old.arg, ")" ),
+        details = "The noise model is now fitted by estimate.noise.model()." )
   }
 
   for ( old.arg in c( "refine", "problem.quantile" ) ) {
@@ -659,7 +658,6 @@ get.spectral.variants <- function(
     sim.threshold      = sim.threshold,
     sim.threshold.floor    = sim.threshold.floor,
     af.collinear.threshold = af.collinear.threshold,
-    noise.floor.tail.fraction = noise.floor.tail.fraction,
     spread.estimator   = spread.estimator,
     huber.k            = huber.k,
     huber.max.iter     = huber.max.iter,
@@ -722,65 +720,6 @@ get.spectral.variants <- function(
 
   delta.norms <- lapply( delta.list, function( d ) sqrt( rowSums( d^2 ) ) )
   names( delta.norms ) <- names( spectral.variants )
-
-  # ---------------------------------------------------------------------------
-  # Noise floor, pooled across controls
-  # ---------------------------------------------------------------------------
-  noise.floor <- NULL
-  floor.list  <- lapply( spectral.variants, function( v ) attr( v, "noise.floor" ) )
-  floor.list  <- floor.list[ !vapply( floor.list, is.null, logical( 1 ) ) ]
-
-  if ( length( floor.list ) > 0 ) {
-
-    floor.mat   <- do.call( rbind, floor.list )
-    noise.floor <- apply( floor.mat, 2, function( v ) {
-      v <- v[ is.finite( v ) & v > 0 ]
-      if ( length( v ) == 0 ) NA_real_ else min( v )
-    } )
-
-    if ( anyNA( noise.floor ) & diagnostics )
-      warning( "Noise floor could not be estimated at ",
-               sum( is.na( noise.floor ) ), " detector(s).", call. = FALSE )
-
-    if ( diagnostics )
-      message( sprintf(
-        "Noise floor from %d control(s): median SD %.1f (range %.1f - %.1f)",
-        nrow( floor.mat ),
-        stats::median( noise.floor, na.rm = TRUE ),
-        min( noise.floor, na.rm = TRUE ),
-        max( noise.floor, na.rm = TRUE ) ) )
-  }
-
-  # ---------------------------------------------------------------------------
-  # Noise model (read.var, kappa), fit on the unstained control
-  # ---------------------------------------------------------------------------
-
-  if ( verbose & diagnostics )
-    message( paste0( "\033[34m", "Modelling detector noise", "\033[0m" ) )
-
-  noise.model <- tryCatch(
-    estimate.noise.model(
-      raw.data       = unstained,
-      spectra        = spectra,
-      af.spectra     = af.spectra,
-      read.var.floor = if ( length( floor.list ) > 0 ) noise.floor^2 else NULL,
-      unstained.data = unstained,
-      verbose        = FALSE
-    ),
-    error = function( e ) {
-      if ( diagnostics ) {
-        warning( "Noise model from the unstained control failed: ",
-                 conditionMessage( e ), call. = FALSE )
-      }
-      NULL
-    }
-  )
-
-  if ( verbose && !is.null( noise.model ) & diagnostics )
-    message( sprintf(
-      "Noise model from the unstained control: median read SD %.1f, median counts.per.unit %.3g",
-      stats::median( sqrt( noise.model$read.var ) ),
-      stats::median( noise.model$counts.per.unit ) ) )
 
   # ---------------------------------------------------------------------------
   # Spillover Spreading Matrix (Residual Model)
@@ -890,7 +829,10 @@ get.spectral.variants <- function(
       !is.na( spillover.spread.intercept ) & spillover.spread.intercept < 0 ] <- 0
     # use the unit-normalized spillover spread for visualization
     ssm <- l2.normalize.spectra( spillover.spread )
-    # save the data as CSV
+    # save the data as CSV; asp from get.autospectral.param( figures = FALSE )
+    # carries no folder, so fall back to the standard name
+    if ( is.null( asp$figure.similarity.heatmap.dir ) )
+      asp$figure.similarity.heatmap.dir <- "figure_similarity_heatmap"
     if ( !dir.exists( asp$figure.similarity.heatmap.dir ) )
       dir.create( asp$figure.similarity.heatmap.dir )
 
@@ -1015,8 +957,6 @@ get.spectral.variants <- function(
     variants    = spectral.variants,
     delta.list  = delta.list,
     delta.norms = delta.norms,
-    noise.floor = noise.floor,
-    noise.model = noise.model,
     spillover.spread           = spillover.spread,
     spillover.spread.intercept = spillover.spread.intercept,
     optimize.scores      = necessity$scores.norm,

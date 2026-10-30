@@ -5,138 +5,222 @@
 \title{Estimate Detector Noise Model}
 \usage{
 estimate.noise.model(
-  raw.data,
+  control.dir,
+  control.def.file,
+  asp,
   spectra,
-  af.spectra = NULL,
-  n.bins = 40L,
-  min.bin.n = 50L,
-  trim.quantile = 0.999,
-  verbose = FALSE,
-  af.pc.n = 5L,
-  af.raw.data = NULL,
-  af.basis.n.cells = 20000L,
-  read.var.floor = NULL,
-  file.id = NULL,
-  unstained.data = NULL,
-  dark.quantile = 0.95,
-  n.tranche = 10L
+  spectral.variants,
+  unstained.sample = NULL,
+  output.dir = NULL,
+  save = TRUE,
+  selection = c("auto", "none"),
+  unstained.train.frac = 0.5,
+  control.train.frac = 0.7,
+  max.unstained = 200000L,
+  max.test.unstained = 20000L,
+  max.control.events = 100000L,
+  max.test.control = 5000L,
+  max.fit.events = 6000L,
+  max.cal.events = 2000L,
+  n.af.rows = 4L,
+  basis.var.explained = 0.95,
+  basis.max.rank = 5L,
+  bead.factor = 10,
+  n.bins = 20L,
+  min.bin.events = 50L,
+  fit.quadratic = FALSE,
+  n.irls = 2L,
+  n.restandardise = 2L,
+  floor.frac = 0.01,
+  bound.sds = 1,
+  bead.af.rows = 0L,
+  laser.split = FALSE,
+  laser.split.min = 0.01,
+  per.control.quadratic = FALSE,
+  sigma0.by.class = FALSE,
+  sigma0.fallback = c("floor", "laser"),
+  clamp.mode = c("auto", "off"),
+  clamp.weights = c("poisson", "flat"),
+  clamp.floor.pe = 10,
+  n.cells = 10000L,
+  som.dim = 5L,
+  k.neighbors = 3L,
+  sim.threshold = 0.985,
+  sim.threshold.floor = 0.9,
+  af.collinear.threshold = 0.95,
+  seed = asp$bird.seed,
+  parallel = TRUE,
+  threads = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
-\item{raw.data}{Numeric matrix (events x detectors), or a path to an FCS
-file. Detector columns must include all columns of \code{spectra}.}
+\item{control.dir}{Character, folder of the single-stained control FCS
+files.}
 
-\item{spectra}{Numeric matrix (fluorophores x detectors).}
+\item{control.def.file}{Character, the control definition CSV.}
 
-\item{af.spectra}{Optional AF dictionary (AF components x detectors), as
-returned by \code{get.af.spectra()}. Strongly recommended for cell controls.}
+\item{asp}{The AutoSpectral parameter list.}
 
-\item{n.bins}{Integer, number of quantile bins per detector. Default \code{40}.}
+\item{spectra}{Numeric matrix, reference spectra (fluorophores x
+detectors). An \code{AF} row is ignored.}
 
-\item{min.bin.n}{Integer, minimum events per bin. Default \code{50}.}
+\item{spectral.variants}{List returned by \code{get.spectral.variants()}; its
+\code{thresholds} (unmixed positivity thresholds of the unstained cells) are
+used for variant discovery on the cell controls.}
 
-\item{trim.quantile}{Numeric, upper quantile of each detector discarded
-before binning, to exclude saturation. Default \code{0.999}.}
+\item{unstained.sample}{Optional path to the unstained cell FCS file, used
+when the control file has no \code{AF} row. Default \code{NULL}.}
 
-\item{verbose}{Logical. Default \code{FALSE}.}
+\item{output.dir}{Folder for \code{noise_model.rds}. Default \code{asp$variant.dir}.}
 
-\item{af.pc.n}{Integer, number of principal components to use to describe
-\code{af.spectra}. Default is \code{5}.}
+\item{save}{Logical, save the result as \code{noise_model.rds}. Default \code{TRUE}.}
 
-\item{af.raw.data}{Optional numeric matrix, or a path to an FCS file, of
-individual autofluorescence-only events -- typically the same unstained
-sample \code{af.spectra} was built from. When supplied, the AF shape basis is
-fit by PCA on these per-cell events (L-infinity normalised per event,
-matching \code{get.af.spectra()}'s own convention) instead of on the rows of
-\code{af.spectra}. \code{af.spectra} rows are SOM node centroids, already
-compressed from the underlying cells; if within-node AF spread is
-substantially real rather than noise (check \code{shape.frac} in
-\code{attr(af.spectra, "af.model")}), the centroids alone understate true
-per-cell AF shape diversity, and the basis fit here from raw events will
-need more components to reach the same variance-explained target.
-Ignored when \code{af.spectra} is \code{NULL}. Default \code{NULL}, which fits the
-basis on \code{af.spectra} as before.}
+\item{selection}{\code{"auto"} (default): scatter core and singlets of every
+file. \code{"none"}: every event.}
 
-\item{af.basis.n.cells}{Integer, default \code{20000}. Maximum events from
-\code{af.raw.data} used for the PCA; downsampled if more are supplied. Only
-used when \code{af.raw.data} is supplied.}
+\item{unstained.train.frac, control.train.frac}{Numeric, training share of
+the unstained cells (default \code{0.5}) and of each control and bead
+negative (default \code{0.7}).}
 
-\item{read.var.floor}{Optional named numeric vector, per-detector additive}
+\item{max.unstained, max.test.unstained}{Integers, unstained events read
+(default \code{200000}) and held out at most (default \code{20000}).}
 
-\item{file.id}{Optional vector (character or factor), length
-\code{nrow(raw.data)}, identifying which source file/acquisition each row
-came from. When supplied, per-file residual means are subtracted before
-the mean-variance regression, so between-file offsets (gain drift,
-voltage differences across acquisition days) are not counted as
-photon-driven variance. Recommended whenever \code{raw.data} was pooled
-across multiple control files, e.g. from \code{pool.scc.for.noise.model()}.
-Default \code{NULL}.}
+\item{max.control.events, max.test.control}{Integers, control events read
+(default \code{100000}) and held-out positives kept (default \code{5000}).}
 
-\item{unstained.data}{Optional numeric matrix (events x detectors) of an
-unstained/AF-only control, used only to anchor the lower tranche of the
-linearity check at \code{dark.quantile} of the true-dark distribution. When
-\code{NULL}, falls back to \code{dark.quantile} of \code{raw.data} itself, which is a
-weaker proxy since it is not a genuinely dark reference. Default \code{NULL}.}
+\item{max.fit.events, max.cal.events}{Integers, events per control and bead
+negative in the fit (default \code{6000}; four times that for the unstained
+cells) and in the calibration (default \code{2000}; twice for the unstained).}
 
-\item{dark.quantile}{Numeric in (0, 1), the quantile of \code{unstained.data}
-(or of \code{raw.data} when \code{unstained.data} is \code{NULL}) used as the upper
-bound of the lowest linearity tranche. Default \code{0.95}.}
+\item{n.af.rows}{Integer, AF design rows of a cell negative. Default \code{4}.}
 
-\item{n.tranche}{Integer, number of intensity tranches for the linearity
-check. Default \code{10L}.}
+\item{basis.var.explained, basis.max.rank}{Variant basis: variance
+explained (default \code{0.95}) and maximum rank (default \code{5}).}
+
+\item{bead.factor}{Numeric, minimum ratio between the positives and an
+internal bead negative. Default \code{10}.}
+
+\item{n.bins, min.bin.events, fit.quadratic, n.irls, n.restandardise, floor.frac, bound.sds}{Estimator settings: quantile bins per group (default \code{20}), fewest
+events per bin (\code{50}), a per-detector \verb{c mu^2} term (\code{FALSE}), IRLS
+passes (\code{2}), restandardisation rounds (\code{2}), lower clamp on sigma0^2 as
+a fraction of its median (\code{0.01}) and sampling SDs added to its upper
+clamp (\code{1}).}
+
+\item{bead.af.rows}{Integer, AF rows of a bead negative (\code{0} = off; \code{3}
+when on).}
+
+\item{laser.split}{Logical, one design row per laser. Default \code{FALSE}.}
+
+\item{laser.split.min}{Numeric, the part on a laser and the rest must
+each reach this fraction of the spectrum's peak. Default \code{0.01}.}
+
+\item{per.control.quadratic, sigma0.by.class}{Logical options. Default
+\code{FALSE}.}
+
+\item{sigma0.fallback}{\code{"floor"} (default) or \code{"laser"}.}
+
+\item{clamp.mode}{\code{"auto"} (default) detects clamped data; \code{"off"} skips
+the check.}
+
+\item{clamp.weights}{\code{"poisson"} (default) or \code{"flat"}.}
+
+\item{clamp.floor.pe}{Numeric, floor of the Poisson weights in
+photoelectrons. Default \code{10}.}
+
+\item{n.cells, som.dim, k.neighbors, sim.threshold, sim.threshold.floor, af.collinear.threshold}{Variant discovery settings passed to \code{get.fluor.variants()}. Defaults
+\code{10000}, \code{5}, \code{3}, \code{0.985}, \code{0.90}, \code{0.95}.}
+
+\item{seed}{Integer seed of the splits and subsamples. Default
+\code{asp$bird.seed}.}
+
+\item{parallel, threads}{Threading of the variant SOMs. Defaults \code{TRUE},
+\code{NULL}.}
+
+\item{verbose}{Logical. Default \code{TRUE}.}
 }
 \value{
-A named list:
+A list. For \code{unmix.gls()} and \code{unmix.af.gls()}:
 \describe{
-\item{\code{read.var}}{Named numeric vector, additive variance floor per
-detector, in squared instrument units.}
-\item{\code{counts.per.unit}}{Named numeric vector, \eqn{\kappa_d}.}
-\item{\code{kappa.pooled}}{Numeric scalar, median of \code{counts.per.unit}.}
-\item{\code{fit.table}}{Data frame of per-bin means and variances, for QC
-plotting.}
-\item{\code{r.squared}}{Named numeric vector, per-detector regression fit.}
-\item{\code{curvature.coef}}{Named numeric vector, the quadratic coefficient
-of \code{variance ~ mean + mean^2} fitted across \code{n.tranche} intensity
-tranches per detector. Negative indicates variance growing more
-slowly than linear at high signal (compression, e.g. approaching
-saturation); positive indicates faster-than-linear growth.}
-\item{\code{curvature.p}}{Named numeric vector, the p-value of
-\code{curvature.coef}. Values below roughly \code{0.01} indicate the linear
-mean-variance model is a poor fit for that detector's full range.}
-\item{\code{curvature.table}}{Data frame of per-tranche means, variances,
-and counts, one block per detector, for QC plotting -- the same
-shape as \code{fit.table} but at tranche rather than bin resolution.}
-\item{\code{noise.floor.signal}}{\code{sqrt(read.var)}, in \emph{signal} units, for
-passing to the existing \code{noise.floor} argument of the C++ pipeline.
-Note the unit difference: \code{read.var} is a variance, the C++
-\code{noise.floor} is a signal level.}
-\item{\code{read.var.source}}{Named character vector, \code{"external"} or
-\code{"regression"} per detector, indicating whether \code{read.var} came from
-\code{read.var.floor} or the fitted intercept.}
-\item{\code{kappa.source}}{Named character vector, \code{"regression"} or
-\code{"pooled.median"} per detector, flagging detectors where the fitted
-slope was non-positive and \code{counts.per.unit} was filled from the
-pooled median instead of measured directly. Treat these detectors'
-\code{counts.per.unit}, and any ratio computed from it, with caution.}
+\item{\code{read.var}}{Named numeric vector, sigma0^2 per detector (the
+cells' sigma0 when fitted per class).}
+\item{\code{counts.per.unit}}{Named numeric vector, kappa per detector.}
+\item{\code{kappa.pooled}}{Median kappa.}
 }
+and in addition: \code{sigma0.sq} and \code{g} (= 1 / kappa), \code{c}, \code{flags} (bit
+mask per detector: 1 sigma0 clamped high, 2 raised to the floor, 4 kappa
+pooled, 8 sigma0 from the same laser) and \code{flag.text}, \code{classes},
+\code{sigma0.sq.by.class}, \code{flags.by.class} and \code{by.class} (a complete
+\code{read.var} / \code{counts.per.unit} list per class, with \code{sigma0.by.class}),
+\code{group.c}, \code{fit.table} (per group, bin and detector: observed and
+predicted residual variance), \code{groups}, \code{calibration} (from held-out
+events: \code{in.band}, \code{in.band.controls}, the tranche tables and one row per
+source), \code{clamped}, \code{negative.share}, \code{flat.phi}, \code{clamped.weights}
+(\code{kind}, \code{floor}, \code{scale} and a \code{noise.model} list usable in place of
+this one), \code{selection} (event counts per file), \code{sources}, \code{unstained},
+\code{notes} and \code{settings}.
 }
 \description{
-Estimates the two parameters of the detector noise model used by
-\code{unmix.gls()}: a per-detector additive variance floor (read noise plus
-any residual dark-offset contribution) and a per-detector photon
-conversion factor \code{counts.per.unit}, such that
-\deqn{Var(y_d) = read.var_d + \mu_d / \kappa_d}
+Fits the per-detector noise model
+\deqn{Var(y_d) = \sigma_{0,d}^2 + \mu_d / \kappa_d}
+used by \code{unmix.gls()} and \code{unmix.af.gls()} from the single-stained
+controls, and checks it on held-out events.
 
-Estimation uses the mean-variance relationship of the \emph{residual} after
-least-squares projection onto \code{spectra} (optionally augmented with
-\code{af.spectra}). Residuals are orthogonal to the fitted values by
-construction, so binning on the fitted value does not bias the variance
-estimate. A degrees-of-freedom correction accounts for the variance
-removed by the projection.
+Run it after \code{get.spectral.variants()}, which supplies the unmixed
+positivity thresholds. The steps:
+\enumerate{
+\item \strong{Event selection.} Every file is read in full and its scatter core
+and singlets kept (\code{selection = "auto"}): a robust ellipse around the
+densest FSC-A x SSC-A mode, then an FSC-A/FSC-H singlet band. Doublets
+and off-core particles add variance that grows with signal, which the
+fit would otherwise read as shot noise.
+\item \strong{Unstained cells} (the \code{AF} row of the control file, or
+\code{unstained.sample}) are split into training and held-out halves; their
+design is the leading right singular vectors of the training events.
+\item \strong{Bead negatives} anchor sigma0 on beads: unstained bead samples
+(\code{Negative} rows of type \code{beads}), the bead controls' universal
+negatives, else unstained beads found inside the bead controls.
+\item \strong{Single-stain controls} are split 70/30. Positives are unsaturated
+events above the 99.5th percentile of the control's negative in its
+peak detector. Spectral variants are rediscovered on the training split
+only (\code{get.fluor.variants()}), so the held-out events stay independent
+of the design. A control's design is its reference spectrum, its mean
+variant delta, its variant basis (\code{build.variant.basis()}) and, for
+cell controls, the AF rows of its negative; a bead control carries its
+negative's mean as an offset.
+\item \strong{Joint fit.} Each group's events are projected onto its design and
+binned on its own abundance; the binned residual variances of every
+group and detector are fitted together by non-negative least squares
+through the mixing matrix \eqn{(I - H) \circ (I - H)}, which accounts
+for each detector's residual carrying the variance of the others.
+sigma0 is clamped above at the lowest variance a bin shows and below at
+\code{floor.frac} of its median; a detector without shot-noise information
+takes the median kappa. Each is flagged.
+\item \strong{Calibration} on the held-out events: observed / predicted residual
+variance per detector and intensity tranche (1 when the model is
+right; the share inside 0.8-1.25 is reported, 80\% or more is good),
+and the share of events per source whose GLS chi-square has p < 0.001.
+\item \strong{Clamped data.} When no detector has 1\% or more of its negative
+values at or below zero, the data were clamped at zero by the export
+and their noise is truncated there. The model is still fitted;
+\code{clamped.weights} then holds the weights recommended in its place:
+Poisson weights with a floor of \code{clamp.floor.pe} photoelectrons
+(\code{"poisson"}) or flat weights (\code{"flat"}), scaled to the held-out
+unstained cells.
+}
 
-Best estimated on bead controls (no autofluorescence, no biological
-spread) or on an unstained cell control together with its AF dictionary.
-On fully stained samples, unmodelled spectral variation inflates both
-parameters; that is not necessarily wrong (it reflects true predictive
-uncertainty) but it is no longer a pure instrument measurement.
+Estimator options, all off by default and intended for validation:
+\code{bead.af.rows} (bead negatives and bead controls take AF rows of the bead
+negative instead of its mean), \code{laser.split} (one design row per laser),
+\code{per.control.quadratic} (one \verb{c_g mu^2} per control, absorbing
+control-specific spread; used in calibration, not for unmixing),
+\code{sigma0.by.class} (one sigma0 for cells and one for beads, kappa shared)
+and \code{sigma0.fallback = "laser"} (a clamped detector takes the median
+sigma0 of its laser's unflagged detectors instead of the clamp).
+
+Simplifications: one unstained cell sample is used; bead negatives are
+chosen automatically; lasers come from the cytometer database only, and
+the laser options are skipped when any detector's laser is unknown; bead
+controls without a universal-negative file rediscover their variants
+against their internal negative events.
 }

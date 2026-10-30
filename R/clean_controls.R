@@ -92,6 +92,17 @@ clean.controls <- function(
 
   if ( intermediate.figures & !main.figures ) main.figures <- TRUE
 
+  # asp from get.autospectral.param( figures = FALSE ) carries no figure
+  # folders; when figures are requested, fall back to the standard names
+  if ( main.figures ) {
+    if ( is.null( asp$figure.clean.control.dir ) )
+      asp$figure.clean.control.dir <- "figure_clean_controls"
+    if ( is.null( asp$figure.spectral.ribbon.dir ) )
+      asp$figure.spectral.ribbon.dir <- "figure_spectral_ribbon"
+    if ( is.null( asp$figure.scatter.dir.base ) )
+      asp$figure.scatter.dir.base <- "figure_scatter"
+  }
+
   if ( parallel ) {
     # set default thread value
     threads <- if (is.null(threads)) asp$worker.process.n else threads

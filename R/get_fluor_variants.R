@@ -100,6 +100,9 @@
 #'   and reused across all fluorophores sharing the same negative, avoiding a
 #'   repeat disk read/decode per fluorophore. Default `NULL` falls back to
 #'   reading `universal.negative[fluor]` directly.
+#' @param control.data Optional list with `$spectral` and `$scatter` matrices
+#'   of this control's events, used instead of reading `file.name[fluor]`
+#'   (e.g. a training split, as in `estimate.noise.model()`). Default `NULL`.
 #' @param use.unmixed Logical, default \code{TRUE}. Whether to unmix
 #'   background-corrected positive events against the full \code{spectra}
 #'   matrix for positivity selection and SOM clustering features, and whether
@@ -136,12 +139,6 @@
 #'   fluorophore's reference row alone, since a joint OLS fit against
 #'   near-collinear AF and fluorophore directions can push real fluorophore
 #'   signal into the AF term. Recorded as the \code{"af.collinear"} attribute.
-#' @param noise.floor.tail.fraction Numeric in (0, 1), default \code{0.20}.
-#'   Per-detector noise floor is the MAD (scaled to a Gaussian-equivalent
-#'   variance) of the lowest fraction of raw values in that detector's
-#'   column, using every event in the control file. Lower values isolate a
-#'   purer background tail but with fewer events to estimate from; higher
-#'   values are more stable but risk pulling in dim positive events.
 #' @param noise.mask.threshold Numeric in (0, 1), default \code{0.05}. A
 #'   detector is excluded from this control's contribution to the pooled
 #'   noise-model regression (see \code{"noise.mask"} below) when this
@@ -195,7 +192,6 @@
 #' passed cosine QC. When too few positive events are available, or no
 #' centroids survive cosine QC, the single reference spectrum is returned
 #' (one row), still carrying the full set of attributes below. Carries:
-#' \code{"noise.floor"} (per-detector background SD, described above),
 #' \code{"noise.events"} (up to \code{noise.n.cells} events x detectors
 #' matrix, sampled from \code{keep.idx}, background-corrected -- and
 #' AF-corrected where the projection above ran -- but not otherwise fit;
@@ -242,6 +238,7 @@ get.fluor.variants <- function(
     flow.channel,
     af.pcs,
     neg.cache          = NULL,
+    control.data       = NULL,
     use.unmixed        = TRUE,
     n.cells            = 10000L,
     som.dim            = 10L,
@@ -249,7 +246,6 @@ get.fluor.variants <- function(
     sim.threshold      = 0.985,
     sim.threshold.floor    = 0.90,
     af.collinear.threshold = 0.95,
-    noise.floor.tail.fraction = 0.20,
     noise.mask.threshold = 0.05,
     noise.n.cells = 2000L,
     spread.estimator      = c( "binned.mad", "huber.squared" ),
@@ -275,10 +271,14 @@ get.fluor.variants <- function(
   orig.vec <- as.numeric( original.spectrum )
   af.collinear <- FALSE
 
-  pos.data <- readFCS(
-    file.path( control.dir, file.name[ fluor ] ),
-    columns = union( spectral.channel, scatter.channel )
-  )
+  pos.data <- if ( is.null( control.data ) ) {
+    readFCS(
+      file.path( control.dir, file.name[ fluor ] ),
+      columns = union( spectral.channel, scatter.channel )
+    )
+  } else {
+    cbind( control.data$spectral, control.data$scatter )
+  }
   # remove saturated events
   keep <- rowSums( pos.data[ , spectral.channel ] >= asp$expr.data.max ) == 0
   pos.spectral <- pos.data[ keep, spectral.channel ]
@@ -288,30 +288,6 @@ get.fluor.variants <- function(
   peak.channel <- flow.channel[ fluor ]
   pos.idx <- which( pos.spectral[ , peak.channel ] > raw.thresholds[ peak.channel ] )
   neg.idx <- setdiff( seq_len( nrow( pos.spectral ) ), pos.idx )
-
-  # ---------------------------------------------------------------------------
-  # Noise floor upper bound (per detector)
-  # ---------------------------------------------------------------------------
-  # Estimated from the lowest noise.floor.tail.fraction of raw values in each
-  # detector column, using every event in the control file rather than a
-  # row-wise positive/negative split. Unchanged from get.fluor.variants().
-
-  noise.floor.est <- stats::setNames(
-    rep( NA_real_, length( spectral.channel ) ), spectral.channel )
-
-  if ( nrow( pos.spectral ) >= 200 ) {
-    noise.floor.est <- apply(
-      pos.spectral, 2,
-      function( v ) {
-        v <- v[ is.finite( v ) ]
-        if ( length( v ) < 200 ) return( NA_real_ )
-        cutoff   <- stats::quantile( v, noise.floor.tail.fraction, names = FALSE )
-        low.tail <- v[ v <= cutoff ]
-        if ( length( low.tail ) < 20 ) return( NA_real_ )
-        stats::mad( low.tail, constant = 1.4826 )
-      } )
-    names( noise.floor.est ) <- spectral.channel
-  }
 
   # restrict to top n events
   if ( length( pos.idx ) > n.cells * 2 ) {
@@ -326,7 +302,6 @@ get.fluor.variants <- function(
       paste0( "Insufficient positive events found for ",
               fluor, ". Skipping spectral variation." )
     )
-    attr( original.spectrum, "noise.floor" ) <- noise.floor.est
     return( original.spectrum )
   }
 
@@ -589,7 +564,6 @@ get.fluor.variants <- function(
     warning( paste0( "Insufficient events passed cosine QC for ", fluor,
                      " even after relaxing to sim.threshold.floor = ",
                      sim.threshold.floor, ". Returning reference spectrum." ) )
-    attr( original.spectrum, "noise.floor" )             <- noise.floor.est
     attr( original.spectrum, "noise.events" )            <- noise.events
     attr( original.spectrum, "noise.mask" )              <- noise.mask
     attr( original.spectrum, "spillover.spread" )        <- spread.mad
@@ -688,7 +662,6 @@ get.fluor.variants <- function(
     )
   }
 
-  attr( variant.spectra, "noise.floor" )             <- noise.floor.est
   attr( variant.spectra, "noise.events" )            <- noise.events
   attr( variant.spectra, "noise.mask" )              <- noise.mask
   attr( variant.spectra, "spillover.spread" )        <- spread.mad

@@ -52,10 +52,76 @@ rows phase one changed.
 `spread.estimator`. The default, `"binned.mad"`, fits the Residual Model line
 through binned squared MADs; the former Huber line on squared projections
 (`"huber.squared"`) gives about half the variance slope.
+- `fix.my.unmix()` takes several fully stained files (`fully.stained.sample`
+a vector), reading at most `max.events` (default 400,000) in total, split
+equally between them, and at most `max.events` unstained events.
+- `fix.my.unmix()`: smooth updates (`smooth.updates`, default `TRUE`): five
+rounds (`smooth.rounds`), each on a fresh half of the stained events
+(`smooth.fraction`) unmixed again with the current spectra, each moving the
+spectra a step `1 / round` toward its result (`smooth.mode = "damped"`), or
+adopting only the corrections the rounds agree on (`"consensus"`).
+`smooth.log` reports the rounds.
+- `fix.my.unmix()`: a plausibility box (`plausibility.ratio`,
+`plausibility.floor`, `plausibility.reject`, `plausibility.reset`): a detector
+may change by at most its starting value or 0.003 of the peak. Phase one takes
+the out-of-box part of each back-solved row back out of its coefficients;
+phase two resets out-of-box detectors and rejects a row mostly outside the box
+(`"implausible"`).
+- `fix.my.unmix()`, phase two: signatures are fitted jointly with the dyes
+present in the row's population (`phase.two.active`, `phase.two.present`);
+phase one's back-solved row is tried when the re-measured row fails a gate
+that says nothing against the row itself (`phase.two.rescue`,
+`rescue.reasons`, `rescue.min.weight`); a tandem whose parent is in the panel
+has its parent-fraction row as a last candidate (`tandem.candidate`,
+`tandem.min.coefficient`); `phase.two.fallback` chooses what a row too small
+for the joint fit is judged on. `signature.log` gains `candidate`,
+`rescued.from`, `tandem.parent`, `tandem.coefficient` and `implausible.frac`;
+`recovery` gains `deg.phase1`.
+- `fix.my.unmix()`, phase one: the joint lasso check is fitted after the pair
+slopes, with them removed from its first negativity mask (`glasso.warm`); the
+hypernegative check judges only the events the source dominates
+(`hypernegative.dominant`); the envelope-versus-median disagreement uses the
+envelope moved back to each bin's centre (`disagreement.reference`,
+`envelope.scale.quantile`); phase one stops when every coefficient with at
+least `stop.trust` trust has settled for `stop.confirm` iterations
+(`stop.rule`), and returns `stop.reason`.
+- `fluorophore_database.csv` gains `tandem.parent`.
+- `estimate.noise.model()` is rewritten with a new signature, matching the
+Honeychrome noise model: it reads the single-stained controls itself
+(`control.dir`, `control.def.file`, `asp`, `spectra`, `spectral.variants`) and
+fits sigma0^2 and kappa jointly over the controls' positives, the unstained
+cells and the bead negatives by non-negative least squares through the mixing
+matrix (I - H) o (I - H), each group projected onto its own design (reference
+spectrum, variant basis rediscovered on a 70% training split, AF rows). Events
+are selected automatically (scatter core and FSC-A/FSC-H singlets). The model
+is checked on held-out events (`calibration`), detectors whose sigma0 or kappa
+could not be identified are flagged, and clamped data (no negative value at or
+below zero) are detected, with Poisson weights with a floor returned in
+`clamped.weights`. `read.var`, `counts.per.unit` and `kappa.pooled` keep their
+meaning, so `unmix.gls()` and `unmix.af.gls()` take the result unchanged.
+Estimator options for validation, all off by default: `bead.af.rows`,
+`laser.split`, `per.control.quadratic`, `sigma0.by.class`, `sigma0.fallback`.
+- `get.fluor.variants()`: new `control.data` argument, the control's events in
+place of reading its file.
 
 ## Changes
 
+- `get.spectral.variants()` no longer fits a noise model or returns
+`noise.model` and `noise.floor`; run `estimate.noise.model()` after it.
+`noise.floor.tail.fraction` and `diagnostics` are deprecated.
+- `get.fluor.variants()`: the `"noise.floor"` attribute and
+`noise.floor.tail.fraction` are removed.
 - `fix.my.unmix()`: `spread.kappa` now defaults to `3`.
+- `fix.my.unmix()`: `bg.mode` now defaults to `"per.cell"`, the per-event
+autofluorescence assignment `unmix.autospectral()` uses. Under it, no library
+row is dropped and no fluorophore frozen for its coupling to the library.
+- `fix.my.unmix()` defaults: `unstained.threshold` `0.95` for the upper
+boundary only, with the lower boundary at the new `lower.unstained.threshold`
+(`0.99`); `source.events` `c( 200, 400 )`; `max.angle` `30`;
+`convergence.threshold` `0.003`; `convergence.quantile` `1`;
+`coefficient.decay` `0`; `leakage.channels = "negative"`.
+- `fix.my.unmix()`: `gate.on.bias` and `min.impact.ratio` are removed; the gate
+had no input left.
 
 ## Bug fixes
 

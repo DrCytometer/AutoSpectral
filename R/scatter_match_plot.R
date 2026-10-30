@@ -114,6 +114,9 @@ scatter.match.plot <- function(
     sep = "_"
   )
 
+  if ( !dir.exists( asp$figure.scatter.dir.base ) )
+    dir.create( asp$figure.scatter.dir.base )
+
   suppressWarnings(
     ggsave(
       scatter.plot.filename,
@@ -122,8 +125,7 @@ scatter.match.plot <- function(
       device = ragg::agg_jpeg,
       width = asp$scatter.match.plot.width,
       height = asp$scatter.match.plot.height,
-      limitsize = FALSE,
-      create.dir = TRUE
+      limitsize = FALSE
     )
   )
 
