@@ -20,7 +20,24 @@ spectral.mismatch.plot(
   plot.width = NULL,
   plot.height = NULL,
   color.by.laser = TRUE,
-  asp = NULL
+  asp = NULL,
+  normalization = c("none", "max", "L2"),
+  exclude.lasers = NULL,
+  show.cosine = FALSE,
+  cosine.on.plotted = FALSE,
+  cosine.digits = 3,
+  label.every = 1,
+  label.angle = 45,
+  trace.labels = TRUE,
+  y.label = NULL,
+  diff.label = NULL,
+  legend.position = "bottom",
+  legend.title = "Fluorophore",
+  bar.line.width = 0.5,
+  show.laser.key = FALSE,
+  base.size = 11,
+  axis.text.size = NULL,
+  save = TRUE
 )
 }
 \arguments{
@@ -33,10 +50,12 @@ normalised spectral intensities for the test spectrum. Must have the same
 names as \code{ref.spectrum}.}
 
 \item{ref.label}{Character string used as the legend label for the reference
-spectrum. If \code{NULL} (default), the \code{rownames()} of \code{ref.spectrum} is used.}
+spectrum. If \code{NULL} (default), the \code{rownames()} of \code{ref.spectrum} is used
+(\code{"Reference"} for a vector).}
 
 \item{test.label}{Character string used as the legend label for the test
-spectrum. If \code{NULL} (default), the \code{rownames()} of \code{test.spectrum} is used.}
+spectrum. If \code{NULL} (default), the \code{rownames()} of \code{test.spectrum} is used
+(\code{"Test"} for a vector).}
 
 \item{title}{Character string used as both the plot title and the JPEG
 filename stem. Default is \code{"Spectral comparison"}.}
@@ -73,13 +92,72 @@ upper panel. Default is \code{TRUE}.}
 labels by excitation laser (from \code{cytometer_database.csv}). Falls back to
 black labels if the detectors do not all map to the instrument's detectors.}
 
-\item{asp}{Optional AutoSpectral parameter list, used only to identify the
-cytometer for \code{color.by.laser}. If \code{NULL} (default), the cytometer is
+\item{asp}{Optional AutoSpectral parameter list, used to identify the
+cytometer for the laser of each detector (\code{color.by.laser},
+\code{exclude.lasers}, \code{show.laser.key}). If \code{NULL} (default), the cytometer is
 identified from the detector names.}
+
+\item{normalization}{How both spectra are scaled before plotting and before
+the difference is taken, always over all detectors (before
+\code{exclude.lasers}): \code{"none"} (default; as supplied), \code{"max"} (peak = 1) or
+\code{"L2"} (unit Euclidean norm).}
+
+\item{exclude.lasers}{Optional character vector of lasers (as named in
+\code{cytometer_database.csv}, e.g. \code{"DeepUV"}) whose detectors are left out of
+the display. Normalisation, and by default the cosine similarity, still
+use all detectors. Default \code{NULL}.}
+
+\item{show.cosine}{Logical, default \code{FALSE}. Print the cosine similarity of
+the two spectra in the upper panel.}
+
+\item{cosine.on.plotted}{Logical, default \code{FALSE}. Calculate the cosine
+similarity on the displayed detectors only (otherwise on all detectors).}
+
+\item{cosine.digits}{Integer, default \code{3}. Decimal places of the printed
+cosine similarity.}
+
+\item{label.every}{Show every n-th detector label. Default \code{1} (every
+label); \code{NULL} chooses n so that at most about 70 labels are shown.}
+
+\item{label.angle}{Numeric, default \code{45}. Angle of the detector labels
+(\code{90} for vertical labels).}
+
+\item{trace.labels}{Logical, default \code{TRUE}. Show detector labels under the
+upper panel as well as under the difference panel. \code{FALSE} labels the
+difference panel only.}
+
+\item{y.label}{Optional title of the upper panel's y axis. Default \code{NULL}:
+\code{"Intensity (L2-normalized)"} with \code{normalization = "L2"}, otherwise
+\code{"Normalized Intensity"}.}
+
+\item{diff.label}{Optional title of the difference panel's y axis. Default
+\code{NULL}: \code{"Spectral Difference (ref - test)"}.}
+
+\item{legend.position}{Position of the trace legend. Default \code{"bottom"}.}
+
+\item{legend.title}{Title of the trace legend. Default \code{"Fluorophore"};
+\code{NULL} for none.}
+
+\item{bar.line.width}{Numeric, default \code{0.5}. Outline width of the
+difference bars (thinner outlines suit instruments with many detectors).}
+
+\item{show.laser.key}{Logical, default \code{FALSE}. Add a one-row key of the
+laser colours under the figure.}
+
+\item{base.size}{Numeric, default \code{11}. Base font size (points).}
+
+\item{axis.text.size}{Numeric. Detector label size in points. Default
+\code{NULL}: \code{0.8 * base.size}.}
+
+\item{save}{Logical, default \code{TRUE}. Save the figure as
+\verb{<plot.dir>/<title>.jpg}. \code{FALSE} only returns it.}
 }
 \value{
-The combined cowplot object is returned invisibly. The figure is
-always saved to disk as \verb{<plot.dir>/<title>.jpg}.
+The combined cowplot object is returned invisibly, with the cosine
+similarity as \code{attr(x, "cosine.similarity")} and the lasers of the
+displayed detectors as \code{attr(x, "lasers")} (\code{NULL} if the lasers could not
+be assigned). With \code{save = TRUE} (default) the figure is also saved to disk
+as \verb{<plot.dir>/<title>.jpg}.
 }
 \description{
 Produces a two-panel diagnostic figure comparing two fluorophore spectra. The
@@ -88,7 +166,10 @@ spectrum across all detectors. The lower panel shows the per-detector spectral
 difference (reference minus test) as a bar chart, making it easy to identify
 channels where the spectra diverge.
 
-The combined figure is saved as a JPEG to \code{plot.dir} and returned invisibly as
-a \code{ggplot} / cowplot object so it can be embedded in downstream reports or
-further modified.
+By default the combined figure is saved as a JPEG to \code{plot.dir} and returned
+invisibly as a \code{ggplot} / cowplot object so it can be embedded in downstream
+reports or further modified. Optional arguments normalise the spectra,
+hide the detectors of some lasers, print the cosine similarity, thin the
+detector labels, add a laser colour key and skip saving, so the figure can
+be used directly as a manuscript panel.
 }
