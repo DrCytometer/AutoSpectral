@@ -18,8 +18,18 @@
 #' matrix pair by pair, from a robust line through the events that are negative
 #' for the target channel: their apparent abundance there is spillover from the
 #' source, so its slope against source abundance is the residual coefficient.
-#' Truncating the target from above shrinks that slope toward zero when the two
-#' markers are co-expressed, which is the safe direction. A negative
+#' The slope is taken from the source's clearly positive events only: those
+#' above both the spread-scaled unstained boundary and the upper bound of the
+#' stained sample's own negative population in that channel (its mode plus
+#' the mirrored lower tail, `negative.tail`), so the tilted tail of a negative
+#' population collinear with other dyes never sets a slope. The
+#' source-negative bulk fixes where the line passes (`estimator =
+#' "anchored"`) but not its slope, and target negativity is a band around the
+#' current line after a first one-sided pass, so the source's own
+#' cell-to-cell variation is trimmed on both sides. A source earns trust only
+#' as its clearly positive events exceed the rate the unstained sample gives
+#' (`source.events`), and each coefficient is checked against a joint lasso
+#' of the channel over every other fluorophore (`glasso.check`). A negative
 #' correlation between a source's abundance and a channel's corrected value has
 #' no biological explanation the way co-expression or coverage disagreement
 #' can, so it is checked directly on the source's own positive population
@@ -138,7 +148,21 @@
 #' @param unstained.margin Numeric, multiplier applied to that threshold.
 #'   Default `1.3`.
 #' @param spread.kappa Numeric, how many spillover-spread standard deviations
-#'   above the flat threshold still count as negative. Default `2`.
+#'   above the flat threshold still count as negative. The Residual Model
+#'   spread is narrower than the real cell-to-cell variation of stained cells,
+#'   so the default is `3`.
+#' @param negative.tail Numeric in (0, 0.5), the share of the stained sample's
+#'   own negative population in a source channel allowed above its upper
+#'   bound. The bound is the autogating tail threshold, the population's mode
+#'   plus its mirrored lower tail, measured among the events below their own
+#'   positivity boundary; a source's clearly positive events are those above
+#'   both that bound and the boundary itself. Default `0.001`.
+#' @param source.events Numeric pair. A source's clearly positive events,
+#'   less the number the unstained sample gives at the same event count by
+#'   the same rule (AF outliers and noise tails that a large file always
+#'   has), earn its coefficients no trust at or below the first value and
+#'   full trust at or above the second, rising smoothly between. Default
+#'   `c( 50, 250 )`.
 #' @param envelope.quantiles Numeric pair. The first is the envelope the slope
 #'   is measured on; the second is a comparison quantile whose disagreement with
 #'   the first reports co-expression. Default `c( 0.05, 0.5 )`.
@@ -228,8 +252,38 @@
 #'   threshold divided by the coefficient, so the estimator loses its leverage
 #'   precisely as the coefficient it is measuring grows. Default `3`.
 #' @param estimator Character, which pair estimator supplies the coefficients.
-#'   `"truncated"` (default) is a robust line through the target-negative
-#'   events; `"envelope"` is the binned lower envelope.
+#'   `"anchored"` (default) is a Huber line through the clearly positive
+#'   source events that are negative for the target (a band around the
+#'   current line after the first pass), anchored at the robust centre of
+#'   the source-negative bulk; the bulk fixes the origin but not the slope.
+#'   `"truncated"` is a robust line through every target-negative event,
+#'   bulk included, cut from above only; in a small positive population the
+#'   bulk's own covariance (other dyes' spread, AF residuals) then sets the
+#'   slope. `"envelope"` is the binned lower envelope.
+#' @param glasso.check Logical, whether each pair coefficient's trust is
+#'   scaled by its agreement with a joint lasso of the channel over every
+#'   other fluorophore (`correct.spectra.glasso()`'s phase one, refitted
+#'   without the penalty on the lasso's selection),
+#'   `1 - |pair - lasso| / (|pair| + |lasso|)`, zero where the lasso selects
+#'   nothing. A source that only tracks the channel through a third dye then
+#'   earns nothing. Default `TRUE`.
+#' @param glasso.n.lambda,glasso.lambda.min.ratio,glasso.margin.frac Lasso
+#'   path length, smallest penalty relative to the largest, and sparsity
+#'   margin; see `correct.spectra.glasso()`. Defaults `40`, `1e-3`, `0.05`.
+#' @param glasso.tolerance Numeric, lasso coefficients smaller than this are
+#'   zeroed. Default `1e-4`.
+#' @param af.gate Logical, whether a source's step is dropped when the change
+#'   it implies for that row looks like autofluorescence: the largest squared
+#'   cosine between the change and a row of `af.spectra` (or of the AF basis)
+#'   above `af.gate.max`. The same test rejects a phase-two change
+#'   (`"af.like"`). Default `FALSE`.
+#' @param af.gate.max Numeric in `[0, 1]`, the AF likeness above which the
+#'   gate applies. Default `0.8`.
+#' @param phase.two.rows Character, `"flagged"` (default) re-measures only the
+#'   rows phase one changed by at least `convergence.threshold`; the others
+#'   are logged as `"not.flagged"`. `"all"` re-measures every row. For an
+#'   in-span error the re-measured signature is the back-solved phase-one row
+#'   plus noise, so a row phase one left alone has nothing to re-measure.
 #' @param source.dominant Logical, whether source-positive events dominated by
 #'   another fluorophore are dropped from the pair fit. Their apparent source
 #'   abundance is that other fluorophore's brightness read through a spectral
@@ -358,6 +412,11 @@
 #'   \item{`trust`}{Per-coefficient trust weights used to damp the update.}
 #'   \item{`coefficient.log`}{Per-pair fit diagnostics from the final
 #'     iteration.}
+#'   \item{`source.log`}{Per-source diagnostics from the final iteration:
+#'     the negative-population bound, the clearly positive events, the
+#'     number the unstained rate accounts for, the excess, the resulting
+#'     weight, the AF likeness of the row change the step implied, and
+#'     whether the AF gate dropped it.}
 #'   \item{`signature.log`}{Per-fluorophore signature statistics and gate
 #'     outcomes.}
 #'   \item{`convergence.log`}{Per-iteration delta history.}
@@ -422,7 +481,9 @@ fix.my.unmix <- function(
     downsample.min.stratum     = 2000L,
     unstained.threshold    = 0.99,
     unstained.margin       = 1.3,
-    spread.kappa           = 2,
+    spread.kappa           = 3,
+    negative.tail          = 0.001,
+    source.events          = c( 50, 250 ),
     envelope.quantiles     = c( 0.05, 0.5 ),
     min.negative.frac      = 0.10,
     max.disagreement       = 0.5,
@@ -442,7 +503,15 @@ fix.my.unmix <- function(
     ridge                  = 1e-6,
     max.truncated.events   = 20000L,
     max.mask.passes        = 3L,
-    estimator              = c( "truncated", "envelope" ),
+    estimator              = c( "anchored", "truncated", "envelope" ),
+    glasso.check           = TRUE,
+    glasso.n.lambda        = 40L,
+    glasso.lambda.min.ratio = 1e-3,
+    glasso.margin.frac     = 0.05,
+    glasso.tolerance       = 1e-4,
+    af.gate                = FALSE,
+    af.gate.max            = 0.8,
+    phase.two.rows         = c( "flagged", "all" ),
     source.dominant        = TRUE,
     spread.addback         = FALSE,
     anchor.weight          = 1,
@@ -477,8 +546,16 @@ fix.my.unmix <- function(
     keep.history           = FALSE
 ) {
 
-  bg.mode   <- match.arg( bg.mode )
-  estimator <- match.arg( estimator )
+  bg.mode        <- match.arg( bg.mode )
+  estimator      <- match.arg( estimator )
+  phase.two.rows <- match.arg( phase.two.rows )
+
+  if ( length( source.events ) != 2 || !( source.events[ 1 ] >= 0 ) ||
+       !( source.events[ 2 ] > source.events[ 1 ] ) )
+    stop( "`source.events` must be a pair with 0 <= low < high.", call. = FALSE )
+
+  if ( !( negative.tail > 0 && negative.tail < 0.5 ) )
+    stop( "`negative.tail` must lie between 0 and 0.5.", call. = FALSE )
 
   # Set once, not only around the downsample, because the pair estimator also
   # subsamples the negative bulk and the whole run should be reproducible.
@@ -712,6 +789,13 @@ fix.my.unmix <- function(
       "\033[31mFrozen, inseparable from the background basis: %s.\033[0m",
       paste( af.frozen, collapse = ", " ) ) )
 
+  # The AF gate compares a row change with the AF library, or with the AF
+  # basis rows when there is no library.
+  af.gate.spectra <- if ( !is.null( af.spectra ) ) af.spectra else background.basis
+
+  if ( af.gate && is.null( af.gate.spectra ) )
+    stop( "`af.gate` needs `af.spectra` or a background basis.", call. = FALSE )
+
   prior <- NULL
 
   if ( leakage.prior ) {
@@ -823,6 +907,7 @@ fix.my.unmix <- function(
 
   trust <- spillover.curr
   pair.log <- NULL
+  source.log <- NULL
 
   # Warm-starts the truncated estimator's IRLS from the previous outer
   # iteration's fitted slope for the same pair, since spillover.curr moves by
@@ -898,26 +983,44 @@ fix.my.unmix <- function(
       side             = "lower",
       verbose          = FALSE )
 
-    dominant <- NULL
+    # Clearly positive events per source (above both the spread-scaled
+    # boundary and the bound of the sample's own negative population there)
+    # and the trust their number beyond the unstained rate earns. Dominance
+    # scores each abundance against its own event's positivity boundary, not
+    # the flat cut, so a bright dye's mid-range events are not handed to
+    # whichever narrower neighbour it spreads into.
+    evidence <- .fix.source.evidence(
+      unmixed.comp     = unmixed.comp,
+      unstained.comp   = unstained.comp,
+      thresholds       = thresholds,
+      spillover.spread = spillover.spread,
+      spread.kappa     = spread.kappa,
+      negative.tail    = negative.tail,
+      source.events    = source.events,
+      source.dominant  = source.dominant,
+      n.events         = nrow( stained.fit.full$abundance ) )
 
-    if ( source.dominant ) {
+    t.clear  <- evidence$t.clear
+    dominant <- evidence$dominant
 
-      dyn.range <- pmax(
-        apply( unmixed.comp, 2, stats::quantile, probs = 0.999,
-               names = FALSE ) - thresholds, .Machine$double.eps )
+    joint <- NULL
 
-      # Each abundance is scored against its own event's positivity boundary,
-      # not the flat cut. A channel a bright dye spills into has a wider
-      # negative population there, and scoring it flat while dividing by that
-      # channel's own dynamic range hands the bright dye's mid-range events to
-      # whichever narrower neighbour it spreads into.
-      dominance.score <- sweep(
-        pmax( unmixed.comp - threshold.matrix, 0 ), 2, dyn.range, "/" )
-
-      dominant <- max.col( dominance.score, ties.method = "first" )
-      dominant[ dominance.score[ cbind( seq_along( dominant ),
-                                        dominant ) ] <= 0 ] <- 0L
-    }
+    if ( glasso.check )
+      joint <- .fix.glasso.matrix(
+        unmixed.comp         = unmixed.comp,
+        threshold.matrix     = threshold.matrix,
+        thresholds           = thresholds,
+        neg.var              = neg.var,
+        min.negative.events  = min.negative.events,
+        max.mask.passes      = max.mask.passes,
+        max.truncated.events = max.truncated.events,
+        max.coefficient      = max.coefficient,
+        min.span             = min.span,
+        min.rise             = min.rise,
+        n.lambda             = glasso.n.lambda,
+        lambda.min.ratio     = glasso.lambda.min.ratio,
+        margin.frac          = glasso.margin.frac,
+        tolerance            = glasso.tolerance )
 
     marker.spillover <- diag( fluorophore.n )
     dimnames( marker.spillover ) <- list( fluorophores, fluorophores )
@@ -925,7 +1028,8 @@ fix.my.unmix <- function(
     trust <- diag( fluorophore.n )
     dimnames( trust ) <- list( fluorophores, fluorophores )
 
-    pair.log <- list()
+    pair.log   <- list()
+    source.log <- list()
 
     # One batched call per source instead of one scalar call per pair -
     # everything that depends only on the source (the dominance mask, the
@@ -947,19 +1051,32 @@ fix.my.unmix <- function(
         spread.var.vec <- pmax( spread.var.vec, 0 )
       }
 
-      # The population a hypernegative check is actually about: events bright
-      # enough in `source` for its subtraction from a channel to matter at
-      # all. A source-negative event's channel reading barely moves whatever
-      # the coefficient is, so folding it into the denominator would only
-      # dilute a real over-correction by however small a share of the sample
-      # this source's own positive population happens to be.
-      source.positive   <- unmixed.comp[ , source ] > threshold.matrix[ , source ]
+      # The population a hypernegative check is actually about: events
+      # clearly positive for `source`, bright enough for its subtraction from
+      # a channel to matter at all. A source-negative event's channel reading
+      # barely moves whatever the coefficient is, so folding it into the
+      # denominator would only dilute a real over-correction by however small
+      # a share of the sample this source's own positive population is.
+      source.positive   <- unmixed.comp[ , source ] > t.clear[ , source ]
       n.source.positive <- sum( source.positive )
 
-      est.batch <- .fix.envelope.slope.batch(
+      w.source <- unname( evidence$weight[ source ] )
+
+      source.log[[ length( source.log ) + 1L ]] <- data.frame(
+        source          = source,
+        negative.bound  = unname( evidence$bound[ source ] ),
+        clear.events    = unname( evidence$n.clear[ source ] ),
+        baseline.events = unname( evidence$baseline[ source ] ),
+        excess.events   = unname( evidence$excess[ source ] ),
+        source.weight   = w.source,
+        af.likeness     = NA_real_,
+        af.gated        = FALSE,
+        row.names = NULL, stringsAsFactors = FALSE )
+
+      est.batch <- if ( w.source <= 0 ) NULL else .fix.envelope.slope.batch(
         x.source          = unmixed.comp[ , source ],
         X.target          = unmixed.comp[ , channel.set, drop = FALSE ],
-        threshold.source  = threshold.matrix[ , source ],
+        threshold.source  = t.clear[ , source ],
         Threshold.target  = threshold.matrix[ , channel.set, drop = FALSE ],
         spread.var        = spread.var.vec,
         neg.var           = neg.var[ channel.set ],
@@ -975,6 +1092,9 @@ fix.my.unmix <- function(
         max.coefficient       = max.coefficient,
         max.mask.passes       = max.mask.passes,
         start.slope           = slope.warm[ source, channel.set ],
+        estimator             = if ( estimator == "truncated" ) "truncated" else "anchored",
+        Threshold.lower       = if ( estimator == "truncated" ) NULL else
+          neg.threshold.matrix[ , channel.set, drop = FALSE ],
         n.threads             = n.threads )
 
       for ( ci in seq_along( channel.set ) ) {
@@ -983,13 +1103,18 @@ fix.my.unmix <- function(
         est <- if ( is.null( est.batch ) ) NULL else
           as.list( est.batch[ ci, , drop = FALSE ] )
 
-        if ( !is.null( est ) && is.finite( est$slope.truncated ) )
-          slope.warm[ source, channel ] <- est$slope.truncated
+        slope.fit <- if ( is.null( est ) ) NA_real_ else
+          if ( estimator == "truncated" ) est$slope.truncated else est$slope.anchored
+
+        if ( is.finite( slope.fit ) )
+          slope.warm[ source, channel ] <- slope.fit
 
         w <- 0
 
         slope.use <- if ( is.null( est ) ) NA_real_ else
-          if ( estimator == "truncated" ) est$slope.truncated else est$slope
+          if ( estimator == "envelope" ) est$slope else slope.fit
+
+        glasso.agreement <- NA_real_
 
         hypernegative.base  <- NA_real_
         hypernegative.after <- NA_real_
@@ -1007,12 +1132,26 @@ fix.my.unmix <- function(
           if ( !is.finite( prior.var ) || prior.var <= 0 )
             prior.var <- slope.use^2
 
-          w <- if ( is.finite( est$se ) && est$se > 0 )
-            prior.var / ( prior.var + est$se^2 ) else 1
+          # The envelope's standard error, else the anchored fit's own. A
+          # coefficient whose uncertainty cannot be judged earns no trust.
+          se.use <- est$se
+          if ( !( is.finite( se.use ) && se.use > 0 ) ) se.use <- est$se.fit
+
+          w <- if ( is.finite( se.use ) && se.use > 0 )
+            prior.var / ( prior.var + se.use^2 ) else 0
+
+          w <- w * w.source
 
           if ( is.finite( est$disagreement ) &&
                est$disagreement > max.disagreement )
             w <- w * max.disagreement / est$disagreement
+
+          if ( !is.null( joint ) ) {
+            g <- joint[ source, channel ]
+            glasso.agreement <- if ( g == 0 ) 0 else
+              max( 0, 1 - abs( slope.use - g ) / ( abs( slope.use ) + abs( g ) ) )
+            w <- w * glasso.agreement
+          }
 
           # A negative correlation between `source`'s abundance and a
           # channel's corrected value has no biological explanation the way
@@ -1063,8 +1202,15 @@ fix.my.unmix <- function(
           slope           = if ( is.null( est ) ) NA_real_ else est$slope,
           slope.truncated = if ( is.null( est ) ) NA_real_ else
             est$slope.truncated,
+          slope.anchored  = if ( is.null( est ) ) NA_real_ else
+            est$slope.anchored,
           slope.median    = if ( is.null( est ) ) NA_real_ else est$slope.alt,
+          slope.glasso    = if ( is.null( joint ) ) NA_real_ else
+            joint[ source, channel ],
           se           = if ( is.null( est ) ) NA_real_ else est$se,
+          se.fit       = if ( is.null( est ) ) NA_real_ else est$se.fit,
+          glasso.agreement = glasso.agreement,
+          source.weight    = w.source,
           disagreement = if ( is.null( est ) ) NA_real_ else est$disagreement,
           coverage     = if ( is.null( est ) ) NA_real_ else est$coverage,
           span         = if ( is.null( est ) ) NA_real_ else est$span,
@@ -1079,6 +1225,41 @@ fix.my.unmix <- function(
     }
 
     slope.error <- marker.spillover - diag( fluorophore.n )
+
+    source.log <- do.call( rbind, source.log )
+
+    # The change each source's back-solved row would take this step, and how
+    # much it looks like autofluorescence. With `af.gate`, a source whose
+    # step looks like AF takes none: marker-associated AF (a myeloid marker's
+    # cells carrying their own AF) would otherwise be booked as spillover.
+    off.mask   <- row( slope.error ) != col( slope.error )
+    row.change <- ( ( trust * slope.error ) * off.mask ) %*%
+      ( spillover.curr %*% spectra.fluor )
+
+    gated <- character( 0 )
+
+    for ( f in seq_len( fluorophore.n ) ) {
+
+      like <- if ( is.null( af.gate.spectra ) ) NA_real_ else
+        .fix.af.likeness( row.change[ f, ], af.gate.spectra )
+
+      source.log$af.likeness[ f ] <- like
+
+      if ( af.gate && is.finite( like ) && like > af.gate.max ) {
+        trust[ f, off.mask[ f, ] ] <- 0
+        source.log$af.gated[ f ] <- TRUE
+        gated <- c( gated, fluorophores[ f ] )
+      }
+    }
+
+    if ( length( gated ) > 0L )
+      pair.log <- lapply( pair.log, function( r ) {
+        if ( r$source %in% gated ) r$trust <- 0
+        r
+      } )
+
+    # The next anchored fit starts from the slope this step leaves behind.
+    if ( estimator == "anchored" ) slope.warm <- slope.warm * ( 1 - trust )
 
     off.diagonal <- abs( slope.error[ row( slope.error ) != col( slope.error ) ] )
 
@@ -1120,7 +1301,8 @@ fix.my.unmix <- function(
         marker.spillover = marker.spillover,
         trust            = trust,
         spillover.next   = spillover.next,
-        coefficient.log  = do.call( rbind, pair.log ) )
+        coefficient.log  = do.call( rbind, pair.log ),
+        source.log       = source.log )
 
     diag.next <- diag( spillover.next )
 
@@ -1251,6 +1433,11 @@ fix.my.unmix <- function(
 
     condition.curr <- calculate.condition.number( design )
 
+    # A row phase one left alone has no in-span change to re-measure.
+    flagged <- apply( abs( spillover.curr - diag( fluorophore.n ) ), 1, max ) >=
+      convergence.threshold
+    names( flagged ) <- fluorophores
+
     log.rows <- list()
 
     for ( f in seq_along( fluorophores ) ) {
@@ -1261,6 +1448,9 @@ fix.my.unmix <- function(
       reject <- NA_character_
 
       if ( j %in% af.frozen ) reject <- "af.coupled"
+
+      if ( is.na( reject ) && phase.two.rows == "flagged" && !flagged[ j ] )
+        reject <- "not.flagged"
 
       candidate <- NULL
 
@@ -1337,6 +1527,7 @@ fix.my.unmix <- function(
       leak.before <- NA_real_
       leak.after  <- NA_real_
       condition.after <- NA_real_
+      af.likeness <- NA_real_
 
       if ( is.na( reject ) ) {
 
@@ -1351,6 +1542,13 @@ fix.my.unmix <- function(
 
           trial <- spectra.new
           trial[ j, ] <- stepped / max( stepped )
+
+          if ( !is.null( af.gate.spectra ) )
+            af.likeness <- .fix.af.likeness( trial[ j, ] - spectra.new[ j, ],
+                                             af.gate.spectra )
+
+          if ( af.gate && is.finite( af.likeness ) && af.likeness > af.gate.max )
+            reject <- "af.like"
         }
       }
 
@@ -1403,6 +1601,7 @@ fix.my.unmix <- function(
         fluorophore = j,
         n.events    = length( idx ),
         stats.block,
+        af.likeness     = af.likeness,
         leak.before     = leak.before,
         leak.after      = leak.after,
         condition.after = condition.after,
@@ -1535,6 +1734,7 @@ fix.my.unmix <- function(
     compensation             = compensation.curr,
     trust                     = trust,
     coefficient.log           = coefficient.log,
+    source.log                = source.log,
     signature.log             = signature.log,
     convergence.log           = convergence.log,
     spillover.history         = spillover.history,

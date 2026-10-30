@@ -11,8 +11,12 @@
 #' population variance, its own spillover-spread term, and the robust slope
 #' itself) vary by column.
 #'
-#' The truncated estimator -- `select.negative()`, the `max.mask.passes`
-#' refinement loop, and `.fix.huber.slope()` -- is delegated to
+#' The robust line is either the anchored estimator (`estimator =
+#' "anchored"`, `.fix.anchored.slopes()`: the source-negative bulk only fixes
+#' the origin and the clearly positive events set the slope, with a band
+#' around the current line when `Threshold.lower` is given) or the truncated
+#' estimator -- `select.negative()`, the `max.mask.passes` refinement loop,
+#' and `.fix.huber.slope()` -- delegated to
 #' `fix_envelope_truncated_batch_rcpp()` for every target sharing this
 #' source in one call. This piece does not have a profitable pure-R batched
 #' form: batching across targets does not reduce the number of `median()`
@@ -59,6 +63,11 @@
 #'   mask.tolerance As in `.fix.envelope.slope()`.
 #' @param start.slope Numeric vector, length `m`, per-target warm starts.
 #'   `NULL` starts every target at zero.
+#' @param estimator Character, `"anchored"` (default) or `"truncated"`, the
+#'   robust line fitted.
+#' @param Threshold.lower Numeric matrix, `n x m`, the per-event, per-target
+#'   lower boundary, or `NULL`. With the anchored estimator, every pass after
+#'   the first also drops positive events below it (band).
 #' @param n.threads Integer, OpenMP threads for
 #'   `fix_envelope_truncated_batch_rcpp()`. Default `1`. Only raise this
 #'   when the outer call to `fix.my.unmix()` is not itself running inside
@@ -67,10 +76,13 @@
 #'
 #' @return A data frame, one row per target in the order of
 #'   `colnames(X.target)`, with columns `target`, `slope`,
-#'   `slope.truncated`, `se`, `slope.alt`, `disagreement`, `coverage`, `n`,
-#'   `span`, `noise` -- the same quantities `.fix.envelope.slope()` returns
-#'   in its list -- or `NULL` if the shared source-side population is too
-#'   small to fit anything.
+#'   `slope.truncated`, `slope.anchored`, `se`, `se.fit`, `slope.alt`,
+#'   `disagreement`, `coverage`, `n`, `n.positive`, `span`, `noise` -- the
+#'   quantities `.fix.envelope.slope()` returns in its list, plus the
+#'   anchored slope and its own standard error (`NA` under the truncated
+#'   estimator, as `slope.truncated` is under the anchored one) and the
+#'   number of positive source events -- or `NULL` if the shared source-side
+#'   population is too small to fit anything.
 #'
 #' @noRd
 .fix.envelope.slope.batch <- function(
@@ -88,7 +100,11 @@
     max.mask.passes      = 3L,
     mask.tolerance       = 0.05,
     start.slope          = NULL,
+    estimator            = c( "anchored", "truncated" ),
+    Threshold.lower      = NULL,
     n.threads            = 1L ) {
+
+  estimator <- match.arg( estimator )
 
   n <- length( x.source )
   m <- ncol( X.target )
@@ -106,20 +122,48 @@
     X.target         <- X.target[ keep.event, , drop = FALSE ]
     threshold.source <- threshold.source[ keep.event ]
     Threshold.target <- Threshold.target[ keep.event, , drop = FALSE ]
+    if ( !is.null( Threshold.lower ) )
+      Threshold.lower <- Threshold.lower[ keep.event, , drop = FALSE ]
 
     n <- length( x.source )
   }
 
   if ( n < min.events ) return( NULL )
 
-  # One seed per target, drawn from R's ambient RNG stream so the whole
-  # pipeline is reproducible under set.seed() upstream of this call.
-  seed <- sample.int( .Machine$integer.max, m )
+  slope.truncated <- rep( NA_real_, m )
+  slope.anchored  <- rep( NA_real_, m )
+  se.fit          <- rep( NA_real_, m )
 
-  if (
+  if ( estimator == "anchored" ) {
+
+    anchored <- .fix.anchored.slopes(
+      x                    = x.source,
+      Y                    = X.target,
+      Threshold.target     = Threshold.target,
+      t.source             = threshold.source,
+      start                = start.slope,
+      Threshold.lower      = Threshold.lower,
+      max.truncated.events = max.truncated.events,
+      floor.n              = min.bin.negative,
+      max.coefficient      = max.coefficient,
+      max.mask.passes      = max.mask.passes,
+      mask.tolerance       = mask.tolerance,
+      n.threads            = n.threads )
+
+    slope.anchored <- anchored$slope
+    se.fit         <- anchored$se
+    n.fit          <- anchored$n
+    slope.fit      <- slope.anchored
+
+  } else if (
     requireNamespace( "AutoSpectralRcpp", quietly = TRUE ) &&
     "fix_envelope_truncated_batch_rcpp" %in% ls( getNamespace( "AutoSpectralRcpp" ) )
   ) {
+
+    # One seed per target, drawn from R's ambient RNG stream so the whole
+    # pipeline is reproducible under set.seed() upstream of this call.
+    seed <- sample.int( .Machine$integer.max, m )
+
     truncated <- AutoSpectralRcpp::fix_envelope_truncated_batch_rcpp(
       x                     = x.source,
       Y                     = X.target,
@@ -133,15 +177,18 @@
       min_events            = as.integer( min.events ),
       max_truncated_events  = as.integer( max.truncated.events ),
       n_threads             = as.integer( n.threads ) )
+
+    slope.truncated <- truncated$slope
+    n.fit           <- truncated$n
+    slope.fit       <- slope.truncated
+
   } else {
     stop( "Install AutoSpectralRcpp" )
   }
 
-  slope.truncated <- truncated$slope
-
-  slope.mask <- ifelse( is.finite( slope.truncated ) &
-                          abs( slope.truncated ) <= max.coefficient,
-                        slope.truncated, 0 )
+  slope.mask <- ifelse( is.finite( slope.fit ) &
+                          abs( slope.fit ) <= max.coefficient,
+                        slope.fit, 0 )
 
   # Recomputed once, cheaply, from the final slope -- not inside the pass
   # loop, so this is a single O(n x m) comparison, not a hot path.
@@ -171,11 +218,14 @@
     target          = colnames( X.target ),
     slope           = NA_real_,
     slope.truncated = slope.truncated,
+    slope.anchored  = slope.anchored,
     se              = NA_real_,
+    se.fit          = se.fit,
     slope.alt       = NA_real_,
     disagreement    = NA_real_,
     coverage        = coverage,
-    n               = truncated$n,
+    n               = n.fit,
+    n.positive      = sum( source.positive ),
     span            = span.truncated,
     noise           = sqrt( pmax( neg.var, 0 ) ),
     stringsAsFactors = FALSE )

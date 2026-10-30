@@ -25,7 +25,9 @@ fix.my.unmix(
   downsample.min.stratum = 2000L,
   unstained.threshold = 0.99,
   unstained.margin = 1.3,
-  spread.kappa = 2,
+  spread.kappa = 3,
+  negative.tail = 0.001,
+  source.events = c(50, 250),
   envelope.quantiles = c(0.05, 0.5),
   min.negative.frac = 0.1,
   max.disagreement = 0.5,
@@ -45,7 +47,15 @@ fix.my.unmix(
   ridge = 1e-06,
   max.truncated.events = 20000L,
   max.mask.passes = 3L,
-  estimator = c("truncated", "envelope"),
+  estimator = c("anchored", "truncated", "envelope"),
+  glasso.check = TRUE,
+  glasso.n.lambda = 40L,
+  glasso.lambda.min.ratio = 0.001,
+  glasso.margin.frac = 0.05,
+  glasso.tolerance = 1e-04,
+  af.gate = FALSE,
+  af.gate.max = 0.8,
+  phase.two.rows = c("flagged", "all"),
   source.dominant = TRUE,
   spread.addback = FALSE,
   anchor.weight = 1,
@@ -178,7 +188,23 @@ control defining positivity. Default \code{0.99}.}
 Default \code{1.3}.}
 
 \item{spread.kappa}{Numeric, how many spillover-spread standard deviations
-above the flat threshold still count as negative. Default \code{2}.}
+above the flat threshold still count as negative. The Residual Model
+spread is narrower than the real cell-to-cell variation of stained cells,
+so the default is \code{3}.}
+
+\item{negative.tail}{Numeric in (0, 0.5), the share of the stained sample's
+own negative population in a source channel allowed above its upper
+bound. The bound is the autogating tail threshold, the population's mode
+plus its mirrored lower tail, measured among the events below their own
+positivity boundary; a source's clearly positive events are those above
+both that bound and the boundary itself. Default \code{0.001}.}
+
+\item{source.events}{Numeric pair. A source's clearly positive events,
+less the number the unstained sample gives at the same event count by
+the same rule (AF outliers and noise tails that a large file always
+has), earn its coefficients no trust at or below the first value and
+full trust at or above the second, rising smoothly between. Default
+\code{c( 50, 250 )}.}
 
 \item{envelope.quantiles}{Numeric pair. The first is the envelope the slope
 is measured on; the second is a comparison quantile whose disagreement with
@@ -278,8 +304,44 @@ threshold divided by the coefficient, so the estimator loses its leverage
 precisely as the coefficient it is measuring grows. Default \code{3}.}
 
 \item{estimator}{Character, which pair estimator supplies the coefficients.
-\code{"truncated"} (default) is a robust line through the target-negative
-events; \code{"envelope"} is the binned lower envelope.}
+\code{"anchored"} (default) is a Huber line through the clearly positive
+source events that are negative for the target (a band around the
+current line after the first pass), anchored at the robust centre of
+the source-negative bulk; the bulk fixes the origin but not the slope.
+\code{"truncated"} is a robust line through every target-negative event,
+bulk included, cut from above only; in a small positive population the
+bulk's own covariance (other dyes' spread, AF residuals) then sets the
+slope. \code{"envelope"} is the binned lower envelope.}
+
+\item{glasso.check}{Logical, whether each pair coefficient's trust is
+scaled by its agreement with a joint lasso of the channel over every
+other fluorophore (\code{correct.spectra.glasso()}'s phase one, refitted
+without the penalty on the lasso's selection),
+\verb{1 - |pair - lasso| / (|pair| + |lasso|)}, zero where the lasso selects
+nothing. A source that only tracks the channel through a third dye then
+earns nothing. Default \code{TRUE}.}
+
+\item{glasso.n.lambda, glasso.lambda.min.ratio, glasso.margin.frac}{Lasso
+path length, smallest penalty relative to the largest, and sparsity
+margin; see \code{correct.spectra.glasso()}. Defaults \code{40}, \code{1e-3}, \code{0.05}.}
+
+\item{glasso.tolerance}{Numeric, lasso coefficients smaller than this are
+zeroed. Default \code{1e-4}.}
+
+\item{af.gate}{Logical, whether a source's step is dropped when the change
+it implies for that row looks like autofluorescence: the largest squared
+cosine between the change and a row of \code{af.spectra} (or of the AF basis)
+above \code{af.gate.max}. The same test rejects a phase-two change
+(\code{"af.like"}). Default \code{FALSE}.}
+
+\item{af.gate.max}{Numeric in \verb{[0, 1]}, the AF likeness above which the
+gate applies. Default \code{0.8}.}
+
+\item{phase.two.rows}{Character, \code{"flagged"} (default) re-measures only the
+rows phase one changed by at least \code{convergence.threshold}; the others
+are logged as \code{"not.flagged"}. \code{"all"} re-measures every row. For an
+in-span error the re-measured signature is the back-solved phase-one row
+plus noise, so a row phase one left alone has nothing to re-measure.}
 
 \item{source.dominant}{Logical, whether source-positive events dominated by
 another fluorophore are dropped from the pair fit. Their apparent source
@@ -450,6 +512,11 @@ fluorophores.}
 \item{\code{trust}}{Per-coefficient trust weights used to damp the update.}
 \item{\code{coefficient.log}}{Per-pair fit diagnostics from the final
 iteration.}
+\item{\code{source.log}}{Per-source diagnostics from the final iteration:
+the negative-population bound, the clearly positive events, the
+number the unstained rate accounts for, the excess, the resulting
+weight, the AF likeness of the row change the step implied, and
+whether the AF gate dropped it.}
 \item{\code{signature.log}}{Per-fluorophore signature statistics and gate
 outcomes.}
 \item{\code{convergence.log}}{Per-iteration delta history.}
@@ -507,8 +574,17 @@ The correction runs in two phases. The first estimates the residual spillover
 matrix pair by pair, from a robust line through the events that are negative
 for the target channel: their apparent abundance there is spillover from the
 source, so its slope against source abundance is the residual coefficient.
-Truncating the target from above shrinks that slope toward zero when the two
-markers are co-expressed, which is the safe direction. A negative
+The slope is taken from the source's clearly positive events only: those
+above both the spread-scaled unstained boundary and the upper bound of the
+stained sample's own negative population in that channel (its mode plus
+the mirrored lower tail, \code{negative.tail}), so the tilted tail of a negative
+population collinear with other dyes never sets a slope. The
+source-negative bulk fixes where the line passes (\code{estimator = "anchored"}) but not its slope, and target negativity is a band around the
+current line after a first one-sided pass, so the source's own
+cell-to-cell variation is trimmed on both sides. A source earns trust only
+as its clearly positive events exceed the rate the unstained sample gives
+(\code{source.events}), and each coefficient is checked against a joint lasso
+of the channel over every other fluorophore (\code{glasso.check}). A negative
 correlation between a source's abundance and a channel's corrected value has
 no biological explanation the way co-expression or coverage disagreement
 can, so it is checked directly on the source's own positive population
