@@ -27,6 +27,10 @@
 # Concordance across instruments: mean pairwise cosine similarity of the
 # instruments' shift vectors, tested against a laser-label permutation null
 # (laser labels shuffled independently within each instrument).
+#
+# The calculations, laser.space.shift() and laser.shift.concordance(), are
+# exported AutoSpectral functions (R/laser_space_shift.R). This file keeps the
+# laser order, lasers.present() and the spider-chart plot.
 
 laser.order <- c( "DeepUV", "UV", "Violet", "Blue", "YellowGreen", "Red", "IR" )
 
@@ -36,115 +40,12 @@ laser.order <- c( "DeepUV", "UV", "Violet", "Blue", "YellowGreen", "Red", "IR" )
   } else x
 }
 
-.clamp.acos.deg <- function( x ) acos( pmin( 1, pmax( -1, x ) ) ) * 180 / pi
-
 #' Lasers present on a cytometer's spectrum (in laser.order)
 lasers.present <- function( spectrum, detector.lasers ) {
   v <- .as.named.vector( spectrum )
   las <- unique( detector.lasers$Laser[ match( names( v ), detector.lasers$Detector ) ] )
   las <- las[ !is.na( las ) ]
   c( intersect( laser.order, las ), setdiff( las, laser.order ) )
-}
-
-#' Cell -> bead shift in laser space for one instrument
-#'
-#' @param cells,beads Named vectors or 1-row matrices (same detectors).
-#' @param detector.lasers data.frame from get.detector.lasers().
-#' @param lasers Lasers (axes) to use, in display order.
-#' @param metric "clr" or "delta".
-#' @return list(shift, cell.norms, bead.norms, angle.total, angle.between,
-#'   angle.within)
-laser.space.shift <- function(
-    cells, beads, detector.lasers, lasers, metric = c( "clr", "delta" )
-) {
-  metric <- match.arg( metric )
-  c.v <- .as.named.vector( cells )
-  b.v <- .as.named.vector( beads )
-  if ( !identical( names( c.v ), names( b.v ) ) )
-    stop( "Cell and bead spectra must have identical detector names.", call. = FALSE )
-
-  las <- detector.lasers$Laser[ match( names( c.v ), detector.lasers$Detector ) ]
-  if ( anyNA( las ) )
-    warning( sum( is.na( las ) ), " detector(s) without a laser assignment were ignored: ",
-             paste( names( c.v )[ is.na( las ) ], collapse = ", " ), call. = FALSE )
-  missing.lasers <- setdiff( lasers, las )
-  if ( length( missing.lasers ) > 0 )
-    stop( "Laser(s) not present on this instrument: ", paste( missing.lasers, collapse = ", " ),
-          call. = FALSE )
-
-  keep <- !is.na( las ) & las %in% lasers
-  c.v <- c.v[ keep ]; b.v <- b.v[ keep ]; las <- las[ keep ]
-  c.v <- c.v / sqrt( sum( c.v^2 ) )
-  b.v <- b.v / sqrt( sum( b.v^2 ) )
-
-  bank.norm <- function( v ) vapply( lasers, function( L ) sqrt( sum( v[ las == L ]^2 ) ), numeric( 1 ) )
-  n.c <- bank.norm( c.v )
-  n.b <- bank.norm( b.v )
-
-  if ( any( c( n.c, n.b ) < 1e-6 ) && metric == "clr" )
-    warning( "A laser bank has (near-)zero signal; its log ratio is unstable.", call. = FALSE )
-
-  shift <- if ( metric == "clr" ) {
-    lr <- log2( n.b / n.c )
-    lr - mean( lr )
-  } else {
-    n.b - n.c
-  }
-
-  within <- vapply( lasers, function( L ) {
-    i <- las == L
-    .clamp.acos.deg( sum( c.v[ i ] * b.v[ i ] ) / ( n.c[[ L ]] * n.b[[ L ]] ) )
-  }, numeric( 1 ) )
-
-  list(
-    shift         = shift,
-    cell.norms    = n.c,
-    bead.norms    = n.b,
-    angle.total   = .clamp.acos.deg( sum( c.v * b.v ) ),
-    angle.between = .clamp.acos.deg( sum( n.c * n.b ) ),
-    angle.within  = within
-  )
-}
-
-#' Directional concordance of shift vectors across instruments
-#'
-#' @param shift.matrix Instruments (rows) x lasers (columns).
-#' @param n.perm Number of random permutations.
-#' @param seed Random seed.
-#' @return list(pairwise = cosine matrix, mean.cosine, p.value, n.perm,
-#'   leave.one.out = cosine of each instrument with the mean of the others,
-#'   null = permutation distribution)
-laser.shift.concordance <- function( shift.matrix, n.perm = 10000, seed = 42 ) {
-
-  m <- as.matrix( shift.matrix )
-  if ( nrow( m ) < 2 ) stop( "Need at least two instruments.", call. = FALSE )
-
-  cos.matrix <- function( x ) { u <- x / sqrt( rowSums( x^2 ) ); tcrossprod( u ) }
-  mean.pairwise <- function( x ) { cm <- cos.matrix( x ); mean( cm[ upper.tri( cm ) ] ) }
-
-  observed <- mean.pairwise( m )
-
-  set.seed( seed )
-  null <- vapply( seq_len( n.perm ), function( i ) {
-    mean.pairwise( t( apply( m, 1, sample ) ) )
-  }, numeric( 1 ) )
-  p.value <- ( 1 + sum( null >= observed ) ) / ( 1 + n.perm )
-
-  loo <- vapply( seq_len( nrow( m ) ), function( i )
-    cosine.similarity( rbind( m[ i, ], colMeans( m[ -i, , drop = FALSE ] ) ) )[ 1, 2 ], numeric( 1 ) )
-  names( loo ) <- rownames( m )
-
-  pairwise <- cos.matrix( m )
-  dimnames( pairwise ) <- list( rownames( m ), rownames( m ) )
-
-  list(
-    pairwise      = pairwise,
-    mean.cosine   = observed,
-    p.value       = p.value,
-    n.perm        = n.perm,
-    leave.one.out = loo,
-    null          = null
-  )
 }
 
 # Polar coordinate system with straight edges between vertices (spider chart)

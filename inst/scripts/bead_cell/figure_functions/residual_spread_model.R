@@ -12,44 +12,17 @@
 #     unstained control) + the fluorophore's own spectrum (fluorophore alone
 #     if it is nearly collinear with an AF component), giving the control's
 #     own abundance b.h and the residual of that fit;
-#  4. project the residual through the FULL panel with unmix.ols();
-#  5. for each unmixed channel k, regress proj_k^2 on b.h with a Huber-robust
-#     line: Var(unmixed_k | b.h) = intercept_k + slope_k * b.h. The slope is
-#     SS(fluorophore, k) in the units used throughout AutoSpectral.
+#  4-5. project the residual through the FULL panel and fit the Residual
+#     Model line Var(unmixed_k | b.h) = intercept_k + slope_k * b.h for every
+#     channel k with the package's own estimator (internal
+#     .residual.model.line(), the code get.fluor.variants() uses; default
+#     "binned.mad": Huber line of binned squared MADs on the bins' mean b.h).
+#     The slope is SS(fluorophore, k) in the units used throughout AutoSpectral.
 #
 # Differences from the package: (a) it works on events already gated by the
 # caller (the package reads the control ungated), and (b) it does not need a
-# control file or the whole panel of controls.
-
-# Huber IRLS line fit, used only if the package's .fix.huber.slope() (needs
-# AutoSpectralRcpp) is unavailable. Returns c(intercept, slope).
-.huber.line.fallback <- function( x, y, k = 1.345, max.iter = 100L, tol = 1e-4 ) {
-  X <- cbind( 1, x )
-  beta <- stats::lm.fit( X, y )$coefficients
-  for ( i in seq_len( max.iter ) ) {
-    r <- y - drop( X %*% beta )
-    s <- stats::mad( r )
-    if ( !is.finite( s ) || s == 0 ) break
-    w <- pmin( 1, k * s / abs( r ) )
-    new.beta <- stats::lm.wfit( X, y, w )$coefficients
-    converged <- max( abs( new.beta - beta ) / ( abs( beta ) + 1e-12 ) ) < tol
-    beta <- new.beta
-    if ( converged ) break
-  }
-  as.numeric( beta )
-}
-
-.huber.line <- function( x, y, k, max.iter ) {
-  pkg.fn <- tryCatch(
-    utils::getFromNamespace( ".fix.huber.slope", "AutoSpectral" ),
-    error = function( e ) NULL
-  )
-  if ( !is.null( pkg.fn ) ) {
-    res <- tryCatch( pkg.fn( x, y, k = k, max.iter = max.iter ), error = function( e ) NULL )
-    if ( !is.null( res ) ) return( as.numeric( res ) )
-  }
-  .huber.line.fallback( x, y, k = k, max.iter = max.iter )
-}
+# control file or the whole panel of controls. Steps 1-3 mirror
+# get.fluor.variants(); the estimator in steps 4-5 is the package's.
 
 #' @param stained.data,unstained.data Matrices of GATED raw events containing
 #'   the spectral channels (`colnames(spectra)`) and `scatter.channels`.
@@ -60,9 +33,12 @@
 #' @param asp AutoSpectral parameter list.
 #' @param scatter.channels FSC/SSC channel names (default
 #'   `asp$default.scatter.parameter`).
+#' @param spread.estimator,spread.n.bins,spread.min.bin.events,huber.k,huber.max.iter
+#'   As in AutoSpectral get.fluor.variants() (default "binned.mad").
 #' @return list(spread = named numeric slope per unmixed channel (NA for the
-#'   fluorophore itself; negative slopes set to 0), intercept, n.events,
-#'   af.collinear, af.cosine).
+#'   fluorophore itself; negative slopes set to 0, as in
+#'   get.spectral.variants()), intercept, n.events, af.collinear, af.cosine,
+#'   estimator).
 calculate.residual.spread <- function(
     stained.data,
     unstained.data,
@@ -76,11 +52,15 @@ calculate.residual.spread <- function(
     k.neighbors = 3L,
     n.af.pcs = 4L,
     af.collinear.threshold = 0.95,
+    spread.estimator = c( "binned.mad", "huber.squared" ),
+    spread.n.bins = 20L,
+    spread.min.bin.events = 20L,
     huber.k = 1.345,
     huber.max.iter = 100L,
     min.events = 50L
 ) {
 
+  spread.estimator <- match.arg( spread.estimator )
   spec.ch <- colnames( spectra )
 
   # saturation filter
@@ -138,9 +118,14 @@ calculate.residual.spread <- function(
   b.h <- as.numeric( fit[ , ncol( fit ) ] )
   resid.lr <- pos.corrected - fit %*% design
 
-  # project the residual through the full panel and regress squared value on b.h
-  proj <- unmix.ols( resid.lr, spectra )
-  coef <- apply( proj, 2, function( p ) .huber.line( b.h, p^2, huber.k, huber.max.iter ) )
+  # Residual Model line per channel: the package's estimator
+  residual.model.line <- utils::getFromNamespace( ".residual.model.line", "AutoSpectral" )
+  coef <- residual.model.line(
+    b.h, resid.lr, spectra,
+    spread.estimator = spread.estimator,
+    n.bins = spread.n.bins, min.bin.events = spread.min.bin.events,
+    huber.k = huber.k, huber.max.iter = huber.max.iter
+  )
 
   intercept <- coef[ 1, ]
   spread <- coef[ 2, ]
@@ -156,6 +141,7 @@ calculate.residual.spread <- function(
     intercept    = intercept,
     n.events     = length( b.h ),
     af.collinear = af.collinear,
-    af.cosine    = af.cosine
+    af.cosine    = af.cosine,
+    estimator    = spread.estimator
   )
 }

@@ -45,6 +45,10 @@
 #' @param spread.kappa Number of spread SDs above the flat threshold (default 2,
 #'   as in create.biplot()).
 #' @param legend.inside Place the legend inside the panel (top left).
+#' @param drop.linear.breaks Drop axis breaks with 0 < |b| <= |width basis|
+#'   (default FALSE).
+#' @param point.alpha Point opacity (default 1); lower it to see overlapping
+#'   populations (one value for all populations).
 #' @return ggplot object.
 create.brightness.biplot <- function(
     populations,
@@ -65,8 +69,10 @@ create.brightness.biplot <- function(
     y.width.basis = -1000,
     max.points.per.population = 5e4,
     point.size = asp$figure.gate.point.size,
+    point.alpha = 1,
     title = NULL,
     legend.inside = TRUE,
+    drop.linear.breaks = FALSE,
     legend.text.size = 7,
     spread.color = "red"
 ) {
@@ -114,20 +120,26 @@ create.brightness.biplot <- function(
   y.breaks <- extend.negative.breaks( asp$ribbon.breaks, y.min )
   x.breaks <- x.breaks[ x.breaks < x.max ]
   y.breaks <- y.breaks[ y.breaks < y.max ]
+  # optionally drop the breaks inside the linear zone (|b| <= |width basis|),
+  # whose labels otherwise overlap the 0 label when the width basis is wide
+  if ( drop.linear.breaks ) {
+    x.breaks <- x.breaks[ x.breaks == 0 | abs( x.breaks ) > abs( x.width.basis ) ]
+    y.breaks <- y.breaks[ y.breaks == 0 | abs( y.breaks ) > abs( y.width.basis ) ]
+  }
   make.labels <- function( b ) sapply( b, function( v )
-    if ( v == 0 ) "0" else parse( text = paste0( "10^", log10( abs( v ) ) ) ) )
+    if ( v == 0 ) "0" else parse( text = paste0( if ( v < 0 ) "-" else "", "10^", log10( abs( v ) ) ) ) )
 
   plot.data$x.trans <- biexp.trans.x( plot.data$x )
   plot.data$y.trans <- biexp.trans.y( plot.data$y )
 
   biplot <- ggplot2::ggplot( plot.data, ggplot2::aes( x.trans, y.trans, colour = population ) ) +
-    scattermore::geom_scattermore( pointsize = point.size, alpha = 1, na.rm = TRUE ) +
+    scattermore::geom_scattermore( pointsize = point.size, alpha = point.alpha, na.rm = TRUE ) +
     ggplot2::scale_colour_manual(
       values = population.colors[ names( populations ) ],
       labels = legend.labels[ names( populations ) ],
       name = NULL
     ) +
-    ggplot2::guides( colour = ggplot2::guide_legend( override.aes = list( size = 2.5 ) ) ) +
+    ggplot2::guides( colour = ggplot2::guide_legend( override.aes = list( size = 2.5, alpha = 1 ) ) ) +
     ggplot2::scale_x_continuous(
       name = x.lab,
       breaks = biexp.trans.x( x.breaks ),
