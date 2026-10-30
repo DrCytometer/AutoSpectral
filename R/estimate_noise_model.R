@@ -3,562 +3,666 @@
 #' @title Estimate Detector Noise Model
 #'
 #' @description
-#' Estimates the two parameters of the detector noise model used by
-#' `unmix.gls()`: a per-detector additive variance floor (read noise plus
-#' any residual dark-offset contribution) and a per-detector photon
-#' conversion factor `counts.per.unit`, such that
-#' \deqn{Var(y_d) = read.var_d + \mu_d / \kappa_d}
+#' Fits the per-detector noise model
+#' \deqn{Var(y_d) = \sigma_{0,d}^2 + \mu_d / \kappa_d}
+#' used by `unmix.gls()` and `unmix.af.gls()` from the single-stained
+#' controls, and checks it on held-out events.
 #'
-#' Estimation uses the mean-variance relationship of the *residual* after
-#' least-squares projection onto `spectra` (optionally augmented with
-#' `af.spectra`). Residuals are orthogonal to the fitted values by
-#' construction, so binning on the fitted value does not bias the variance
-#' estimate. A degrees-of-freedom correction accounts for the variance
-#' removed by the projection.
+#' Run it after `get.spectral.variants()`, which supplies the unmixed
+#' positivity thresholds. The steps:
 #'
-#' Best estimated on bead controls (no autofluorescence, no biological
-#' spread) or on an unstained cell control together with its AF dictionary.
-#' On fully stained samples, unmodelled spectral variation inflates both
-#' parameters; that is not necessarily wrong (it reflects true predictive
-#' uncertainty) but it is no longer a pure instrument measurement.
+#' 1. **Event selection.** Every file is read in full and its scatter core
+#'    and singlets kept (`selection = "auto"`): a robust ellipse around the
+#'    densest FSC-A x SSC-A mode, then an FSC-A/FSC-H singlet band. Doublets
+#'    and off-core particles add variance that grows with signal, which the
+#'    fit would otherwise read as shot noise.
+#' 2. **Unstained cells** (the `AF` row of the control file, or
+#'    `unstained.sample`) are split into training and held-out halves; their
+#'    design is the leading right singular vectors of the training events.
+#' 3. **Bead negatives** anchor sigma0 on beads: unstained bead samples
+#'    (`Negative` rows of type `beads`), the bead controls' universal
+#'    negatives, else unstained beads found inside the bead controls.
+#' 4. **Single-stain controls** are split 70/30. Positives are unsaturated
+#'    events above the 99.5th percentile of the control's negative in its
+#'    peak detector. Spectral variants are rediscovered on the training split
+#'    only (`get.fluor.variants()`), so the held-out events stay independent
+#'    of the design. A control's design is its reference spectrum, its mean
+#'    variant delta, its variant basis (`build.variant.basis()`) and, for
+#'    cell controls, the AF rows of its negative; a bead control carries its
+#'    negative's mean as an offset.
+#' 5. **Joint fit.** Each group's events are projected onto its design and
+#'    binned on its own abundance; the binned residual variances of every
+#'    group and detector are fitted together by non-negative least squares
+#'    through the mixing matrix \eqn{(I - H) \circ (I - H)}, which accounts
+#'    for each detector's residual carrying the variance of the others.
+#'    sigma0 is clamped above at the lowest variance a bin shows and below at
+#'    `floor.frac` of its median; a detector without shot-noise information
+#'    takes the median kappa. Each is flagged.
+#' 6. **Calibration** on the held-out events: observed / predicted residual
+#'    variance per detector and intensity tranche (1 when the model is
+#'    right; the share inside 0.8-1.25 is reported, 80% or more is good),
+#'    and the share of events per source whose GLS chi-square has p < 0.001.
+#' 7. **Clamped data.** When no detector has 1% or more of its negative
+#'    values at or below zero, the data were clamped at zero by the export
+#'    and their noise is truncated there. The model is still fitted;
+#'    `clamped.weights` then holds the weights recommended in its place:
+#'    Poisson weights with a floor of `clamp.floor.pe` photoelectrons
+#'    (`"poisson"`) or flat weights (`"flat"`), scaled to the held-out
+#'    unstained cells.
 #'
-#' @param raw.data Numeric matrix (events x detectors), or a path to an FCS
-#'   file. Detector columns must include all columns of `spectra`.
-#' @param spectra Numeric matrix (fluorophores x detectors).
-#' @param af.spectra Optional AF dictionary (AF components x detectors), as
-#'   returned by `get.af.spectra()`. Strongly recommended for cell controls.
-#' @param n.bins Integer, number of quantile bins per detector. Default `40`.
-#' @param min.bin.n Integer, minimum events per bin. Default `50`.
-#' @param trim.quantile Numeric, upper quantile of each detector discarded
-#'   before binning, to exclude saturation. Default `0.999`.
-#' @param verbose Logical. Default `FALSE`.
-#' @param af.pc.n Integer, number of principal components to use to describe
-#' `af.spectra`. Default is `5`.
-#' @param af.raw.data Optional numeric matrix, or a path to an FCS file, of
-#'   individual autofluorescence-only events -- typically the same unstained
-#'   sample `af.spectra` was built from. When supplied, the AF shape basis is
-#'   fit by PCA on these per-cell events (L-infinity normalised per event,
-#'   matching `get.af.spectra()`'s own convention) instead of on the rows of
-#'   `af.spectra`. `af.spectra` rows are SOM node centroids, already
-#'   compressed from the underlying cells; if within-node AF spread is
-#'   substantially real rather than noise (check `shape.frac` in
-#'   `attr(af.spectra, "af.model")`), the centroids alone understate true
-#'   per-cell AF shape diversity, and the basis fit here from raw events will
-#'   need more components to reach the same variance-explained target.
-#'   Ignored when `af.spectra` is `NULL`. Default `NULL`, which fits the
-#'   basis on `af.spectra` as before.
-#' @param af.basis.n.cells Integer, default `20000`. Maximum events from
-#'   `af.raw.data` used for the PCA; downsampled if more are supplied. Only
-#'   used when `af.raw.data` is supplied.
-#' @param read.var.floor Optional named numeric vector, per-detector additive
-#' @param file.id Optional vector (character or factor), length
-#'   `nrow(raw.data)`, identifying which source file/acquisition each row
-#'   came from. When supplied, per-file residual means are subtracted before
-#'   the mean-variance regression, so between-file offsets (gain drift,
-#'   voltage differences across acquisition days) are not counted as
-#'   photon-driven variance. Recommended whenever `raw.data` was pooled
-#'   across multiple control files, e.g. from `pool.scc.for.noise.model()`.
-#'   Default `NULL`.
-#' @param unstained.data Optional numeric matrix (events x detectors) of an
-#'   unstained/AF-only control, used only to anchor the lower tranche of the
-#'   linearity check at `dark.quantile` of the true-dark distribution. When
-#'   `NULL`, falls back to `dark.quantile` of `raw.data` itself, which is a
-#'   weaker proxy since it is not a genuinely dark reference. Default `NULL`.
-#' @param dark.quantile Numeric in (0, 1), the quantile of `unstained.data`
-#'   (or of `raw.data` when `unstained.data` is `NULL`) used as the upper
-#'   bound of the lowest linearity tranche. Default `0.95`.
-#' @param n.tranche Integer, number of intensity tranches for the linearity
-#'   check. Default `10L`.
+#' Estimator options, all off by default and intended for validation:
+#' `bead.af.rows` (bead negatives and bead controls take AF rows of the bead
+#' negative instead of its mean), `laser.split` (one design row per laser),
+#' `per.control.quadratic` (one `c_g mu^2` per control, absorbing
+#' control-specific spread; used in calibration, not for unmixing),
+#' `sigma0.by.class` (one sigma0 for cells and one for beads, kappa shared)
+#' and `sigma0.fallback = "laser"` (a clamped detector takes the median
+#' sigma0 of its laser's unflagged detectors instead of the clamp).
 #'
-#' @return A named list:
+#' Simplifications: one unstained cell sample is used; bead negatives are
+#' chosen automatically; lasers come from the cytometer database only, and
+#' the laser options are skipped when any detector's laser is unknown; bead
+#' controls without a universal-negative file rediscover their variants
+#' against their internal negative events.
+#'
+#' @param control.dir Character, folder of the single-stained control FCS
+#'   files.
+#' @param control.def.file Character, the control definition CSV.
+#' @param asp The AutoSpectral parameter list.
+#' @param spectra Numeric matrix, reference spectra (fluorophores x
+#'   detectors). An `AF` row is ignored.
+#' @param spectral.variants List returned by `get.spectral.variants()`; its
+#'   `thresholds` (unmixed positivity thresholds of the unstained cells) are
+#'   used for variant discovery on the cell controls.
+#' @param unstained.sample Optional path to the unstained cell FCS file, used
+#'   when the control file has no `AF` row. Default `NULL`.
+#' @param output.dir Folder for `noise_model.rds`. Default `asp$variant.dir`.
+#' @param save Logical, save the result as `noise_model.rds`. Default `TRUE`.
+#' @param selection `"auto"` (default): scatter core and singlets of every
+#'   file. `"none"`: every event.
+#' @param unstained.train.frac,control.train.frac Numeric, training share of
+#'   the unstained cells (default `0.5`) and of each control and bead
+#'   negative (default `0.7`).
+#' @param max.unstained,max.test.unstained Integers, unstained events read
+#'   (default `200000`) and held out at most (default `20000`).
+#' @param max.control.events,max.test.control Integers, control events read
+#'   (default `100000`) and held-out positives kept (default `5000`).
+#' @param max.fit.events,max.cal.events Integers, events per control and bead
+#'   negative in the fit (default `6000`; four times that for the unstained
+#'   cells) and in the calibration (default `2000`; twice for the unstained).
+#' @param n.af.rows Integer, AF design rows of a cell negative. Default `4`.
+#' @param basis.var.explained,basis.max.rank Variant basis: variance
+#'   explained (default `0.95`) and maximum rank (default `5`).
+#' @param bead.factor Numeric, minimum ratio between the positives and an
+#'   internal bead negative. Default `10`.
+#' @param n.bins,min.bin.events,fit.quadratic,n.irls,n.restandardise,floor.frac,bound.sds
+#'   Estimator settings: quantile bins per group (default `20`), fewest
+#'   events per bin (`50`), a per-detector `c mu^2` term (`FALSE`), IRLS
+#'   passes (`2`), restandardisation rounds (`2`), lower clamp on sigma0^2 as
+#'   a fraction of its median (`0.01`) and sampling SDs added to its upper
+#'   clamp (`1`).
+#' @param bead.af.rows Integer, AF rows of a bead negative (`0` = off; `3`
+#'   when on).
+#' @param laser.split Logical, one design row per laser. Default `FALSE`.
+#' @param laser.split.min Numeric, the part on a laser and the rest must
+#'   each reach this fraction of the spectrum's peak. Default `0.01`.
+#' @param per.control.quadratic,sigma0.by.class Logical options. Default
+#'   `FALSE`.
+#' @param sigma0.fallback `"floor"` (default) or `"laser"`.
+#' @param clamp.mode `"auto"` (default) detects clamped data; `"off"` skips
+#'   the check.
+#' @param clamp.weights `"poisson"` (default) or `"flat"`.
+#' @param clamp.floor.pe Numeric, floor of the Poisson weights in
+#'   photoelectrons. Default `10`.
+#' @param n.cells,som.dim,k.neighbors,sim.threshold,sim.threshold.floor,af.collinear.threshold
+#'   Variant discovery settings passed to `get.fluor.variants()`. Defaults
+#'   `10000`, `5`, `3`, `0.985`, `0.90`, `0.95`.
+#' @param seed Integer seed of the splits and subsamples. Default
+#'   `asp$bird.seed`.
+#' @param parallel,threads Threading of the variant SOMs. Defaults `TRUE`,
+#'   `NULL`.
+#' @param verbose Logical. Default `TRUE`.
+#'
+#' @return A list. For `unmix.gls()` and `unmix.af.gls()`:
 #' \describe{
-#'   \item{`read.var`}{Named numeric vector, additive variance floor per
-#'     detector, in squared instrument units.}
-#'   \item{`counts.per.unit`}{Named numeric vector, \eqn{\kappa_d}.}
-#'   \item{`kappa.pooled`}{Numeric scalar, median of `counts.per.unit`.}
-#'   \item{`fit.table`}{Data frame of per-bin means and variances, for QC
-#'     plotting.}
-#'   \item{`r.squared`}{Named numeric vector, per-detector regression fit.}
-#'   \item{`curvature.coef`}{Named numeric vector, the quadratic coefficient
-#'     of `variance ~ mean + mean^2` fitted across `n.tranche` intensity
-#'     tranches per detector. Negative indicates variance growing more
-#'     slowly than linear at high signal (compression, e.g. approaching
-#'     saturation); positive indicates faster-than-linear growth.}
-#'   \item{`curvature.p`}{Named numeric vector, the p-value of
-#'     `curvature.coef`. Values below roughly `0.01` indicate the linear
-#'     mean-variance model is a poor fit for that detector's full range.}
-#'   \item{`curvature.table`}{Data frame of per-tranche means, variances,
-#'     and counts, one block per detector, for QC plotting -- the same
-#'     shape as `fit.table` but at tranche rather than bin resolution.}
-#'   \item{`noise.floor.signal`}{`sqrt(read.var)`, in *signal* units, for
-#'     passing to the existing `noise.floor` argument of the C++ pipeline.
-#'     Note the unit difference: `read.var` is a variance, the C++
-#'     `noise.floor` is a signal level.}
-#'   \item{`read.var.source`}{Named character vector, `"external"` or
-#'     `"regression"` per detector, indicating whether `read.var` came from
-#'     `read.var.floor` or the fitted intercept.}
-#'   \item{`kappa.source`}{Named character vector, `"regression"` or
-#'     `"pooled.median"` per detector, flagging detectors where the fitted
-#'     slope was non-positive and `counts.per.unit` was filled from the
-#'     pooled median instead of measured directly. Treat these detectors'
-#'     `counts.per.unit`, and any ratio computed from it, with caution.}
+#'   \item{`read.var`}{Named numeric vector, sigma0^2 per detector (the
+#'     cells' sigma0 when fitted per class).}
+#'   \item{`counts.per.unit`}{Named numeric vector, kappa per detector.}
+#'   \item{`kappa.pooled`}{Median kappa.}
 #' }
+#' and in addition: `sigma0.sq` and `g` (= 1 / kappa), `c`, `flags` (bit
+#' mask per detector: 1 sigma0 clamped high, 2 raised to the floor, 4 kappa
+#' pooled, 8 sigma0 from the same laser) and `flag.text`, `classes`,
+#' `sigma0.sq.by.class`, `flags.by.class` and `by.class` (a complete
+#' `read.var` / `counts.per.unit` list per class, with `sigma0.by.class`),
+#' `group.c`, `fit.table` (per group, bin and detector: observed and
+#' predicted residual variance), `groups`, `calibration` (from held-out
+#' events: `in.band`, `in.band.controls`, the tranche tables and one row per
+#' source), `clamped`, `negative.share`, `flat.phi`, `clamped.weights`
+#' (`kind`, `floor`, `scale` and a `noise.model` list usable in place of
+#' this one), `selection` (event counts per file), `sources`, `unstained`,
+#' `notes` and `settings`.
 #'
 #' @export
 
 estimate.noise.model <- function(
-    raw.data,
+    control.dir,
+    control.def.file,
+    asp,
     spectra,
-    af.spectra    = NULL,
-    n.bins        = 40L,
-    min.bin.n     = 50L,
-    trim.quantile = 0.999,
-    verbose       = FALSE,
-    af.pc.n       = 5L,
-    af.raw.data      = NULL,
-    af.basis.n.cells = 20000L,
-    read.var.floor = NULL,
-    file.id       = NULL,
-    unstained.data = NULL,
-    dark.quantile  = 0.95,
-    n.tranche      = 10L
-
+    spectral.variants,
+    unstained.sample      = NULL,
+    output.dir            = NULL,
+    save                  = TRUE,
+    selection             = c( "auto", "none" ),
+    unstained.train.frac  = 0.5,
+    control.train.frac    = 0.7,
+    max.unstained         = 200000L,
+    max.test.unstained    = 20000L,
+    max.control.events    = 100000L,
+    max.test.control      = 5000L,
+    max.fit.events        = 6000L,
+    max.cal.events        = 2000L,
+    n.af.rows             = 4L,
+    basis.var.explained   = 0.95,
+    basis.max.rank        = 5L,
+    bead.factor           = 10,
+    n.bins                = 20L,
+    min.bin.events        = 50L,
+    fit.quadratic         = FALSE,
+    n.irls                = 2L,
+    n.restandardise       = 2L,
+    floor.frac            = 0.01,
+    bound.sds             = 1,
+    bead.af.rows          = 0L,
+    laser.split           = FALSE,
+    laser.split.min       = 0.01,
+    per.control.quadratic = FALSE,
+    sigma0.by.class       = FALSE,
+    sigma0.fallback       = c( "floor", "laser" ),
+    clamp.mode            = c( "auto", "off" ),
+    clamp.weights         = c( "poisson", "flat" ),
+    clamp.floor.pe        = 10,
+    n.cells               = 10000L,
+    som.dim               = 5L,
+    k.neighbors           = 3L,
+    sim.threshold         = 0.985,
+    sim.threshold.floor   = 0.90,
+    af.collinear.threshold = 0.95,
+    seed                  = asp$bird.seed,
+    parallel              = TRUE,
+    threads               = NULL,
+    verbose               = TRUE
 ) {
 
-  if ( is.character( raw.data ) ) {
-    if ( verbose ) message( "Reading FCS file: ", raw.data )
-    probe.cols <- colnames( readFCS( raw.data, start.row = 1, end.row = 1 ) )
-    raw.data   <- readFCS( raw.data, columns = intersect( colnames( spectra ), probe.cols ) )
-  }
-  raw.data <- as.matrix( raw.data )
+  selection       <- match.arg( selection )
+  sigma0.fallback <- match.arg( sigma0.fallback )
+  clamp.mode      <- match.arg( clamp.mode )
+  clamp.weights   <- match.arg( clamp.weights )
+  seed <- if ( is.null( seed ) ) 42L else as.integer( seed )
 
-  det.names <- colnames( spectra )
-  if ( !all( det.names %in% colnames( raw.data ) ) )
-    stop( "`raw.data` does not contain all detectors present in `spectra`.",
+  settings <- .noise.settings(
+    n.bins = n.bins, min.bin.events = min.bin.events, fit.quadratic = fit.quadratic,
+    n.irls = n.irls, n.restandardise = n.restandardise, floor.frac = floor.frac,
+    bound.sds = bound.sds, per.control.quadratic = per.control.quadratic,
+    sigma0.by.class = sigma0.by.class, sigma0.fallback = sigma0.fallback )
+
+  if ( is.null( spectral.variants$thresholds ) )
+    stop( "`spectral.variants` must be the list returned by get.spectral.variants().",
           call. = FALSE )
-  raw.data <- raw.data[ , det.names, drop = FALSE ]
 
-  if ( !is.null( unstained.data ) ) {
-    unstained.data <- as.matrix( unstained.data )
-    if ( !all( det.names %in% colnames( unstained.data ) ) )
-      stop( "`unstained.data` does not contain all detectors present in `spectra`.",
-            call. = FALSE )
-    unstained.data <- unstained.data[ , det.names, drop = FALSE ]
+  if ( is.null( output.dir ) ) output.dir <- asp$variant.dir
+  if ( save && !dir.exists( output.dir ) ) dir.create( output.dir, recursive = TRUE )
+
+  spectra <- as.matrix( spectra )
+  fluorophores <- rownames( spectra )[ rownames( spectra ) != "AF" ]
+  spectra   <- spectra[ fluorophores, , drop = FALSE ]
+  detectors <- colnames( spectra )
+  ceiling   <- asp$expr.data.max
+  notes     <- character( 0 )
+  note <- function( txt ) {
+    notes <<- c( notes, txt )
+    if ( verbose ) message( "  ", txt )
   }
 
   # ---------------------------------------------------------------------------
-  # Projection basis
+  # Control file
   # ---------------------------------------------------------------------------
 
-  # The AF dictionary can hold 50-100+ node spectra which, with the
-  # fluorophores, meets or exceeds the detector count and leaves no residual
-  # to measure. AF lives in a low-dimensional subspace, so a handful of
-  # principal components spans nearly all of it.
+  if ( !file.exists( control.def.file ) )
+    stop( paste( "Unable to locate control.def.file:", control.def.file ), call. = FALSE )
 
-  basis <- spectra[ rownames( spectra ) != "AF", , drop = FALSE ]
+  control.table <- utils::read.csv( control.def.file, stringsAsFactors = FALSE, strip.white = TRUE )
+  control.table[] <- lapply( control.table, function( x ) {
+    if ( is.character( x ) ) { x <- trimws( x ); x[ x == "" ] <- NA; x } else x
+  } )
+  control.table <- control.table[ !is.na( control.table$fluorophore ), , drop = FALSE ]
 
-  if ( !is.null( af.spectra ) ) {
+  file.of  <- stats::setNames( control.table$filename, control.table$fluorophore )
+  channel  <- stats::setNames( control.table$channel, control.table$fluorophore )
+  type.of  <- stats::setNames( control.table$control.type, control.table$fluorophore )
+  univ.neg <- stats::setNames( control.table$universal.negative, control.table$fluorophore )
+  univ.neg[ is.na( univ.neg ) ] <- "FALSE"
+  is.fcs <- function( x ) !is.na( x ) && x != "FALSE" && grepl( "\\.fcs$", x, ignore.case = TRUE )
 
-    af.mat <- as.matrix( af.spectra )[ , det.names, drop = FALSE ]
+  unstained.file <- if ( "AF" %in% names( file.of ) ) file.of[[ "AF" ]] else unstained.sample
+  if ( is.null( unstained.file ) )
+    stop( "An unstained cell control is required: include an `AF` row in the control ",
+          "file, or supply `unstained.sample`.", call. = FALSE )
 
-    if ( !is.null( af.raw.data ) ) {
+  controls <- names( file.of )[ !grepl( "Negative|^AF$", names( file.of ) ) ]
+  missing.fl <- setdiff( controls, fluorophores )
+  if ( length( missing.fl ) )
+    note( paste0( "Not in `spectra`, skipped: ", paste( missing.fl, collapse = ", " ), "." ) )
+  controls <- intersect( controls, fluorophores )
+  bead.negative.files <- unique( stats::na.omit( control.table$filename[
+    control.table$fluorophore == "Negative" & control.table$control.type == "beads" ] ) )
 
-      # Fit the shape basis from raw per-cell AF events rather than the
-      # dictionary centroids. af.spectra rows are already L-infinity
-      # normalised by get.af.spectra(); raw events are not, so
-      # normalisation happens here, per event.
+  # ---------------------------------------------------------------------------
+  # Loading with the automatic selection
+  # ---------------------------------------------------------------------------
 
-      if ( is.character( af.raw.data ) ) {
-        if ( verbose ) message( "Reading FCS file for AF basis: ", af.raw.data )
-        af.raw.data <- readFCS( af.raw.data, columns = det.names )
-      }
-      af.events <- as.matrix( af.raw.data )[ , det.names, drop = FALSE ]
+  scatter.channel <- read.scatter.parameter( asp )
+  counts <- list()
+  cache  <- new.env()
 
-      if ( nrow( af.events ) > af.basis.n.cells )
-        af.events <- af.events[ sample( nrow( af.events ), af.basis.n.cells ), , drop = FALSE ]
+  resolve <- function( f ) {
+    p <- file.path( control.dir, f )
+    if ( !file.exists( p ) && file.exists( f ) ) f else p
+  }
 
-      af.peak <- apply( abs( af.events ), 1, max )
-      af.norm <- af.events[ af.peak > 0, , drop = FALSE ] / af.peak[ af.peak > 0 ]
-
-      af.svd   <- svd( af.norm, nu = 0L,
-                       nv = min( af.pc.n, ncol( af.norm ) ) )
-      af.basis <- t( af.svd$v )
-      rownames( af.basis ) <- paste0( "AFPC", seq_len( nrow( af.basis ) ) )
-      colnames( af.basis ) <- det.names
-
-      if ( verbose )
-        message( sprintf(
-          "AF shape basis from %d raw events: %d PCs, %.1f%% of variance",
-          nrow( af.norm ), nrow( af.basis ),
-          100 * sum( af.svd$d[ seq_len( nrow( af.basis ) ) ]^2 ) /
-            sum( af.svd$d^2 ) ) )
-
-    } else if ( nrow( af.mat ) <= af.pc.n ) {
-      af.basis <- af.mat
+  load.events <- function( f, keep.in.cache = FALSE ) {
+    if ( exists( f, envir = cache, inherits = FALSE ) ) return( get( f, envir = cache ) )
+    path <- resolve( f )
+    cols <- colnames( readFCS( path, start.row = 1, end.row = 1 ) )
+    if ( !all( detectors %in% cols ) )
+      stop( "`", f, "` does not contain every detector of `spectra`.", call. = FALSE )
+    fsc.h <- if ( grepl( "-A$", scatter.channel[ 1 ] ) ) sub( "-A$", "-H", scatter.channel[ 1 ] ) else NA
+    sc.cols <- intersect( scatter.channel, cols )
+    dat <- readFCS( path, columns = unique( c( detectors, sc.cols, intersect( fsc.h, cols ) ) ) )
+    mask <- rep( TRUE, nrow( dat ) )
+    if ( selection == "auto" && all( scatter.channel[ 1:2 ] %in% cols ) ) {
+      sel <- .select.noise.events(
+        dat[ , scatter.channel[ 1 ] ], dat[ , scatter.channel[ 2 ] ],
+        if ( !is.na( fsc.h ) && fsc.h %in% cols ) dat[ , fsc.h ] else NULL )
+      mask <- sel$mask
+      counts[[ f ]] <<- sel$counts
     } else {
-      af.svd   <- svd( af.mat, nu = 0L,
-                       nv = min( af.pc.n, ncol( af.mat ) ) )
-      af.basis <- t( af.svd$v )
-      rownames( af.basis ) <- paste0( "AFPC", seq_len( nrow( af.basis ) ) )
-      colnames( af.basis ) <- det.names
+      counts[[ f ]] <<- c( n.root = nrow( dat ), n.scatter = nrow( dat ), n.singlet = nrow( dat ) )
+    }
+    out <- list( fl = dat[ mask, detectors, drop = FALSE ], sc = dat[ mask, sc.cols, drop = FALSE ] )
+    if ( keep.in.cache ) assign( f, out, envir = cache )
+    out
+  }
 
-      if ( verbose )
-        message( sprintf(
-          "AF dictionary (%d spectra) reduced to %d PCs, %.1f%% of variance",
-          nrow( af.mat ), nrow( af.basis ),
-          100 * sum( af.svd$d[ seq_len( nrow( af.basis ) ) ]^2 ) /
-            sum( af.svd$d^2 ) ) )
+  if ( selection == "auto" && length( scatter.channel ) < 2L )
+    note( "No FSC-A and SSC-A: every event of each file is used." )
+
+  # ---------------------------------------------------------------------------
+  # Unstained cells
+  # ---------------------------------------------------------------------------
+
+  if ( verbose ) message( "\033[34mModelling detector noise\033[0m" )
+  if ( verbose ) message( "  Unstained cells: ", unstained.file )
+
+  u <- load.events( unstained.file )
+  if ( nrow( u$fl ) < 500L )
+    stop( "Only ", nrow( u$fl ), " unstained events after selection.", call. = FALSE )
+  keep  <- .subsample.idx( nrow( u$fl ), max.unstained, seed )
+  u.fl  <- u$fl[ keep, , drop = FALSE ]
+  u.sc  <- u$sc[ keep, , drop = FALSE ]
+  rm( u )
+  split <- .holdout.split( nrow( u.fl ), unstained.train.frac, seed, max.test.unstained )
+  u.train <- u.fl[ split$train, , drop = FALSE ]
+  u.test  <- u.fl[ split$test, , drop = FALSE ]
+  setup.basis <- .af.basis.rows( u.train, n.af.rows, seed = seed )
+  bases.af  <- list()
+  bases.af[[ unstained.file ]] <- setup.basis
+  negatives <- list()
+  negatives[[ unstained.file ]] <- list( fl = u.train, sc = u.sc[ split$train, , drop = FALSE ] )
+
+  # ---------------------------------------------------------------------------
+  # Bead negatives
+  # ---------------------------------------------------------------------------
+
+  bead.rows <- function( neg.fl ) {
+    if ( bead.af.rows <= 0L || is.null( neg.fl ) || nrow( neg.fl ) < 10L ) return( NULL )
+    tr <- .holdout.split( nrow( neg.fl ), control.train.frac, seed + 7L )$train
+    .af.basis.rows( neg.fl[ tr, , drop = FALSE ], bead.af.rows, seed = seed )
+  }
+
+  bead.thresholds <- function( neg.fl ) {
+    neg.fl <- neg.fl[ .subsample.idx( nrow( neg.fl ), 100000L, 0L ), , drop = FALSE ]
+    apply( unmix.ols( neg.fl, spectra ), 2, stats::quantile, probs = 0.995, names = FALSE )
+  }
+
+  anchors <- list()
+  for ( f in bead.negative.files ) {
+    if ( verbose ) message( "  Bead negative: ", f )
+    b <- load.events( f, keep.in.cache = TRUE )
+    if ( nrow( b$fl ) ) anchors[[ f ]] <- c( b, source = "unstained bead sample" )
+  }
+  bead.controls <- controls[ type.of[ controls ] == "beads" ]
+  bead.own <- list()
+  for ( fl.name in bead.controls ) {
+    if ( !is.fcs( univ.neg[[ fl.name ]] ) ) next
+    f <- univ.neg[[ fl.name ]]
+    b <- load.events( f, keep.in.cache = TRUE )
+    if ( !nrow( b$fl ) ) next
+    bead.own[[ fl.name ]] <- c( b, source = paste( "universal negative of", fl.name ) )
+    if ( is.null( anchors[[ f ]] ) ) anchors[[ f ]] <- bead.own[[ fl.name ]]
+  }
+
+  load.control <- function( n, fl.name ) {
+    if ( exists( fl.name, envir = cache, inherits = FALSE ) ) return( get( fl.name, envir = cache ) )
+    got  <- load.events( file.of[[ fl.name ]] )
+    keep <- .subsample.idx( nrow( got$fl ), max.control.events, seed + n )
+    list( fl = got$fl[ keep, , drop = FALSE ], sc = got$sc[ keep, , drop = FALSE ] )
+  }
+
+  # dark levels of every bead control, for the internal negatives
+  bead.medians <- list()
+  if ( any( !bead.controls %in% names( bead.own ) ) ) {
+    for ( fl.name in bead.controls ) {
+      n   <- match( fl.name, controls )
+      got <- load.control( n, fl.name )
+      assign( fl.name, got, envir = cache )
+      bead.medians[[ fl.name ]] <- list( median = apply( got$fl, 2, stats::median ),
+                                         fluor = match( fl.name, fluorophores ) )
+    }
+  }
+
+  # ---------------------------------------------------------------------------
+  # Single-stain controls
+  # ---------------------------------------------------------------------------
+
+  kept <- list()
+  internal <- list()
+  deferred <- character( 0 )
+  sources  <- list( Unstained = unstained.file )
+
+  process <- function( n, fl.name, ctrl, neg, background, raw.thr, unmixed.thr, b.rows, af.pcs,
+                       neg.key ) {
+    peak <- match( channel[[ fl.name ]], detectors )
+    sp <- .holdout.split( nrow( ctrl$fl ), control.train.frac, seed + 1000L + n )
+    tr.fl  <- ctrl$fl[ sp$train, , drop = FALSE ]
+    pos.tr <- .positive.rows( tr.fl, peak, raw.thr, ceiling )
+    pos.te <- .positive.rows( ctrl$fl[ sp$test, , drop = FALSE ], peak, raw.thr, ceiling )
+    if ( length( pos.tr ) < 100L || length( pos.te ) < 50L ) {
+      note( sprintf( "%s: too few positives (%d training, %d held out)", fl.name,
+                     length( pos.tr ), length( pos.te ) ) )
+      return( invisible( NULL ) )
+    }
+    test.rows <- sp$test[ pos.te ][ .subsample.idx( length( pos.te ), max.test.control, seed + n ) ]
+
+    if ( verbose ) message( "  Variants (training split): ", fl.name )
+    un <- stats::setNames( "FALSE", fl.name )
+    neg.cache <- NULL
+    if ( !is.null( neg ) && is.fcs( univ.neg[[ fl.name ]] ) ) {
+      un[ fl.name ] <- univ.neg[[ fl.name ]]
+      neg.cache <- stats::setNames( list( list( spectral = neg$fl, scatter = neg$sc ) ), univ.neg[[ fl.name ]] )
+    }
+    raw.thresholds <- stats::setNames( rep( Inf, length( detectors ) ), detectors )
+    raw.thresholds[ peak ] <- raw.thr
+    variants <- tryCatch(
+      get.fluor.variants(
+        fl.name,
+        file.name          = file.of,
+        control.dir        = control.dir,
+        asp                = asp,
+        spectra            = spectra,
+        figures            = FALSE,
+        output.dir         = output.dir,
+        verbose            = FALSE,
+        spectral.channel   = detectors,
+        scatter.channel    = colnames( ctrl$sc ),
+        universal.negative = un,
+        control.type       = type.of,
+        raw.thresholds     = raw.thresholds,
+        unmixed.thresholds = unmixed.thr,
+        flow.channel       = channel,
+        af.pcs             = af.pcs,
+        neg.cache          = neg.cache,
+        use.unmixed        = !anyNA( unmixed.thr ),
+        n.cells            = n.cells,
+        som.dim            = som.dim,
+        k.neighbors        = k.neighbors,
+        sim.threshold      = sim.threshold,
+        sim.threshold.floor    = sim.threshold.floor,
+        af.collinear.threshold = af.collinear.threshold,
+        parallel           = parallel,
+        threads            = threads,
+        control.data       = list( spectral = tr.fl, scatter = ctrl$sc[ sp$train, , drop = FALSE ] )
+      ),
+      error = function( e ) {
+        note( paste0( fl.name, ": variant discovery failed (", conditionMessage( e ), ")" ) )
+        NULL
+      } )
+    delta <- if ( is.null( variants ) ) NULL else
+      sweep( as.matrix( variants ), 2, spectra[ fl.name, ], "-" )
+
+    k <- length( kept )
+    train.pos <- tr.fl[ pos.tr, , drop = FALSE ]
+    test.ev   <- ctrl$fl[ test.rows, , drop = FALSE ]
+    sources[[ fl.name ]] <<- file.of[[ fl.name ]]
+    kept[[ fl.name ]] <<- list(
+      fluor = match( fl.name, fluorophores ), is.cell = type.of[[ fl.name ]] == "cells",
+      neg.key = neg.key, background = background, b.rows = b.rows, delta = delta,
+      fit = train.pos[ .subsample.idx( nrow( train.pos ), max.fit.events, seed + k ), , drop = FALSE ],
+      cal = test.ev[ .subsample.idx( nrow( test.ev ), max.cal.events, seed + k ), , drop = FALSE ] )
+    invisible( NULL )
+  }
+
+  for ( n in seq_along( controls ) ) {
+    fl.name <- controls[ n ]
+    if ( verbose ) message( sprintf( "  Controls: %s (%d/%d)", fl.name, n, length( controls ) ) )
+    peak <- match( channel[[ fl.name ]], detectors )
+    if ( is.na( peak ) ) {
+      note( paste0( fl.name, ": peak channel ", channel[[ fl.name ]], " is not a detector of `spectra`" ) )
+      next
+    }
+    ctrl <- load.control( n, fl.name )
+    if ( !nrow( ctrl$fl ) ) {
+      note( paste0( fl.name, ": no events after selection" ) )
+      next
     }
 
-    basis <- rbind( basis, af.basis )
-  }
-
-  det.n   <- ncol( basis )
-  basis.n <- nrow( basis )
-
-  if ( basis.n >= det.n - 4L )
-    stop( "Projection basis (", basis.n, " rows) leaves too few residual ",
-          "degrees of freedom for ", det.n, " detectors. Reduce `af.pc.n`.",
-          call. = FALSE )
-
-  x.hat <- unmix.ols.fast( raw.data, basis )
-  y.hat <- x.hat %*% basis
-  resid <- raw.data - y.hat
-
-  # residual variance is deflated by the projection: E[r_d^2] = sigma_d^2 (1 - h_d),
-  # where h_d is the d-th diagonal of the detector-space hat matrix
-  # H = t(basis) (basis t(basis))^{-1} basis. Leverage is far from uniform:
-  # detectors under emission peaks lose much more residual variance than empty
-  # detectors, so a single average correction biases per-detector kappa low at
-  # exactly the peak detectors. Correct per detector instead.
-  hat.diag <- colSums( ( MASS::ginv( basis %*% t( basis ) ) %*% basis ) * basis )
-  hat.diag <- pmin( pmax( hat.diag, 0 ), 1 - 1e-3 )
-  dof.correction <- 1 / ( 1 - hat.diag )
-
-  return( .fit.noise.regression(
-    y.hat          = y.hat,
-    resid          = resid,
-    det.names      = det.names,
-    n.bins         = n.bins,
-    min.bin.n      = min.bin.n,
-    trim.quantile  = trim.quantile,
-    read.var.floor = read.var.floor,
-    unstained.data = unstained.data,
-    dark.quantile  = dark.quantile,
-    n.tranche      = n.tranche,
-    dof.correction = dof.correction,
-    file.id        = file.id,
-    verbose        = verbose
-  ) )
-}
-
-#' @keywords internal
-.fit.noise.regression <- function(
-    y.hat,
-    resid,
-    det.names,
-    n.bins         = 40L,
-    min.bin.n      = 50L,
-    trim.quantile  = 0.999,
-    read.var.floor = NULL,
-    unstained.data = NULL,
-    dark.quantile  = 0.95,
-    n.tranche      = 10L,
-    dof.correction = NULL,
-    file.id        = NULL,
-    verbose        = FALSE
-) {
-
-  det.n <- length( det.names )
-  if ( is.null( dof.correction ) ) dof.correction <- rep( 1, det.n )
-
-  # Between-file offsets (gain drift, voltage differences across acquisition
-  # days, or -- pooling across controls -- different controls entirely) show
-  # up as a mean shift in the residual that has nothing to do with photon
-  # statistics. Left in, it inflates whichever of read.var/kappa absorbs a
-  # shift correlated with brightness. Centering residuals within each file
-  # removes it while leaving the within-file photon-driven spread -- the
-  # thing kappa actually measures -- untouched.
-  if ( !is.null( file.id ) ) {
-    if ( length( file.id ) != nrow( resid ) )
-      stop( "`file.id` must have one entry per row of `resid`.", call. = FALSE )
-    file.id <- as.factor( file.id )
-    resid   <- apply( resid, 2, function( col ) col - stats::ave( col, file.id ) )
-    colnames( resid ) <- det.names
-  }
-
-  # ---------------------------------------------------------------------------
-  # Per-detector mean-variance regression
-  # ---------------------------------------------------------------------------
-
-  read.var       <- stats::setNames( rep( NA_real_, det.n ), det.names )
-  kappa          <- stats::setNames( rep( NA_real_, det.n ), det.names )
-  r.squared      <- stats::setNames( rep( NA_real_, det.n ), det.names )
-  extrap         <- stats::setNames( rep( NA_real_, det.n ), det.names )
-  curvature.coef <- stats::setNames( rep( NA_real_, det.n ), det.names )
-  curvature.p    <- stats::setNames( rep( NA_real_, det.n ), det.names )
-  fit.rows       <- vector( "list", det.n )
-  tranche.rows   <- vector( "list", det.n )
-
-  for ( d in seq_len( det.n ) ) {
-
-    d.name <- det.names[ d ]
-    fit.d <- y.hat[ , d ]
-    res.d <- resid[ , d ]
-
-    keep <- fit.d <= stats::quantile( fit.d, trim.quantile, na.rm = TRUE ) &
-      is.finite( fit.d ) & is.finite( res.d )
-    fit.d <- fit.d[ keep ]
-    res.d <- res.d[ keep ]
-
-    if ( length( fit.d ) < min.bin.n * 4L ) next
-
-    breaks <- unique( stats::quantile(
-      fit.d, probs = seq( 0, 1, length.out = n.bins + 1L ), na.rm = TRUE ) )
-    if ( length( breaks ) < 4L ) next
-
-    bin <- cut( fit.d, breaks = breaks, include.lowest = TRUE, labels = FALSE )
-
-    bin.n    <- tabulate( bin, nbins = length( breaks ) - 1L )
-    good.bin <- which( bin.n >= min.bin.n )
-    if ( length( good.bin ) < 4L ) next
-
-    bin.mean <- vapply( good.bin, function( b )
-      mean( fit.d[ bin == b ] ), numeric( 1 ) )
-    bin.var  <- vapply( good.bin, function( b )
-      stats::mad( res.d[ bin == b ] )^2 * dof.correction[ d ], numeric( 1 ) )
-
-    ok <- is.finite( bin.mean ) & is.finite( bin.var ) & bin.var > 0
-    if ( sum( ok ) < 4L ) next
-
-    fit.rows[[ d ]] <- data.frame(
-      detector = det.names[ d ],
-      mean     = bin.mean[ ok ],
-      variance = bin.var[ ok ],
-      n        = bin.n[ good.bin ][ ok ],
-      stringsAsFactors = FALSE
-    )
-
-    bin.df <- fit.rows[[ d ]]
-
-    has.floor <- !is.null( read.var.floor ) &&
-      d.name %in% names( read.var.floor ) &&
-      is.finite( read.var.floor[ d.name ] ) &&
-      read.var.floor[ d.name ] > 0
-
-    if ( has.floor ) {
-
-      # Floor supplied externally (e.g. spectral.variants$noise.floor, from
-      # SCC negative-event quantiles). The intercept is no longer free: only
-      # the slope (1 / kappa) is fit, through the known floor. This avoids
-      # the non-identifiability of a freely-fit intercept on cell data, where
-      # unmodelled AF shape variance inflates the low-signal bins.
-
-      floor.d <- read.var.floor[ d.name ]
-      bin.df$resid.var <- pmax( bin.df$variance - floor.d, 0 )
-
-      w.bin  <- bin.df$n / pmax( bin.df$variance, 1e-8 )^2
-      lm.fit <- stats::lm( resid.var ~ mean - 1, data = bin.df, weights = w.bin )
-
-      for ( pass in seq_len( 2L ) ) {
-        v.fit  <- pmax( stats::fitted( lm.fit ) + floor.d, 1e-8 )
-        w.bin  <- bin.df$n / v.fit^2
-        lm.fit <- stats::lm( resid.var ~ mean - 1, data = bin.df, weights = w.bin )
-      }
-
-      slope <- stats::coef( lm.fit )[ 1L ]
-
-      tss <- sum( ( bin.df$resid.var -
-                      stats::weighted.mean( bin.df$resid.var, w.bin ) )^2 * w.bin )
-      rss <- sum( stats::residuals( lm.fit )^2 * w.bin )
-      r.squared[ d ] <- if ( tss > 0 ) 1 - rss / tss else NA_real_
-      extrap[ d ]    <- NA_real_
-
-      if ( is.finite( slope ) && slope > 0 ) kappa[ d ] <- 1 / slope
-      read.var[ d ] <- floor.d
-
-    } else {
-
-      # Var( s^2 ) ~ 2 sigma^4 / n, so weight by n / sigma^4. Weighting by n
-      # alone lets the brightest bins dictate the intercept, which is a long
-      # extrapolation from them. Two IRLS passes using the fitted variance.
-      w.bin  <- bin.df$n / pmax( bin.df$variance, 1e-8 )^2
-      lm.fit <- stats::lm( variance ~ mean, data = bin.df, weights = w.bin )
-
-      for ( pass in seq_len( 2L ) ) {
-        v.fit  <- pmax( stats::fitted( lm.fit ), 1e-8 )
-        w.bin  <- bin.df$n / v.fit^2
-        lm.fit <- stats::lm( variance ~ mean, data = bin.df, weights = w.bin )
-      }
-
-      cf <- stats::coef( lm.fit )
-      r.squared[ d ] <- summary( lm.fit )$r.squared
-
-      # how far the intercept is extrapolated: variance at the lowest bin
-      # divided by the fitted intercept. Values >> 1 mean the floor is not
-      # identifiable from this file.
-      extrap[ d ] <- min( bin.df$variance ) / max( cf[ 1L ], 1e-8 )
-
-      if ( is.finite( cf[ 2L ] ) && cf[ 2L ] > 0 ) kappa[ d ] <- 1 / cf[ 2L ]
-      if ( is.finite( cf[ 1L ] ) ) read.var[ d ] <- max( cf[ 1L ], 1e-8 )
-
-      # ---------------------------------------------------------------------
-      # Linearity check: ten tranches, not two
-      # ---------------------------------------------------------------------
-      # The single-slope fit above assumes one kappa across the whole
-      # detector range. Rather than compare two arbitrary halves, split the
-      # range into n.tranche levels and fit a quadratic term across their
-      # (mean, variance) points -- the t-test on that term is a direct lack-
-      # of-fit test for the linear model above. Tranche 1 is anchored to
-      # dark.quantile of the unstained population (when supplied) rather than
-      # an internal quantile of whatever got pooled into fit.d, so it isolates
-      # the regime a genuinely dark event sits in -- exactly where baseline
-      # restoration would show up.
-
-      dark.cut <- if ( !is.null( unstained.data ) )
-        stats::quantile( unstained.data[ , det.names[ d ] ], dark.quantile, na.rm = TRUE ) else
-          stats::quantile( fit.d, dark.quantile, na.rm = TRUE )
-
-      above <- fit.d > dark.cut
-
-      if ( sum( !above ) >= min.bin.n && sum( above ) >= min.bin.n * ( n.tranche - 1L ) ) {
-
-        tr.breaks <- unique( c(
-          -Inf, dark.cut,
-          stats::quantile( fit.d[ above ],
-                           probs = seq( 0, 1, length.out = n.tranche )[ -1L ],
-                           na.rm = TRUE )
-        ) )
-
-        if ( length( tr.breaks ) >= 4L ) {
-
-          tranche <- cut( fit.d, breaks = tr.breaks, include.lowest = TRUE, labels = FALSE )
-          tr.n    <- tabulate( tranche, nbins = length( tr.breaks ) - 1L )
-          tr.good <- which( tr.n >= min.bin.n )
-
-          if ( length( tr.good ) >= 4L ) {
-
-            tr.mean <- vapply( tr.good, function( b )
-              mean( fit.d[ tranche == b ] ), numeric( 1 ) )
-            tr.var  <- vapply( tr.good, function( b )
-              stats::mad( res.d[ tranche == b ] )^2 * dof.correction[ d ], numeric( 1 ) )
-
-            tr.ok <- is.finite( tr.mean ) & is.finite( tr.var ) & tr.var > 0
-
-            if ( sum( tr.ok ) >= 4L ) {
-
-              tr.df <- data.frame(
-                detector = det.names[ d ],
-                tranche  = tr.good[ tr.ok ],
-                mean     = tr.mean[ tr.ok ],
-                variance = tr.var[ tr.ok ],
-                n        = tr.n[ tr.good ][ tr.ok ],
-                stringsAsFactors = FALSE
-              )
-
-              tranche.rows[[ d ]] <- tr.df
-
-              quad.fit <- tryCatch(
-                stats::lm( variance ~ mean + I( mean^2 ), data = tr.df, weights = n ),
-                error = function( e ) NULL )
-
-              if ( !is.null( quad.fit ) ) {
-                quad.cf <- summary( quad.fit )$coefficients
-                if ( "I(mean^2)" %in% rownames( quad.cf ) ) {
-                  curvature.coef[ d ] <- quad.cf[ "I(mean^2)", "Estimate" ]
-                  curvature.p[ d ]    <- quad.cf[ "I(mean^2)", "Pr(>|t|)" ]
-                }
-              }
-            }
+    if ( type.of[[ fl.name ]] == "cells" ) {
+      neg.key <- unstained.file
+      uneg <- univ.neg[[ fl.name ]]
+      if ( is.fcs( uneg ) && uneg != unstained.file ) {
+        if ( is.null( negatives[[ uneg ]] ) ) {
+          got <- load.events( uneg )
+          if ( nrow( got$fl ) ) {
+            negatives[[ uneg ]] <- got
+            bases.af[[ uneg ]]  <- .af.basis.rows( got$fl, n.af.rows, seed = seed )
           }
         }
+        if ( !is.null( negatives[[ uneg ]] ) ) neg.key <- uneg
       }
+      neg <- negatives[[ neg.key ]]
+      raw.thr <- stats::quantile(
+        neg$fl[ .subsample.idx( nrow( neg$fl ), 100000L, 0L ), channel[[ fl.name ]] ], 0.995, names = FALSE )
+      process( n, fl.name, ctrl, if ( is.fcs( uneg ) ) neg else NULL, NULL, raw.thr,
+               spectral.variants$thresholds,
+               NULL, stats::setNames( list( bases.af[[ neg.key ]] ), if ( is.fcs( uneg ) ) uneg else "none" ),
+               neg.key )
+    } else {
+      own <- bead.own[[ fl.name ]]
+      if ( is.null( own ) ) {
+        others <- Filter( function( m ) m$fluor != match( fl.name, fluorophores ), bead.medians )
+        level  <- if ( length( others ) ) .bead.reference.levels( others, spectra )[ peak ] else NA_real_
+        found  <- .internal.bead.negative( ctrl$fl, peak, level, factor = bead.factor )
+        if ( !is.null( found$mask ) ) {
+          own <- list( fl = ctrl$fl[ found$mask, , drop = FALSE ], sc = ctrl$sc[ found$mask, , drop = FALSE ],
+                       source = paste0( "internal negative of ", fl.name, " (", found$reason, ")" ) )
+          internal[[ paste( fl.name, "negative" ) ]] <- own
+          sources[[ paste( fl.name, "negative" ) ]]  <- file.of[[ fl.name ]]
+        } else if ( verbose ) {
+          message( "  No internal bead negative in ", fl.name, " (", found$reason, ")" )
+        }
+      }
+      if ( is.null( own ) ) {
+        deferred <- c( deferred, fl.name )
+        next
+      }
+      raw.thr <- stats::quantile( own$fl[ , peak ], 0.995, names = FALSE )
+      process( n, fl.name, ctrl, own, colMeans( own$fl ), raw.thr, bead.thresholds( own$fl ),
+               bead.rows( own$fl ), NULL, NULL )
     }
   }
 
+  if ( !length( anchors ) ) anchors <- internal
+  for ( fl.name in deferred ) {
+    n    <- match( fl.name, controls )
+    peak <- match( channel[[ fl.name ]], detectors )
+    ctrl <- load.control( n, fl.name )
+    if ( length( anchors ) ) {
+      neg <- list( fl = do.call( rbind, lapply( anchors, `[[`, "fl" ) ),
+                   sc = do.call( rbind, lapply( anchors, `[[`, "sc" ) ) )
+      process( n, fl.name, ctrl, neg, colMeans( neg$fl ),
+               stats::quantile( neg$fl[ , peak ], 0.995, names = FALSE ), bead.thresholds( neg$fl ),
+               bead.rows( neg$fl ), NULL, NULL )
+    } else {
+      raw.thr <- 10^.otsu.threshold( log10( pmax( ctrl$fl[ , peak ], 1 ) ) )
+      note( paste0( fl.name, ": no bead negative; positives above the Otsu split" ) )
+      process( n, fl.name, ctrl, NULL, NULL, raw.thr, bead.thresholds( u.train ), NULL, NULL, NULL )
+    }
+  }
+  rm( list = ls( envir = cache ), envir = cache )
+
+  if ( !length( kept ) )
+    stop( "No single-stain control has enough positive events.", call. = FALSE )
+
   # ---------------------------------------------------------------------------
-  # Fill failures from the pooled estimate
+  # Groups
   # ---------------------------------------------------------------------------
 
-  read.var.source <- stats::setNames( rep( "regression", det.n ), det.names )
-  if ( !is.null( read.var.floor ) ) {
-    ext <- det.names %in% names( read.var.floor ) &
-      is.finite( read.var.floor[ det.names ] ) &
-      read.var.floor[ det.names ] > 0
-    ext[ is.na( ext ) ] <- FALSE
-    read.var.source[ ext ] <- "external"
+  delta.list <- lapply( Filter( function( k ) !is.null( k$delta ) && nrow( k$delta ) >= 3L, kept ),
+                        function( k ) k$delta[ -1, , drop = FALSE ] )
+  vbases <- if ( length( delta.list ) )
+    build.variant.basis( delta.list, spectra = NULL, rank = basis.max.rank,
+                         var.explained = basis.var.explained, min.lambda = 1e-4,
+                         pooled.fallback = FALSE, verbose = FALSE ) else list()
+
+  lasers <- .detector.lasers( detectors, asp, verbose = FALSE )
+  if ( ( laser.split || sigma0.fallback == "laser" ) && is.null( lasers ) ) {
+    note( "The laser of some detectors is unknown: no per-laser design rows or same-laser fallback." )
+    lasers <- NULL
   }
 
-  kappa.source <- stats::setNames( rep( "regression", det.n ), det.names )
-
-  bad.kappa <- !is.finite( kappa ) | kappa <= 0
-  if ( any( bad.kappa ) ) {
-    if ( all( bad.kappa ) )
-      stop( "Mean-variance regression failed at every detector. Check that ",
-            "`raw.data` spans a range of intensities and that `spectra` ",
-            "matches the file.", call. = FALSE )
-    if ( verbose )
-      warning( "Non-positive variance slope at ", sum( bad.kappa ), " detector(s): ",
-               paste( det.names[ bad.kappa ], collapse = ", " ),
-               "; filled from the pooled median.", call. = FALSE )
-    kappa.source[ bad.kappa ] <- "pooled.median"
-    kappa[ bad.kappa ] <- stats::median( kappa[ !bad.kappa ] )
+  fit.groups <- cal.groups <- list()
+  for ( fl.name in names( kept ) ) {
+    k <- kept[[ fl.name ]]
+    af.rows <- if ( k$is.cell ) bases.af[[ k$neg.key ]] else k$b.rows
+    design  <- .control.design( spectra[ k$fluor, ], vbases[[ fl.name ]], af.rows,
+                                lasers = if ( laser.split ) lasers else NULL, split.min = laser.split.min )
+    offset <- if ( !is.null( k$b.rows ) ) NULL else k$background
+    cls    <- if ( k$is.cell ) "cells" else "beads"
+    fit.groups[[ length( fit.groups ) + 1L ]] <- list( name = fl.name, kind = "control", raw = k$fit,
+      design = design, offset = offset, bin.row = 1L, cls = cls )
+    cal.groups[[ length( cal.groups ) + 1L ]] <- list( name = fl.name, kind = "control", raw = k$cal,
+      design = design, offset = offset, bin.row = 1L, cls = cls )
+  }
+  fit.groups[[ length( fit.groups ) + 1L ]] <- list( name = "Unstained", kind = "unstained",
+    raw = u.train[ .subsample.idx( nrow( u.train ), 4L * max.fit.events, seed ), , drop = FALSE ],
+    design = setup.basis, offset = NULL, bin.row = 1L, cls = "cells" )
+  cal.groups[[ length( cal.groups ) + 1L ]] <- list( name = "Unstained", kind = "unstained",
+    raw = u.test[ .subsample.idx( nrow( u.test ), 2L * max.cal.events, seed ), , drop = FALSE ],
+    design = setup.basis, offset = NULL, bin.row = 1L, cls = "cells" )
+  for ( a.name in names( anchors ) ) {
+    bfl <- anchors[[ a.name ]]$fl
+    sp  <- .holdout.split( nrow( bfl ), control.train.frac, seed + 7L )
+    design <- bead.rows( bfl )
+    b.tr <- bfl[ sp$train, , drop = FALSE ]
+    b.te <- bfl[ sp$test, , drop = FALSE ]
+    fit.groups[[ length( fit.groups ) + 1L ]] <- list( name = a.name, kind = "beads",
+      raw = b.tr[ .subsample.idx( nrow( b.tr ), max.fit.events, seed ), , drop = FALSE ],
+      design = design, offset = NULL, bin.row = 1L, cls = "beads" )
+    cal.groups[[ length( cal.groups ) + 1L ]] <- list( name = a.name, kind = "beads",
+      raw = b.te[ .subsample.idx( nrow( b.te ), max.cal.events, seed ), , drop = FALSE ],
+      design = design, offset = NULL, bin.row = 1L, cls = "beads" )
+    if ( is.null( sources[[ a.name ]] ) ) sources[[ a.name ]] <- a.name
   }
 
-  bad.floor <- !is.finite( read.var ) | read.var <= 0
-  if ( all( bad.floor ) )
-    stop( "The variance floor could not be estimated at any detector. ",
-          "Supply `read.var.floor` or a control spanning low intensities.",
-          call. = FALSE )
-  if ( any( bad.floor ) )
-    read.var[ bad.floor ] <- stats::median( read.var[ !bad.floor ] )
+  # ---------------------------------------------------------------------------
+  # Clamped data
+  # ---------------------------------------------------------------------------
 
-  n.tested  <- sum( !is.na( curvature.p ) )
-  n.curved  <- sum( curvature.p < 0.01, na.rm = TRUE )
+  clamp <- list( clamped = FALSE, share = NULL )
+  if ( clamp.mode == "auto" ) {
+    clamp <- .negatives.clamped( c( list( u.fl ), lapply( anchors, `[[`, "fl" ) ) )
+    if ( clamp$clamped )
+      note( paste0( "Clamped data: the negatives have no values at or below zero on any detector, so ",
+                    "their noise is truncated at zero. Use `clamped.weights$noise.model` (",
+                    clamp.weights, " weights) for unmixing rather than this model." ) )
+  }
+  u.proj   <- .noise.project( list( raw = u.test, design = setup.basis ) )
+  flat.phi <- stats::median( .robust.var( u.proj$resid ) )
+
+  # ---------------------------------------------------------------------------
+  # Fit and calibration
+  # ---------------------------------------------------------------------------
+
+  if ( verbose ) message( "  Fitting the noise model" )
+  model <- .fit.noise.model( fit.groups, detectors, settings, lasers )
+
+  floor.signal <- clamp.floor.pe * stats::median( model$g )
+  scale <- .noise.dispersion.scale( .poisson.noise.model( detectors, model$g, floor.signal ), u.proj )
+  clamped.model <- if ( clamp.weights == "poisson" ) {
+    g.s <- model$g * scale
+    list( read.var = stats::setNames( g.s * floor.signal, detectors ),
+          counts.per.unit = stats::setNames( 1 / g.s, detectors ), kappa.pooled = stats::median( 1 / g.s ) )
+  } else {
+    list( read.var = stats::setNames( rep( flat.phi, length( detectors ) ), detectors ),
+          counts.per.unit = stats::setNames( rep( Inf, length( detectors ) ), detectors ), kappa.pooled = Inf )
+  }
+
+  if ( verbose ) message( "  Calibrating the noise model on held-out events" )
+  calibration <- .calibrate.noise.model( model, cal.groups )
+
+  kappa <- 1 / model$g
+  by.class <- NULL
+  if ( !is.null( model$sigma0.sq.by.class ) ) {
+    by.class <- lapply( seq_along( model$classes ), function( k ) list(
+      read.var = stats::setNames( model$sigma0.sq.by.class[ k, ], detectors ),
+      counts.per.unit = kappa, kappa.pooled = stats::median( kappa ), c = model$c,
+      flags = stats::setNames( model$flags.by.class[ k, ], detectors ) ) )
+    names( by.class ) <- model$classes
+  }
+
+  noise.model <- c(
+    list( read.var = model$sigma0.sq, counts.per.unit = kappa, kappa.pooled = stats::median( kappa ) ),
+    model,
+    list(
+      flag.text      = stats::setNames( .noise.flag.text( model$flags ), detectors ),
+      by.class       = by.class,
+      calibration    = calibration,
+      clamped        = clamp$clamped,
+      negative.share = clamp$share,
+      flat.phi       = flat.phi,
+      clamped.weights = list( kind = clamp.weights, floor = floor.signal, scale = scale,
+                              noise.model = clamped.model ),
+      selection      = list( mode = selection, counts = do.call( rbind, counts ) ),
+      sources        = unlist( sources ),
+      unstained      = unstained.file,
+      notes          = notes
+    ) )
+  noise.model$settings <- c( settings, list(
+    selection = selection, bead.af.rows = bead.af.rows, laser.split = laser.split,
+    laser.split.min = laser.split.min, clamp.mode = clamp.mode, clamp.weights = clamp.weights,
+    clamp.floor.pe = clamp.floor.pe, seed = seed ) )
 
   if ( verbose ) {
     message( sprintf(
-      "Noise model: median read SD %.1f, median counts.per.unit %.3g, median R2 %.3f",
-      stats::median( sqrt( read.var ) ),
-      stats::median( kappa ),
-      stats::median( r.squared, na.rm = TRUE )
-    ) )
+      "  Noise model: median sigma0 %.1f, median kappa %.3g, %d flagged detector(s)",
+      stats::median( sqrt( model$sigma0.sq ) ), stats::median( kappa ), sum( model$flags > 0 ) ) )
     message( sprintf(
-      "  %d / %d detectors show significant curvature (quadratic term p < 0.01)",
-      n.curved, n.tested ) )
+      "  Held-out calibration: %.0f%% of detector x intensity cells in 0.8-1.25 (controls %.0f%%)",
+      100 * calibration$in.band, 100 * calibration$in.band.controls ) )
   }
 
-  if ( n.tested > 0 && n.curved / n.tested > 0.25 )
-    warning( "Significant curvature (quadratic term p < 0.01) detected at ",
-             n.curved, " of ", n.tested, " detectors (",
-             round( 100 * n.curved / n.tested ), "%). A single kappa per ",
-             "detector is an approximation there; treat unmix.gls() ",
-             "weighting as approximate at the extremes of the intensity ",
-             "range. See `curvature.table` for the tranche-level fits.",
-             call. = FALSE )
+  if ( save ) saveRDS( noise.model, file = file.path( output.dir, "noise_model.rds" ) )
 
-  if ( any( read.var.source == "regression" ) &&
-       stats::median( extrap[ read.var.source == "regression" ], na.rm = TRUE ) > 20 )
-    warning( "The variance floor is being extrapolated from data far above ",
-             "zero signal at detector(s) without an external floor (median ratio ",
-             round( stats::median( extrap[ read.var.source == "regression" ], na.rm = TRUE ) ),
-             "). `read.var` is poorly identified from this file. Pass ",
-             "`read.var.floor` (e.g. `spectral.variants$noise.floor` from ",
-             "single-stained control negatives) or an unstained bead ",
-             "population instead; a blank/buffer acquisition is not possible ",
-             "on this class of instrument.",
-             call. = FALSE )
-
-  list(
-    read.var           = read.var,
-    counts.per.unit    = kappa,
-    kappa.pooled       = stats::median( kappa ),
-    fit.table          = do.call( rbind, fit.rows ),
-    r.squared          = r.squared,
-    extrap             = extrap,
-    curvature.coef     = curvature.coef,
-    curvature.p        = curvature.p,
-    curvature.table    = do.call( rbind, tranche.rows ),
-    noise.floor.signal = sqrt( read.var )
-  )
+  noise.model
 }
