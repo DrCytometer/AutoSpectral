@@ -98,6 +98,9 @@
 #'   number of trusted (source, target) entries required to calibrate the
 #'   hotspot-matrix fallback. Below this, weak controls are left blank as
 #'   before and a message explains why.
+#' @param spread.estimator Character, \code{"binned.mad"} (default) or
+#'   \code{"huber.squared"}, how \code{get.fluor.variants()} fits the
+#'   Residual Model spread line; see there.
 #' @param huber.k Numeric, default \code{1.345}. Huber tuning constant
 #'   passed to \code{get.fluor.variants()}'s spillover-spread
 #'   regression.
@@ -147,8 +150,8 @@
 #'     noise floor in signal units (SD), pooled by minimum across controls.}
 #'   \item{\code{spillover.spread}}{Matrix (source fluorophore x target
 #'     channel), the Residual Model Spillover Spreading Matrix: the
-#'     Huber-robust slope of each target's squared residual-projection
-#'     against the source's own recovered abundance -- added unmixed
+#'     slope of each target's residual-projection variance against the
+#'     source's own recovered abundance (\code{spread.estimator}) -- added unmixed
 #'     variance per unit of the source's on-channel abundance. Diagonal
 #'     entries are `NA`. Rows below `spread.min.events` are left `NA` across
 #'     the row unless filled by the hotspot-matrix fallback. Carries
@@ -194,6 +197,7 @@ get.spectral.variants <- function(
     spread.min.events        = 50L,
     spread.hotspot.fallback  = TRUE,
     spread.hotspot.min.pairs = 20,
+    spread.estimator = c( "binned.mad", "huber.squared" ),
     huber.k         = 1.345,
     huber.max.iter  = 100L,
     variant.fill.color = "red",
@@ -207,6 +211,8 @@ get.spectral.variants <- function(
     diagnostics                  = FALSE,
     ...
 ) {
+
+  spread.estimator <- match.arg( spread.estimator )
 
   # ---------------------------------------------------------------------------
   # Deprecated argument handling
@@ -654,6 +660,7 @@ get.spectral.variants <- function(
     sim.threshold.floor    = sim.threshold.floor,
     af.collinear.threshold = af.collinear.threshold,
     noise.floor.tail.fraction = noise.floor.tail.fraction,
+    spread.estimator   = spread.estimator,
     huber.k            = huber.k,
     huber.max.iter     = huber.max.iter,
     variant.fill.color = variant.fill.color,

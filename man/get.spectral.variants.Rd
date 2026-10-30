@@ -24,6 +24,7 @@ get.spectral.variants(
   spread.min.events = 50L,
   spread.hotspot.fallback = TRUE,
   spread.hotspot.min.pairs = 20,
+  spread.estimator = c("binned.mad", "huber.squared"),
   huber.k = 1.345,
   huber.max.iter = 100L,
   variant.fill.color = "red",
@@ -117,6 +118,10 @@ number of trusted (source, target) entries required to calibrate the
 hotspot-matrix fallback. Below this, weak controls are left blank as
 before and a message explains why.}
 
+\item{spread.estimator}{Character, \code{"binned.mad"} (default) or
+\code{"huber.squared"}, how \code{get.fluor.variants()} fits the
+Residual Model spread line; see there.}
+
 \item{huber.k}{Numeric, default \code{1.345}. Huber tuning constant
 passed to \code{get.fluor.variants()}'s spillover-spread
 regression.}
@@ -178,8 +183,8 @@ reference spectrum), one per fluorophore.}
 noise floor in signal units (SD), pooled by minimum across controls.}
 \item{\code{spillover.spread}}{Matrix (source fluorophore x target
 channel), the Residual Model Spillover Spreading Matrix: the
-Huber-robust slope of each target's squared residual-projection
-against the source's own recovered abundance -- added unmixed
+slope of each target's residual-projection variance against the
+source's own recovered abundance (\code{spread.estimator}) -- added unmixed
 variance per unit of the source's on-channel abundance. Diagonal
 entries are \code{NA}. Rows below \code{spread.min.events} are left \code{NA} across
 the row unless filled by the hotspot-matrix fallback. Carries
