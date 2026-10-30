@@ -829,7 +829,10 @@ get.spectral.variants <- function(
       !is.na( spillover.spread.intercept ) & spillover.spread.intercept < 0 ] <- 0
     # use the unit-normalized spillover spread for visualization
     ssm <- l2.normalize.spectra( spillover.spread )
-    # save the data as CSV
+    # save the data as CSV; asp from get.autospectral.param( figures = FALSE )
+    # carries no folder, so fall back to the standard name
+    if ( is.null( asp$figure.similarity.heatmap.dir ) )
+      asp$figure.similarity.heatmap.dir <- "figure_similarity_heatmap"
     if ( !dir.exists( asp$figure.similarity.heatmap.dir ) )
       dir.create( asp$figure.similarity.heatmap.dir )
 

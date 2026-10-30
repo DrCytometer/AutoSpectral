@@ -20,7 +20,6 @@ get.spectral.variants(
   sim.threshold = 0.985,
   sim.threshold.floor = 0.9,
   af.collinear.threshold = 0.95,
-  noise.floor.tail.fraction = 0.2,
   spread.min.events = 50L,
   spread.hotspot.fallback = TRUE,
   spread.hotspot.min.pairs = 20,
@@ -35,7 +34,6 @@ get.spectral.variants(
   unstained.sample = NULL,
   stained.sample = NULL,
   optimize.necessity.threshold = 0.01,
-  diagnostics = FALSE,
   ...
 )
 }
@@ -89,10 +87,6 @@ cosine similarity between a fluorophore's reference spectrum and any of
 its paired unstained file's AF principal directions at or above which
 the AF-component projection step (and the low-rank fit feeding the
 Residual Model) is skipped.}
-
-\item{noise.floor.tail.fraction}{Numeric in (0, 1), default \code{0.20}.
-Fraction of each detector's raw values (lowest end) used to estimate the
-per-control noise floor. Passed to \code{get.fluor.variants}.}
 
 \item{spread.min.events}{Integer, default \code{50}. Minimum number of
 events behind a source fluorophore's Residual Model regression
@@ -160,12 +154,10 @@ brightness. Pass \code{NULL} (default) to use purely geometric scores.}
 \item{optimize.necessity.threshold}{Numeric in \verb{[0, 1]}, default \code{0.01}.
 Passed to \code{calculate.optimize.necessity()}.}
 
-\item{diagnostics}{Logical, default \code{FALSE}. When \code{TRUE}, prints
-additional messages on model characteristics to the console.}
-
 \item{...}{Ignored. Catches and warns on previously used deprecated
 arguments: \code{af.spectra}, \code{refine}, \code{problem.quantile},
-\code{pos.quantile}.}
+\code{pos.quantile}, \code{noise.floor.tail.fraction},
+\code{diagnostics}.}
 }
 \value{
 A named list with elements:
@@ -179,8 +171,6 @@ fluorophore.}
 \item{\code{delta.list}}{Named list of delta matrices (variant minus
 reference spectrum), one per fluorophore.}
 \item{\code{delta.norms}}{Named list of Euclidean norms of the deltas.}
-\item{\code{noise.floor}}{Named numeric vector, per-detector electronic
-noise floor in signal units (SD), pooled by minimum across controls.}
 \item{\code{spillover.spread}}{Matrix (source fluorophore x target
 channel), the Residual Model Spillover Spreading Matrix: the
 slope of each target's residual-projection variance against the

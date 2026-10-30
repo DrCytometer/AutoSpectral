@@ -371,6 +371,17 @@ get.spectra.automated <- function(
   # plots) intentionally keep static names and are expected to overwrite.
   run.timestamp <- format( Sys.time(), "%Y%m%d_%H%M%S" )
 
+  # asp from get.autospectral.param( figures = FALSE ) carries no figure
+  # folders; when figures are requested, fall back to the standard names
+  if ( figures ) {
+    if ( is.null( asp$figure.spectra.dir ) )
+      asp$figure.spectra.dir <- "figure_spectra"
+    if ( is.null( asp$figure.similarity.heatmap.dir ) )
+      asp$figure.similarity.heatmap.dir <- "figure_similarity_heatmap"
+    if ( is.null( asp$figure.scatter.dir.base ) )
+      asp$figure.scatter.dir.base <- "figure_scatter"
+  }
+
   # -- 0. Validate inputs
   if ( !dir.exists( control.dir ) )
     stop( "control.dir does not exist: ", control.dir, call. = FALSE )
@@ -888,8 +899,8 @@ get.spectra.automated <- function(
           asp              = asp,
           allow.duplicate.controls = allow.duplicate.controls
         )
-        fc.legacy  <- clean.controls( fc.legacy, asp )
-        get.fluorophore.spectra( fc.legacy, asp )
+        fc.legacy  <- clean.controls( fc.legacy, asp, main.figures = figures )
+        get.fluorophore.spectra( fc.legacy, asp, figures = figures )
       },
       error = function( e ) {
         message( "\033[31m  Legacy pipeline failed: ", e$message, "\033[0m" )

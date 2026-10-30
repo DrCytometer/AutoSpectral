@@ -65,6 +65,15 @@ get.fluorophore.spectra <- function(
   # `asp$table.spectra.dir` -- never overwrite each other's output.
   run.timestamp <- format( Sys.time(), "%Y%m%d_%H%M%S" )
 
+  # asp from get.autospectral.param( figures = FALSE ) carries no figure
+  # folders; when figures are requested, fall back to the standard names
+  if ( figures ) {
+    if ( is.null( asp$figure.spectra.dir ) )
+      asp$figure.spectra.dir <- "figure_spectra"
+    if ( is.null( asp$figure.similarity.heatmap.dir ) )
+      asp$figure.similarity.heatmap.dir <- "figure_similarity_heatmap"
+  }
+
   # empty collection vector
   spectra.zero <- rep( 0, flow.control$spectral.channel.n )
   names( spectra.zero ) <- flow.control$spectral.channel

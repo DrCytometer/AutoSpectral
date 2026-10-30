@@ -278,10 +278,16 @@ define.flow.control <- function(
 
   final.gate.list <- list()
 
+  # asp from get.autospectral.param( figures = FALSE ) carries no gate folder.
+  # Gate definition plots are always drawn, so they fall back to the standard
+  # name; asp$figure.gate.dir stays NULL, which keeps the per-sample gate
+  # plots in get.gated.flow.expression.data() off.
+  gate.dir <- if ( is.null( asp$figure.gate.dir ) ) "figure_gate" else asp$figure.gate.dir
+
   if ( gate ) {
     if ( verbose ) message( "\033[34mDefining gates \033[0m" )
 
-    if ( !dir.exists( asp$figure.gate.dir ) ) dir.create( asp$figure.gate.dir )
+    if ( !dir.exists( gate.dir ) ) dir.create( gate.dir )
 
     unique.names <- unique( control.table$gate.name )
 
@@ -298,7 +304,7 @@ define.flow.control <- function(
             control.dir = control.dir,
             asp = asp,
             gate.name = g.name,
-            output.dir = asp$figure.gate.dir,
+            output.dir = gate.dir,
             verbose = FALSE,
             control.table = control.table,
             color.palette = if ( is.null(color.palette) ) "plasma" else color.palette
@@ -309,7 +315,7 @@ define.flow.control <- function(
             control.dir = control.dir,
             asp = asp,
             gate.name = g.name,
-            output.dir = asp$figure.gate.dir,
+            output.dir = gate.dir,
             verbose = FALSE,
             control.table = control.table,
             check = FALSE,
@@ -425,7 +431,7 @@ define.flow.control <- function(
           asp = asp,
           gate.name = fallback.gate.name,
           n.cells = min( 2000, asp$min.cell.warning.n * 4 ),
-          output.dir = asp$figure.gate.dir,
+          output.dir = gate.dir,
           verbose = FALSE,
           control.table = fallback.control.table,
           check = FALSE,

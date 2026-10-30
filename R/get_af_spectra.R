@@ -37,10 +37,12 @@
 #'   the AF signatures. Default is `TRUE`.
 #' @param save Logical, whether to save the CSV file for the AF signatures.
 #'   Default is `TRUE`.
-#' @param plot.dir Directory (folder) where the plots will be saved. Default is
-#'   `NULL`, which inherits from `asp$figure.af.dir`.
+#' @param plot.dir Directory (folder) where the plots and the contamination QC
+#'   report will be saved. Default is `NULL`, which inherits from
+#'   `asp$figure.af.dir`, or `"figure_autofluorescence"` when that is `NULL`.
 #' @param table.dir Directory (folder) where the spectra csv file will be saved.
-#'   Default is `NULL`, which inherits from `asp$table.af.dir`.
+#'   Default is `NULL`, which inherits from `asp$table.spectra.dir`, or
+#'   `"table_spectra"` when that is `NULL`.
 #' @param title Title for the output spectral plots and csv file. Default is
 #'   `"Autofluorescence spectra"`.
 #' @param verbose Logical, controls messaging. Default is `TRUE`.
@@ -263,10 +265,15 @@ get.af.spectra <- function(
   # Setup
   # ---------------------------------------------------------------------------
 
+  # asp from get.autospectral.param( figures = FALSE ) carries no output
+  # folders; fall back to the standard names. plot.dir is always created
+  # because qc.af.spectra() writes its contamination report there.
   if ( is.null( plot.dir ) )  plot.dir  <- asp$figure.af.dir
-  if ( !dir.exists( plot.dir ) ) dir.create( plot.dir )
+  if ( is.null( plot.dir ) )  plot.dir  <- "figure_autofluorescence"
+  if ( !dir.exists( plot.dir ) ) dir.create( plot.dir, recursive = TRUE )
   if ( is.null( table.dir ) ) table.dir <- asp$table.spectra.dir
-  if ( !dir.exists( table.dir ) ) dir.create( table.dir )
+  if ( is.null( table.dir ) ) table.dir <- "table_spectra"
+  if ( save && !dir.exists( table.dir ) ) dir.create( table.dir, recursive = TRUE )
   if ( is.null( title ) ) title <- asp$af.file.name
 
   if ( is.null( threads ) ) threads <- asp$worker.process.n

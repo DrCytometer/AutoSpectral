@@ -70,11 +70,13 @@ the AF signatures. Default is \code{TRUE}.}
 \item{save}{Logical, whether to save the CSV file for the AF signatures.
 Default is \code{TRUE}.}
 
-\item{plot.dir}{Directory (folder) where the plots will be saved. Default is
-\code{NULL}, which inherits from \code{asp$figure.af.dir}.}
+\item{plot.dir}{Directory (folder) where the plots and the contamination QC
+report will be saved. Default is \code{NULL}, which inherits from
+\code{asp$figure.af.dir}, or \code{"figure_autofluorescence"} when that is \code{NULL}.}
 
 \item{table.dir}{Directory (folder) where the spectra csv file will be saved.
-Default is \code{NULL}, which inherits from \code{asp$table.af.dir}.}
+Default is \code{NULL}, which inherits from \code{asp$table.spectra.dir}, or
+\code{"table_spectra"} when that is \code{NULL}.}
 
 \item{title}{Title for the output spectral plots and csv file. Default is
 \code{"Autofluorescence spectra"}.}

@@ -22,6 +22,7 @@ get.fluor.variants(
   flow.channel,
   af.pcs,
   neg.cache = NULL,
+  control.data = NULL,
   use.unmixed = TRUE,
   n.cells = 10000L,
   som.dim = 10L,
@@ -29,7 +30,6 @@ get.fluor.variants(
   sim.threshold = 0.985,
   sim.threshold.floor = 0.9,
   af.collinear.threshold = 0.95,
-  noise.floor.tail.fraction = 0.2,
   noise.mask.threshold = 0.05,
   noise.n.cells = 2000L,
   spread.estimator = c("binned.mad", "huber.squared"),
@@ -101,6 +101,10 @@ and reused across all fluorophores sharing the same negative, avoiding a
 repeat disk read/decode per fluorophore. Default \code{NULL} falls back to
 reading \code{universal.negative[fluor]} directly.}
 
+\item{control.data}{Optional list with \verb{$spectral} and \verb{$scatter} matrices
+of this control's events, used instead of reading \code{file.name[fluor]}
+(e.g. a training split, as in \code{estimate.noise.model()}). Default \code{NULL}.}
+
 \item{use.unmixed}{Logical, default \code{TRUE}. Whether to unmix
 background-corrected positive events against the full \code{spectra}
 matrix for positivity selection and SOM clustering features, and whether
@@ -143,13 +147,6 @@ fit feeding the Residual Model -- drops the AF-PC terms and uses this
 fluorophore's reference row alone, since a joint OLS fit against
 near-collinear AF and fluorophore directions can push real fluorophore
 signal into the AF term. Recorded as the \code{"af.collinear"} attribute.}
-
-\item{noise.floor.tail.fraction}{Numeric in (0, 1), default \code{0.20}.
-Per-detector noise floor is the MAD (scaled to a Gaussian-equivalent
-variance) of the lowest fraction of raw values in that detector's
-column, using every event in the control file. Lower values isolate a
-purer background tail but with fewer events to estimate from; higher
-values are more stable but risk pulling in dim positive events.}
 
 \item{noise.mask.threshold}{Numeric in (0, 1), default \code{0.05}. A
 detector is excluded from this control's contribution to the pooled
@@ -217,7 +214,6 @@ spectrum for \code{fluor}; subsequent rows are SOM-derived variants that
 passed cosine QC. When too few positive events are available, or no
 centroids survive cosine QC, the single reference spectrum is returned
 (one row), still carrying the full set of attributes below. Carries:
-\code{"noise.floor"} (per-detector background SD, described above),
 \code{"noise.events"} (up to \code{noise.n.cells} events x detectors
 matrix, sampled from \code{keep.idx}, background-corrected -- and
 AF-corrected where the projection above ran -- but not otherwise fit;
