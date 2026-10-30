@@ -68,6 +68,18 @@
 #' @param Threshold.lower Numeric matrix, `n x m`, the per-event, per-target
 #'   lower boundary, or `NULL`. With the anchored estimator, every pass after
 #'   the first also drops positive events below it (band).
+#' @param disagreement.reference Character, the slope the binned median is
+#'   compared with to give `disagreement`. `"envelope"` (default) is the binned
+#'   lower envelope itself, which falls with the spread as the source brightens
+#'   and so runs steeper than the line it bounds. `"envelope.corrected"` moves
+#'   each bin's envelope back to its centre by the bin's own lower-tail scale,
+#'   `(q(envelope.scale.quantile) - q(quantiles[1])) / (z(quantiles[1]) -
+#'   z(envelope.scale.quantile))`, which needs no spread model and stays below
+#'   most co-expression. `"anchored"` is the fitted robust line, which moves
+#'   with any co-expression inside the band, as the median does. `slope` and
+#'   `se` are the plain envelope's under every choice.
+#' @param envelope.scale.quantile Numeric, the upper quantile of each bin's
+#'   lower tail for `"envelope.corrected"`. Default `0.25`.
 #' @param n.threads Integer, OpenMP threads for
 #'   `fix_envelope_truncated_batch_rcpp()`. Default `1`. Only raise this
 #'   when the outer call to `fix.my.unmix()` is not itself running inside
@@ -102,9 +114,17 @@
     start.slope          = NULL,
     estimator            = c( "anchored", "truncated" ),
     Threshold.lower      = NULL,
+    disagreement.reference  = c( "envelope", "envelope.corrected", "anchored" ),
+    envelope.scale.quantile = 0.25,
     n.threads            = 1L ) {
 
-  estimator <- match.arg( estimator )
+  estimator              <- match.arg( estimator )
+  disagreement.reference <- match.arg( disagreement.reference )
+
+  if ( disagreement.reference == "envelope.corrected" &&
+       !( quantiles[ 1 ] < envelope.scale.quantile && envelope.scale.quantile < 1 ) )
+    stop( "`envelope.scale.quantile` must lie between the envelope quantile and 1.",
+          call. = FALSE )
 
   n <- length( x.source )
   m <- ncol( X.target )
@@ -288,14 +308,18 @@
           matrix( bin.n, length( bins ), m ) /
             pmax( sd.bin^2, .Machine$double.eps ) )
 
-        envelope.value <- vapply( idx.by.bin, function( idx )
-          vapply( seq_len( m ), function( k ) {
-            v <- X.target[ idx, k ][ target.negative[ idx, k ] ]
-            if ( length( v ) < min.bin.negative ) return( NA_real_ )
-            stats::quantile( v, probs = quantiles[ 1 ], names = FALSE )
-          }, numeric( 1 ) ), numeric( m ) )
-        dim( envelope.value ) <- c( m, length( bins ) )
-        envelope.value <- t( envelope.value )
+        negative.quantile <- function( probs ) {
+          value <- vapply( idx.by.bin, function( idx )
+            vapply( seq_len( m ), function( k ) {
+              v <- X.target[ idx, k ][ target.negative[ idx, k ] ]
+              if ( length( v ) < min.bin.negative ) return( NA_real_ )
+              stats::quantile( v, probs = probs, names = FALSE )
+            }, numeric( 1 ) ), numeric( m ) )
+          dim( value ) <- c( m, length( bins ) )
+          t( value )
+        }
+
+        envelope.value <- negative.quantile( quantiles[ 1 ] )
 
         median.value <- vapply( idx.by.bin, function( idx )
           vapply( seq_len( m ), function( k )
@@ -345,8 +369,23 @@
         compare  <- fit.trace.batch( median.value   + z[ 2 ] * sd.bin,
                                      weight.compare )
 
-        disagreement <- abs( envelope$slope - compare$slope ) /
-          ( abs( envelope$slope ) + abs( compare$slope ) + .Machine$double.eps )
+        reference.slope <- switch(
+          disagreement.reference,
+          envelope = envelope$slope,
+          anchored = ifelse( is.finite( slope.fit ) &
+                               abs( slope.fit ) <= max.coefficient,
+                             slope.fit, NA_real_ ),
+          envelope.corrected = {
+            scale.value <- negative.quantile( envelope.scale.quantile )
+            z.tail <- -stats::qnorm( c( quantiles[ 1 ], envelope.scale.quantile ) )
+            fit.trace.batch(
+              envelope.value + z.tail[ 1 ] * ( scale.value - envelope.value ) /
+                ( z.tail[ 1 ] - z.tail[ 2 ] ),
+              weight.envelope )$slope
+          } )
+
+        disagreement <- abs( reference.slope - compare$slope ) /
+          ( abs( reference.slope ) + abs( compare$slope ) + .Machine$double.eps )
 
         result$slope        <- envelope$slope
         result$se           <- envelope$se

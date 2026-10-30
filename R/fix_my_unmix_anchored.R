@@ -383,11 +383,18 @@
 #' selected source must span `min.span` times its threshold over the
 #' target-negative events and rise by `min.rise` noise SDs across it.
 #'
+#' With `warm` (source x target slopes, typically the pair estimator's), the
+#' first negativity mask has them removed. Without it, a source whose positive
+#' residual spillover lifts its positive events above the target's boundary is
+#' missing from the fit that should find it, and the lasso returns zero or the
+#' wrong sign for that source.
+#'
 #' @return Numeric matrix (source x target), zero diagonal.
 #'
 #' @noRd
 .fix.glasso.matrix <- function( unmixed.comp, threshold.matrix, thresholds,
                                 neg.var,
+                                warm                 = NULL,
                                 min.negative.events  = 200L,
                                 max.mask.passes      = 3L,
                                 mask.tolerance       = 0.05,
@@ -408,7 +415,11 @@
   for ( target in fluorophores ) {
 
     sources <- setdiff( fluorophores, target )
-    neg.idx <- which( unmixed.comp[ , target ] <= threshold.matrix[ , target ] )
+
+    lifted <- if ( is.null( warm ) ) 0 else
+      as.numeric( unmixed.comp[ , sources, drop = FALSE ] %*% warm[ sources, target ] )
+
+    neg.idx <- which( unmixed.comp[ , target ] - lifted <= threshold.matrix[ , target ] )
 
     if ( length( neg.idx ) < min.negative.events ) next
 
@@ -479,4 +490,148 @@
     pmax( sqrt( rowSums( af.spectra^2 ) ) * norm.c, .Machine$double.eps )
 
   max( cosine^2 )
+}
+
+
+#' The largest change each detector of a row may take: `ratio` times the
+#' reference value or `floor`, whichever is greater (rows peak-normalised). A
+#' detector with no starting signal may gain no more than the floor, and at
+#' ratio 1 a detector's value can at most double.
+#'
+#' @param reference Numeric matrix (rows x detectors) or vector, the reference
+#'   rows.
+#' @param ratio,floor Numeric, see `fix.my.unmix()`'s `plausibility.ratio` and
+#'   `plausibility.floor`.
+#'
+#' @return Numeric, the same shape as `reference`.
+#'
+#' @noRd
+.fix.plausible.change <- function( reference, ratio, floor ) {
+  out <- reference
+  out[] <- pmax( ratio * pmax( reference, 0 ), floor )
+  out
+}
+
+
+#' A row with each detector's change from `reference` clipped to
+#' `+/- allow`, non-negative and peak-normalised. With `reset`, a detector
+#' outside the bounds takes no change at all rather than the bound.
+#'
+#' @return A list: `row` and `frac`, the share (Euclidean norm) of the change
+#'   that lay outside the bounds.
+#'
+#' @noRd
+.fix.clip.to.plausible <- function( row, reference, allow, reset = FALSE ) {
+
+  change <- row - reference
+  norm.c <- sqrt( sum( change^2 ) )
+
+  if ( !( norm.c > 0 ) ) return( list( row = row, frac = 0 ) )
+
+  clipped <- pmin( pmax( change, -allow ), allow )
+  kept    <- if ( reset ) ifelse( abs( change ) > allow, 0, change ) else clipped
+
+  out  <- pmax( reference + kept, 0 )
+  peak <- max( out )
+  out  <- if ( peak > 0 ) out / peak else reference
+
+  list( row = out, frac = sqrt( sum( ( change - clipped )^2 ) ) / norm.c )
+}
+
+
+#' Spillover rows adjusted so that their back-solved rows move back inside the
+#' plausibility box.
+#'
+#' For each row in `rows`, the part of its back-solved row (`spillover` row
+#' times `spectra`, peak-normalised) outside `reference +/- allow` is taken
+#' back out of its off-diagonal coefficients by least squares over the other
+#' rows' spectra (those in `basis`), over `passes` rounds. A part of the excess
+#' outside the panel's span cannot be taken back this way and is left to the
+#' clip of the adopted row in phase two.
+#'
+#' @return A list: `spillover`, and `share`, per row the share of its change
+#'   from the reference outside the box before the first pass (0 inside).
+#'
+#' @noRd
+.fix.plausible.project <- function( spillover, spectra, reference, allow,
+                                    passes = 3L, rows = NULL, basis = NULL ) {
+
+  n <- nrow( spillover )
+  share <- stats::setNames( rep( 0, n ), rownames( spillover ) )
+
+  if ( is.null( rows ) ) rows <- rep( TRUE, n )
+  if ( is.null( basis ) ) basis <- rep( TRUE, n )
+
+  for ( f in which( rows ) ) {
+
+    others <- which( basis & seq_len( n ) != f )
+    if ( length( others ) == 0L ) next
+
+    cols <- t( spectra[ others, , drop = FALSE ] )
+    cols.qr <- qr( cols )
+
+    for ( pass in seq_len( passes ) ) {
+
+      row  <- pmax( as.numeric( spillover[ f, ] %*% spectra ), 0 )
+      peak <- max( row )
+      if ( !( peak > 0 ) ) break
+
+      normed  <- row / peak
+      clipped <- .fix.clip.to.plausible( normed, reference[ f, ], allow[ f, ] )
+
+      if ( pass == 1L ) share[ f ] <- clipped$frac
+      if ( clipped$frac <= 1e-6 ) break
+
+      coef <- qr.coef( cols.qr, ( clipped$row - normed ) * peak )
+      coef[ !is.finite( coef ) ] <- 0
+      spillover[ f, others ] <- spillover[ f, others ] + coef
+    }
+  }
+
+  list( spillover = spillover, share = share )
+}
+
+
+#' Tandem fluorophores whose parent is in the panel.
+#'
+#' Each name is matched to `fluorophore_database.csv` with
+#' `match.fluorophores()`, and its `tandem.parent` looked up there. A tandem
+#' whose parent is not in the panel is left out.
+#'
+#' @param fluorophores Character vector, the panel's fluorophore names.
+#'
+#' @return Named character vector: names are tandems, values their parent's
+#'   name in `fluorophores`. Empty when there are none.
+#'
+#' @noRd
+.fix.tandem.pairs <- function( fluorophores ) {
+
+  none <- stats::setNames( character( 0 ), character( 0 ) )
+
+  db.path <- system.file( "extdata", "fluorophore_database.csv",
+                          package = "AutoSpectral" )
+  if ( !nzchar( db.path ) ) return( none )
+
+  db <- utils::read.csv( db.path, stringsAsFactors = FALSE )
+  if ( !"tandem.parent" %in% colnames( db ) ) return( none )
+
+  canonical <- toupper( vapply( fluorophores, function( nm ) {
+    hit <- match.fluorophores( nm, db, verbose = FALSE )[[ 1 ]]
+    if ( is.null( hit ) || hit %in% c( "No match", "AF", "Negative" ) ) nm else hit
+  }, character( 1 ) ) )
+
+  db.names  <- toupper( db$fluorophore )
+  db.parent <- toupper( trimws( db$tandem.parent ) )
+  db.parent[ is.na( db.parent ) ] <- ""
+
+  out <- none
+
+  for ( i in seq_along( fluorophores ) ) {
+    parent <- db.parent[ match( canonical[ i ], db.names ) ]
+    if ( is.na( parent ) || !nzchar( parent ) ) next
+    j <- which( canonical == parent & seq_along( canonical ) != i )
+    if ( length( j ) > 0L ) out[ fluorophores[ i ] ] <- fluorophores[ j[ 1 ] ]
+  }
+
+  out
 }
