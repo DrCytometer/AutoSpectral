@@ -1,42 +1,41 @@
 marker,synonym1,synonym2,synonym3,synonym4,synonym5,synonym6,synonym7,synonym8,synonym9,large.gate
-ACSA-2,ASCA2,ACSA-2,ASCA-2,ACSA2,ASCA2,ACSA.2,,,,TRUE
+ACSA-2,ASCA2,ASCA-2,ACSA2,ACSA.2,,,,,,TRUE
 Activin A,INHBA,Activin-A,,,,,,,,FALSE
-AF,AutoFluorescence,Autofluorescence,AutoF,AutoFluor,,,,,,FALSE
+AF,AutoFluorescence,AutoF,AutoFluor,,,,,,,FALSE
 Aiolos,IKZF3,Aiolos zinc finger protein 3,,,,,,,,FALSE
-ALK,Anaplastic lymphoma kinase,,,,,,,,,FALSE
+ALK,Anaplastic lymphoma kinase,CD246,,,,,,,,FALSE
 alpha-SMA,ACTA2,Smooth muscle actin,aSMA,a-SMA,Smooth muscle alpha-actin,,,,,FALSE
-Amphiregulin,Areg,AREG,EGF-like ligand,,,,,,,FALSE
-Annexin A1,AnxA1,ANXA1,Lipocortin I,,,,,,,FALSE
-Annexin A2,AnxA2,ANXA2,Lipocortin II,,,,,,,FALSE
+Amphiregulin,Areg,EGF-like ligand,A-reg,A.reg,,,,,,FALSE
+Annexin A1,AnxA1,Lipocortin I,,,,,,,,FALSE
+Annexin A2,AnxA2,Lipocortin II,,,,,,,,FALSE
 Annexin V,Annexin,AnnV,AnnexinV,,,,,,,FALSE
 AP-1,Activator protein 1,c-Fos/c-Jun,,,,,,,,FALSE
-Areg,A-reg,A.reg,Amphiregulin,,,,,,,FALSE
 AU1,AU1 tag,AU1-tag,AU1_tag,,,,,,,FALSE
 AU5,AU5 tag,AU5-tag,AU5_tag,,,,,,,FALSE
-AXL,AXL receptor tyrosine kinase,UFO,,,,,,,,FALSE
+AXL,AXL receptor tyrosine kinase,UFO,,,,,,,,TRUE
 B220,CD45R,,,,,,,,,FALSE
 BAFFR,BAFF-R,BAFF.R,CD268,TNFRSF13C,BR3,,,,,FALSE
-BATF,Batf,,,,,,,,,FALSE
-Bax,BAX,Bcl2-associated X protein,,,,,,,,FALSE
-Bcl-2,BCL2,Bcl2,,,,,,,,FALSE
-Bcl-6,Bcl-6,Bcl.6,Bcl6,BCL6,,,,,,FALSE
-Bcl-xL,BCL2L1,BclxL,BCL-xL,,,,,,,FALSE
+BATF,,,,,,,,,,FALSE
+Bax,Bcl2-associated X protein,,,,,,,,,FALSE
+Bcl-2,BCL2,,,,,,,,,FALSE
+Bcl-6,Bcl.6,Bcl6,,,,,,,,FALSE
+Bcl-xL,BCL2L1,BclxL,,,,,,,,FALSE
 BDNF,,,,,,,,,,FALSE
 BFP,Blue Fluorescent Protein,,,,,,,,,FALSE
 Blimp-1,Blimp1,Prdm1,,,,,,,,FALSE
-BMP4,Bone morphogenetic protein 4,Bmp4,,,,,,,,FALSE
+BMP4,Bone morphogenetic protein 4,,,,,,,,,FALSE
 BP1,BP-1,BP.1,Ly51,Ly-51,Ly.51,,,,,FALSE
-BTLA,CD272,BTLA (CD272),,,,,,,,FALSE
+BTLA,CD272,,,,,,,,,FALSE
 C,C tag,C-tag,C_tag,,,,,,,FALSE
-c-Myc,cMyc,MYC,c-MYC,,,,,,,FALSE
+c-Myc,cMyc,MYC,,,,,,,,FALSE
 C/EBPa,CEBPA,CCAAT enhancer binding protein alpha,CEBPalpha,,,,,,,FALSE
 C/EBPb,CEBPB,CCAAT enhancer binding protein beta,CEBPbeta,,,,,,,FALSE
 CADM1,Cell adhesion molecule 1,,,,,,,,,FALSE
 Calreticulin,CRT,Calregulin,,,,,,,,FALSE
 CAR-T,CAR.T,CAR T,,,,,,,,FALSE
 Casitas b-lineage lymphoma,CBL,c-Cbl,Cbl proto-oncogene,,,,,,,FALSE
-Caspase-3,Casp3,Cleaved caspase-3,CASP3,Cleaved-Casp3,,,,,,FALSE
-Caspase-8,Casp8,Cleaved caspase-8,CASP8,Cleaved-Casp8,,,,,,FALSE
+Caspase-3,Casp3,Cleaved caspase-3,Cleaved-Casp3,,,,,,,FALSE
+Caspase-8,Casp8,Cleaved caspase-8,Cleaved-Casp8,,,,,,,FALSE
 CCL1,,,,,,,,,,FALSE
 CCL11,Eotaxin,,,,,,,,,FALSE
 CCL13,MCP-4,,,,,,,,,FALSE
@@ -56,14 +55,14 @@ CCL25,TECK,Thymus-expressed chemokine,,,,,,,,FALSE
 CCL26,Eotaxin-3,,,,,,,,,FALSE
 CCL27,CTACK,Cutaneous T-cell attracting chemokine,,,,,,,,FALSE
 CCL3,MIP-1alpha,Macrophage inflammatory protein 1 alpha,,,,,,,,FALSE
-CCL4,MIP-1beta,Macrophage inflammatory protein 1 beta,,,,,,,,FALSE
+CCL4,MIP-1beta,Macrophage inflammatory protein 1 beta,MIP-1b,,,,,,,FALSE
 CCL5,RANTES,CCL-5,,,,,,,,FALSE
 CCL7,MCP-3,Monocyte chemoattractant protein 3,,,,,,,,FALSE
 CCL8,,,,,,,,,,FALSE
-CCR1,CD191,CCR1 (CD191),,,,,,,,FALSE
+CCR1,CD191,CCR1 (CD191),,,,,,,,TRUE
 CCR10,,,,,,,,,,FALSE
-CCR2,CD192,CCR2 (CD192),,,,,,,,FALSE
-CCR3,CD193,CCR3 (CD193),,,,,,,,FALSE
+CCR2,CD192,CCR2 (CD192),,,,,,,,TRUE
+CCR3,CD193,CCR3 (CD193),,,,,,,,TRUE
 CCR4,CD194,CCR4 (CD194),,,,,,,,FALSE
 CCR5,CD195,CCR5 (CD195),,,,,,,,FALSE
 CCR6,CD196,CCR6 (CD196),,,,,,,,FALSE
@@ -74,12 +73,12 @@ CD10,,,,,,,,,,FALSE
 CD100,SEMA4D,Semaphorin 4D,,,,,,,,FALSE
 CD101,,,,,,,,,,FALSE
 CD102,ICAM-2,ICAM2,,,,,,,,FALSE
-CD103,,,,,,,,,,FALSE
+CD103,ITGAE,Integrin alpha E,Integrin aE,,,,,,,FALSE
 CD104,Integrin-beta4,Itgb4,Beta4 integrin,,,,,,,FALSE
 CD105,Endoglin,,,,,,,,,FALSE
 CD106,VCAM-1,VCAM1,Vascular cell adhesion molecule 1,,,,,,,FALSE
-CD107a,LAMP.1,CD107a (LAMP.1),,,,,,,,TRUE
-CD107b,LAMP-2,LAMP2,Lysosomal-associated membrane protein 2,,,,,,,TRUE
+CD107a,LAMP.1,CD107a (LAMP.1),LAMP-1,Lamp1,,,,,,FALSE
+CD107b,LAMP-2,LAMP2,Lysosomal-associated membrane protein 2,,,,,,,FALSE
 CD108,,,,,,,,,,FALSE
 CD109,,,,,,,,,,FALSE
 CD110,MPL,Thrombopoietin receptor,c-MPL,,,,,,,FALSE
@@ -89,35 +88,35 @@ CD113,,,,,,,,,,TRUE
 CD114,G-CSFR,CSF3R,Granulocyte colony stimulating factor receptor,,,,,,,TRUE
 CD115,FMS,CSF-1R,CSF1R,c-FMS,M-CSFR,,,,,TRUE
 CD116,GM-CSFR,CSF2RA,GM-CSF receptor,,,,,,,TRUE
-CD117,CD117,c-Kit,c.Kit,cKit,,,,,,TRUE
+CD117,c-Kit,c.Kit,cKit,,,,,,,TRUE
 CD118,LIFR,,,,,,,,,FALSE
 CD119,IFN-gamma-R,IFNgR,Interferon gamma receptor,,,,,,,FALSE
 CD11a,LFA.1,LFA1,LFA-1,,,,,,,FALSE
-CD11b,Itgam,,,,,,,,,TRUE
+CD11b,Itgam,Mac-1,,,,,,,,TRUE
 CD11c,Itgax,,,,,,,,,TRUE
-CD120a,TNFR1,TNFRSF1A,TNF receptor 1,,,,,,,FALSE
-CD120b,TNFR2,TNFRSF1B,TNF receptor 2,,,,,,,FALSE
+CD120a,TNFR1,TNFRSF1A,TNF receptor 1,TNFRI,TNFR-I,TNF-R1,,,,FALSE
+CD120b,TNFR2,TNFRSF1B,TNF receptor 2,TNFRII,TNFR-II,TNF-R2,,,,FALSE
 CD121a,IL-1R1,IL1R1,Interleukin-1 receptor 1,,,,,,,FALSE
 CD121b,IL-1R2,IL1R2,Interleukin-1 receptor 2,,,,,,,FALSE
 CD122,IL-2R-beta,CD122 (IL-2R-beta),,,,,,,,FALSE
-CD123,IL3Ra,CD123 (IL3Ra),,,,,,,,FALSE
+CD123,IL3Ra,CD123 (IL3Ra),,,,,,,,TRUE
 CD124,IL-4Ra,IL4Ra,Interleukin-4 receptor alpha,,,,,,,FALSE
 CD125,IL-5Ra,IL5Ra,Interleukin-5 receptor alpha,,,,,,,FALSE
-CD126,IL-6Ra,IL6Ra,gp80,,,,,,,FALSE
-CD127,IL7Ralpha,IL7RA,CD127,,,,,,,FALSE
+CD126,IL-6Ra,IL6Ra,gp80,IL-6R,,,,,,FALSE
+CD127,IL7Ralpha,IL7RA,IL-7Ra,IL7R,,,,,,FALSE
 CD129,,,,,,,,,,FALSE
-CD13,,,,,,,,,,FALSE
+CD13,,,,,,,,,,TRUE
 CD130,gp130,IL-6Rbeta,IL6ST,,,,,,,FALSE
 CD131,Common beta chain,CSF2RB,IL-3/5/GM-CSFR beta,,,,,,,FALSE
 CD132,gc,Common Gamma Chain,,,,,,,,FALSE
 CD133,Prominin-1,PROM1,AC133,Prominin,,,,,,FALSE
 CD134,TNFRSF4,OX40,OX-40,OX.40,,,,,,FALSE
-CD135,FLT.3,FLT-3,FLT3,FLK2,,,,,,FALSE
+CD135,FLT.3,FLT-3,FLT3,FLK2,STK1,,,,,FALSE
 CD136,RON,MSP-R,,,,,,,,FALSE
-CD137,4-1BB,41BB,4.1BB,4_1BB,CD137,TNFRSF9,,,,FALSE
+CD137,4-1BB,41BB,4.1BB,4_1BB,TNFRSF9,,,,,FALSE
 CD138,,,,,,,,,,FALSE
 CD139,,,,,,,,,,FALSE
-CD14,,,,,,,,,,FALSE
+CD14,,,,,,,,,,TRUE
 CD140a,PDGFRalpha,PDGFRA,Platelet-derived growth factor receptor alpha,,,,,,,FALSE
 CD140b,PDGFRbeta,PDGFRB,Platelet-derived growth factor receptor beta,,,,,,,FALSE
 CD141,BDCA-3,Thrombomodulin,BDCA3,BDCA_3,BDCA.3,,,,,TRUE
@@ -126,12 +125,12 @@ CD143,ACE,,,,,,,,,FALSE
 CD144,VE-Cadherin,CDH5,Vascular endothelial cadherin,,,,,,,FALSE
 CD146,MCAM,CD146 (MCAM),,,,,,,,TRUE
 CD147,EMMPRIN,Basigin,BSG,,,,,,,FALSE
-CD148,RPTP-eta,DEP1,CD148,,,,,,,FALSE
+CD148,RPTP-eta,DEP1,,,,,,,,FALSE
 CD149,,,,,,,,,,FALSE
-CD15,Le X,Lewis X,,,,,,,,FALSE
+CD15,Le X,Lewis X,SSEA-1,LeX,Lewis X antigen,FUT4,,,,TRUE
 CD150,SLAM1,SLAMF1,,,,,,,,FALSE
 CD151,,,,,,,,,,FALSE
-CTLA-4,CD152,CTLA4,Cytotoxic T-lymphocyte antigen 4,CTLA-4,CTLA.4,CTLA_4,,,,FALSE
+CTLA-4,CD152,CTLA4,Cytotoxic T-lymphocyte antigen 4,CTLA.4,CTLA_4,,,,,FALSE
 CD153,CD30L,,,,,,,,,FALSE
 CD154,CD40L,,,,,,,,,FALSE
 CD155,PVR,Nectin-like 5,CD155 (PVR),Poliovirus receptor,,,,,,FALSE
@@ -158,21 +157,20 @@ CD159c,NKG2C,NKG2-C,KLRC2,,,,,,,FALSE
 CD16,FcgRIII,CD16 (FcgRIII),,,,,,,,TRUE
 CD16/32,CD16-32,CD16.32,CD16_32,FcgRII/III,,,,,,TRUE
 CD160,BY55,NK1,,,,,,,,FALSE
-CD161,,,,,,,,,,FALSE
-CD163,,,,,,,,,,FALSE
+CD161,KLRB1,,,,,,,,,FALSE
+CD163,,,,,,,,,,TRUE
 CD166,ALCAM,Activated leukocyte cell adhesion molecule,,,,,,,,FALSE
-CD169,,,,,,,,,,FALSE
+CD169,,,,,,,,,,TRUE
 CD16a,FcgRIIIa,FCGR3A,,,,,,,,TRUE
 CD16b,FcgRIIIb,FCGR3B,,,,,,,,TRUE
 CD17,Lactosylceramide,LacCer,,,,,,,,FALSE
 CD170,Siglec-5,Siglec5,,,,,,,,TRUE
-CD172a,SIRP1alpha,SIRP1a,,,,,,,,TRUE
+CD172a,SIRP1alpha,SIRP1a,SIRPa,SIRPalpha,,,,,,TRUE
 CD172b,SIRPbeta,SIRP-beta,,,,,,,,TRUE
 CD175,Tn antigen,,,,,,,,,FALSE
 CD175s,Sialyl-Tn,,,,,,,,,FALSE
 CD176,Thomsen-Friedenreich antigen,TF antigen,,,,,,,,FALSE
-CD177,NB1,PRV-1,NB-1,,,,,,,FALSE
-CD178,FasL,Fas Ligand,FasLigand,,,,,,,FALSE
+CD177,NB1,PRV-1,NB-1,,,,,,,TRUE
 CD179a,VpreB,,,,,,,,,FALSE
 CD179b,Lambda5,IGLL1,,,,,,,,FALSE
 CD18,Integrin beta-2,ITGB2,,,,,,,,TRUE
@@ -189,8 +187,8 @@ CD200,OX2,MRC OX-2,,,,,,,,FALSE
 CD200R,Cd200r1,CD200R-1,MO2R1,CD200 receptor 1,Orexin receptor 2,Ox2r,Mox2r,,,TRUE
 CD201,EPCR,Endothelial protein C receptor,,,,,,,,FALSE
 CD202b,TEK,TIE2,Angiopoietin receptor,,,,,,,FALSE
-CD203c,ENPP3,,,,,,,,,FALSE
-CD204,MSR1,Macrophage scavenger receptor 1,,,,,,,,FALSE
+CD203c,ENPP3,,,,,,,,,TRUE
+CD204,MSR1,Macrophage scavenger receptor 1,,,,,,,,TRUE
 CD205,DEC.205,DEC-205,DEC205,DEC 205,,,,,,TRUE
 CD206,Mannose Receptor,MMR,,,,,,,,TRUE
 CD207,Langerin,CD207 (Langerin),,,,,,,,TRUE
@@ -204,17 +202,15 @@ CD213a1,IL-13Ra1,IL13RA1,,,,,,,,TRUE
 CD213a2,IL13RA2,,,,,,,,,TRUE
 CD214,IL-4R,IL4R,,,,,,,,FALSE
 CD215,IL-15Ra,IL15RA,,,,,,,,FALSE
-CD217,IL-17R,IL17RA,,,,,,,,FALSE
+CD217,IL-17R,IL17RA,IL-17RA,,,,,,,FALSE
 CD218a,IL-18Ra,IL18R1,,,,,,,,FALSE
 CD218b,IL18RAP,,,,,,,,,FALSE
-CD22,Siglec-2,,,,,,,,,TRUE
+CD22,Siglec-2,,,,,,,,,FALSE
 CD220,INSR,Insulin receptor,,,,,,,,FALSE
-CD221,IGF1R,Insulin-like growth factor 1 receptor,,,,,,,,FALSE
 CD222,M6PR,IGF2R,Cation-independent mannose-6-phosphate receptor,,,,,,,FALSE
-CD223,LAG-3,,,,,,,,,FALSE
 CD224,GGT1,Gamma-glutamyltranspeptidase 1,,,,,,,,FALSE
 CD225,Leu13,,,,,,,,,FALSE
-CD226,DNAM1,,,,,,,,,FALSE
+CD226,DNAM1,DNAM-1,,,,,,,,FALSE
 CD227,MUC1,Mucin-1,PEM,,,,,,,FALSE
 CD228,Melanotransferrin,MFI2,,,,,,,,FALSE
 CD229,Ly9,SH2D3A,,,,,,,,FALSE
@@ -230,7 +226,7 @@ CD235b,GPB,Glycophorin B,,,,,,,,FALSE
 CD236,Glycophorin C,GPC,GYPC,,,,,,,FALSE
 CD238,Kell,Kell antigen,,,,,,,,FALSE
 CD239,B-CAM,LU,Lutheran antigen,,,,,,,FALSE
-CD24,CD24,,,,,,,,,FALSE
+CD24,,,,,,,,,,FALSE
 CD240CE,RhCE antigen,,,,,,,,,FALSE
 CD240D,Rh D antigen,,,,,,,,,FALSE
 CD241,RhCE,,,,,,,,,FALSE
@@ -238,31 +234,29 @@ CD242,ICAM-4,,,,,,,,,FALSE
 CD243,MDR1,ABCB1,P-glycoprotein,,,,,,,FALSE
 CD244,SLAMF4,2B4,,,,,,,,FALSE
 CD245,,,,,,,,,,FALSE
-CD246,ALK,,,,,,,,,FALSE
 CD247,CD3zeta,TCR zeta,,,,,,,,FALSE
 CD248,Endosialin,TEM1,,,,,,,,FALSE
 CD249,Aminopeptidase A,,,,,,,,,FALSE
 CD25,IL2Ralpha,CD25 (IL2Ralpha),,,,,,,,FALSE
 CD252,OX40L,TNFSF4,OX-40L,OX40 ligand,OX40L (CD252),,,,,TRUE
-CD253,TRAIL,TNFSF10,Apo2L,TRAIL (CD253),,,,,,TRUE
-CD254,RANKL,TNFSF11,Receptor activator of NF-kB ligand,,,,,,,TRUE
+CD253,TRAIL,TNFSF10,Apo2L,TRAIL (CD253),,,,,,FALSE
+CD254,RANKL,TNFSF11,Receptor activator of NF-kB ligand,,,,,,,FALSE
 CD255,TWEAK,TNFSF12,TWEAK (CD255),,,,,,,TRUE
 CD256,APRIL,TNFSF13,,,,,,,,TRUE
 CD257,BAFF,TNFSF13B,BLyS,,,,,,,TRUE
-CD258,LIGHT,TNFSF14,,,,,,,,TRUE
-CD26,DPP4,Dipeptidyl peptidase-4,DPP-4,,,,,,,TRUE
+CD258,LIGHT,TNFSF14,,,,,,,,FALSE
+CD26,DPP4,Dipeptidyl peptidase-4,DPP-4,,,,,,,FALSE
 CD261,TRAIL-R1,DR4,TNFRSF10A,,,,,,,TRUE
 CD262,TRAIL-R2,DR5,TNFRSF10B,,,,,,,TRUE
 CD263,DcR1,TNFRSF10C,,,,,,,,TRUE
 CD264,TRAIL-R4,DcR2,TNFRSF10D,,,,,,,TRUE
 CD265,RANK,TNFRSF11A,,,,,,,,TRUE
 CD266,TWEAK-R,FN14,TNFRSF12A,,,,,,,TRUE
-CD267,TACI,TNFRSF13B,,,,,,,,TRUE
-CD269,BCMA,TNFRSF17,B-cell maturation antigen,,,,,,,TRUE
-CD27,,,,,,,,,,TRUE
-CD270,HVEM,TNFRSF14,Herpes virus entry mediator,,,,,,,TRUE
+CD267,TACI,TNFRSF13B,,,,,,,,FALSE
+CD269,BCMA,TNFRSF17,B-cell maturation antigen,,,,,,,FALSE
+CD27,,,,,,,,,,FALSE
+CD270,HVEM,TNFRSF14,Herpes virus entry mediator,,,,,,,FALSE
 CD271,LNGFR,NGF receptor,p75NTR,,,,,,,TRUE
-CD272,BTLA,CD272 (BTLA),,,,,,,,TRUE
 CD275,ICOSL,B7-H2,,,,,,,,TRUE
 CD276,B7-H3,,,,,,,,,TRUE
 CD277,BTN3A1,,,,,,,,,TRUE
@@ -276,7 +270,7 @@ CD286,TLR6,Toll-like receptor 6,,,,,,,,TRUE
 CD288,TLR8,Toll-like receptor 8,,,,,,,,TRUE
 CD289,TLR9,Toll-like receptor 9,,,,,,,,TRUE
 CD29,Integrin-beta1,Integrin-b1,Itgb1,beta1 integrin,,,,,,FALSE
-CD290,TLR10,Toll-like receptor 10,,,,,,,,TRUE
+CD290,TLR10,Toll-like receptor 10,,,,,,,,FALSE
 CD292,BMPR1A,,,,,,,,,TRUE
 CD293,BMPR1B,,,,,,,,,TRUE
 CD294,CRTH2,PTGDR2,Prostaglandin D2 receptor 2,,,,,,,TRUE
@@ -294,11 +288,10 @@ CD302,CL-P1,COLEC12,Collectin placenta 1,,,,,,,TRUE
 CD303,BDCA2,BDCA-2,,,,,,,,TRUE
 CD305,LAIR-1,LAIR1,,,,,,,,TRUE
 CD306,LAIR-2,LAIR2,,,,,,,,TRUE
-CD307,FcRL5,FCRH5,FcRH5,CD307e,,,,,,TRUE
-CD307a,FCRL1,,,,,,,,,TRUE
-CD307b,FCRL2,,,,,,,,,TRUE
-CD307c,FCRL3,,,,,,,,,TRUE
-CD307d,FCRL4,,,,,,,,,TRUE
+CD307a,FCRL1,,,,,,,,,FALSE
+CD307b,FCRL2,,,,,,,,,FALSE
+CD307c,FCRL3,,,,,,,,,FALSE
+CD307d,FCRL4,,,,,,,,,FALSE
 CD309,KDR,VEGFR2,Vascular endothelial growth factor receptor 2,,,,,,,TRUE
 CD31,PECAM_1,PECAM.1,FcgRIIa,PECAM-1,PECAM1,PECAM,,,,TRUE
 CD312,EMR2,ADGRE2,,,,,,,,TRUE
@@ -307,12 +300,12 @@ CD315,CD9P-1,PTGFRN,,,,,,,,TRUE
 CD316,EWI-2,IGSF8,,,,,,,,TRUE
 CD317,BST-2,Tetherin,HM1.24,,,,,,,TRUE
 CD318,CDCP1,,,,,,,,,TRUE
-CD319,SLAMF7,CS1,CRACC,Elotuzumab target,,,,,,TRUE
+CD319,SLAMF7,CS1,CRACC,Elotuzumab target,,,,,,FALSE
 CD32,FcgRII,FcgRIIb,CD32b,FcgRII-b,,,,,,TRUE
 CD320,8D6A,,,,,,,,,TRUE
 CD321,JAM-A,JAM1,F11R,Junctional adhesion molecule A,,,,,,TRUE
 CD322,JAM-2,JAM2,Junctional adhesion molecule 2,,,,,,,TRUE
-CD324,E-Cadherin,E-cad,Cadherin-1,Epithelial cadherin,CDH1,,,,,TRUE
+CD324,E-Cadherin,E-cad,Cadherin-1,Epithelial cadherin,CDH1,Cadherin1,Cadherin.1,,,TRUE
 CD325,N-Cadherin,N-cad,Cadherin-2,CDH2,,,,,,TRUE
 CD327,Siglec-6,,,,,,,,,TRUE
 CD328,Siglec-7,Siglec7,p75,p75/AIRM1,,,,,,TRUE
@@ -322,32 +315,29 @@ CD331,FGFR1,Fibroblast growth factor receptor 1,,,,,,,,TRUE
 CD332,FGFR2,Fibroblast growth factor receptor 2,,,,,,,,TRUE
 CD333,FGFR3,Fibroblast growth factor receptor 3,,,,,,,,TRUE
 CD334,FGFR4,Fibroblast growth factor receptor 4,,,,,,,,TRUE
-CD335,NKp46,NCR1,Natural cytotoxicity triggering receptor 1,,,,,,,FALSE
+CD335,NKp46,NCR1,Natural cytotoxicity triggering receptor 1,NK.p46,NK-p46,,,,,FALSE
 CD336,NKp44,NCR2,Natural cytotoxicity triggering receptor 2,,,,,,,FALSE
 CD337,NKp30,NCR3,Natural cytotoxicity triggering receptor 3,,,,,,,FALSE
 CD338,ABCG2,BCRP,Breast cancer resistance protein,,,,,,,TRUE
 CD339,Jagged-1,JAG1,,,,,,,,TRUE
 CD34,,,,,,,,,,FALSE
-CD340,HER2,ErbB2,ErbB-2,ERBB2,Receptor tyrosine-protein kinase erbB-2,,,,,TRUE
+CD340,HER2,ErbB2,ErbB-2,Receptor tyrosine-protein kinase erbB-2,,,,,,TRUE
 CD344,,,,,,,,,,TRUE
 CD349,Frizzled-9,FZD9,,,,,,,,TRUE
 CD35,CR1,Complement receptor 1,,,,,,,,FALSE
 CD350,Frizzled-4,FZD4,,,,,,,,TRUE
 CD351,FcauR,FCAMR,,,,,,,,TRUE
-CD352,SLAMF6,NTB-A,Slam-F6,SlamF-6,Slamf6,,,,,FALSE
+CD352,SLAMF6,NTB-A,Slam-F6,SlamF-6,Ly108,,,,,FALSE
 CD353,SLAMF8,,,,,,,,,FALSE
 CD354,TREM1,,,,,,,,,TRUE
-CD355,CRTAM,,,,,,,,,TRUE
-CD357,GITR,TNFRSF18,,,,,,,,FALSE
-CD358,DR6,TNFRSF21,,,,,,,,TRUE
-CD36,SR-B2,SCARB2,Fatty acid translocase,,,,,,,FALSE
-CD360,IL21R,,,,,,,,,FALSE
+CD355,CRTAM,,,,,,,,,FALSE
+CD358,DR6,TNFRSF21,,,,,,,,FALSE
+CD36,SR-B2,SCARB2,Fatty acid translocase,,,,,,,TRUE
 CD361,EVI2B,,,,,,,,,FALSE
 CD362,Syndecan-2,SDC2,,,,,,,,FALSE
 CD363,S1PR1,,,,,,,,,FALSE
 CD364,CRISP9,Peptidase Inhibitor 16,PI-16,,,,,,,FALSE
-CD365,Galectin-9,LGALS9,,,,,,,,FALSE
-CD366,TIM-3,HAVCR2,TIM-3,TIM.3,Tim3,,,,,FALSE
+CD366,TIM-3,HAVCR2,TIM.3,Tim3,,,,,,FALSE
 CD367,CLEC4A,DCIR,,,,,,,,TRUE
 CD368,CLEC4D,,,,,,,,,TRUE
 CD369,CLEC7A,Dectin-1,,,,,,,,TRUE
@@ -368,8 +358,8 @@ CD42d,GPV,,,,,,,,,FALSE
 CD43,Sialophorin,Spn,,,,,,,,FALSE
 CD44,,,,,,,,,,FALSE
 CD45,,,,,,,,,,FALSE
-CD45.1,CD45_1,,,,,,,,,FALSE
-CD45.2,CD45_2,,,,,,,,,FALSE
+CD45.1,CD45_1,Ly5.1,,,,,,,,FALSE
+CD45.2,CD45_2,Ly5.2,,,,,,,,FALSE
 CD45RA,,,,,,,,,,FALSE
 CD45RB,,,,,,,,,,FALSE
 CD45RC,,,,,,,,,,FALSE
@@ -378,7 +368,7 @@ CD46,MCP,Membrane Cofactor Protein,,,,,,,,FALSE
 CD47,IAP,integrin-associated protein,,,,,,,,FALSE
 CD48,,,,,,,,,,FALSE
 CD49a,ITGA1,,,,,,,,,FALSE
-CD49b,Integrin alpha-2,Itga2,Integrin a2,Integrin alpha-2,DX5,,,,,FALSE
+CD49b,Integrin alpha-2,Itga2,Integrin a2,DX5,,,,,,FALSE
 CD49c,Integrin alpha-3,ITGA3,,,,,,,,FALSE
 CD49d,Integrin alpha-4,ITGA4,VLA-4,,,,,,,FALSE
 CD49e,Integrin alpha-5,ITGA5,,,,,,,,FALSE
@@ -400,10 +390,10 @@ CD60b,,,,,,,,,,FALSE
 CD60c,,,,,,,,,,FALSE
 CD61,Integrin beta-3,Itgb3,Beta3 integrin,GPIIIa,,,,,,FALSE
 CD62E,E-Selectin,ELAM-1,,,,,,,,FALSE
-CD62L,L-Selectin,L-selectin,L Selectin,,,,,,,FALSE
+CD62L,L-Selectin,L Selectin,,,,,,,,FALSE
 CD62P,P-Selectin,GMP-140,,,,,,,,FALSE
 CD63,LAMP-3,LAMP3,,,,,,,,FALSE
-CD64,FcgRI,CD64 (FcgRI),CD64a,,,,,,,FALSE
+CD64,FcgRI,CD64 (FcgRI),CD64a,,,,,,,TRUE
 CD65,,,,,,,,,,FALSE
 CD65s,,,,,,,,,,FALSE
 CD66a,CEACAM1,BGP,,,,,,,,TRUE
@@ -413,9 +403,9 @@ CD66d,CEACAM3,,,,,,,,,TRUE
 CD66e,CEACAM5,CEA,,,,,,,,TRUE
 CD66f,PSG1,,,,,,,,,FALSE
 CD67,,,,,,,,,,FALSE
-CD68,,,,,,,,,,FALSE
+CD68,,,,,,,,,,TRUE
 CD69,,,,,,,,,,FALSE
-CD7,CD7,,,,,,,,,FALSE
+CD7,,,,,,,,,,FALSE
 CD70,CD27L,CD27 Ligand,,,,,,,,FALSE
 CD71,TfR1,TfR,Tranferrin receptor,Transferrin receptor 1,,,,,,FALSE
 CD72,,,,,,,,,,FALSE
@@ -425,16 +415,16 @@ CD75,,,,,,,,,,FALSE
 CD75s,,,,,,,,,,FALSE
 CD76,DBA.44,,,,,,,,,FALSE
 CD77,Gb3,,,,,,,,,FALSE
-CD79a,Igalpha,Iga,Ig-alpha,mb-1,B29,,,,,FALSE
+CD79a,Igalpha,Ig-alpha,mb-1,,,,,,,FALSE
 CD79b,Igbeta,Igb,Ig-beta,B29,,,,,,FALSE
-CD8,CD8alpha,CD8a,Cd8,Cd8a,,,,,,FALSE
+CD8,CD8alpha,CD8a,,,,,,,,FALSE
 CD80,B7.1,B7_1,B7-1,,,,,,,FALSE
 CD81,TAPA-1,,,,,,,,,FALSE
 CD82,KAI1,,,,,,,,,FALSE
 CD83,,,,,,,,,,FALSE
 CD84,SLAMF5,,,,,,,,,FALSE
-CD85A,LILRB3,ILT5,,,,,,,,FALSE
-CD85B,ILT8,,,,,,,,,FALSE
+CD85A,LILRB3,ILT5,,,,,,,,TRUE
+CD85B,ILT8,,,,,,,,,TRUE
 CD85C,LILRB5,,,,,,,,,TRUE
 CD85D,LILRB2,ILT4,,,,,,,,TRUE
 CD85F,LILRA5,ILT11,,,,,,,,TRUE
@@ -443,12 +433,12 @@ CD85H,LILRA2,ILT1,,,,,,,,TRUE
 CD85I,LILRA1,,,,,,,,,TRUE
 CD85j,ILT2,LILRB1,LIR-1,LIR1,MIR-7,,,,,FALSE
 CD85K,LILRB4,ILT3,,,,,,,,TRUE
-CD85M,ILT10,,,,,,,,,FALSE
+CD85M,ILT10,,,,,,,,,TRUE
 CD86,B7.2,B7_2,B7-2,,,,,,,FALSE
 CD87,uPAR,PLAUR,,,,,,,,FALSE
-CD88,C5aR,C5a receptor,,,,,,,,FALSE
+CD88,C5aR,C5a receptor,,,,,,,,TRUE
 CD89,FcaRI,IgA receptor,,,,,,,,TRUE
-CD8b,CD8 beta,CD8-beta,CD8beta,Cd8b,,,,,,FALSE
+CD8b,CD8 beta,CD8-beta,CD8beta,,,,,,,FALSE
 CD9,,,,,,,,,,FALSE
 CD90,Thy1,CD90 (Thy1),,,,,,,,FALSE
 CD90.1,Thy1.1,,,,,,,,,FALSE
@@ -458,17 +448,16 @@ CD92,CTL1,SLC44A1,,,,,,,,FALSE
 CD93,C1qRp,AA4.1,,,,,,,,FALSE
 CD94,KLRD1,CD94 (KLRD1),,,,,,,,FALSE
 CD95,Fas,CD95 (Fas),,,,,,,,FALSE
-CD96,TACTILE,Tactile,,,,,,,,FALSE
+CD96,TACTILE,,,,,,,,,FALSE
 CD97,,,,,,,,,,FALSE
-CD98,CD98,4F2hc,SLC3A2,,,,,,,FALSE
+CD98,4F2hc,SLC3A2,,,,,,,,FALSE
 CD99,MIC2,,,,,,,,,FALSE
-CDK1,Cyclin-dependent kinase 1,CDC2,Cdc2,,,,,,,FALSE
-CDK2,Cyclin-dependent kinase 2,Cdk2,,,,,,,,FALSE
-CDK4,Cyclin-dependent kinase 4,Cdk4,,,,,,,,FALSE
-CDK6,Cyclin-dependent kinase 6,Cdk6,,,,,,,,FALSE
+CDK1,Cyclin-dependent kinase 1,CDC2,,,,,,,,FALSE
+CDK2,Cyclin-dependent kinase 2,,,,,,,,,FALSE
+CDK4,Cyclin-dependent kinase 4,,,,,,,,,FALSE
+CDK6,Cyclin-dependent kinase 6,,,,,,,,,FALSE
 CDw145,,,,,,,,,,FALSE
 CLEC4F,,,,,,,,,,TRUE
-CLEC12A,Clec12a,CLEC12A (Clec12a),,,,,,,,TRUE
 CNTF,Ciliary neurotrophic factor,,,,,,,,,TRUE
 Collagen I,ColI,COL1A1,Type I collagen,,,,,,,FALSE
 Collagen IV,ColIV,COL4A1,Type IV collagen,,,,,,,FALSE
@@ -488,26 +477,25 @@ CXCL5,ENA-78,,,,,,,,,FALSE
 CXCL6,GCP-2,,,,,,,,,FALSE
 CXCL7,NAP-2,,,,,,,,,FALSE
 CXCL9,MIG,Monokine induced by gamma interferon,,,,,,,,FALSE
-CXCR1,CD181,CXCR1 (CD181),CD128a,,,,,,,FALSE
-CXCR2,CD182,CXCR2 (CD182),CD128b,,,,,,,FALSE
+CXCR1,CD181,CXCR1 (CD181),CD128a,,,,,,,TRUE
+CXCR2,CD182,CXCR2 (CD182),CD128b,,,,,,,TRUE
 CXCR3,CD183,CXCR3 (CD183),,,,,,,,FALSE
 CXCR4,CD184,CXCR4 (CD184),,,,,,,,FALSE
 CXCR5,CD185,CXCR5 (CD185),,,,,,,,FALSE
 CXCR6,CD186,CXCR6 (CD186),,,,,,,,FALSE
-CXCR7,ACKR3,CXCR7 (ACKR3),,CD189,RDC1,,,,,FALSE
+CXCR7,ACKR3,CXCR7 (ACKR3),CD189,RDC1,,,,,,FALSE
 CXCR8,CD188,CXCR8 (CD188),,,,,,,,FALSE
 Cyclin B1,CCNB1,CyclinB1,,,,,,,,FALSE
 Cyclin D1,CCND1,CyclinD1,BCL1,,,,,,,FALSE
 Cyclin D3,CCND3,CyclinD3,,,,,,,,FALSE
 Cyclin E,CCNE1,CyclinE,,,,,,,,FALSE
-Cytokeratin8,Cytokeratin-8,Keratin8,Cytokeratin8,Keratin-8,,,,,,FALSE
-DCIR2,,,,,,,,,,FALSE
+Cytokeratin8,Cytokeratin-8,Keratin8,Keratin-8,,,,,,,FALSE
+DCIR2,,,,,,,,,,TRUE
 Delta-1,DLL1,Delta like ligand 1,Dll-1,,,,,,,FALSE
 Delta-4,DLL4,Delta like ligand 4,Dll-4,,,,,,,FALSE
 Desmin,DES,,,,,,,,,FALSE
-E-Cadherin,CD324,Cadherin-1,Cadherin1,Cadherin.1,CDH1,,,,,FALSE
 E47,TCF3,E-protein,E2A,TCF-3,,,,,,FALSE
-EGFR,ErbB1,HER1,CD170,Epidermal growth factor receptor,ERBB1,,,,,FALSE
+EGFR,ErbB1,HER1,Epidermal growth factor receptor,,,,,,,FALSE
 Eomes,,,,,,,,,,FALSE
 EOS,,,,,,,,,,FALSE
 EpCAM,CD326,EpCAM (CD326),,,,,,,,FALSE
@@ -515,202 +503,198 @@ EphA2,EPH receptor A2,Eph-A2,,,,,,,,FALSE
 EphB4,EPH receptor B4,Eph-B4,,,,,,,,FALSE
 Ephrin-A1,EFNA1,Ephrin A1,,,,,,,,FALSE
 Ephrin-B2,EFNB2,Ephrin B2,,,,,,,,FALSE
-EPO,Erythropoietin,EPOR,Epo,,,,,,,FALSE
+EPO,Erythropoietin,EPOR,,,,,,,,FALSE
 F4/80,F4-80,F4_80,F480,,,,,,,TRUE
-FasL,CD178,FasL (CD178),,,,,,,,TRUE
-FceRIa,FcER1,FceR1a,FceRIalpha,FceR1,FceRI,FceR1alpha,FcER1alpha,FcER1a,,FALSE
-FcRL5,Fcrl5,,,,,,,,,FALSE
-Fibronectin,FN1,Fn1,,,,,,,,FALSE
-Flag,FLAG,DYKDDDDK,,,,,,,,FALSE
-FLT3,CD135,FLK2,STK1,Flt-3,,,,,,FALSE
-Follistatin,FST,Fst,,,,,,,,FALSE
-FOLR2,FolR2,Folr2,,,,,,,,TRUE
+FasL,CD178,Fas Ligand,FasLigand,,,,,,,FALSE
+FceRIa,FcER1,FceR1a,FceRIalpha,FceRI,FceR1alpha,,,,,TRUE
+FcRL5,CD307,FCRH5,CD307e,,,,,,,FALSE
+Fibronectin,FN1,,,,,,,,,FALSE
+Flag,DYKDDDDK,,,,,,,,,FALSE
+Follistatin,FST,,,,,,,,,FALSE
+FOLR2,,,,,,,,,,TRUE
 FOXO1,FOXO1A,Forkhead box O1,,,,,,,,FALSE
 FOXO3,FOXO3A,Forkhead box O3,,,,,,,,FALSE
-FoxP3,Fox-P3,Foxp3,Foxp-3,,,,,,,FALSE
-FR2,Folate Receptor 2,Fr2,,,,,,,,TRUE
+FoxP3,Fox-P3,Foxp-3,,,,,,,,FALSE
+FR2,Folate Receptor 2,,,,,,,,,TRUE
 G-CSF,CSF3,Granulocyte colony-stimulating factor,GCSF,,,,,,,FALSE
-Galectin-3,Gal-3,Gal3,LGALS3,,,,,,,FALSE
-Galectin-9,Gal-9,Gal9,LGALS9,,,,,,,FALSE
-GARP,LRRC32,Garp,,,,,,,,FALSE
-GATA-3,GATA-3,Gata3,GATA 3,,,,,,,FALSE
-GFAP,GFAP,Gfap,,,,,,,,FALSE
-GFP,Green Fluorescent Protein,Gfp,eGFP,,,,,,,FALSE
-GITR,GITR,Gitr,,,,,,,,FALSE
-GL7,GL7,,,,,,,,,FALSE
-GM-CSF,CSF2,Granulocyte-macrophage colony-stimulating factor,GMCSF,GM_CSF,Gmcsf,,,,,FALSE
-GPR183,GPR183,Gpr183,,,,,,,,FALSE
+Galectin-3,Gal-3,Gal3,LGALS3,Mac-2,,,,,,TRUE
+Galectin-9,Gal-9,Gal9,LGALS9,CD365,,,,,,FALSE
+GARP,LRRC32,,,,,,,,,FALSE
+GATA-3,Gata3,GATA 3,,,,,,,,FALSE
+GFAP,,,,,,,,,,FALSE
+GFP,Green Fluorescent Protein,eGFP,,,,,,,,FALSE
+GITR,CD357,TNFRSF18,,,,,,,,FALSE
+GL7,,,,,,,,,,FALSE
+GM-CSF,CSF2,Granulocyte-macrophage colony-stimulating factor,GMCSF,GM_CSF,,,,,,FALSE
+GPR183,,,,,,,,,,FALSE
 Gr-1,Gr1,,,,,,,,,TRUE
 Granzyme A,Granzyme-A,GrA,GZMA,,,,,,,FALSE
-Granzyme B,Granzyme-B,Granzymeb,Granzyme_B,GranzymeB,,,,,,FALSE
+Granzyme B,Granzyme-B,Granzymeb,Granzyme_B,,,,,,,FALSE
 Granzyme K,Granzyme-K,GrK,GZMK,,,,,,,FALSE
 Granzyme M,Granzyme-M,GrM,GZMM,,,,,,,FALSE
-HA,HA tag,Ha,HA Tag,HA.Tag,,,,,,FALSE
-Hedgehog,SHH,Sonic hedgehog,Shh,,,,,,,FALSE
-Helios,Ikzf2,IKZF2,,,,,,,,FALSE
-HER3,ErbB3,ERBB3,Receptor tyrosine-protein kinase erbB-3,,,,,,,FALSE
+HA,HA tag,HA.Tag,,,,,,,,FALSE
+Hedgehog,SHH,Sonic hedgehog,,,,,,,,FALSE
+Helios,Ikzf2,,,,,,,,,FALSE
+HER3,ErbB3,Receptor tyrosine-protein kinase erbB-3,,,,,,,,FALSE
 HIF-1a,HIF1A,Hypoxia-inducible factor 1 alpha,HIF-1alpha,HIF1-alpha,,,,,,FALSE
-HLA-DR,HLA.DR,Hladr,HLA_DR,HLADR,,,,,,TRUE
+HLA-DR,HLA.DR,Hladr,HLA_DR,,,,,,,TRUE
 HMGB1,HMG-1,High mobility group box 1,,,,,,,,FALSE
 Iba-1,IBA1,AIF-1,Allograft inflammatory factor 1,,,,,,,TRUE
-ICOS,ICOS (CD278),Icos,CD278,,,,,,,FALSE
-ID2,Inhibitor of differentiation 2,Inhibitor of DNA binding 2,Id2,,,,,,,FALSE
-ID3,Inhibitor of differentiation 3,Inhibitor of DNA binding 3,Id3,,,,,,,FALSE
+ICOS,ICOS (CD278),CD278,,,,,,,,FALSE
+ID2,Inhibitor of differentiation 2,Inhibitor of DNA binding 2,,,,,,,,FALSE
+ID3,Inhibitor of differentiation 3,Inhibitor of DNA binding 3,,,,,,,,FALSE
 IFNa,Interferon alpha,IFN-alpha,IFNalpha,,,,,,,FALSE
 IFNb,Interferon beta,IFN-beta,IFNbeta,,,,,,,FALSE
-IFNg,Interferon gamma,Ifng,Interferon,IFN-g,Interferon-g,Interferon-gamma,IFN-gamma,,,FALSE
-IgD,Igd,,,,,,,,,FALSE
-IgE,Ige,,,,,,,,,FALSE
+IFNg,Interferon gamma,Interferon,IFN-g,Interferon-g,Interferon-gamma,IFN-gamma,,,,FALSE
+IgD,,,,,,,,,,FALSE
+IgE,,,,,,,,,,FALSE
 IGF1R,CD221,Insulin-like growth factor 1 receptor,IGF-1R,,,,,,,FALSE
-IgG,Igg,,,,,,,,,FALSE
-IgG1,Igg1,,,,,,,,,FALSE
-IgG2,Igg2,,,,,,,,,FALSE
-IgG2a,Igg2a,,,,,,,,,FALSE
-IgG2b,Igg2b,,,,,,,,,FALSE
-IgG3,Igg3,,,,,,,,,FALSE
-IgG4,Igg4,,,,,,,,,FALSE
-IgM,Igm,,,,,,,,,FALSE
+IgG,,,,,,,,,,FALSE
+IgG1,,,,,,,,,,FALSE
+IgG2,,,,,,,,,,FALSE
+IgG2a,,,,,,,,,,FALSE
+IgG2b,,,,,,,,,,FALSE
+IgG3,,,,,,,,,,FALSE
+IgG4,,,,,,,,,,FALSE
+IgM,,,,,,,,,,FALSE
 Ikaros,IKZF1,Ikaros zinc finger protein 1,,,,,,,,FALSE
-IL-10,IL10,IL_10,Il10,,,,,,,FALSE
-IL-11,IL11,Interleukin-11,Il11,,,,,,,FALSE
+IL-10,IL10,IL_10,,,,,,,,FALSE
+IL-11,IL11,Interleukin-11,,,,,,,,FALSE
 IL-12,IL12,Interleukin-12,IL-12p70,,,,,,,FALSE
-IL-12p35,IL12p35,IL-12p35,Il12P35,,,,,,,FALSE
-IL-12p40,IL12p40,IL-12p40,Il12P40,,,,,,,FALSE
-IL-13,IL13,IL_13,Il13,,,,,,,FALSE
-IL-15,IL15,IL_15,Il15,,,,,,,FALSE
-IL-17,IL17,IL_17,Il17,IL-17A,IL17A,,,,,FALSE
-IL-17F,IL17F,IL.17F,Il17F,,,,,,,FALSE
-IL-17RB,IL17RB,IL17RB,Il17Rb,,,,,,,FALSE
-IL-18,IL18,Interleukin-18,Il18,,,,,,,FALSE
+IL-12p35,IL12p35,,,,,,,,,FALSE
+IL-12p40,IL12p40,,,,,,,,,FALSE
+IL-13,IL13,IL_13,,,,,,,,FALSE
+IL-15,IL15,IL_15,,,,,,,,FALSE
+IL-17,IL17,IL_17,IL-17A,IL17A,,,,,,FALSE
+IL-17F,IL17F,IL.17F,,,,,,,,FALSE
+IL-17RB,IL17RB,,,,,,,,,FALSE
+IL-18,IL18,Interleukin-18,,,,,,,,FALSE
 IL-18R,IL18R,IL-18Receptor,IL_18R,IL-18-R,IL18-R,,,,,FALSE
-IL-19,IL19,Interleukin-19,Il19,,,,,,,FALSE
-IL-1a,IL1a,IL-1 alpha,Il1A,IL-1.alpha,,,,,,FALSE
-IL-1b,IL1b,pro-IL-1-beta,Il1B,IL-1 beta,,,,,,FALSE
-IL-2,IL2,IL.2,Il2,,,,,,,FALSE
-IL-21,IL21,IL-21,Il21,,,,,,,FALSE
-IL-21R,IL21R,IL-21 receptor,,,,,,,,FALSE
-IL-22,IL22,IL-22,Il22,,,,,,,FALSE
-IL-23,IL23,IL-23p19,Il23,IL_23p19,,,,,,FALSE
-IL-23p19,IL23p19,IL-23,Il23p19,p19,,,,,,FALSE
-IL-24,IL24,Interleukin-24,Il24,,,,,,,FALSE
-IL-25,IL25,IL-17E,Il25,,,,,,,FALSE
-IL-26,IL26,Interleukin-26,Il26,,,,,,,FALSE
-IL-27,IL27,IL-27,Il27,IL.27,,,,,,FALSE
+IL-19,IL19,Interleukin-19,,,,,,,,FALSE
+IL-1a,IL1a,IL-1 alpha,IL-1.alpha,,,,,,,FALSE
+IL-1b,IL1b,pro-IL-1-beta,IL-1 beta,,,,,,,FALSE
+IL-2,IL2,IL.2,,,,,,,,FALSE
+IL-21,IL21,,,,,,,,,FALSE
+IL-21R,IL21R,IL-21 receptor,CD360,,,,,,,FALSE
+IL-22,IL22,,,,,,,,,FALSE
+IL-23,IL23,IL-23p19,IL_23p19,IL23p19,p19,,,,,FALSE
+IL-24,IL24,Interleukin-24,,,,,,,,FALSE
+IL-25,IL25,IL-17E,,,,,,,,FALSE
+IL-26,IL26,Interleukin-26,,,,,,,,FALSE
+IL-27,IL27,IL.27,,,,,,,,FALSE
 IL-28,IL28,IFN-lambda,Interferon lambda,,,,,,,FALSE
-IL-3,IL3,Interleukin-3,Il3,,,,,,,FALSE
-IL-31,IL31,Interleukin-31,Il31,,,,,,,FALSE
-IL-32,IL32,Interleukin-32,Il32,,,,,,,FALSE
-IL-33,IL33,IL-33,Il33,,,,,,,FALSE
-IL-34,IL34,Interleukin-34,Il34,,,,,,,FALSE
-IL-35,IL35,IL-35,Il35,EBI3,IL.35,,,,,FALSE
-IL-36,IL36,Interleukin-36,Il36,,,,,,,FALSE
-IL-37,IL37,Interleukin-37,Il37,,,,,,,FALSE
-IL-4,IL4,Interleukin-4,Il4,,,,,,,FALSE
-IL-5,IL5,Interleukin-5,Il5,,,,,,,FALSE
-IL-6,IL6,Interleukin-6,Il6,,,,,,,FALSE
-IL-7,IL7,Interleukin-7,Il7,,,,,,,FALSE
+IL-3,IL3,Interleukin-3,,,,,,,,FALSE
+IL-31,IL31,Interleukin-31,,,,,,,,FALSE
+IL-32,IL32,Interleukin-32,,,,,,,,FALSE
+IL-33,IL33,,,,,,,,,FALSE
+IL-34,IL34,Interleukin-34,,,,,,,,FALSE
+IL-35,IL35,EBI3,IL.35,,,,,,,FALSE
+IL-36,IL36,Interleukin-36,,,,,,,,FALSE
+IL-37,IL37,Interleukin-37,,,,,,,,FALSE
+IL-4,IL4,Interleukin-4,,,,,,,,FALSE
+IL-5,IL5,Interleukin-5,,,,,,,,FALSE
+IL-6,IL6,Interleukin-6,,,,,,,,FALSE
+IL-7,IL7,Interleukin-7,,,,,,,,FALSE
 IL-8,IL8,CXCL8,Interleukin-8,,,,,,,FALSE
-IL-9,IL9,Interleukin-9,Il9,,,,,,,FALSE
-IntegrinB7,Integrin-b7,Integrinb7,Integrin B7,Itgb7,,,,,,FALSE
+IL-9,IL9,Interleukin-9,,,,,,,,FALSE
+IntegrinB7,Integrin-b7,Integrin B7,Itgb7,,,,,,,FALSE
 IRF1,Interferon regulatory factor 1,,,,,,,,,FALSE
 IRF3,Interferon regulatory factor 3,,,,,,,,,FALSE
-IRF4,IRF.4,Irf4,IRF-4,,,,,,,FALSE
+IRF4,IRF.4,IRF-4,,,,,,,,FALSE
 IRF7,Interferon regulatory factor 7,,,,,,,,,FALSE
 IRF8,Interferon regulatory factor 8,ICSBP,,,,,,,,FALSE
-ivCD45,intravenous*CD45,,i.v.*CD45,intravenousCD45,i.v.CD45,injectedCD45,injCD45,CD45iv,CD45i.v,FALSE
+ivCD45,intravenous*CD45,i.v.*CD45,intravenousCD45,i.v.CD45,injectedCD45,injCD45,CD45iv,CD45i.v,,FALSE
 Jagged-2,JAG2,Jagged2,,,,,,,,FALSE
 JNK,MAPK8,c-Jun N-terminal kinase,SAPK,,,,,,,FALSE
-Ki67,Ki_67,Ki67,,,,,,,,FALSE
-Klf4,KLF4,Kruppel-like factor 4,,,,,,,,FALSE
-KLRG1,Klrg1,,,,,,,,,FALSE
-LAG3,LAG-3,Lag3,,,,,,,,FALSE
+Ki67,Ki_67,Ki-67,,,,,,,,FALSE
+Klf4,Kruppel-like factor 4,,,,,,,,,FALSE
+KLRG1,,,,,,,,,,FALSE
+LAG3,LAG-3,CD223,,,,,,,,FALSE
 Laminin,LAM,Laminin-1,,,,,,,,FALSE
-LAP,latent.TGF-beta,Lap,,,,,,,,FALSE
+LAP,latent.TGF-beta,,,,,,,,,FALSE
 LEF1,LEF-1,Lymphoid enhancer binding factor 1,,,,,,,,FALSE
 LIF,Leukemia inhibitory factor,HILDA,,,,,,,,FALSE
 LTa,Lymphotoxin alpha,LT-alpha,TNFSF1,,,,,,,FALSE
 Ly49D,,,,,,,,,,FALSE
-Sca-1,Ly.6a,Ly-6A,Ly_6a,Sca1,Sca_1,Stem cell antigen-1,Stem cell antigen 1,,,FALSE
+Sca-1,Ly.6a,Ly-6A,Ly_6a,Sca1,Sca_1,Stem cell antigen-1,Stem cell antigen 1,Ly6A,,FALSE
 Ly6C,Ly.6c,Ly-6C,Ly_6C,,,,,,,TRUE
 LY6E,Ly-6E,Lymphocyte antigen 6E,,,,,,,,FALSE
 Ly6G,Ly.6G,Ly-6G,Ly_6G,,,,,,,TRUE
-LYVE1,Lyve1,,,,,,,,,TRUE
+LYVE1,,,,,,,,,,TRUE
 M-CSF,CSF1,Macrophage colony-stimulating factor,MCSF,,,,,,,FALSE
 MAP2,Microtubule associated protein 2,Microtubule-associated protein 2,,,,,,,,FALSE
 mCherry,cherry,,,,,,,,,FALSE
 Mcl-1,MCL1,Myeloid cell leukemia 1,,,,,,,,FALSE
-MerTK,MertK,Mertk,,,,,,,,TRUE
+MerTK,,,,,,,,,,TRUE
 MET,c-MET,HGFR,Hepatocyte growth factor receptor,,,,,,,FALSE
-MHCI,H-2Kk,H-2Db,H-2Kb,H-2Db,MHC1,,,,,TRUE
+MHCI,H-2Kk,H-2Db,H-2Kb,MHC1,HLA-ABC,H-2Kd,H-2Dd,,,TRUE
 MHCII,I-A,I-E,ClassII,MHC2,I-A/I-E,I-A I-E,IAIE,,,TRUE
-Nanog,NANOG,Nanog,,,,,,,,FALSE
-Nestin,NES,Nestin,Intermediate filament,,,,,,,FALSE
+Nanog,,,,,,,,,,FALSE
+Nestin,NES,Intermediate filament,,,,,,,,FALSE
 NeuN,RBFOX3,Fox-3,,,,,,,,TRUE
-Neuropilin,CD304,Neuropilin,Neuropilin-1,Nrp1,Nrp-1,,,,,FALSE
-Neuropilin-2,NRP2,Nrp-2,NRP-2,,,,,,,FALSE
+Neuropilin,CD304,Neuropilin-1,Nrp1,Nrp-1,,,,,,FALSE
+Neuropilin-2,NRP2,Nrp-2,,,,,,,,FALSE
 NF-kB,NFkB,p65,RelA,NF-kappaB,,,,,,FALSE
 NFAT1,NFATC2,Nuclear factor of activated T-cells 2,,,,,,,,FALSE
-NFAT2,NFATC1,Nuclear factor of activated T-cells 1,NFATc1,,,,,,,FALSE
-NFIL3,E4BP4,Nfil3,,,,,,,,FALSE
+NFAT2,NFATC1,Nuclear factor of activated T-cells 1,,,,,,,,FALSE
+NFIL3,E4BP4,,,,,,,,,FALSE
 NK1.1,NK1-1,NK1_1,NK11,,,,,,,FALSE
-NKp46,NK.p46,Nkp46,NKp46 (CD335),CD335,NK-p46,,,,,FALSE
-Noggin,NOG,Nog,,,,,,,,FALSE
-Notch1,NOTCH1,Notch-1,N1,,,,,,,FALSE
-Notch2,NOTCH2,Notch-2,N2,,,,,,,FALSE
-Notch3,NOTCH3,Notch-3,N3,,,,,,,FALSE
-Notch4,NOTCH4,Notch-4,N4,,,,,,,FALSE
+Noggin,NOG,,,,,,,,,FALSE
+Notch1,Notch-1,N1,,,,,,,,FALSE
+Notch2,Notch-2,N2,,,,,,,,FALSE
+Notch3,Notch-3,N3,,,,,,,,FALSE
+Notch4,Notch-4,N4,,,,,,,,FALSE
 Nur77,,,,,,,,,,FALSE
 NWS,NWS tag,Strep tag,Strep tag II,,,,,,,FALSE
 O4,,,,,,,,,,FALSE
-Oct4,POU5F1,Pou5f1,OCT4,Oct-4,,,,,,FALSE
-Olig2,OLIG2,Oligodendrocyte lineage transcription factor 2,,,,,,,,FALSE
-Ollas,OLLAS,,,,,,,,,FALSE
+Oct4,POU5F1,Oct-4,,,,,,,,FALSE
+Olig2,Oligodendrocyte lineage transcription factor 2,,,,,,,,,FALSE
+Ollas,,,,,,,,,,FALSE
 Oncostatin M,OSM,Oncostatin-M,,,,,,,,FALSE
-p21,CDKN1A,Cip1,Waf1,CIP1,WAF1,,,,,FALSE
+p21,CDKN1A,Cip1,Waf1,,,,,,,FALSE
 p27,CDKN1B,Kip1,,,,,,,,FALSE
-P2RY12,P2Ry12,P2RY12 (P2Ry12),,,,,,,,TRUE
-P2XR7,P2RX7,P2Xr7,,,,,,,,TRUE
+P2RY12,P2RY12 (P2Ry12),,,,,,,,,TRUE
+P2XR7,P2RX7,,,,,,,,,TRUE
 p38,MAPK14,p38 MAPK,,,,,,,,FALSE
 p53,TP53,Tumor suppressor p53,Trp53,,,,,,,FALSE
-pAKT,phospho-AKT,p-AKT,pAkt,Phospho-AKT,,,,,,FALSE
+pAKT,phospho-AKT,p-AKT,,,,,,,,FALSE
 PanCytokeratin,Pan.cytokeratin,Pan-cytokeratin,Pan_cytokeratin,,,,,,,FALSE
-PAX5,Pax5,PAX5 (Pax5),,,,,,,,FALSE
-Pax6,PAX6,Paired box protein 6,,,,,,,,FALSE
-PD-1,CD279,Pd1,PD1 (CD279),PD.1,PD_1,PD-1,,,,FALSE
-PD-L1,B7-H1,CD274,PDL1,PD-L1,PD_L1,,,,,TRUE
-PD-L2,B7-DC,CD273,PDL2,PD-L2,PD_L2,,,,,TRUE
+PAX5,PAX5 (Pax5),,,,,,,,,FALSE
+Pax6,Paired box protein 6,,,,,,,,,FALSE
+PD-1,CD279,Pd1,PD1 (CD279),PD.1,PD_1,,,,,FALSE
+PD-L1,B7-H1,CD274,PDL1,PD_L1,,,,,,TRUE
+PD-L2,B7-DC,CD273,PDL2,PD_L2,,,,,,TRUE
 PDCA-1,PDCA1,PDCA.1,PDCA_1,plasmacytoid,,,,,,TRUE
 PDGFR,PDGFRalpha/beta,PDGFR-ab,,,,,,,,FALSE
-Perforin,Perf,Perforin,,,,,,,,FALSE
-pERK,phospho-ERK,pERK1/2,phospho-p44/42 MAPK,pMAPK,Phospho-ERK,,,,,FALSE
+Perforin,Perf,,,,,,,,,FALSE
+pERK,phospho-ERK,pERK1/2,phospho-p44/42 MAPK,pMAPK,,,,,,FALSE
 PI3K,PIK3CA,Phosphatidylinositol 3-kinase,p110alpha,,,,,,,FALSE
-PLZF,ZBTB16,Zbtb16,Promyelocytic leukemia zinc finger,,,,,,,FALSE
-pmTOR,phospho-mTOR,p-mTOR,Phospho-mTOR,,,,,,,FALSE
+PLZF,ZBTB16,Promyelocytic leukemia zinc finger,,,,,,,,FALSE
+pmTOR,phospho-mTOR,p-mTOR,,,,,,,,FALSE
 podoplanin,PDPN,Aggrus,T1 alpha,gp36,,,,,,FALSE
 pRb,RB1,Retinoblastoma protein,,,,,,,,FALSE
-pSTAT1,phospho-STAT1,p-STAT1,Phospho-STAT1,,,,,,,FALSE
-pSTAT3,pSTAT3,Pstat3,phospho-STAT3,,,,,,,FALSE
-pSTAT4,phospho-STAT4,p-STAT4,Phospho-STAT4,,,,,,,FALSE
-pSTAT5,pSTAT5,Pstat5,phospho-STAT5,,,,,,,FALSE
-pSTAT6,phospho-STAT6,p-STAT6,Phospho-STAT6,,,,,,,FALSE
+pSTAT1,phospho-STAT1,p-STAT1,,,,,,,,FALSE
+pSTAT3,phospho-STAT3,,,,,,,,,FALSE
+pSTAT4,phospho-STAT4,p-STAT4,,,,,,,,FALSE
+pSTAT5,phospho-STAT5,,,,,,,,,FALSE
+pSTAT6,phospho-STAT6,p-STAT6,,,,,,,,FALSE
 PTEN,Phosphatase and tensin homolog,PTEN tumor suppressor,,,,,,,,FALSE
-PU.1,SPI1,Spi-1 proto-oncogene,Spib,PU1,,,,,,FALSE
+PU.1,SPI1,Spi-1 proto-oncogene,PU1,,,,,,,FALSE
 Ras,HRAS,KRAS,NRAS,Ras GTPase,,,,,,FALSE
 Rex1,ZFP42,Rex-1,,,,,,,,FALSE
-RFP,tdT,Rfp,Red Fluorescent Protein,dsRed,ROSA-RFP,,,,,FALSE
-RORgT,RORgamma,Rorgt,RORc,ROR-gamma,ROR-g,,,,,FALSE
+RFP,tdT,Red Fluorescent Protein,dsRed,ROSA-RFP,tdTomato,tdTom,,,,FALSE
+RORgT,RORgamma,RORc,ROR-gamma,ROR-g,,,,,,FALSE
 ROS1,ROS,c-ROS,,,,,,,,FALSE
-Runx1,RUNX1,CBFalpha2,AML1,,,,,,,FALSE
-Runx3,RUNX3,CBFalpha3,AML2,,,,,,,FALSE
+Runx1,CBFalpha2,AML1,,,,,,,,FALSE
+Runx3,CBFalpha3,AML2,,,,,,,,FALSE
 S,S tag,S-tag,S_tag,,,,,,,FALSE
 S100A4,FSP1,Fibroblast-specific protein 1,Metastasin,,,,,,,TRUE
 S100A8,MRP8,Calgranulin-A,,,,,,,,TRUE
 S100A9,MRP14,Calgranulin-B,,,,,,,,TRUE
 S100B,S100-b,S100beta,,,,,,,,TRUE
-S1P1,S1P1R,S1P1,,,,,,,,FALSE
+S1P1,S1P1R,,,,,,,,,FALSE
 SCF,Stem cell factor,KITLG,KIT ligand,c-Kit ligand,Steel factor,,,,,FALSE
-Semaphorin 3A,SEMA3A,Sema3A,,,,,,,,FALSE
-Semaphorin 4D,SEMA4D,CD100,,,,,,,,FALSE
+Semaphorin 3A,SEMA3A,,,,,,,,,FALSE
 SHP-1,PTPN6,SHP1,Tyrosine-protein phosphatase non-receptor type 6,,,,,,,FALSE
 SHP-2,PTPN11,SHP2,Tyrosine-protein phosphatase non-receptor type 11,,,,,,,FALSE
 Siglec F,SiglecF,Siglec-F,Siglec.F,Siglec_F,,,,,,TRUE
@@ -718,54 +702,101 @@ Siglec H,SiglecH,Siglec-H,Siglec_H,,,,,,,TRUE
 Siglec-8,Siglec8,Siglec 8,Siglec_8,,,,,,,TRUE
 SMAD2,pSMAD2,Phospho-SMAD2,,,,,,,,FALSE
 SMAD3,pSMAD3,Phospho-SMAD3,,,,,,,,FALSE
-Sox1,SOX1,SRY-related HMG box-1,,,,,,,,FALSE
-Sox17,SOX17,SRY-related HMG box-17,,,,,,,,FALSE
-Sox2,SOX2,SRY-related HMG box-2,,,,,,,,FALSE
-SpiB,SPIB,Spi-B transcription factor,,,,,,,,FALSE
-SSEA-1,LeX,Lewis X antigen,CD15,FUT4,,,,,,FALSE
+Sox1,SRY-related HMG box-1,,,,,,,,,FALSE
+Sox17,SRY-related HMG box-17,,,,,,,,,FALSE
+Sox2,SRY-related HMG box-2,,,,,,,,,FALSE
+SpiB,Spi-B transcription factor,,,,,,,,,FALSE
 SSEA-3,Globopentaosylceramide,Stage-specific embryonic antigen 3,,,,,,,,FALSE
 SSEA-4,Globoside,Stage-specific embryonic antigen 4,,,,,,,,FALSE
-ST2,IL-33R,St2,IL33R,,,,,,,FALSE
-Stabilin2,STAB2,Stabilin2,,,,,,,,FALSE
+ST2,IL-33R,IL33R,,,,,,,,FALSE
+Stabilin2,STAB2,,,,,,,,,FALSE
 Survivin,BIRC5,Baculoviral IAP repeat-containing protein 5,,,,,,,,FALSE
-synaptophysin,SYP,Syp,,,,,,,,FALSE
-T-bet,T.bet,Tbet,,,,,,,,FALSE
-TCF1,TCF1/7,Tcf1,TCF7,TCF1 (TCF7),,,,,,FALSE
+synaptophysin,SYP,,,,,,,,,FALSE
+T-bet,T.bet,Tbet,Tbx21,,,,,,,FALSE
+TCF1,TCF1/7,TCF7,TCF1 (TCF7),TCF-1,,,,,,FALSE
 TCF7L2,TCF4,Transcription factor 7 like 2,,,,,,,,FALSE
-TCR Va24-Ja18,TCR.Va24_Ja18,Tcr Va24-Ja18,TCR Va24,TCR Va24_Ja18,,,,,,FALSE
-TCR Va7.2,TCR.Va7.2,Tcr Va7.2,TCR Valpha7.2,TCR 7.2,,,,,,FALSE
-TCR Vb11,TCR-Vb11,Tcr Vb11,,,,,,,,FALSE
-TCR Vd2,TCRVdelta2,Tcr Vd2,,,,,,,,FALSE
-TCR Vg9,TCRVgamma9,Tcr Vg9,,,,,,,,FALSE
-TCRab,TCRalpha/beta,Tcrab,TCR-ab,TCR-alpha,TCR alpha/beta,TCR a/b,TCRa,TCR-a,,FALSE
-TCRbeta,TCR-beta,Tcrbeta,TCR-b,TCR-beta,,,,,,FALSE
+TCR Va24-Ja18,TCR.Va24_Ja18,TCR Va24,TCR Va24_Ja18,,,,,,,FALSE
+TCR Va7.2,TCR.Va7.2,TCR Valpha7.2,TCR 7.2,,,,,,,FALSE
+TCR Vb11,TCR-Vb11,,,,,,,,,FALSE
+TCR Vd2,TCRVdelta2,,,,,,,,,FALSE
+TCR Vg9,TCRVgamma9,,,,,,,,,FALSE
+TCRab,TCRalpha/beta,TCR-ab,TCR-alpha,TCR alpha/beta,TCR a/b,TCRa,TCR-a,,,FALSE
+TCRbeta,TCR-beta,TCR-b,,,,,,,,FALSE
 TCRgd,TCRgamma,Tcrg,gdTCR,gd TCR,TCR-gamma,TCR-gd,TCRd,TCR gd,TCRyd,FALSE
-TER119,TER-119,Ter119,TER_119,TER.119,,,,,,FALSE
-TGFb,TGFb1,TGF beta 1,Transforming growth factor beta 1,TGF-b1,,,,,,FALSE
-TGFbeta,TGF-beta,Tgfbeta,TGF,,,,,,,FALSE
-TIGIT,TIGIT,Tigit,,,,,,,,FALSE
+TER119,TER-119,TER_119,TER.119,,,,,,,FALSE
+TGFbeta,TGF-beta,TGF,TGFb,TGFb1,TGF beta 1,Transforming growth factor beta 1,TGF-b1,,,FALSE
+TIGIT,,,,,,,,,,FALSE
 Tim-1,TIM1,KIM-1,KIM1,HAVcr1,Kidney injury molecule 1,,,,,FALSE
-TIM-4,Tim4,TIMD4,Tim-4,,,,,,,FALSE
-TNF,TNF.alpha,Tnf,TNFa,TNF-a,TNF-alpha,TNF.alpha,TNF_alpha,TNF_a,TNF.a,FALSE
+TIM-4,Tim4,TIMD4,,,,,,,,TRUE
+TNF,TNF.alpha,TNFa,TNF-a,TNF-alpha,TNF_alpha,TNF_a,TNF.a,,,FALSE
 TOX,,,,,,,,,,FALSE
 TOX2,TOX high mobility group box family member 2,,,,,,,,,FALSE
 TPO,Thrombopoietin,THPO,Mpl ligand,,,,,,,FALSE
 TRA-1-60,TRA160,Podocalyxin-like protein,PODXL,,,,,,,FALSE
 TRA-1-81,TRA181,,,,,,,,,FALSE
-TREM2,TREM2,Trem2,,,,,,,,FALSE
+TREM2,,,,,,,,,,TRUE
 TrkB,NTRK2,Neurotrophic receptor tyrosine kinase 2,,,,,,,,FALSE
-TSLP,Thymic stromal lymphopoietin,TSLP,Il7-like cytokine,,,,,,,FALSE
-TYRO3,TYRO3 protein tyrosine kinase,SKY,,,,,,,,FALSE
+TSLP,Thymic stromal lymphopoietin,Il7-like cytokine,,,,,,,,FALSE
+TYRO3,TYRO3 protein tyrosine kinase,SKY,,,,,,,,TRUE
 V5,V5 tag,V5-tag,V5_tag,,,,,,,FALSE
 VEGFR1,Flt-1,FLT1,vascular endothelial growth factor receptor 1,,,,,,,FALSE
 VEGFR3,Flt-4,FLT4,vascular endothelial growth factor receptor 3,,,,,,,FALSE
-Viability,fixable,Livedead,Viability,viable,viablity,live-dead,LD,,,FALSE
-Vimentin,VIM,Vim,,,,,,,,FALSE
+Viability,fixable,Livedead,LIVE/DEAD,live-dead,viable,LD,Zombie,7-AAD,DAPI,FALSE
+Vimentin,VIM,,,,,,,,,FALSE
 VSVg,VSV-g,VSV_g,,,,,,,,FALSE
-Wnt-5a,WNT5A,Wnt5a,,,,,,,,FALSE
-Wnt3a,WNT3A,Wnt-3a,,,,,,,,FALSE
+Wnt-5a,WNT5A,,,,,,,,,FALSE
+Wnt3a,Wnt-3a,,,,,,,,,FALSE
 XCL1,,,,,,,,,,FALSE
 XCL2,,,,,,,,,,FALSE
-XCR1,XCR1,Xcr1,,,,,,,,TRUE
-YFP,Yellow Fluorescent Protein,Yfp,,,,,,,,FALSE
-ZAP70,ZAP-70,Zap70,Zap.70,ZAP_70,,,,,,FALSE
+XCR1,,,,,,,,,,TRUE
+YFP,Yellow Fluorescent Protein,,,,,,,,,FALSE
+ZAP70,ZAP-70,Zap.70,ZAP_70,,,,,,,FALSE
+c-MAF,cMaf,MAF,,,,,,,,FALSE
+IgA,Ig-A,IgA1,IgA2,,,,,,,FALSE
+IgG2c,,,,,,,,,,FALSE
+Igk,Ig kappa,Ig-kappa,Kappa,,,,,,,FALSE
+Igl,Ig lambda,Ig-lambda,Lambda,,,,,,,FALSE
+ZsGreen,ZsGreen1,,,,,,,,,FALSE
+FR4,FR-4,Folr4,Izumo1r,,,,,,,FALSE
+CD200R3,CD200R-3,,,,,,,,,TRUE
+CD301b,MGL2,MGL-2,,,,,,,,TRUE
+Ly6D,Ly-6D,Ly.6D,,,,,,,,FALSE
+TCR Vd1,Vd1,TCRVd1,TCRVdelta1,TRDV1,,,,,,FALSE
+TCR Vg1,Vg1,TCRVg1,Vgamma1,,,,,,,FALSE
+TCR Vg4,Vg4,TCRVg4,Vgamma4,,,,,,,FALSE
+TCR Va2,Va2,TCRVa2,Valpha2,,,,,,,FALSE
+HLA-DQ,HLADQ,HLA.DQ,HLA_DQ,,,,,,,TRUE
+BrdU,Bromodeoxyuridine,,,,,,,,,FALSE
+EdU,Ethynyl deoxyuridine,,,,,,,,,FALSE
+Tetramer,Tet,Dextramer,,,,,,,,FALSE
+Lineage,Lin,Dump,,,,,,,,FALSE
+Proliferation dye,CFSE,CTV,CellTrace,,,,,,,FALSE
+Ly49A,Ly-49A,Klra1,,,,,,,,FALSE
+Ly49C/I,Ly49CI,Ly49C,Ly49I,,,,,,,FALSE
+Ly49F,Ly-49F,Klra6,,,,,,,,FALSE
+Ly49G2,Ly-49G2,Ly49G,Klra7,,,,,,,FALSE
+Ly49H,Ly-49H,Klra8,,,,,,,,FALSE
+pS6,phospho-S6,pRPS6,,,,,,,,FALSE
+pSyk,phospho-Syk,,,,,,,,,FALSE
+pZAP70,phospho-ZAP70,pZAP-70,,,,,,,,FALSE
+pBTK,phospho-BTK,,,,,,,,,FALSE
+pPLCg2,phospho-PLCg2,pPLCgamma2,,,,,,,,FALSE
+pCREB,phospho-CREB,,,,,,,,,FALSE
+IkBa,IkB-alpha,IkBalpha,NFKBIA,,,,,,,FALSE
+Arg1,Arginase-1,Arginase 1,,,,,,,,TRUE
+iNOS,NOS2,,,,,,,,,TRUE
+RELMa,RELM-alpha,RELMalpha,Retnla,Fizz1,,,,,,TRUE
+Ym1,Chil3,Chi3l3,,,,,,,,TRUE
+HLA-E,HLAE,HLA.E,,,,,,,,FALSE
+HLA-G,HLAG,HLA.G,,,,,,,,FALSE
+IL-23R,IL23R,,,,,,,,,FALSE
+TSLPR,CRLF2,TSLP-R,,,,,,,,FALSE
+IFNAR1,IFNAR,,,,,,,,,FALSE
+PCNA,,,,,,,,,,FALSE
+pH3,phospho-Histone H3,pHH3,H3S10ph,,,,,,,FALSE
+MitoTracker,,,,,,,,,,FALSE
+TMRM,,,,,,,,,,FALSE
+CellROX,,,,,,,,,,FALSE
+BODIPY,,,,,,,,,,FALSE
+2-NBDG,2NBDG,,,,,,,,,FALSE
+Puromycin,Puro,,,,,,,,,FALSE
