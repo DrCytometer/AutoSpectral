@@ -2,6 +2,13 @@
 
 ## New Features
 
+- `convert.flowjo.workspace()`: rewrites the parameter names in a FlowJo
+workspace or template (`.wsp`/`.wspt`) to match an AutoSpectral-unmixed FCS
+file, so gating templates built on instrument-unmixed files can be applied to
+AutoSpectral output. Fluorophores are matched via `fluorophore_database.csv`
+synonyms, compensated ("Comp-") references follow the FCS file's `$SPILLOVER`,
+Table Editor markers are updated from `$PnS`, and samples pointing to the
+original files are removed.
 - `run.bead.cell.comparison()` (and its internal `finalize.control.file()`)
 moved from `inst/scripts/run_bead_cell_comparison.R` into the package and is
 now exported.
