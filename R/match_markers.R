@@ -22,10 +22,11 @@ match.markers <- function( control.filenames, marker.database, verbose = TRUE ) 
 
   marker.matches <- list()
 
-  # columns in order of importance
-  antigen.cols <- c(
-    "marker", paste0( "synonym", 1:9 )
-  )
+  # columns in order of importance: "marker", then every synonymN column present,
+  # so adding more synonym columns to marker_database.csv works automatically
+  syn.cols <- grep( "^synonym[0-9]+$", colnames( marker.database ), value = TRUE )
+  syn.cols <- syn.cols[ order( as.integer( sub( "synonym", "", syn.cols ) ) ) ]
+  antigen.cols <- c( "marker", syn.cols )
 
   for ( filename in control.filenames ) {
 

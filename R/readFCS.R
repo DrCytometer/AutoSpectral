@@ -123,8 +123,15 @@ readFCS <- function(
 
   # Identify delimiter (first character)
   delim <- substr(txt, 1, 1)
+  # Drop any padding after the final delimiter, then split on single
+  # delimiters only: a doubled delimiter is an escaped literal inside a value
+  # (FCS 3.1 3.2.4).
+  last.delim <- max(gregexpr(delim, txt, fixed = TRUE)[[1]])
+  txt <- substr(txt, 2, last.delim - 1)
+  escaped <- "\001"
+  txt <- gsub(paste0(delim, delim), escaped, txt, fixed = TRUE)
   kv <- strsplit(txt, delim, fixed = TRUE)[[1]]
-  if (length(kv) > 0 && kv[1] == "") kv <- kv[-1]
+  kv <- gsub(escaped, delim, kv, fixed = TRUE)
   if (length(kv) %% 2 != 0) kv <- c(kv, "")
 
   # Map keys to values
