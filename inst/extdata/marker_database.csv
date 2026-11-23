@@ -358,8 +358,8 @@ CD42d,GPV,,,,,,,,,FALSE
 CD43,Sialophorin,Spn,,,,,,,,FALSE
 CD44,,,,,,,,,,FALSE
 CD45,,,,,,,,,,FALSE
-CD45.1,CD45_1,Ly5.1,,,,,,,,FALSE
-CD45.2,CD45_2,Ly5.2,,,,,,,,FALSE
+CD45.1,CD45_1,Ly5.1,CD45-1,,,,,,,FALSE
+CD45.2,CD45_2,Ly5.2,CD452,CD45-2,,,,,,FALSE
 CD45RA,,,,,,,,,,FALSE
 CD45RB,,,,,,,,,,FALSE
 CD45RC,,,,,,,,,,FALSE
@@ -442,7 +442,7 @@ CD8b,CD8 beta,CD8-beta,CD8beta,,,,,,,FALSE
 CD9,,,,,,,,,,FALSE
 CD90,Thy1,CD90 (Thy1),,,,,,,,FALSE
 CD90.1,Thy1.1,,,,,,,,,FALSE
-CD90.2,Thy1.2,,,,,,,,,FALSE
+CD90.2,Thy1.2,CD90-2,,,,,,,,FALSE
 CD91,LRP1,,,,,,,,,FALSE
 CD92,CTL1,SLC44A1,,,,,,,,FALSE
 CD93,C1qRp,AA4.1,,,,,,,,FALSE
@@ -522,7 +522,7 @@ Galectin-9,Gal-9,Gal9,LGALS9,CD365,,,,,,FALSE
 GARP,LRRC32,,,,,,,,,FALSE
 GATA-3,Gata3,GATA 3,,,,,,,,FALSE
 GFAP,,,,,,,,,,FALSE
-GFP,Green Fluorescent Protein,eGFP,,,,,,,,FALSE
+GFP,Green Fluorescent Protein,eGFP,aGFP,anti-GFP,,,,,,FALSE
 GITR,CD357,TNFRSF18,,,,,,,,FALSE
 GL7,,,,,,,,,,FALSE
 GM-CSF,CSF2,Granulocyte-macrophage colony-stimulating factor,GMCSF,GM_CSF,,,,,,FALSE
@@ -572,7 +572,7 @@ IL-18,IL18,Interleukin-18,,,,,,,,FALSE
 IL-18R,IL18R,IL-18Receptor,IL_18R,IL-18-R,IL18-R,,,,,FALSE
 IL-19,IL19,Interleukin-19,,,,,,,,FALSE
 IL-1a,IL1a,IL-1 alpha,IL-1.alpha,,,,,,,FALSE
-IL-1b,IL1b,pro-IL-1-beta,IL-1 beta,,,,,,,FALSE
+IL-1b,IL1b,pro-IL-1-beta,IL-1 beta,IL-1-beta,pro-IL-1b,pro-IL1b,,,,FALSE
 IL-2,IL2,IL.2,,,,,,,,FALSE
 IL-21,IL21,,,,,,,,,FALSE
 IL-21R,IL21R,IL-21 receptor,CD360,,,,,,,FALSE
@@ -628,11 +628,11 @@ Mcl-1,MCL1,Myeloid cell leukemia 1,,,,,,,,FALSE
 MerTK,,,,,,,,,,TRUE
 MET,c-MET,HGFR,Hepatocyte growth factor receptor,,,,,,,FALSE
 MHCI,H-2Kk,H-2Db,H-2Kb,MHC1,HLA-ABC,H-2Kd,H-2Dd,,,TRUE
-MHCII,I-A,I-E,ClassII,MHC2,I-A/I-E,I-A I-E,IAIE,,,TRUE
+MHCII,I-A,I-E,ClassII,MHC2,I-A/I-E,I-A I-E,IAIE,MHC-II,,TRUE
 Nanog,,,,,,,,,,FALSE
 Nestin,NES,Intermediate filament,,,,,,,,FALSE
 NeuN,RBFOX3,Fox-3,,,,,,,,TRUE
-Neuropilin,CD304,Neuropilin-1,Nrp1,Nrp-1,,,,,,FALSE
+Neuropilin,CD304,Neuropilin-1,Nrp1,Nrp-1,Neuropillin,Nrp,,,,FALSE
 Neuropilin-2,NRP2,Nrp-2,,,,,,,,FALSE
 NF-kB,NFkB,p65,RelA,NF-kappaB,,,,,,FALSE
 NFAT1,NFATC2,Nuclear factor of activated T-cells 2,,,,,,,,FALSE
@@ -645,6 +645,7 @@ Notch2,Notch-2,N2,,,,,,,,FALSE
 Notch3,Notch-3,N3,,,,,,,,FALSE
 Notch4,Notch-4,N4,,,,,,,,FALSE
 Nur77,,,,,,,,,,FALSE
+Nur77-GFP,Nur77 GFP,GFP Nur77,GFP-Nur77,Nur77-eGFP,Nr4a1-GFP,Nr4a1 GFP,,,,FALSE
 NWS,NWS tag,Strep tag,Strep tag II,,,,,,,FALSE
 O4,,,,,,,,,,FALSE
 Oct4,POU5F1,Oct-4,,,,,,,,FALSE
@@ -721,8 +722,8 @@ TCR Vb11,TCR-Vb11,,,,,,,,,FALSE
 TCR Vd2,TCRVdelta2,,,,,,,,,FALSE
 TCR Vg9,TCRVgamma9,,,,,,,,,FALSE
 TCRab,TCRalpha/beta,TCR-ab,TCR-alpha,TCR alpha/beta,TCR a/b,TCRa,TCR-a,,,FALSE
-TCRbeta,TCR-beta,TCR-b,,,,,,,,FALSE
-TCRgd,TCRgamma,Tcrg,gdTCR,gd TCR,TCR-gamma,TCR-gd,TCRd,TCR gd,TCRyd,FALSE
+TCRbeta,TCR-beta,TCR-b,TCRb,TCRβ,,,,,,FALSE
+TCRgd,TCRgamma,Tcrg,gdT,gd TCR,TCR-gamma,TCR-gd,TCRd,TCR gd,TCRyd,FALSE
 TER119,TER-119,TER_119,TER.119,,,,,,,FALSE
 TGFbeta,TGF-beta,TGF,TGFb,TGFb1,TGF beta 1,Transforming growth factor beta 1,TGF-b1,,,FALSE
 TIGIT,,,,,,,,,,FALSE
@@ -749,7 +750,7 @@ Wnt3a,Wnt-3a,,,,,,,,,FALSE
 XCL1,,,,,,,,,,FALSE
 XCL2,,,,,,,,,,FALSE
 XCR1,,,,,,,,,,TRUE
-YFP,Yellow Fluorescent Protein,,,,,,,,,FALSE
+YFP,Yellow Fluorescent Protein,Foxp3-YFP,YFP anti-GFP,,,,,,,FALSE
 ZAP70,ZAP-70,Zap.70,ZAP_70,,,,,,,FALSE
 c-MAF,cMaf,MAF,,,,,,,,FALSE
 IgA,Ig-A,IgA1,IgA2,,,,,,,FALSE
