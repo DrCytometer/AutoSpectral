@@ -259,7 +259,7 @@ spectral.mismatch.plot <- function(
 
   if ( is.null( y.label ) )
     y.label <- if ( normalization == "L2" ) "Intensity (L2-normalized)" else "Normalized Intensity"
-  if ( is.null( diff.label ) ) diff.label <- "Spectral Difference (ref − test)"
+  if ( is.null( diff.label ) ) diff.label <- "Spectral Difference (ref - test)"
 
   x.text <- ggplot2::element_text( angle = label.angle, hjust = 1, vjust = label.vjust,
                                    size = axis.text.size )
