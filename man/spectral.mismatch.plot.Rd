@@ -26,11 +26,14 @@ spectral.mismatch.plot(
   show.cosine = FALSE,
   cosine.on.plotted = FALSE,
   cosine.digits = 3,
+  show.angle = FALSE,
+  angle.digits = 1,
   label.every = 1,
   label.angle = 45,
   trace.labels = TRUE,
   y.label = NULL,
   diff.label = NULL,
+  diff.limits = NULL,
   legend.position = "bottom",
   legend.title = "Fluorophore",
   bar.line.width = 0.5,
@@ -116,6 +119,14 @@ similarity on the displayed detectors only (otherwise on all detectors).}
 \item{cosine.digits}{Integer, default \code{3}. Decimal places of the printed
 cosine similarity.}
 
+\item{show.angle}{Logical, default \code{FALSE}. Print the spectral angle
+(degrees, \code{acos()} of the cosine similarity, as in
+\code{assess.mismatch.angle()}) in the upper panel. Uses the same detectors as
+the cosine similarity (\code{cosine.on.plotted}).}
+
+\item{angle.digits}{Integer, default \code{1}. Decimal places of the printed
+spectral angle.}
+
 \item{label.every}{Show every n-th detector label. Default \code{1} (every
 label); \code{NULL} chooses n so that at most about 70 labels are shown.}
 
@@ -132,6 +143,10 @@ difference panel only.}
 
 \item{diff.label}{Optional title of the difference panel's y axis. Default
 \code{NULL}: \code{"Spectral Difference (ref - test)"}.}
+
+\item{diff.limits}{Optional numeric vector of length 2 giving fixed y-axis
+limits for the difference panel, e.g. \code{c( -0.2, 0.2 )}, so that several
+figures share one scale. Default \code{NULL}: limits fitted to the data.}
 
 \item{legend.position}{Position of the trace legend. Default \code{"bottom"}.}
 
@@ -154,7 +169,8 @@ laser colours under the figure.}
 }
 \value{
 The combined cowplot object is returned invisibly, with the cosine
-similarity as \code{attr(x, "cosine.similarity")} and the lasers of the
+similarity as \code{attr(x, "cosine.similarity")}, the spectral angle in degrees
+as \code{attr(x, "spectral.angle")} and the lasers of the
 displayed detectors as \code{attr(x, "lasers")} (\code{NULL} if the lasers could not
 be assigned). With \code{save = TRUE} (default) the figure is also saved to disk
 as \verb{<plot.dir>/<title>.jpg}.
