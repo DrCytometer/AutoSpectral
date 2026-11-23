@@ -16,6 +16,11 @@
 #' - `synonym7`: Potential synonym 7
 #' - `synonym8`: Potential synonym 8
 #' - `synonym9`: Potential synonym 9
+#' - `synonym10`: Potential synonym 10
+#' - `synonym11`: Potential synonym 11
+#' - `synonym12`: Potential synonym 12
+#'   (`match.markers()` and Honeychrome read every `synonymN` column, so more
+#'   columns can be added)
 #' - `large.gate`: Logical. `TRUE` if this marker is typically expressed on
 #' larger cells (e.g. granulocytes, macrophages) and should trigger a
 #' `large.gate` assignment in `create.control.file()`; `FALSE` or blank
