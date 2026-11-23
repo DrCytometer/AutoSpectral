@@ -79,7 +79,7 @@ biexp.transform <- function(
 
   if ( neg != 0 ) {
     stop(
-      "biexp.fast() currently only supports neg = 0 (got ", neg, "). ",
+      "biexp.transform() currently only supports neg = 0 (got ", neg, "). ",
       "Extending to neg > 0 needs the GatingML 2.0 shifted-origin form -- ",
       "not implemented. Use flowCore::logicleTransform() for that case."
     )
