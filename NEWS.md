@@ -1,3 +1,38 @@
+# AutoSpectral 1.8.9 (2026-11-23)
+
+## New Features
+
+- `spectral.mismatch.plot()`: `show.angle` prints the spectral angle (degrees,
+as in `assess.mismatch.angle()`) in the upper panel, on the same detectors as
+the cosine similarity, with `angle.digits` decimal places; the angle is also
+returned as `attr(x, "spectral.angle")`. `diff.limits` fixes the y-axis limits
+of the difference panel so several figures can share one scale. Both are off
+by default.
+- `fluorophore_database.csv` gains `synonym6` to `synonym8`, and
+`marker_database.csv` gains `synonym10` to `synonym12`. `match.markers()` now
+searches every `synonymN` column present, as `match.fluorophores()` and
+`convert.flowjo.workspace()` already do, so further synonym columns can be
+added without code changes.
+
+## Changes
+
+- Updated marker and fluorophore databases: more markers and fluorophores,
+more synonyms, the dye `class` filled in for all fluorophores, `2-NDGB`
+renamed `2-NBDG` (the old name kept as a synonym), and corrected peak
+channels for some fluorophores (e.g. 7-AAD on the 5-laser Aurora).
+
+## Bug fixes
+
+- `readFCS()` and `writeFCS()`: FCS files with padding after the final TEXT
+delimiter, or with empty keyword values (e.g. NovoCyte files), no longer have
+their keyword/value pairs shifted. A doubled delimiter is read as an escaped
+literal inside a value (FCS 3.1), and on writing, keywords with a blank name or
+value are dropped and delimiters inside values are escaped.
+- Biexponential axis labels on biplots, ribbon plots, spectra plots and the
+AF gating plot now show the minus sign for negative decades.
+- `biexp.transform()`: the error message for `neg != 0` named the old function.
+
+
 # AutoSpectral 1.8.8 (2026-10-30)
 
 ## New Features
