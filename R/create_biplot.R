@@ -168,10 +168,12 @@ create.biplot <- function(
   x.breaks <- x.breaks[ x.breaks < x.max ]
   y.breaks <- y.breaks[ y.breaks < y.max ]
   x.axis.labels <- sapply( x.breaks, function( x ) {
-    if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
+    if ( x == 0 ) "0" else
+      parse( text = paste0( if ( x < 0 ) "-" else "", "10^", log10( abs( x ) ) ) )
   } )
   y.axis.labels <- sapply( y.breaks, function( x ) {
-    if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
+    if ( x == 0 ) "0" else
+      parse( text = paste0( if ( x < 0 ) "-" else "", "10^", log10( abs( x ) ) ) )
   } )
   x.limits <- c( x.min, x.max )
   y.limits <- c( y.min, y.max )

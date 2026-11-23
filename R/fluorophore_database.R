@@ -11,6 +11,11 @@
 #' - `synonym2`: Fluorophore synonym 2
 #' - `synonym3`: Fluorophore synonym 3
 #' - `synonym4`: Fluorophore synonym 4
+#' - `synonym5`: Fluorophore synonym 5
+#' - `synonym6`: Fluorophore synonym 6
+#' - `synonym7`: Fluorophore synonym 7
+#' - `synonym8`: Fluorophore synonym 8 (every `synonymN` column is searched by
+#'   `match.fluorophores()` and `convert.flowjo.workspace()`, so more can be added)
 #' - `channel.Aurora`: Peak channels for fluorophores on the 5-laser Aurora
 #' - `channel.NL`: Peak channels for fluorophores on the 3-laser Aurora
 #' - `channel.ID7000`: Peak channels for fluorophores on the 5-laser ID7000
@@ -23,5 +28,6 @@
 #' - `excitation.laser`: Excitation laser
 #' - `nominal.wavelength`: Numeric; nominal peak emission wavelength
 #' - `is.viability`: Logical; whether the fluorophore is a viability dye
+#' - `class`: Dye class (e.g. `Protein tandem`, `Small molecule`)
 #' - `tandem.parent`: For a tandem dye, the fluorophore its donor is on its
 #'   own (e.g. `PE` for `PE-Cy7`); empty otherwise

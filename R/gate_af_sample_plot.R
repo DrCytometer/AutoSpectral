@@ -84,7 +84,8 @@ gate.af.sample.plot <- function(
   breaks <- asp$ribbon.breaks
   limits <- c( asp$ribbon.plot.min, asp$expr.data.max )
   axis.labels <- sapply( breaks, function( x ) {
-    if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
+    if ( x == 0 ) "0" else
+      parse( text = paste0( if ( x < 0 ) "-" else "", "10^", log10( abs( x ) ) ) )
   } )
 
   x.lim.trans <- biexp.trans( limits )

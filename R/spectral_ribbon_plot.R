@@ -176,7 +176,8 @@ spectral.ribbon.plot <- function(
 
   ribbon.breaks <- asp$ribbon.breaks
   ribbon.labels <- sapply( ribbon.breaks, function( x ) {
-    if ( x == 0 ) "0" else parse( text = paste0( "10^", log10( abs( x ) ) ) )
+    if ( x == 0 ) "0" else
+      parse( text = paste0( if ( x < 0 ) "-" else "", "10^", log10( abs( x ) ) ) )
   } )
   ribbon.limits <- c( asp$ribbon.plot.min, asp$expr.data.max )
 

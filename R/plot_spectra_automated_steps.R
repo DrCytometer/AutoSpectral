@@ -72,7 +72,8 @@
   breaks <- asp$ribbon.breaks
   limits <- c( asp$ribbon.plot.min, asp$expr.data.max )
   axis.labels <- sapply( breaks, function( v ) {
-    if ( v == 0 ) "0" else parse( text = paste0( "10^", log10( abs( v ) ) ) )
+    if ( v == 0 ) "0" else
+      parse( text = paste0( if ( v < 0 ) "-" else "", "10^", log10( abs( v ) ) ) )
   } )
 
   list(
@@ -294,7 +295,8 @@
   breaks <- asp$ribbon.breaks
   limits <- c( asp$ribbon.plot.min, asp$expr.data.max )
   axis.labels <- sapply( breaks, function( v ) {
-    if ( v == 0 ) "0" else parse( text = paste0( "10^", log10( abs( v ) ) ) )
+    if ( v == 0 ) "0" else
+      parse( text = paste0( if ( v < 0 ) "-" else "", "10^", log10( abs( v ) ) ) )
   } )
 
   ggplot2::ggplot( dens.df, ggplot2::aes( x, y ) ) +

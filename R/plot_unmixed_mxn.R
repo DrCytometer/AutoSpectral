@@ -150,7 +150,8 @@
 .axis.setup <- function( asp, dim.min, dim.max ) {
   brks   <- asp$ribbon.breaks[ asp$ribbon.breaks < dim.max ]
   labels <- sapply( brks, function( v ) {
-    if ( v == 0 ) "0" else parse( text = paste0( "10^", log10( abs( v ) ) ) )
+    if ( v == 0 ) "0" else
+      parse( text = paste0( if ( v < 0 ) "-" else "", "10^", log10( abs( v ) ) ) )
   } )
   list( breaks = brks, limits = c( dim.min, dim.max ), labels = labels )
 }

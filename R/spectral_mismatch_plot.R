@@ -70,6 +70,12 @@
 #'   similarity on the displayed detectors only (otherwise on all detectors).
 #' @param cosine.digits Integer, default `3`. Decimal places of the printed
 #'   cosine similarity.
+#' @param show.angle Logical, default `FALSE`. Print the spectral angle
+#'   (degrees, `acos()` of the cosine similarity, as in
+#'   `assess.mismatch.angle()`) in the upper panel. Uses the same detectors as
+#'   the cosine similarity (`cosine.on.plotted`).
+#' @param angle.digits Integer, default `1`. Decimal places of the printed
+#'   spectral angle.
 #' @param label.every Show every n-th detector label. Default `1` (every
 #'   label); `NULL` chooses n so that at most about 70 labels are shown.
 #' @param label.angle Numeric, default `45`. Angle of the detector labels
@@ -82,6 +88,9 @@
 #'   `"Normalized Intensity"`.
 #' @param diff.label Optional title of the difference panel's y axis. Default
 #'   `NULL`: `"Spectral Difference (ref - test)"`.
+#' @param diff.limits Optional numeric vector of length 2 giving fixed y-axis
+#'   limits for the difference panel, e.g. `c( -0.2, 0.2 )`, so that several
+#'   figures share one scale. Default `NULL`: limits fitted to the data.
 #' @param legend.position Position of the trace legend. Default `"bottom"`.
 #' @param legend.title Title of the trace legend. Default `"Fluorophore"`;
 #'   `NULL` for none.
@@ -96,7 +105,8 @@
 #'   `<plot.dir>/<title>.jpg`. `FALSE` only returns it.
 #'
 #' @return The combined cowplot object is returned invisibly, with the cosine
-#' similarity as `attr(x, "cosine.similarity")` and the lasers of the
+#' similarity as `attr(x, "cosine.similarity")`, the spectral angle in degrees
+#' as `attr(x, "spectral.angle")` and the lasers of the
 #' displayed detectors as `attr(x, "lasers")` (`NULL` if the lasers could not
 #' be assigned). With `save = TRUE` (default) the figure is also saved to disk
 #' as `<plot.dir>/<title>.jpg`.
@@ -131,11 +141,14 @@ spectral.mismatch.plot <- function(
     show.cosine        = FALSE,
     cosine.on.plotted  = FALSE,
     cosine.digits      = 3,
+    show.angle         = FALSE,
+    angle.digits       = 1,
     label.every        = 1,
     label.angle        = 45,
     trace.labels       = TRUE,
     y.label            = NULL,
     diff.label         = NULL,
+    diff.limits        = NULL,
     legend.position    = "bottom",
     legend.title       = "Fluorophore",
     bar.line.width     = 0.5,
@@ -146,6 +159,8 @@ spectral.mismatch.plot <- function(
   ) {
 
   normalization <- match.arg( normalization )
+  if ( !is.null( diff.limits ) && !( is.numeric( diff.limits ) && length( diff.limits ) == 2 ) )
+    stop( "`diff.limits` must be NULL or a numeric vector of length 2.", call. = FALSE )
 
   # --- input validation ---
   if ( !is.numeric( as.matrix( ref.spectrum ) ) || !is.numeric( as.matrix( test.spectrum ) ) ) {
@@ -193,6 +208,8 @@ spectral.mismatch.plot <- function(
   # --- cosine similarity ---
   cos.idx <- if ( cosine.on.plotted ) show else rep( TRUE, length( detectors ) )
   cos.sim <- cosine.similarity( rbind( ref.vals[ cos.idx ], test.vals[ cos.idx ] ) )[ 1, 2 ]
+  # clamp for floating-point drift just outside [-1, 1] before acos()
+  spec.angle <- acos( pmin( pmax( cos.sim, -1 ), 1 ) ) * 180 / pi
 
   pivot.cols <- detectors[ show ]
   shown.lasers <- if ( is.null( lasers ) ) NULL else unique( unname( lasers[ show ] ) )
@@ -242,7 +259,7 @@ spectral.mismatch.plot <- function(
 
   if ( is.null( y.label ) )
     y.label <- if ( normalization == "L2" ) "Intensity (L2-normalized)" else "Normalized Intensity"
-  if ( is.null( diff.label ) ) diff.label <- "Spectral Difference (ref − test)"
+  if ( is.null( diff.label ) ) diff.label <- "Spectral Difference (ref - test)"
 
   x.text <- ggplot2::element_text( angle = label.angle, hjust = 1, vjust = label.vjust,
                                    size = axis.text.size )
@@ -284,6 +301,14 @@ spectral.mismatch.plot <- function(
       "text", x = Inf, y = Inf, hjust = 1.05, vjust = 1.6, size = base.size * 0.32,
       label = sprintf( "cosine similarity = %s",
                        formatC( cos.sim, digits = cosine.digits, format = "f" ) )
+    )
+
+  if ( show.angle )
+    spectra.plot <- spectra.plot + ggplot2::annotate(
+      "text", x = Inf, y = Inf, hjust = 1.05, vjust = if ( show.cosine ) 3.2 else 1.6,
+      size = base.size * 0.32,
+      label = sprintf( "spectral angle = %s deg",
+                       formatC( spec.angle, digits = angle.digits, format = "f" ) )
     )
 
   # apply color palette
@@ -330,7 +355,7 @@ spectral.mismatch.plot <- function(
     ggplot2::theme(
       axis.text.x = x.text
     ) +
-    ggplot2::coord_cartesian( clip = label.clip ) +
+    ggplot2::coord_cartesian( ylim = diff.limits, clip = label.clip ) +
     laser.labels$components
 
   # --- combine panels ---
@@ -367,6 +392,7 @@ spectral.mismatch.plot <- function(
     )
 
   attr( combined.plot, "cosine.similarity" ) <- cos.sim
+  attr( combined.plot, "spectral.angle" ) <- spec.angle
   attr( combined.plot, "lasers" ) <- shown.lasers
 
   invisible( combined.plot )
