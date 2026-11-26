@@ -1,3 +1,37 @@
+# AutoSpectral 1.9.0 (2026-11-26)
+
+## Changes
+
+- Unmixed FCS files now carry over from the raw file only keywords that stay
+valid for the new file: the standard FCS 3.1 acquisition and sample keywords
+(`$DATE`, `$BTIM`, `$ETIM`, `$CYT`, `$CYTSN`, `$OP`, `$SMNO`, `$SRC`, `$PROJ`,
+`$WELLID`, `$PLATEID`, `$PLATENAME`, `$TIMESTEP`, `$TR`, `$VOL` and similar)
+plus the sample-name keywords `TUBE NAME`, `TUBENAME`, `EXPERIMENT NAME` and
+`GROUPNAME`. Vendor keywords describing the original file (e.g. NovoCyte byte
+offsets to filtered events, per-parameter instrument settings) and the raw
+`$SPILLOVER` are no longer copied. NovoExpress refused to open files that
+carried them.
+- `PnDISPLAY` and `PnTYPE` are written as custom keywords without the `$`
+prefix, which FCS 3.1 reserves for the keywords it defines. Cytek instruments
+write `PnDISPLAY` the same way.
+- `writeFCS()` uses the AutoSpectralRcpp writer only from AutoSpectralRcpp
+1.3.6, which completes the FCS 3.1 keywords; with an older version it falls
+back to the R writer.
+
+## Bug fixes
+
+- `writeFCS()`: the TEXT delimiter is chosen per file as a character that
+appears in no keyword or value, so nothing needs escaping and
+`flowCore::read.FCS()` reads the files with its default `emptyValue = TRUE`.
+Escaping by doubling is kept as a fallback and now covers keyword names too.
+- `writeFCS()`: writes the required `$MODE` keyword, and sets `$PnB` to 32 and
+`$PnE` to `0,0` for every parameter, as FCS 3.1 requires for floating-point
+data.
+- `$LAST_MODIFIED` uses English month abbreviations and a `.` decimal
+separator whatever the system locale. On a German system the month was
+previously written in German.
+
+
 # AutoSpectral 1.8.9 (2026-11-23)
 
 ## New Features

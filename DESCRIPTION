@@ -1,7 +1,7 @@
 Package: AutoSpectral
 Type: Package
 Title: Tools for Unmixing Spectral Flow Cytometry Data
-Version: 1.8.9
+Version: 1.9.0
 Authors@R: c(
     person(
       "Oliver", "Burton",
@@ -46,7 +46,7 @@ Imports:
     hexbin,
     isoband
 Suggests: 
-    AutoSpectralRcpp (>= 1.3.0),
+    AutoSpectralRcpp (>= 1.3.6),
     CompensAID,
     flowCore,
     FlowSOM,

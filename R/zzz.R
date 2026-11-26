@@ -10,11 +10,17 @@
 # feature requires a newer minimum.
 .AS.RCPP.MIN.COLUMNS <- "1.3.1"
 
+# Minimum AutoSpectralRcpp version whose writeFCS() completes the keywords
+# from define.keywords() into an FCS 3.1 compliant file ($MODE, $PnB, $PnE and
+# the choice of TEXT delimiter). With an older version, writeFCS() uses the R
+# writer instead.
+.AS.RCPP.MIN.WRITEFCS <- "1.3.6"
+
 # Latest AutoSpectralRcpp version containing a recommended bug fix. This is
 # informational only: unlike .AS.RCPP.MIN.COLUMNS, it never changes which
 # code path AutoSpectral uses. Update the version string (and the message in
 # .onAttach() below) when a new fix ships that's worth flagging.
-.AS.RCPP.RECOMMENDED <- "1.3.3"
+.AS.RCPP.RECOMMENDED <- "1.3.6"
 
 #' Check GitHub for a newer tagged release of a package
 #'
@@ -126,14 +132,23 @@
   }
 
   if (requireNamespace("AutoSpectralRcpp", quietly = TRUE)) {
-    packageStartupMessage(
-      "AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS."
-    )
-
     installed.version <- tryCatch(
       utils::packageVersion("AutoSpectralRcpp"),
       error = function(e) NULL
     )
+
+    if (!is.null(installed.version) &&
+        installed.version < package_version(.AS.RCPP.MIN.WRITEFCS)) {
+      packageStartupMessage(
+        "AutoSpectralRcpp detected: using Rcpp-accelerated readFCS. FCS files ",
+        "are written with the R writer until AutoSpectralRcpp ",
+        .AS.RCPP.MIN.WRITEFCS, " or later is installed."
+      )
+    } else {
+      packageStartupMessage(
+        "AutoSpectralRcpp detected: using Rcpp-accelerated readFCS and writeFCS."
+      )
+    }
 
     if (!is.null(installed.version) &&
         installed.version < package_version(.AS.RCPP.MIN.COLUMNS)) {
@@ -148,9 +163,9 @@
                installed.version < package_version(.AS.RCPP.RECOMMENDED)) {
       packageStartupMessage(
         "NOTE: AutoSpectralRcpp ", .AS.RCPP.RECOMMENDED, " includes a ",
-        "recommended bug fix (installed: ", installed.version, "). This is ",
-        "not required. AutoSpectral will keep using the Rcpp-accelerated ",
-        "path as normal either way. Update with:\n",
+        "recommended bug fix for writing FCS files (installed: ",
+        installed.version, "). Until it is installed, AutoSpectral writes FCS ",
+        "files with its slower R writer. Update with:\n",
         "  pak::pak(\"DrCytometer/AutoSpectralRcpp\")"
       )
     }
