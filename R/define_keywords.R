@@ -51,14 +51,22 @@ define.keywords <- function(
     include.imaging = FALSE
 ) {
 
-  # Identify non-parameter keywords
-  non.param.keys <- fcs.keywords[!grepl("^\\$?P\\d+", names(fcs.keywords))]
-  if (asp$cytometer == "Mosaic") {
-    non.param.keys <- non.param.keys[!grepl("^\\$?CH\\d+", names(non.param.keys))]
-  }
-  non.param.keys <- non.param.keys[!names(non.param.keys) %in% c(
-    "BDCHORUSDATARECORD"
-  )]
+  # Carry over only keywords that stay true for the new file: standard FCS 3.1
+  # keywords describing the acquisition and the sample, plus vendor
+  # sample-identifier keywords used for grouping in analysis software.
+  # Everything else describes the original file (byte offsets into it, raw
+  # channel settings, raw spillover, vendor unmixing setup), and vendor
+  # software can refuse to open a file whose own keywords contradict it.
+  # Parameter keywords are rebuilt below.
+  carry.standard <- c(
+    "ABRT", "BTIM", "CELLS", "COM", "CYT", "CYTSN", "DATE", "ETIM", "EXP",
+    "INST", "LOST", "OP", "PLATEID", "PLATENAME", "PROJ", "SMNO", "SRC", "SYS",
+    "TIMESTEP", "TR", "VOL", "WELLID"
+  )
+  carry.vendor <- c("TUBE NAME", "TUBENAME", "EXPERIMENT NAME", "GROUPNAME")
+  key.names <- toupper(names(fcs.keywords))
+  is.standard <- grepl("^\\$", key.names) & sub("^\\$", "", key.names) %in% carry.standard
+  non.param.keys <- fcs.keywords[is.standard | key.names %in% carry.vendor]
 
   # Build parameter lookup from original file
   pN.keys <- grep("^\\$?P\\d+N$", names(fcs.keywords), value = TRUE)
@@ -125,6 +133,9 @@ define.keywords <- function(
       p.name <- gsub(",", "_", p.name, fixed = TRUE)
     }
     p.prefix <- paste0("$P", i)
+    # PnDISPLAY and PnTYPE are not FCS 3.1 keywords, so they are written as
+    # custom keywords without '$' (Cytek instruments write PnDISPLAY this way).
+    custom.prefix <- paste0("P", i)
 
     # AF Index
     if (p.name == "AF Index") {
@@ -134,8 +145,8 @@ define.keywords <- function(
       param.keywords[[paste0(p.prefix, "E")]] <- "0,0"
       param.keywords[[paste0(p.prefix, "R")]] <- as.character(nrow(af.spectra))
       param.keywords[[paste0(p.prefix, "G")]] <- "1"
-      param.keywords[[paste0(p.prefix, "DISPLAY")]] <- "LIN"
-      param.keywords[[paste0(p.prefix, "TYPE")]] <- "Fluorescence"
+      param.keywords[[paste0(custom.prefix, "DISPLAY")]] <- "LIN"
+      param.keywords[[paste0(custom.prefix, "TYPE")]] <- "Fluorescence"
 
       # Autofluorescence
     } else if (p.name == "AF-A") {
@@ -145,8 +156,8 @@ define.keywords <- function(
       param.keywords[[paste0(p.prefix, "E")]] <- "0,0"
       param.keywords[[paste0(p.prefix, "R")]] <- as.character(asp$expr.data.max)
       param.keywords[[paste0(p.prefix, "G")]] <- "1"
-      param.keywords[[paste0(p.prefix, "DISPLAY")]] <- "LOG"
-      param.keywords[[paste0(p.prefix, "TYPE")]] <- "Fluorescence"
+      param.keywords[[paste0(custom.prefix, "DISPLAY")]] <- "LOG"
+      param.keywords[[paste0(custom.prefix, "TYPE")]] <- "Fluorescence"
 
       # Whitelisted carry-through parameters (Scatter, Time, and optionally imaging)
     } else if (p.name %in% names(param.lookup)) {
@@ -160,7 +171,10 @@ define.keywords <- function(
       keep.idx <- field.types %in% keep.fields
 
       filtered.entry <- old.entry[keep.idx]
-      new.names <- paste0(p.prefix, field.types[keep.idx])
+      new.names <- paste0(
+        ifelse(field.types[keep.idx] %in% c("DISPLAY", "TYPE"), custom.prefix, p.prefix),
+        field.types[keep.idx]
+      )
 
       for (k in seq_along(filtered.entry)) {
         param.keywords[[new.names[k]]] <- filtered.entry[[k]]
@@ -173,8 +187,8 @@ define.keywords <- function(
       param.keywords[[paste0(p.prefix, "E")]] <- "0,0"
       param.keywords[[paste0(p.prefix, "R")]] <- as.character(asp$expr.data.max)
       param.keywords[[paste0(p.prefix, "G")]] <- "1"
-      param.keywords[[paste0(p.prefix, "DISPLAY")]] <- "LOG"
-      param.keywords[[paste0(p.prefix, "TYPE")]] <- "Fluorescence"
+      param.keywords[[paste0(custom.prefix, "DISPLAY")]] <- "LOG"
+      param.keywords[[paste0(custom.prefix, "TYPE")]] <- "Fluorescence"
 
       # Map Marker/Stain from flow.control
       clean.name <- sub("-A$", "", p.name)
@@ -227,6 +241,15 @@ define.keywords <- function(
     "0"
   }
 
+  # $LAST_MODIFIED needs English month abbreviations and a '.' decimal
+  # separator whatever the locale (FCS 3.1: dd-mmm-yyyy hh:mm:ss[.cc]).
+  lt <- as.POSIXlt(Sys.time())
+  last.modified <- sprintf(
+    "%02d-%s-%04d %02d:%02d:%05.2f",
+    lt$mday, toupper(month.abb[lt$mon + 1]), lt$year + 1900,
+    lt$hour, lt$min, floor(lt$sec * 100) / 100
+  )
+
   new.keywords <- utils::modifyList(new.keywords, list(
     "$FIL" = file.name,
     "$PAR" = as.character(n.param),
@@ -238,7 +261,7 @@ define.keywords <- function(
     "FLUOROCHROMES" = paste(rownames(spectra), collapse = ","),
     "AUTOSPECTRAL" = asp.ver,
     "AUTOSPECTRALRCPP" = rcpp.ver,
-    '$LAST_MODIFIED' = toupper(format(Sys.time(), "%d-%b-%Y %H:%M:%OS2")),
+    '$LAST_MODIFIED' = last.modified,
     '$LAST_MODIFIER' = sprintf("AutoSpectral_%s", utils::packageVersion("AutoSpectral")),
     '$ORIGINALITY' = "DataModified"
   ))
